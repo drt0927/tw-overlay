@@ -1,0 +1,50 @@
+{
+  "name": "tw-overlay",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-builder --win",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.filbertlab.twoverlay",
+    "productName": "twOverlay",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "src/track.ps1"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron-store": "^11.0.2"
+  },
+  "devDependencies": {
+    "electron": "^40.4.0",
+    "electron-builder": "^26.7.0"
+  }
+}

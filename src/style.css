@@ -1,0 +1,26 @@
+#settings-panel {
+  position: fixed; top: 40px; left: 0; width: 100%; height: 300px;
+  z-index: 4000;
+}
+
+.panel-glass {
+  background: #0f0f0f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 드래그 및 버튼 영역 클릭 차단 방지 */
+.no-drag { -webkit-app-region: no-drag; }
+.drag-region { -webkit-app-region: drag; }
+
+/* 스크롤바 디자인 */
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* 애니메이션 효과 */
+@keyframes fade-in-zoom {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-in { animation: fade-in-zoom 0.2s ease-out forwards; }

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+    body { font-family: 'Inter', 'Noto Sans KR', sans-serif; letter-spacing: -0.01em; }
+    
+    /* 가독성 중심의 진회색 테마 */
+    .glass { background: rgba(23, 23, 28, 0.98); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+    .panel-glass { background: rgb(30, 30, 35); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    .dropdown-glass { background: rgb(35, 35, 40); border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; }
+    
+    .drag-region { -webkit-app-region: drag; }
+    .no-drag { -webkit-app-region: no-drag; }
+    .hidden-custom { display: none !important; }
+    
+    /* 강조된 입력창 스타일 */
+    .input-field { background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); color: white; transition: all 0.2s; }
+    .input-field:focus { border-color: #3b82f6; background: rgba(0, 0, 0, 0.5); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+    
+    /* 스크롤바 가독성 */
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+    
+    .panel-slide { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(-100%); opacity: 0; pointer-events: none; }
+    .panel-slide.active { transform: translateY(0); opacity: 1; pointer-events: auto; height: 340px; overflow-y: auto; }
+
+    .menu-card { transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); }
+    .menu-card:hover { transform: translateY(-2px); background: #2563eb; border-color: #3b82f6; color: white !important; }
+    .menu-card:hover i { color: white !important; }
+  </style>
+</head>
+<body class="bg-transparent text-white overflow-hidden select-none">
+
+  <!-- 상단 컨트롤 바 -->
+  <nav id="control-bar" class="glass h-10 flex items-center px-2 sm:px-3 relative z-[5000]">
+    <div id="loading-bar" class="absolute bottom-0 left-0 h-[2px] bg-blue-400 shadow-[0_0_10px_#60a5fa] transition-all duration-500 opacity-0 w-0"></div>
+    <div class="drag-region w-full h-full flex items-center gap-2 sm:gap-4">
+      
+      <!-- 이동 핸들 -->
+      <div class="flex items-center text-slate-400 hover:text-white transition-colors cursor-move shrink-0" title="드래그하여 이동">
+        <i data-lucide="grip-vertical" class="w-4 h-4" stroke-width="2.5"></i>
+      </div>
+
+      <!-- 메뉴 버튼 -->
+      <div class="relative no-drag shrink-0">
+        <button id="menu-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded shadow-md transition-all text-xs font-bold text-white group border border-blue-400/30">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300"></i>
+          <span class="hidden xs:inline tracking-tight">메뉴</span>
+        </button>
+      </div>
+
+      <!-- 주소창 -->
+      <div class="flex-1 flex items-center no-drag bg-black/40 rounded border border-white/20 focus-within:border-blue-400 transition-all overflow-hidden">
+        <input type="text" id="url-input" placeholder="주소 입력 또는 검색..." class="bg-transparent w-full px-3 py-1.5 text-xs text-white outline-none placeholder:text-slate-500 font-medium">
+        <button id="go-btn" class="px-3 text-blue-400 hover:text-white hover:bg-blue-600 transition-all border-l border-white/10" title="이동"><i data-lucide="send" class="w-3.5 h-3.5" stroke-width="2.5"></i></button>
+      </div>
+
+      <!-- 유틸리티 영역 -->
+      <div class="flex items-center gap-2 sm:gap-4 no-drag shrink-0">
+        <div class="hidden sm:flex items-center gap-2 text-[11px] text-slate-300 font-semibold bg-white/5 px-2 py-1 rounded border border-white/5">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-400"></i>
+          <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.05" value="1.0" class="w-14 md:w-20">
+          <span id="opacity-value" class="w-9 text-right font-mono">100%</span>
+        </div>
+        <div id="status-indicator" class="text-[9px] font-black px-2.5 py-1 rounded shadow-inner tracking-tighter uppercase transition-all">
+          ON
+        </div>
+        <button id="close-app-btn" class="text-slate-400 hover:text-red-500 transition-all p-1" title="종료"><i data-lucide="power" class="w-4.5 h-4.5" stroke-width="2.5"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 메뉴 패널 -->
+  <div id="menu-panel" class="panel-slide fixed top-10 left-0 w-full z-[4500] panel-glass custom-scroll border-b border-white/20 shadow-2xl">
+    <div class="max-w-4xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8 min-h-full">
+      <div class="space-y-6">
+        <div class="space-y-3">
+          <p class="text-[11px] font-black text-blue-400 uppercase tracking-widest">Quick Actions</p>
+          <div class="grid grid-cols-1 gap-2">
+            <button id="menu-home" class="menu-card flex items-center gap-3 p-3 rounded-xl text-xs font-bold no-drag text-slate-200">
+              <i data-lucide="home" class="w-4 h-4 text-blue-400"></i> 홈 페이지
+            </button>
+            <button id="menu-settings-btn" class="menu-card flex items-center gap-3 p-3 rounded-xl text-xs font-bold no-drag text-slate-200">
+              <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> 환경 설정
+            </button>
+            <button id="menu-exit" class="menu-card flex items-center gap-3 p-3 rounded-xl text-xs font-bold no-drag text-red-400">
+              <i data-lucide="log-out" class="w-4 h-4"></i> 앱 종료
+            </button>
+          </div>
+        </div>
+        <!-- 단축키 가이드 -->
+        <div class="bg-black/40 p-4 rounded-xl border border-white/10 shadow-inner hidden sm:block">
+          <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="keyboard" class="w-3.5 h-3.5"></i> Shortcuts</p>
+          <div class="space-y-2.5 text-[11px] font-medium">
+            <div class="flex justify-between items-center text-slate-300"><span>클릭 투과</span><span class="text-blue-400 font-bold bg-blue-400/10 px-1.5 py-0.5 rounded">Ctrl+Shift+T</span></div>
+            <div class="flex justify-between items-center text-slate-300"><span>주소 이동</span><span class="bg-white/10 px-1.5 py-0.5 rounded">Enter</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="md:col-span-2 space-y-4">
+        <p class="text-[11px] font-black text-blue-400 uppercase tracking-widest">Favorites</p>
+        <div id="favs-menu-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px]"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설정 패널 -->
+  <div id="settings-panel" class="panel-slide fixed top-10 left-0 w-full z-[4600] panel-glass custom-scroll border-b border-white/20 shadow-2xl">
+    <div class="max-w-2xl mx-auto p-6 flex flex-col min-h-full">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-base font-black flex items-center gap-2 text-white"><i data-lucide="sliders" class="w-5 h-5 text-blue-500"></i> 환경 설정</h2>
+        <div class="flex gap-3 no-drag">
+          <button id="cancel-btn" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white transition-colors">취소</button>
+          <button id="apply-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-xs font-black transition-all shadow-lg shadow-blue-900/40 border border-blue-400/30">설정 저장 및 적용</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-10 pb-6 text-left">
+        <div class="space-y-6">
+          <div class="space-y-2.5">
+            <label class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Home URL</label>
+            <input type="text" id="home-url-input" class="input-field w-full rounded-lg px-4 py-2.5 text-xs outline-none no-drag font-medium">
+          </div>
+          <div class="grid grid-cols-2 gap-4 pt-2">
+            <div class="space-y-2.5">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-wider">너비 (W)</label>
+              <input type="number" id="width-input" class="input-field w-full rounded-lg px-4 py-2.5 text-xs no-drag outline-none font-mono">
+            </div>
+            <div class="space-y-2.5">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-wider">높이 (H)</label>
+              <input type="number" id="height-input" class="input-field w-full rounded-lg px-4 py-2.5 text-xs no-drag outline-none font-mono">
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-4">즐겨찾기 관리</label>
+          <div id="favs-list" class="space-y-2 mb-6"></div>
+          <div class="flex gap-2 no-drag pt-2">
+            <input type="text" id="new-fav-label" placeholder="이름" class="w-20 input-field rounded-lg px-3 py-2 text-xs outline-none">
+            <input type="text" id="new-fav-url" placeholder="URL 주소" class="flex-1 input-field rounded-lg px-4 py-2 text-xs outline-none">
+            <button id="add-fav-btn" class="bg-slate-700 hover:bg-blue-600 w-10 rounded-lg text-white transition-all shadow-md" title="추가"><i data-lucide="plus" class="w-5 h-5" stroke-width="3"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    tailwind.config = { theme: { extend: { screens: { 'xs': '450px' } } } };
+    const menuBtn = document.getElementById('menu-btn');
+    const menuPanel = document.getElementById('menu-panel');
+    const settingsPanel = document.getElementById('settings-panel');
+    const favsMenuGrid = document.getElementById('favs-menu-grid');
+    const urlInput = document.getElementById('url-input');
+    const goBtn = document.getElementById('go-btn');
+    const homeUrlInput = document.getElementById('home-url-input');
+    const widthInput = document.getElementById('width-input');
+    const heightInput = document.getElementById('height-input');
+    const opacitySlider = document.getElementById('opacity-slider');
+    const opacityValue = document.getElementById('opacity-value');
+    let favorites = [];
+    function refreshIcons() { lucide.createIcons(); }
+    function closeAllPanels() {
+      menuPanel.classList.remove('active');
+      settingsPanel.classList.remove('active');
+      setTimeout(() => {
+        if (!menuPanel.classList.contains('active') && !settingsPanel.classList.contains('active')) window.electronAPI.toggleSettings(false);
+      }, 300);
+    }
+    function toggleMenu() {
+      if (menuPanel.classList.contains('active')) closeAllPanels();
+      else { settingsPanel.classList.remove('active'); menuPanel.classList.add('active'); window.electronAPI.toggleMenu(true); }
+    }
+    menuBtn.addEventListener('mousedown', (e) => { e.stopPropagation(); toggleMenu(); });
+    document.addEventListener('mousedown', (e) => {
+      if (!menuPanel.contains(e.target) && !settingsPanel.contains(e.target) && e.target !== menuBtn) closeAllPanels();
+    });
+    function fixUrl(url) { if (!url) return ''; let t = url.trim(); return (t.startsWith('http://') || t.startsWith('https://')) ? t : 'https://' + t; }
+    function renderFavorites(data) {
+      favorites = data || [];
+      favsMenuGrid.innerHTML = '';
+      const favsListEdit = document.getElementById('favs-list');
+      favsListEdit.innerHTML = '';
+      favorites.forEach((fav, index) => {
+        const card = document.createElement('button');
+        card.className = 'menu-card flex items-center gap-3 p-3.5 rounded-xl text-xs font-bold no-drag text-left w-full overflow-hidden group text-blue-400';
+        card.innerHTML = `<i data-lucide="star" class="w-4 h-4 shrink-0 group-hover:fill-white transition-all"></i> <span class="truncate">${fav.label}</span>`;
+        card.onclick = () => { window.electronAPI.navigate(fav.url); closeAllPanels(); };
+        favsMenuGrid.appendChild(card);
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between bg-black/30 p-3 rounded-xl border border-white/10 hover:border-blue-500/50 transition-all group';
+        row.innerHTML = `<div class="flex items-center gap-3 overflow-hidden font-bold"><span class="text-blue-400 text-xs w-8">${fav.label}</span><span class="text-[10px] text-slate-500 truncate italic font-medium">${fav.url}</span></div><button class="text-slate-600 hover:text-red-500 no-drag ml-2 transition-colors" onclick="removeFav(${index})"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+        favsListEdit.appendChild(row);
+      });
+      refreshIcons();
+    }
+    function removeFav(index) { favorites.splice(index, 1); renderFavorites(favorites); }
+    document.getElementById('add-fav-btn').onclick = () => {
+      const label = document.getElementById('new-fav-label').value;
+      const url = document.getElementById('new-fav-url').value;
+      if (label && url) {
+        favorites.push({ label: label.substring(0, 10).toUpperCase(), url: fixUrl(url) });
+        document.getElementById('new-fav-label').value = ''; document.getElementById('new-fav-url').value = '';
+        renderFavorites(favorites);
+      }
+    };
+    window.electronAPI.onConfigData((config) => {
+      homeUrlInput.value = config.homeUrl; widthInput.value = config.width; heightInput.value = config.height;
+      const opacity = config.opacity || 1.0; opacitySlider.value = opacity; opacityValue.innerText = Math.round(opacity * 100) + '%';
+      renderFavorites(config.favorites);
+    });
+    document.getElementById('menu-home').onclick = () => { window.electronAPI.goHome(); closeAllPanels(); };
+    document.getElementById('menu-settings-btn').onclick = () => { menuPanel.classList.remove('active'); settingsPanel.classList.add('active'); window.electronAPI.toggleSettings(true); };
+    document.getElementById('menu-exit').onclick = () => window.electronAPI.closeApp();
+    document.getElementById('close-app-btn').onclick = () => window.electronAPI.closeApp();
+    window.electronAPI.onLoadStatus((l) => { const lb = document.getElementById('loading-bar'); lb.style.width = l ? '100%' : '0%'; lb.style.opacity = l ? '1' : '0'; });
+    window.electronAPI.onUrlChange((u) => { urlInput.value = u; });
+    const nav = () => { const t = fixUrl(urlInput.value); if (t) window.electronAPI.navigate(t); };
+    urlInput.onkeypress = (e) => { if (e.key === 'Enter') nav(); };
+    goBtn.onclick = nav;
+    document.getElementById('apply-btn').onclick = () => {
+      window.electronAPI.applySettings({ homeUrl: fixUrl(homeUrlInput.value), width: widthInput.value, height: heightInput.value, favorites: favorites });
+      closeAllPanels();
+    };
+    document.getElementById('cancel-btn').onclick = closeAllPanels;
+    opacitySlider.oninput = (e) => { const v = parseFloat(e.target.value); opacityValue.innerText = Math.round(v * 100) + '%'; window.electronAPI.setOpacity(v); };
+    window.electronAPI.onClickThroughStatus((s) => {
+      const si = document.getElementById('status-indicator');
+      si.innerText = s ? '투과' : '가능';
+      si.className = s ? 'bg-blue-500 text-white border-none shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'bg-slate-700 text-slate-400 border border-white/10';
+    });
+    refreshIcons();
+  </script>
+</body>
+</html>

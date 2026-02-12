@@ -45,6 +45,7 @@ function saveConfig(newConfig) {
 
 let mainWindow, view, gameRect = null, offset = { x: 10, y: 10 };
 let isTracking = false, isProgrammaticMove = false, isClickThrough = false, isApplyingSize = false;
+let isPolling = false; // PowerShell 중복 실행 방지 플래그
 
 const updateViewBounds = () => {
   if (!mainWindow || !view) return;
@@ -53,12 +54,15 @@ const updateViewBounds = () => {
 };
 
 const getGameWindowRect = () => {
+  if (isPolling) return Promise.resolve(undefined); // 이전 호출이 아직 실행 중이면 스킵
+  isPolling = true;
   return new Promise((resolve) => {
     let scriptPath = path.join(__dirname, 'track.ps1');
     if (app.isPackaged) {
       scriptPath = scriptPath.replace('app.asar', 'app.asar.unpacked');
     }
-    exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -processName "${GAME_PROCESS_NAME}"`, (error, stdout) => {
+    const child = exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -processName "${GAME_PROCESS_NAME}"`, { timeout: 3000 }, (error, stdout) => {
+      isPolling = false;
       const result = stdout ? stdout.trim() : '';
       if (result && !result.startsWith('ERROR')) {
         const parts = result.split(',');
@@ -70,6 +74,7 @@ const getGameWindowRect = () => {
       }
       resolve(null);
     });
+    child.on('error', () => { isPolling = false; resolve(null); });
   });
 };
 
@@ -194,6 +199,7 @@ function createWindow() {
   let lastResult = "";
   setInterval(async () => {
     const currentRect = await getGameWindowRect();
+    if (currentRect === undefined) return; // 이전 폴링 진행 중이면 스킵
     
     // 1. 게임창이 없거나 최소화된 경우 (전류 상태 우선 처리)
     if (!currentRect || currentRect.x <= -10000) {
@@ -211,7 +217,7 @@ function createWindow() {
       syncOverlay(currentRect);
       lastResult = currentResult;
     }
-  }, 200);
+  }, 500);
 
   ipcMain.on('set-opacity', (e, o) => { mainWindow.setOpacity(o); saveConfig({ opacity: o }); });
   ipcMain.on('navigate', (e, u) => {

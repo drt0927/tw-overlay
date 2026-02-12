@@ -6,6 +6,10 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
+## 📸 스크린샷
+
+![App Screenshot](./screenshot/screen1.png)
+
 ## ✨ 주요 기능
 
 *   **🧲 자석 트래킹 (Magnet Tracking):** 게임 창의 위치와 크기를 실시간으로 감지하여, 게임 창 내부에 오버레이가 항상 따라다닙니다.

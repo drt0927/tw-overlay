@@ -1,7 +1,7 @@
 const { app, BrowserWindow, BrowserView, ipcMain, screen, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
 // [CPU 및 메모리 최적화] 하드웨어 및 렌더러 제한 설정
 app.commandLine.appendSwitch('disable-background-timer-throttling');
@@ -19,10 +19,22 @@ const isDev = process.argv.includes('--dev');
 const MIN_W = 400;
 const MIN_H = 300;
 
+const LOG_MAX_SIZE = 1 * 1024 * 1024; // 1MB
 function logger(message) {
   const logMessage = `[${new Date().toISOString()}] ${message}\n`;
   if (isDev) console.log(message);
-  try { fs.appendFileSync(logPath, logMessage); } catch (err) {}
+  try {
+    // 로그 파일 크기 제한: 1MB 초과 시 백업 후 새로 시작
+    if (fs.existsSync(logPath)) {
+      const stats = fs.statSync(logPath);
+      if (stats.size > LOG_MAX_SIZE) {
+        const backupPath = logPath.replace('.log', '.old.log');
+        try { fs.unlinkSync(backupPath); } catch (e) {}
+        fs.renameSync(logPath, backupPath);
+      }
+    }
+    fs.appendFileSync(logPath, logMessage);
+  } catch (err) {}
 }
 
 function loadConfig() {
@@ -36,16 +48,39 @@ function loadConfig() {
   };
 }
 
+// [성능 개선] 디바운싱된 설정 저장 - move/resize 이벤트 폭주 시 디스크 I/O 감소
+let _saveTimer = null;
+let _pendingConfig = null;
 function saveConfig(newConfig) {
   try {
-    const current = loadConfig();
+    if (!_pendingConfig) _pendingConfig = loadConfig();
+    _pendingConfig = { ..._pendingConfig, ...newConfig };
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(() => {
+      try {
+        fs.writeFileSync(configPath, JSON.stringify(_pendingConfig, null, 2));
+      } catch (e) {}
+      _pendingConfig = null;
+      _saveTimer = null;
+    }, 300);
+  } catch (e) {}
+}
+
+// 즉시 저장 (앱 종료 시 사용)
+function saveConfigImmediate(newConfig) {
+  try {
+    if (_saveTimer) clearTimeout(_saveTimer);
+    const current = _pendingConfig || loadConfig();
     fs.writeFileSync(configPath, JSON.stringify({ ...current, ...newConfig }, null, 2));
+    _pendingConfig = null;
+    _saveTimer = null;
   } catch (e) {}
 }
 
 let mainWindow, view, gameRect = null, offset = { x: 10, y: 10 };
 let isTracking = false, isProgrammaticMove = false, isClickThrough = false, isApplyingSize = false;
-let isPolling = false; // PowerShell 중복 실행 방지 플래그
+let psProcess = null;    // 상주 PowerShell 프로세스
+let pollingTimer = null; // setInterval 핸들 (종료 시 정리용)
 
 const updateViewBounds = () => {
   if (!mainWindow || !view) return;
@@ -53,28 +88,126 @@ const updateViewBounds = () => {
   view.setBounds({ x: 0, y: 40, width: b.width, height: b.height - 40 });
 };
 
-const getGameWindowRect = () => {
-  if (isPolling) return Promise.resolve(undefined); // 이전 호출이 아직 실행 중이면 스킵
-  isPolling = true;
-  return new Promise((resolve) => {
-    let scriptPath = path.join(__dirname, 'track.ps1');
-    if (app.isPackaged) {
-      scriptPath = scriptPath.replace('app.asar', 'app.asar.unpacked');
-    }
-    const child = exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -processName "${GAME_PROCESS_NAME}"`, { timeout: 3000 }, (error, stdout) => {
-      isPolling = false;
-      const result = stdout ? stdout.trim() : '';
-      if (result && !result.startsWith('ERROR')) {
-        const parts = result.split(',');
-        if (parts.length === 4) {
-          const [l, t, r, b] = parts.map(Number);
-          resolve({ x: l, y: t, width: r - l, height: b - t });
-          return;
-        }
+// =============================================================
+// [핵심 개선] 상주 PowerShell 프로세스
+// 기존: 매 폴링마다 powershell.exe를 새로 생성 → CPU 폭주
+// 개선: 프로세스 1개를 유지하고 stdin/stdout으로 통신
+// =============================================================
+let psReady = false;
+let psQueryResolve = null; // 현재 대기 중인 Promise resolve
+let psBuffer = '';
+
+function startPersistentPS() {
+  let scriptPath = path.join(__dirname, 'track.ps1');
+  if (app.isPackaged) {
+    scriptPath = scriptPath.replace('app.asar', 'app.asar.unpacked');
+  }
+
+  psProcess = spawn('powershell', [
+    '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath,
+    '-processName', GAME_PROCESS_NAME, '-loop'
+  ], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+
+  psBuffer = '';
+  psReady = false;
+
+  psProcess.stdout.on('data', (data) => {
+    psBuffer += data.toString();
+    // 줄 단위로 파싱
+    let lines = psBuffer.split(/\r?\n/);
+    psBuffer = lines.pop(); // 마지막 불완전 줄은 버퍼에 유지
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      if (trimmed === 'READY') {
+        psReady = true;
+        logger('[PS] 상주 PowerShell 프로세스 시작됨');
+        continue;
       }
+
+      if (psQueryResolve) {
+        const resolve = psQueryResolve;
+        psQueryResolve = null;
+
+        if (!trimmed.startsWith('ERROR')) {
+          const parts = trimmed.split(',');
+          if (parts.length === 4) {
+            const [l, t, r, b] = parts.map(Number);
+            resolve({ x: l, y: t, width: r - l, height: b - t });
+            continue;
+          }
+        }
+        resolve(null);
+      }
+    }
+  });
+
+  psProcess.stderr.on('data', (data) => {
+    logger(`[PS ERROR] ${data.toString().trim()}`);
+  });
+
+  psProcess.on('exit', (code) => {
+    logger(`[PS] 프로세스 종료 (code: ${code})`);
+    psReady = false;
+    if (psQueryResolve) { psQueryResolve(null); psQueryResolve = null; }
+    // 앱이 아직 살아있으면 자동 재시작
+    if (!app.isQuitting) {
+      logger('[PS] 자동 재시작 시도...');
+      setTimeout(() => startPersistentPS(), 1000);
+    }
+  });
+
+  psProcess.on('error', (err) => {
+    logger(`[PS] spawn 에러: ${err.message}`);
+    psReady = false;
+    if (psQueryResolve) { psQueryResolve(null); psQueryResolve = null; }
+  });
+}
+
+function stopPersistentPS() {
+  if (psProcess) {
+    try {
+      psProcess.stdin.write('EXIT\n');
+      // 1초 후에도 살아있으면 강제 종료
+      setTimeout(() => {
+        try { psProcess.kill(); } catch (e) {}
+      }, 1000);
+    } catch (e) {
+      try { psProcess.kill(); } catch (e2) {}
+    }
+    psProcess = null;
+  }
+}
+
+const getGameWindowRect = () => {
+  if (!psReady || !psProcess || psQueryResolve) {
+    return Promise.resolve(undefined); // 준비 안 됐거나 이전 쿼리 대기 중이면 스킵
+  }
+  return new Promise((resolve) => {
+    psQueryResolve = resolve;
+    // 3초 타임아웃: 응답이 없으면 null 반환
+    const timeout = setTimeout(() => {
+      if (psQueryResolve === resolve) {
+        psQueryResolve = null;
+        resolve(null);
+        logger('[PS] 쿼리 타임아웃');
+      }
+    }, 3000);
+    // 타임아웃 정리를 위해 원래 resolve를 래핑
+    const originalResolve = resolve;
+    psQueryResolve = (result) => {
+      clearTimeout(timeout);
+      originalResolve(result);
+    };
+    try {
+      psProcess.stdin.write('QUERY\n');
+    } catch (e) {
+      clearTimeout(timeout);
+      psQueryResolve = null;
       resolve(null);
-    });
-    child.on('error', () => { isPolling = false; resolve(null); });
+    }
   });
 };
 
@@ -195,9 +328,12 @@ function createWindow() {
     mainWindow.webContents.send('click-through-status', isClickThrough);
   });
 
+  // 상주 PowerShell 프로세스 시작
+  startPersistentPS();
+
   // [CPU 최적화] 게임창 위치 변화가 있을 때만 동기화 로직 실행
   let lastResult = "";
-  setInterval(async () => {
+  pollingTimer = setInterval(async () => {
     const currentRect = await getGameWindowRect();
     if (currentRect === undefined) return; // 이전 폴링 진행 중이면 스킵
     
@@ -264,6 +400,20 @@ function createWindow() {
   ipcMain.on('close-app', () => app.quit());
 }
 
+app.isQuitting = false;
+
 app.whenReady().then(createWindow);
+
+app.on('before-quit', () => {
+  app.isQuitting = true;
+  // 미저장 설정 즉시 기록
+  if (_pendingConfig) saveConfigImmediate({});
+  // 폴링 타이머 정리
+  if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
+  // 상주 PowerShell 종료
+  stopPersistentPS();
+  logger('[APP] 정상 종료');
+});
+
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => app.quit());

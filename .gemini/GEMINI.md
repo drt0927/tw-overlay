@@ -62,8 +62,8 @@ npm run dist
 2. 버전을 업데이트합니다 (`package.json`).
 3. 버전 태그를 생성하고 푸시합니다.
    ```bash
-   git tag v1.0.1
-   git push origin v1.0.1
+   git tag v1.0.2
+   git push origin v1.0.2
    ```
 4. GitHub Actions가 자동으로 빌드를 시작하고 **Releases** 페이지에 설치 파일을 업로드합니다.
 

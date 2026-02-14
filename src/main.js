@@ -25,6 +25,22 @@ app.isQuitting = false;
 let pollingTimer = null;
 let gameWasEverFound = false;
 
+// ─── 중복 실행 방지 ───
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // 두 번째 인스턴스 실행 시도 시 기존 창 활성화
+    const mainWin = wm.getMainWindow();
+    if (mainWin) {
+      if (mainWin.isMinimized()) mainWin.restore();
+      mainWin.show();
+      mainWin.focus();
+    }
+  });
+}
+
 // ─── 적응형 폴링 루프 ───
 // 창 위치 변화 시 빠르게(50ms), 정지 시 느리게(500ms) 폴링
 function startPolling() {

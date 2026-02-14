@@ -62,7 +62,7 @@ function createWindows() {
 
   // 사이드바 윈도우
   sidebarWindow = new BrowserWindow({
-    width: 38, height: 400,
+    width: 200, height: 400,
     frame: false, transparent: true, alwaysOnTop: false, show: false, skipTaskbar: true,
     resizable: false,
     thickFrame: false,
@@ -267,8 +267,8 @@ function setSidebarSettingsMode(isOpen) {
     sidebarWindow.setBounds({ x: Math.round(rightEdge), y: Math.round(top), width: 320, height: h });
   } else {
     // 원래 크기로 복귀 (게임 우측 가장자리 기준)
-    const sidebarW = isSidebarCollapsed ? 12 : 38;
-    sidebarWindow.setBounds({ x: Math.round(rightEdge), y: Math.round(top), width: sidebarW, height: h });
+    // 툴팁 표시를 위해 너비는 200px 유지 (투명 영역은 클릭 투과됨)
+    sidebarWindow.setBounds({ x: Math.round(rightEdge), y: Math.round(top), width: 200, height: h });
   }
 }
 

@@ -54,3 +54,7 @@ patches/mtime-cache.json
 spec/fixtures/logo.png
 
 .yarn/install-state.gz
+
+.gemini/dc_example/*
+.gemini/debug/*
+.gemini/planning/*

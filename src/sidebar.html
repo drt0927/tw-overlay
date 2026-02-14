@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+    body { background: transparent; overflow: hidden; margin: 0; padding: 0; user-select: none; font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+    
+    .sidebar-wrapper {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 6px 0; width: 38px; height: 100vh;
+      box-sizing: border-box;
+      background: rgba(15, 18, 30, 0.85);
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(15px);
+      transition: all 0.3s ease;
+      position: absolute; left: 0; top: 0;
+    }
+
+    .sidebar-wrapper.collapsed {
+      width: 20px; background: rgba(15, 18, 30, 0.5); border-left: 2px solid #7c3aed;
+    }
+    .sidebar-wrapper.collapsed .slot-container {
+      display: none;
+    }
+
+    .toggle-btn {
+      width: 24px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #94a3b8; transition: all 0.2s;
+      margin-bottom: 5px;
+    }
+    .toggle-btn:hover { color: #c084fc; }
+    .sidebar-wrapper.collapsed .toggle-btn { width: 12px; margin-bottom: 0; transform: rotate(180deg); height: 100%; }
+
+    .slot-container {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .tw-slot {
+      width: 30px; height: 30px;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1.5px solid white;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.4);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; position: relative; transition: all 0.2s ease;
+    }
+
+    .tw-slot:hover {
+      border-color: #c084fc;
+      background: linear-gradient(145deg, #2e1065, #1e1b4b);
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.8), inset 0 0 8px rgba(168, 85, 247, 0.4);
+      transform: scale(1.05);
+    }
+
+    .tw-slot:active { transform: scale(0.9); }
+
+    .tw-slot i, .tw-slot svg { 
+      width: 18px; height: 18px; 
+      color: #ffffff !important; 
+      stroke: #ffffff !important; 
+      transition: all 0.2s; 
+    }
+    .tw-slot:hover i, .tw-slot:hover svg { 
+      filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.8)); 
+    }
+
+    .external-dot {
+      position: absolute; top: -2px; right: -2px;
+      width: 7px; height: 7px;
+      background: #a855f7; border: 1.5px solid #0f172a; border-radius: 50%;
+    }
+
+    /* 툴팁 디자인 - 게임 스타일 컴팩트 툴팁 */
+    .tw-tooltip {
+      position: fixed;
+      left: 42px;
+      background: rgba(18, 18, 28, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 2px 6px;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      white-space: nowrap;
+      font-family: 'Inter', 'Noto Sans KR', sans-serif;
+      backdrop-filter: blur(8px);
+    }
+    .tw-tooltip-label { color: #ffffff; font-size: 11px; letter-spacing: -0.02em; font-weight: 500; }
+    .tw-tooltip-url { display: none; }
+
+    .tw-slot::after {
+      content: ''; position: absolute; top: 1px; left: 1px; right: 1px; height: 45%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.12) 0%, transparent 100%);
+      pointer-events: none; border-radius: 2px 2px 0 0;
+    }
+
+    /* 설정 버튼 (사이드바 하단) */
+    .settings-btn {
+      margin-top: auto; padding: 6px 0 4px;
+      cursor: pointer; color: #64748b; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .settings-btn:hover { color: #c084fc; }
+    .sidebar-wrapper.collapsed .settings-btn { display: none; }
+
+    /* 설정 패널 */
+    .settings-panel {
+      position: absolute; left: 0; top: 0;
+      width: 320px; height: 100vh;
+      background: rgba(15, 18, 30, 0.98);
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(15px);
+      display: flex; flex-direction: column;
+      font-family: 'Inter', 'Noto Sans KR', sans-serif;
+      z-index: 100;
+    }
+    .settings-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .settings-title { color: #e2e8f0; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .settings-close { color: #64748b; cursor: pointer; background: none; border: none; padding: 2px; transition: color 0.2s; }
+    .settings-close:hover { color: #ef4444; }
+
+    .edit-list {
+      flex: 1; overflow-y: auto; padding: 8px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .edit-item {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 8px; position: relative;
+      transition: border-color 0.2s;
+    }
+    .edit-item:hover { border-color: rgba(168, 85, 247, 0.4); }
+    .edit-row { display: flex; gap: 6px; margin-bottom: 5px; align-items: center; }
+    .edit-row:last-child { margin-bottom: 0; }
+    .edit-input {
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+      color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .edit-input:focus { border-color: #a855f7; }
+    .edit-input.label-input { width: 60px; }
+    .edit-input.icon-input { width: 70px; }
+    .edit-input.url-input { flex: 1; }
+    .edit-checkbox {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px; color: #94a3b8; cursor: pointer; white-space: nowrap;
+    }
+    .edit-checkbox input { accent-color: #a855f7; width: 12px; height: 12px; cursor: pointer; }
+    .edit-delete {
+      position: absolute; top: 6px; right: 6px;
+      color: #475569; cursor: pointer; background: none; border: none; padding: 2px;
+      transition: color 0.2s;
+    }
+    .edit-delete:hover { color: #ef4444; }
+    .edit-number { color: #6b21a8; font-size: 10px; font-weight: 800; min-width: 14px; }
+
+    .add-slot-area { padding: 4px 8px; }
+    .add-slot-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px;
+      background: rgba(168, 85, 247, 0.1); border: 1px dashed rgba(168, 85, 247, 0.4);
+      color: #c084fc; padding: 6px; border-radius: 6px; cursor: pointer;
+      font-size: 11px; font-weight: 600; transition: all 0.2s;
+    }
+    .add-slot-btn:hover { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; }
+
+    .settings-footer {
+      display: flex; gap: 6px; padding: 8px 10px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .save-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
+      background: #7c3aed; color: white; border: none; padding: 7px;
+      border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .save-btn:hover { background: #6d28d9; }
+    .cancel-btn {
+      padding: 7px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8; border-radius: 6px; font-size: 11px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cancel-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+
+    /* 스크롤바 */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+    /* ─── 아이콘 피커 ─── */
+    .icon-picker-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .icon-picker {
+      width: 290px; max-height: 360px;
+      background: rgba(15, 20, 35, 0.98);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      display: flex; flex-direction: column;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .icon-picker-header {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .icon-picker-search {
+      flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12);
+      color: white; padding: 5px 8px; border-radius: 5px;
+      font-size: 11px; outline: none;
+    }
+    .icon-picker-search:focus { border-color: #a855f7; }
+    .icon-picker-search::placeholder { color: #475569; }
+    .icon-picker-close {
+      background: none; border: none; color: #64748b; cursor: pointer;
+      padding: 2px; transition: color 0.2s;
+    }
+    .icon-picker-close:hover { color: #ef4444; }
+    .icon-picker-grid {
+      flex: 1; overflow-y: auto; padding: 4px 6px 8px;
+    }
+    .icon-grid-items {
+      display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+    }
+    .icon-pick-btn {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; border: 1.5px solid transparent;
+      border-radius: 6px; cursor: pointer;
+      color: #94a3b8; transition: all 0.15s;
+      position: relative;
+    }
+    .icon-pick-btn:hover {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.5);
+      color: #e2e8f0;
+    }
+    .icon-pick-btn.selected {
+      background: rgba(168, 85, 247, 0.25);
+      border-color: #a855f7;
+      color: #c084fc;
+    }
+    .icon-pick-btn svg { width: 16px; height: 16px; }
+    .icon-pick-tooltip {
+      position: fixed; background: #1e1b4b; color: #e2e8f0;
+      font-size: 10px; padding: 3px 7px; border-radius: 4px;
+      pointer-events: none; z-index: 300; white-space: nowrap;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      display: none;
+    }
+
+    /* 아이콘 선택 버튼 (편집 리스트 내) */
+    .icon-select-btn {
+      width: 30px; height: 26px;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #c084fc; transition: all 0.2s;
+    }
+    .icon-select-btn:hover {
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, 0.15);
+    }
+    .icon-select-btn svg { width: 14px; height: 14px; }
+
+    /* 아이콘/텍스트 모드 토글 */
+    .icon-mode-toggle {
+      display: flex; border-radius: 4px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .icon-mode-btn {
+      padding: 3px 7px; font-size: 9px; font-weight: 700;
+      background: rgba(0,0,0,0.3); color: #64748b;
+      border: none; cursor: pointer; transition: all 0.15s;
+    }
+    .icon-mode-btn.active {
+      background: rgba(168, 85, 247, 0.3); color: #c084fc;
+    }
+    .icon-mode-btn:hover:not(.active) { color: #94a3b8; }
+    .text-char-input {
+      width: 30px; height: 26px; text-align: center;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+      color: #c084fc; font-size: 13px; font-weight: 800;
+      border-radius: 4px; outline: none; padding: 0;
+    }
+    .text-char-input:focus { border-color: #a855f7; }
+
+    /* 슬롯 텍스트 모드 표시 */
+    .tw-slot-text {
+      font-size: 13px; font-weight: 900; color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .icon-picker-empty {
+      padding: 20px; text-align: center; color: #475569; font-size: 11px;
+    }
+
+    /* ─── 갤러리 모니터 패널 ─── */
+    .gallery-panel {
+      position: absolute; left: 0; top: 0;
+      width: 320px; height: 100vh;
+      background: rgba(15, 18, 30, 0.98);
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(15px);
+      display: flex; flex-direction: column;
+      font-family: 'Inter', 'Noto Sans KR', sans-serif;
+      z-index: 100;
+    }
+    .gallery-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .gallery-title { color: #e2e8f0; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .gallery-close { color: #64748b; cursor: pointer; background: none; border: none; padding: 2px; transition: color 0.2s; }
+    .gallery-close:hover { color: #ef4444; }
+    .notify-toggle { color: #a855f7; cursor: pointer; background: none; border: none; padding: 2px; transition: color 0.2s; }
+    .notify-toggle.off { color: #475569; }
+    .notify-toggle:hover { color: #c084fc; }
+
+    .gallery-section-title {
+      font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #7c3aed; padding: 8px 12px 4px;
+    }
+
+    /* 감시 글 추가 */
+    .watch-add-row {
+      display: flex; gap: 6px; padding: 4px 12px 8px; align-items: center;
+    }
+    .watch-input {
+      flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+      color: white; padding: 5px 8px; border-radius: 5px; font-size: 11px; outline: none;
+    }
+    .watch-input:focus { border-color: #a855f7; }
+    .watch-input::placeholder { color: #475569; }
+    .watch-add-btn {
+      background: #7c3aed; color: white; border: none; padding: 5px 10px;
+      border-radius: 5px; font-size: 10px; font-weight: 700; cursor: pointer;
+      transition: background 0.2s; white-space: nowrap;
+    }
+    .watch-add-btn:hover { background: #6d28d9; }
+
+    /* 감시 목록 */
+    .watch-list {
+      padding: 0 8px; display: flex; flex-direction: column; gap: 3px;
+    }
+    .watch-item {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; padding: 6px 8px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .watch-item:hover { border-color: rgba(168,85,247,0.4); background: rgba(168,85,247,0.05); }
+    .watch-no { color: #7c3aed; font-size: 9px; font-weight: 800; min-width: 35px; }
+    .watch-title { flex: 1; color: #cbd5e1; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .watch-comments { color: #a855f7; font-size: 9px; font-weight: 700; }
+    .watch-remove {
+      color: #475569; background: none; border: none; cursor: pointer; padding: 2px;
+      transition: color 0.2s; flex-shrink: 0;
+    }
+    .watch-remove:hover { color: #ef4444; }
+
+    /* 최신글 목록 */
+    .post-list {
+      flex: 1; overflow-y: auto; padding: 0 8px 8px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .post-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px; border-radius: 5px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .post-item:hover { background: rgba(255,255,255,0.05); }
+    .post-no { color: #475569; font-size: 9px; min-width: 38px; font-weight: 600; }
+    .post-title { flex: 1; color: #94a3b8; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .post-reply { color: #7c3aed; font-size: 9px; font-weight: 700; }
+    .post-writer { color: #475569; font-size: 9px; max-width: 40px; overflow: hidden; text-overflow: ellipsis; }
+
+    .gallery-refresh-btn {
+      color: #64748b; background: none; border: none; cursor: pointer; padding: 2px;
+      transition: all 0.2s;
+    }
+    .gallery-refresh-btn:hover { color: #c084fc; }
+    .gallery-refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .spin-icon { animation: spin 0.8s linear infinite; }
+    .gallery-empty { padding: 16px; text-align: center; color: #334155; font-size: 10px; }
+
+    /* 갤러리 버튼 (사이드바 하단) */
+    .gallery-btn {
+      padding: 6px 0 10px;
+      cursor: pointer; color: #64748b; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gallery-btn:hover { color: #c084fc; }
+    .sidebar-wrapper.collapsed .gallery-btn { display: none; }
+
+    /* 알림 배지 */
+    .noti-badge {
+      position: absolute; top: -2px; right: -8px;
+      width: 6px; height: 6px;
+      background: #ef4444; border-radius: 50%;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- 일반 모드: 슬롯 바 -->
+  <div id="wrapper" class="sidebar-wrapper">
+    <div class="toggle-btn" onclick="window.electronAPI.toggleSidebar()">
+      <i id="toggle-icon" data-lucide="chevron-right"></i>
+    </div>
+    <div id="gallery-btn" class="gallery-btn" onclick="openGallery()" style="position:relative">
+      <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+      <span id="noti-badge" class="noti-badge"></span>
+    </div>
+    <div id="slot-container" class="slot-container"></div>
+    <!-- 설정 버튼 (하단 고정) -->
+    <div id="settings-btn" class="settings-btn" onclick="openSettings()">
+      <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+    </div>
+  </div>
+
+  <!-- 설정 모드: 퀵슬롯 편집 -->
+  <div id="settings-panel" class="settings-panel" style="display: none;">
+    <div class="settings-header">
+      <span class="settings-title"><i data-lucide="sliders" class="w-3.5 h-3.5"></i> 퀵슬롯 설정</span>
+      <button class="settings-close" onclick="closeSettings()"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <div id="edit-list" class="edit-list custom-scroll"></div>
+    <div class="add-slot-area">
+      <button class="add-slot-btn" onclick="addNewSlot()">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> 슬롯 추가
+      </button>
+    </div>
+    <div class="settings-footer">
+      <button class="save-btn" onclick="saveSlots()">
+        <i data-lucide="check" class="w-3.5 h-3.5"></i> 저장
+      </button>
+      <button class="cancel-btn" onclick="closeSettings()">취소</button>
+    </div>
+  </div>
+
+  <!-- 갤러리 모니터 패널 -->
+  <div id="gallery-panel" class="gallery-panel" style="display: none;">
+    <div class="gallery-header">
+      <span class="gallery-title"><i data-lucide="bell" class="w-3.5 h-3.5"></i> 갤러리 알림</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button id="notify-toggle" class="notify-toggle" onclick="toggleNotify()" title="알림 on/off">
+          <i id="notify-toggle-icon" data-lucide="bell" class="w-3.5 h-3.5"></i>
+        </button>
+        <button class="gallery-refresh-btn" onclick="refreshGallery()" title="새로고침"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+        <button class="gallery-close" onclick="closeGallery()"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+
+    <div class="gallery-section-title">글 감시 (댓글 알림)</div>
+    <div class="watch-add-row">
+      <input id="watch-input" class="watch-input" placeholder="글 번호 입력 (ex: 215524)" onkeypress="if(event.key==='Enter')addWatchPost()">
+      <button class="watch-add-btn" onclick="addWatchPost()">추가</button>
+    </div>
+    <div id="watch-list" class="watch-list"></div>
+
+    <div class="gallery-section-title" style="margin-top:8px">최신 글</div>
+    <div id="post-list" class="post-list custom-scroll"></div>
+  </div>
+
+  <!-- 공용 툴팁 엘리먼트 -->
+  <div id="tooltip" class="tw-tooltip">
+    <div id="tooltip-label" class="tw-tooltip-label"></div>
+    <div id="tooltip-url" class="tw-tooltip-url"></div>
+  </div>
+
+  <!-- 아이콘 피커 팝업 -->
+  <div id="icon-picker-overlay" class="icon-picker-overlay" style="display:none" onclick="if(event.target===this)closeIconPicker()">
+    <div class="icon-picker">
+      <div class="icon-picker-header">
+        <i data-lucide="search" class="w-3.5 h-3.5" style="color:#64748b;flex-shrink:0"></i>
+        <input id="icon-search" class="icon-picker-search" placeholder="아이콘 검색..." oninput="filterIcons(this.value)">
+        <button class="icon-picker-close" onclick="closeIconPicker()"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+      </div>
+      <div id="icon-grid" class="icon-picker-grid custom-scroll"></div>
+    </div>
+  </div>
+  <div id="icon-pick-tooltip" class="icon-pick-tooltip"></div>
+
+  <script>
+    function refreshIcons() { lucide.createIcons(); }
+    const tooltip = document.getElementById('tooltip');
+    const tooltipLabel = document.getElementById('tooltip-label');
+    const tooltipUrl = document.getElementById('tooltip-url');
+    let currentSlots = []; // 현재 설정에서 편집 중인 슬롯 배열
+    let isSettingsOpen = false;
+
+    // ─── 아이콘 목록 (lucide.icons API에서 동적 로드) ───
+    const ALL_ICON_NAMES = Object.keys(lucide.icons || {}).sort();
+
+    let activeIconSlotIndex = -1;
+    const iconPickTooltip = document.getElementById('icon-pick-tooltip');
+
+    function openIconPicker(slotIndex) {
+      activeIconSlotIndex = slotIndex;
+      const overlay = document.getElementById('icon-picker-overlay');
+      const searchInput = document.getElementById('icon-search');
+      overlay.style.display = 'flex';
+      searchInput.value = '';
+      renderIconGrid();
+      searchInput.focus();
+    }
+
+    function closeIconPicker() {
+      document.getElementById('icon-picker-overlay').style.display = 'none';
+      iconPickTooltip.style.display = 'none';
+      activeIconSlotIndex = -1;
+    }
+
+    function selectIcon(iconName) {
+      if (activeIconSlotIndex >= 0 && activeIconSlotIndex < currentSlots.length) {
+        currentSlots[activeIconSlotIndex].icon = iconName;
+        renderEditList();
+      }
+      closeIconPicker();
+    }
+
+    function filterIcons(query) {
+      renderIconGrid(query.toLowerCase().trim());
+    }
+
+    function renderIconGrid(filter = '') {
+      const grid = document.getElementById('icon-grid');
+      grid.innerHTML = '';
+      const currentIcon = activeIconSlotIndex >= 0 ? currentSlots[activeIconSlotIndex]?.icon : '';
+      const filtered = filter ? ALL_ICON_NAMES.filter(ic => ic.includes(filter)) : ALL_ICON_NAMES;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="icon-picker-empty">검색 결과 없음</div>';
+        return;
+      }
+
+      // 페이지 단위 렌더 (한 번에 최대 120개, 스크롤 시 추가 로드)
+      const PAGE_SIZE = 120;
+      let loaded = 0;
+
+      function loadPage() {
+        const chunk = filtered.slice(loaded, loaded + PAGE_SIZE);
+        if (chunk.length === 0) return;
+
+        const items = document.createElement('div');
+        items.className = 'icon-grid-items';
+
+        chunk.forEach(iconName => {
+          const btn = document.createElement('button');
+          btn.className = 'icon-pick-btn' + (iconName === currentIcon ? ' selected' : '');
+          btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+          btn.onclick = () => selectIcon(iconName);
+          btn.onmouseenter = (e) => {
+            const r = btn.getBoundingClientRect();
+            iconPickTooltip.textContent = iconName;
+            iconPickTooltip.style.left = r.left + r.width / 2 - iconPickTooltip.offsetWidth / 2 + 'px';
+            iconPickTooltip.style.top = r.bottom + 4 + 'px';
+            iconPickTooltip.style.display = 'block';
+          };
+          btn.onmouseleave = () => { iconPickTooltip.style.display = 'none'; };
+          items.appendChild(btn);
+        });
+        grid.appendChild(items);
+        loaded += chunk.length;
+        refreshIcons();
+      }
+
+      loadPage();
+
+      // 스크롤 끝 근처에서 추가 로드
+      grid.onscroll = () => {
+        if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 40) {
+          loadPage();
+        }
+      };
+    }
+
+    // ─── 설정 모드 열기/닫기 ───
+    function openSettings() {
+      isSettingsOpen = true;
+      document.getElementById('wrapper').style.display = 'none';
+      document.getElementById('settings-panel').style.display = 'flex';
+      window.electronAPI.sidebarSettingsMode(true);
+      renderEditList();
+      refreshIcons();
+    }
+    function closeSettings() {
+      isSettingsOpen = false;
+      document.getElementById('wrapper').style.display = 'flex';
+      document.getElementById('settings-panel').style.display = 'none';
+      window.electronAPI.sidebarSettingsMode(false);
+      refreshIcons();
+    }
+
+    // ─── 편집 리스트 렌더링 ───
+    function renderEditList() {
+      const list = document.getElementById('edit-list');
+      list.innerHTML = '';
+      currentSlots.forEach((slot, i) => {
+        const isTextMode = slot.iconType === 'text';
+        const item = document.createElement('div');
+        item.className = 'edit-item';
+        item.innerHTML = `
+          <button class="edit-delete" onclick="deleteSlot(${i})" title="삭제"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+          <div class="edit-row">
+            <span class="edit-number">${i + 1}</span>
+            <input class="edit-input label-input" placeholder="라벨" value="${slot.label || ''}" onchange="currentSlots[${i}].label = this.value">
+            <div class="icon-mode-toggle">
+              <button class="icon-mode-btn ${!isTextMode ? 'active' : ''}" onclick="setIconType(${i},'icon')" title="아이콘">아이콘</button>
+              <button class="icon-mode-btn ${isTextMode ? 'active' : ''}" onclick="setIconType(${i},'text')" title="텍스트">글자</button>
+            </div>
+            ${isTextMode
+              ? `<input class="text-char-input" maxlength="1" value="${slot.textChar || ''}" oninput="currentSlots[${i}].textChar = this.value.slice(0,1)" placeholder="A">`
+              : `<button class="icon-select-btn" onclick="openIconPicker(${i})" title="아이콘 선택"><i data-lucide="${slot.icon || 'image'}"></i></button>`
+            }
+          </div>
+          <div class="edit-row">
+            <input class="edit-input url-input" placeholder="URL" value="${slot.url || ''}" onchange="currentSlots[${i}].url = this.value">
+          </div>
+          <div class="edit-row">
+            <label class="edit-checkbox">
+              <input type="checkbox" ${slot.external ? 'checked' : ''} onchange="currentSlots[${i}].external = this.checked">
+              외부 브라우저로 열기
+            </label>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+      refreshIcons();
+    }
+
+    function setIconType(index, type) {
+      currentSlots[index].iconType = type;
+      if (type === 'text' && !currentSlots[index].textChar) {
+        currentSlots[index].textChar = (currentSlots[index].label || '?').substring(0, 1);
+      }
+      renderEditList();
+    }
+
+    function addNewSlot() {
+      currentSlots.push({ label: '', icon: 'link', url: '', external: false });
+      renderEditList();
+      // 스크롤 하단으로
+      const list = document.getElementById('edit-list');
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function deleteSlot(index) {
+      currentSlots.splice(index, 1);
+      renderEditList();
+    }
+
+    function saveSlots() {
+      // 빈 URL 슬롯 제거
+      const validSlots = currentSlots.filter(s => s.url && s.url.trim());
+      validSlots.forEach(s => {
+        if (s.url && !s.url.startsWith('http')) s.url = 'https://' + s.url;
+        if (!s.label) s.label = new URL(s.url).hostname.substring(0, 8).toUpperCase();
+      });
+      window.electronAPI.saveQuickSlots(validSlots);
+      closeSettings();
+    }
+
+    // ─── 사이드바 상태 ───
+    window.electronAPI.onSidebarStatus((isCollapsed) => {
+      const wrapper = document.getElementById('wrapper');
+      const icon = document.getElementById('toggle-icon');
+      if (isCollapsed) {
+        wrapper.classList.add('collapsed');
+        icon.setAttribute('data-lucide', 'chevron-left');
+        tooltip.style.display = 'none';
+      } else {
+        wrapper.classList.remove('collapsed');
+        icon.setAttribute('data-lucide', 'chevron-right');
+      }
+      refreshIcons();
+    });
+
+    // ─── 설정 데이터 수신 ───
+    window.electronAPI.onConfigData((config) => {
+      currentSlots = JSON.parse(JSON.stringify(config.quickSlots || [])); // deep copy
+
+      // 슬롯 바 렌더링 (일반 모드)
+      const container = document.getElementById('slot-container');
+      container.innerHTML = '';
+      
+      const slots = config.quickSlots || [];
+      slots.forEach(slot => {
+        const btn = document.createElement('div');
+        btn.className = 'tw-slot';
+        
+        if (slot.iconType === 'text' && slot.textChar) {
+          btn.innerHTML = `<span class="tw-slot-text">${slot.textChar}</span>`;
+        } else if (slot.icon) {
+          btn.innerHTML = `<i data-lucide="${slot.icon}"></i>`;
+        } else {
+          btn.innerHTML = `<span class="tw-slot-text">${slot.label?.substring(0,1) || '?'}</span>`;
+        }
+
+        if (slot.external) {
+          const dot = document.createElement('div');
+          dot.className = 'external-dot';
+          btn.appendChild(dot);
+        }
+
+        btn.onmouseenter = (e) => {
+          const rect = btn.getBoundingClientRect();
+          tooltipLabel.innerText = slot.label || 'LINK';
+          tooltip.style.top = `${rect.top + (rect.height / 2) - 12}px`;
+          tooltip.style.display = 'flex';
+        };
+        btn.onmouseleave = () => { tooltip.style.display = 'none'; };
+
+        btn.onclick = () => {
+          if (slot.external) window.electronAPI.openExternal(slot.url);
+          else window.electronAPI.navigate(slot.url);
+        };
+        container.appendChild(btn);
+      });
+      refreshIcons();
+
+      // 설정 모드에서 데이터 갱신 시 편집 리스트도 업데이트
+      if (isSettingsOpen) renderEditList();
+    });
+
+    // ─── 갤러리 모니터 ───
+    let isGalleryOpen = false;
+    let galleryPosts = [];
+
+    let notifyOn = true;
+
+    function openGallery() {
+      isGalleryOpen = true;
+      document.getElementById('wrapper').style.display = 'none';
+      document.getElementById('gallery-panel').style.display = 'flex';
+      document.getElementById('noti-badge').style.display = 'none';
+      window.electronAPI.sidebarSettingsMode(true);
+      loadWatchedPosts();
+      refreshGallery();
+      syncNotifyToggle();
+      refreshIcons();
+    }
+
+    async function syncNotifyToggle() {
+      notifyOn = await window.electronAPI.galleryGetNotify();
+      updateNotifyToggleUI();
+    }
+
+    function updateNotifyToggleUI() {
+      const btn = document.getElementById('notify-toggle');
+      const icon = document.getElementById('notify-toggle-icon');
+      if (notifyOn) {
+        btn.classList.remove('off');
+        btn.title = '알림 끄기';
+        icon.setAttribute('data-lucide', 'bell');
+      } else {
+        btn.classList.add('off');
+        btn.title = '알림 켜기';
+        icon.setAttribute('data-lucide', 'bell-off');
+      }
+      refreshIcons();
+    }
+
+    function toggleNotify() {
+      notifyOn = !notifyOn;
+      window.electronAPI.gallerySetNotify(notifyOn);
+      updateNotifyToggleUI();
+    }
+
+    function closeGallery() {
+      isGalleryOpen = false;
+      document.getElementById('wrapper').style.display = 'flex';
+      document.getElementById('gallery-panel').style.display = 'none';
+      window.electronAPI.sidebarSettingsMode(false);
+      refreshIcons();
+    }
+
+    async function refreshGallery() {
+      const btn = document.querySelector('.gallery-refresh-btn');
+      if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
+      const postList = document.getElementById('post-list');
+      postList.innerHTML = '<div class="gallery-empty"><i data-lucide="loader" class="w-4 h-4 inline spin-icon"></i> 불러오는 중...</div>';
+      refreshIcons();
+      try {
+        const watched = await window.electronAPI.galleryForceCheck();
+        renderWatchList(watched);
+      } finally {
+        if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
+      }
+    }
+
+    async function loadWatchedPosts() {
+      const watched = await window.electronAPI.galleryGetWatched();
+      renderWatchList(watched);
+    }
+
+    function renderWatchList(watched) {
+      const list = document.getElementById('watch-list');
+      list.innerHTML = '';
+      const entries = Object.entries(watched || {});
+      if (entries.length === 0) {
+        list.innerHTML = '<div class="gallery-empty">감시 중인 글이 없습니다</div>';
+        refreshIcons();
+        return;
+      }
+      entries.forEach(([no, info]) => {
+        const item = document.createElement('div');
+        item.className = 'watch-item';
+        item.innerHTML = `
+          <span class="watch-no">#${no}</span>
+          <span class="watch-title" onclick="window.electronAPI.galleryOpenPost(${no})">${info.title}</span>
+          <span class="watch-comments"><i data-lucide="message-square" class="w-2.5 h-2.5 inline"></i> ${info.commentCount >= 0 ? info.commentCount : '?'}</span>
+          <button class="watch-remove" onclick="removeWatchPost(${no})" title="감시 해제"><i data-lucide="x" class="w-3 h-3"></i></button>
+        `;
+        item.querySelector('.watch-title').style.cursor = 'pointer';
+        list.appendChild(item);
+      });
+      refreshIcons();
+    }
+
+    async function addWatchPost() {
+      const input = document.getElementById('watch-input');
+      const val = input.value.trim();
+      // URL 또는 번호 지원
+      let postNo;
+      const urlMatch = val.match(/no=(\d+)/);
+      if (urlMatch) postNo = parseInt(urlMatch[1], 10);
+      else postNo = parseInt(val, 10);
+
+      if (!postNo || isNaN(postNo)) return;
+      input.value = '';
+
+      await window.electronAPI.galleryAddWatch(postNo);
+      await loadWatchedPosts();
+    }
+
+    async function removeWatchPost(no) {
+      window.electronAPI.galleryRemoveWatch(no);
+      await loadWatchedPosts();
+    }
+
+    function renderPostList(posts) {
+      const list = document.getElementById('post-list');
+      list.innerHTML = '';
+      if (!posts || posts.length === 0) {
+        list.innerHTML = '<div class="gallery-empty">글 목록 로딩 중...</div>';
+        return;
+      }
+      posts.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'post-item';
+        item.onclick = () => window.electronAPI.galleryOpenPost(p.no);
+        item.innerHTML = `
+          <span class="post-no">${p.no}</span>
+          <span class="post-title">${p.title}</span>
+          ${p.replyCount > 0 ? `<span class="post-reply">[${p.replyCount}]</span>` : ''}
+          <span class="post-writer">${p.writer}</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // 갤러리 글 목록 수신
+    window.electronAPI.onGalleryPosts((posts) => {
+      galleryPosts = posts;
+      if (isGalleryOpen) renderPostList(posts);
+    });
+
+    // 새 글/댓글 활동 수신 → 레드닷
+    window.electronAPI.onGalleryNewActivity((data) => {
+      if (!isGalleryOpen) {
+        document.getElementById('noti-badge').style.display = 'block';
+      }
+    });
+
+    refreshIcons();
+
+    // ─── 투명 영역 클릭 투과 ───
+    // wrapper(실제 UI) 위에 마우스 진입 → 클릭 활성화
+    // wrapper에서 벗어남 → 투명 영역 클릭 통과
+    const wrapper = document.getElementById('wrapper');
+    const galleryPanel = document.getElementById('gallery-panel');
+    const settingsPanel = document.getElementById('settings-panel');
+
+    [wrapper, galleryPanel, settingsPanel].forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        window.electronAPI.setIgnoreMouseEvents(false);
+      });
+      el.addEventListener('mouseleave', () => {
+        window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+      });
+    });
+  </script>
+</body>
+</html>

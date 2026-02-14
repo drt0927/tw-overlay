@@ -16,6 +16,18 @@ public class Window {
 
     [DllImport("user32.dll")]
     public static extern bool IsIconic(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 }
 '@
 
@@ -28,7 +40,7 @@ function Get-GameRect {
 
     if ($p -and $p.MainWindowHandle -ne 0) {
         if ([Window]::IsIconic($p.MainWindowHandle)) {
-            return "ERROR: Window is minimized"
+            return "MINIMIZED"
         }
 
         $rect = New-Object RECT
@@ -44,7 +56,7 @@ function Get-GameRect {
             }
         }
     } else {
-        return "ERROR: Window not found"
+        return "NOT_RUNNING"
     }
 }
 
@@ -57,6 +69,21 @@ if ($loop) {
         if ($cmd -eq "QUERY") {
             $result = Get-GameRect
             Write-Output $result
+        }
+        elseif ($cmd -eq "FOCUS") {
+            $p = Get-Process $processName -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Talesweaver*" } | Select-Object -First 1
+            if ($p -and $p.MainWindowHandle -ne 0) {
+                $hwnd = $p.MainWindowHandle
+                # Alt 키 시뮬레이션으로 Windows 포커스 도용 방지 정책 우회
+                [Window]::keybd_event(0x12, 0, 0, 0)   # VK_MENU (Alt) down
+                [Window]::keybd_event(0x12, 0, 2, 0)   # VK_MENU (Alt) up
+                [Window]::ShowWindow($hwnd, 9) | Out-Null     # SW_RESTORE
+                [Window]::BringWindowToTop($hwnd) | Out-Null
+                [Window]::SetForegroundWindow($hwnd) | Out-Null
+                Write-Output "FOCUSED"
+            } else {
+                Write-Output "FOCUS_FAIL"
+            }
         }
     }
 } else {

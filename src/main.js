@@ -81,6 +81,7 @@ let mainWindow, view, gameRect = null, offset = { x: 10, y: 10 };
 let isTracking = false, isProgrammaticMove = false, isClickThrough = false, isApplyingSize = false;
 let psProcess = null;    // 상주 PowerShell 프로세스
 let pollingTimer = null; // setInterval 핸들 (종료 시 정리용)
+let gameWasEverFound = false; // 게임 프로세스가 한 번이라도 감지되었는지 추적
 
 const updateViewBounds = () => {
   if (!mainWindow || !view) return;
@@ -127,19 +128,31 @@ function startPersistentPS() {
         continue;
       }
 
+      // FOCUS 응답은 별도 처리 (쿼리 resolve에 영향 없음)
+      if (trimmed === 'FOCUSED' || trimmed === 'FOCUS_FAIL') {
+        logger(`[PS] ${trimmed}`);
+        continue;
+      }
+
       if (psQueryResolve) {
         const resolve = psQueryResolve;
         psQueryResolve = null;
 
-        if (!trimmed.startsWith('ERROR')) {
+        if (trimmed === 'NOT_RUNNING') {
+          resolve({ notRunning: true });
+        } else if (trimmed === 'MINIMIZED') {
+          resolve(null);
+        } else if (!trimmed.startsWith('ERROR')) {
           const parts = trimmed.split(',');
           if (parts.length === 4) {
             const [l, t, r, b] = parts.map(Number);
             resolve({ x: l, y: t, width: r - l, height: b - t });
-            continue;
+          } else {
+            resolve(null);
           }
+        } else {
+          resolve(null);
         }
-        resolve(null);
       }
     }
   });
@@ -178,6 +191,16 @@ function stopPersistentPS() {
       try { psProcess.kill(); } catch (e2) {}
     }
     psProcess = null;
+  }
+}
+
+// 게임 창에 포커스를 전환하는 함수 (클릭 투과 모드 활성화 시 사용)
+function focusGameWindow() {
+  if (!psReady || !psProcess) return;
+  try {
+    psProcess.stdin.write('FOCUS\n');
+  } catch (e) {
+    logger(`[PS] FOCUS 전송 실패: ${e.message}`);
   }
 }
 
@@ -324,7 +347,16 @@ function createWindow() {
 
   globalShortcut.register('CommandOrControl+Shift+T', () => {
     isClickThrough = !isClickThrough;
-    mainWindow.setIgnoreMouseEvents(isClickThrough, { forward: true });
+    if (isClickThrough) {
+      // 투과 모드 ON: hover 전달 없이 완전 투과 + 포커스 해제
+      mainWindow.setIgnoreMouseEvents(true);
+      mainWindow.blur();
+      // 게임 창으로 포커스 전환 (약간의 딜레이로 blur 완료 후 실행)
+      setTimeout(() => focusGameWindow(), 50);
+    } else {
+      // 투과 모드 OFF: 정상 복귀
+      mainWindow.setIgnoreMouseEvents(false);
+    }
     mainWindow.webContents.send('click-through-status', isClickThrough);
   });
 
@@ -337,7 +369,22 @@ function createWindow() {
     const currentRect = await getGameWindowRect();
     if (currentRect === undefined) return; // 이전 폴링 진행 중이면 스킵
     
-    // 1. 게임창이 없거나 최소화된 경우 (전류 상태 우선 처리)
+    // 게임 프로세스 종료 감지 → 오버레이도 함께 종료
+    if (currentRect && currentRect.notRunning) {
+      if (gameWasEverFound) {
+        logger('[APP] 게임 프로세스 종료 감지 - 앱 종료');
+        app.quit();
+        return;
+      }
+      // 아직 게임이 시작되지 않은 상태면 숨기기만
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+        isTracking = false;
+      }
+      return;
+    }
+
+    // 1. 게임창이 없거나 최소화된 경우
     if (!currentRect || currentRect.x <= -10000) {
       if (mainWindow.isVisible()) {
         mainWindow.hide();
@@ -346,6 +393,9 @@ function createWindow() {
       }
       return;
     }
+
+    // 게임 창이 정상적으로 감지됨
+    gameWasEverFound = true;
 
     // 2. 위치 변화 감지
     const currentResult = JSON.stringify(currentRect);

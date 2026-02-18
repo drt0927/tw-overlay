@@ -4,15 +4,27 @@
  * - 등록된 글번호 댓글 변화 감지 → 알림 (POST API 사용)
  * - 블락 방지: 랜덤 딜레이, 요청 간격 제한, 쿨다운
  */
-const https = require('https');
-const { Notification } = require('electron');
-const { log } = require('./logger');
-const config = require('./config');
+import * as https from 'https';
+import { Notification, BrowserWindow } from 'electron';
+import { log } from './logger';
+import * as config from './config';
+
+interface Post {
+  no: number;
+  title: string;
+  replyCount: number;
+  writer: string;
+}
+
+interface WatchedPost {
+  title: string;
+  commentCount: number;
+  addedAt: number;
+}
 
 const GALLERY_ID = 'talesweaver';
 const LIST_URL = `https://gall.dcinside.com/mini/board/lists/?id=${GALLERY_ID}&page=1`;
-const VIEW_URL = (no) => `https://gall.dcinside.com/mini/board/view/?id=${GALLERY_ID}&no=${no}`;
-const COMMENT_API_URL = 'https://gall.dcinside.com/board/comment/';
+const VIEW_URL = (no: number | string) => `https://gall.dcinside.com/mini/board/view/?id=${GALLERY_ID}&no=${no}`;
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -45,34 +57,36 @@ let consecutiveErrors = 0;   // 연속 에러 횟수 (백오프용)
 let cachedEsno = '';         // 캐시된 e_s_n_o 토큰
 
 let lastSeenPostNo = 0;           // 마지막으로 본 최신글 번호
-let watchedPosts = {};            // { postNo: { title, commentCount } }
-let checkTimer = null;
+let watchedPosts: Record<string, WatchedPost> = {};            // { postNo: { title, commentCount } }
+let galleryKeywords: string[] = []; // 알림 키워드 목록
+let checkTimer: NodeJS.Timeout | null = null;
 let isRunning = false;
 let notifyEnabled = true;      // 알림 on/off
-let mainWindowRef = null;
-let sidebarWindowRef = null;
+let mainWindowRef: BrowserWindow | null = null;
+let sidebarWindowRef: BrowserWindow | null = null;
+let galleryWindowRef: BrowserWindow | null = null;
 
 // ─── 블락 방지 유틸 ───
 
 /** 랜덤 딜레이 (min~max ms) */
-function randomDelay() {
+function randomDelay(): Promise<void> {
   const ms = RATE_LIMIT.MIN_DELAY_MS + Math.random() * (RATE_LIMIT.MAX_DELAY_MS - RATE_LIMIT.MIN_DELAY_MS);
   return new Promise(resolve => setTimeout(resolve, Math.floor(ms)));
 }
 
 /** 에러 시 지수 백오프 딜레이 */
-function getBackoffMs() {
+function getBackoffMs(): number {
   if (consecutiveErrors <= 0) return 0;
   const ms = Math.min(RATE_LIMIT.BACKOFF_BASE_MS * Math.pow(2, consecutiveErrors - 1), RATE_LIMIT.MAX_BACKOFF_MS);
   return ms;
 }
 
 // ─── HTTP 요청 유틸 ───
-function fetchPage(url) {
+function fetchPage(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const req = https.get(url, { headers: HEADERS, timeout: 10000 }, (res) => {
       // 리다이렉트 처리
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         fetchPage(res.headers.location).then(resolve).catch(reject);
         return;
       }
@@ -97,8 +111,8 @@ function fetchPage(url) {
 // ─── HTML 파싱 (정규식 기반 경량 파서) ───
 
 /** 글 목록 파싱 - 게시글 번호, 제목, 댓글수 추출 */
-function parsePostList(html) {
-  const posts = [];
+function parsePostList(html: string): Post[] {
+  const posts: Post[] = [];
   // gall_list 내 tbody의 tr[data-no] 패턴
   const trRegex = /<tr[^>]*class="ub-content[^"]*"[^>]*data-no="(\d+)"[^>]*>([\s\S]*?)<\/tr>/gi;
   log(`[GALLERY] parsePostList: HTML length=${html.length}, ub-content 포함=${html.includes('ub-content')}, data-no 포함=${html.includes('data-no')}`);
@@ -141,7 +155,7 @@ function parsePostList(html) {
 }
 
 /** 목록 HTML에서 e_s_n_o 토큰 추출 */
-function extractEsno(html) {
+function extractEsno(html: string): string {
   const match = html.match(/name="e_s_n_o"\s+value="([^"]+)"/i)
     || html.match(/id="e_s_n_o"[^>]*value="([^"]+)"/i);
   if (match) {
@@ -152,7 +166,7 @@ function extractEsno(html) {
 }
 
 /** POST 방식 댓글 API로 댓글 수 조회 (가벼움, JSON 응답) */
-function fetchCommentCount(postNo) {
+function fetchCommentCount(postNo: number): Promise<number> {
   return new Promise((resolve, reject) => {
     const body = [
       `id=${GALLERY_ID}`,
@@ -198,7 +212,7 @@ function fetchCommentCount(postNo) {
           const count = json.total_cnt != null ? parseInt(json.total_cnt, 10) : 0;
           log(`[GALLERY] 댓글 API #${postNo}: ${count}개`);
           resolve(count);
-        } catch (e) {
+        } catch (e: any) {
           log(`[GALLERY] 댓글 API 파싱 실패 #${postNo}: ${e.message}`);
           reject(e);
         }
@@ -212,26 +226,31 @@ function fetchCommentCount(postNo) {
 }
 
 // ─── 알림 발송 ───
-function notify(title, body, postNo) {
+function notify(title: string, body: string, postNo?: number): void {
   if (!notifyEnabled) return;
   try {
     const noti = new Notification({ title, body, silent: false });
     noti.on('click', () => {
-      // 알림 클릭 시 해당 글 열기
-      if (postNo && mainWindowRef) {
-        const view = require('./windowManager').getView();
-        if (view) view.webContents.loadURL(VIEW_URL(postNo));
+      if (postNo) {
+        const wm = require('./windowManager');
+        wm.setOverlayVisible(true); // 알림 클릭 시 오버레이 강제 오픈
+        
+        // 창이 생성될 시간을 고려하여 약간의 지연 후 URL 이동
+        setTimeout(() => {
+          const view = wm.getView();
+          if (view) view.webContents.loadURL(VIEW_URL(postNo));
+        }, 100);
       }
     });
     noti.show();
     log(`[GALLERY] 알림: ${title} - ${body}`);
-  } catch (e) {
+  } catch (e: any) {
     log(`[GALLERY] 알림 실패: ${e.message}`);
   }
 }
 
 // ─── 새 글 체크 ───
-async function checkNewPosts() {
+async function checkNewPosts(): Promise<void> {
   try {
     log(`[GALLERY] checkNewPosts 시작...`);
     const html = await fetchPage(LIST_URL);
@@ -246,7 +265,7 @@ async function checkNewPosts() {
     if (lastSeenPostNo === 0) {
       // 최초 실행 시 현재 상태를 기준으로 설정 (알림 안 보냄)
       lastSeenPostNo = latestNo;
-      config.save({ galleryLastSeen: latestNo });
+      config.save({ galleryLastSeen: latestNo } as any);
       log(`[GALLERY] 초기 기준 설정: #${latestNo}`);
       return;
     }
@@ -256,27 +275,40 @@ async function checkNewPosts() {
     if (newPosts.length > 0) {
       // 사이드바에 레드닷 알림
       sendNewActivity('post', newPosts.length);
-      // 최신 3개까지만 알림
-      const toNotify = newPosts.sort((a, b) => b.no - a.no).slice(0, 3);
-      for (const p of toNotify) {
+      
+      // 키워드 필터링 적용
+      let toNotify = newPosts;
+      if (galleryKeywords && galleryKeywords.length > 0) {
+        // 특수문자 이스케이프 및 정규식 생성
+        const pattern = galleryKeywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+        const regex = new RegExp(pattern, 'i');
+        toNotify = newPosts.filter(p => regex.test(p.title));
+      }
+
+      // 필터링된 글에 대해서만 푸시 알림 발송 (최신 3개)
+      const notifyItems = toNotify.sort((a, b) => b.no - a.no).slice(0, 3);
+      for (const p of notifyItems) {
         notify('🆕 새 글', `${p.title}${p.replyCount > 0 ? ` [${p.replyCount}]` : ''} - ${p.writer}`, p.no);
       }
-      if (newPosts.length > 3) {
-        notify('🆕 새 글', `외 ${newPosts.length - 3}개의 새 글이 있습니다.`);
+      
+      if (toNotify.length > 3) {
+        notify('🆕 새 글', `외 ${toNotify.length - 3}개의 키워드 일치 새 글이 있습니다.`);
       }
+
       lastSeenPostNo = latestNo;
-      config.save({ galleryLastSeen: latestNo });
+      config.save({ galleryLastSeen: latestNo } as any);
     }
 
     // 사이드바에 최신 글 목록 전송
     sendPostListToSidebar(posts);
-  } catch (e) {
-    log(`[GALLERY] 목록 체크 실패: ${e.message}\n${e.stack}`);
+  } catch (e: any) {
+    log(`[GALLERY] 목록 체크 실패: ${e.message}
+${e.stack}`);
   }
 }
 
 // ─── 댓글 변화 체크 (POST API + 블락 방지) ───
-async function checkWatchedComments() {
+async function checkWatchedComments(): Promise<void> {
   const watchNos = Object.keys(watchedPosts);
   if (watchNos.length === 0) return;
 
@@ -304,7 +336,7 @@ async function checkWatchedComments() {
         notify('💬 새 댓글', `[${prev.title}]에 ${diff}개의 새 댓글`, no);
       }
       watchedPosts[noStr].commentCount = currentCount;
-    } catch (e) {
+    } catch (e: any) {
       log(`[GALLERY] 댓글 체크 실패 #${noStr}: ${e.message}`);
     }
   }
@@ -312,10 +344,10 @@ async function checkWatchedComments() {
 }
 
 // ─── 주기 체크 루프 (백오프 포함) ───
-async function doCheck() {
+async function doCheck(): Promise<void> {
   if (!isRunning) return;
 
-  // 알림 OFF면 주기 체크 스킵
+  // 알림 OFF면 주기 체크 스킵 (서버 요청 안 함)
   if (!notifyEnabled) {
     checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
     return;
@@ -331,13 +363,21 @@ async function doCheck() {
 
   try {
     await checkNewPosts();
-    // 글 목록 체크와 댓글 체크 사이 딜레이
     await randomDelay();
     await checkWatchedComments();
-    consecutiveErrors = 0; // 성공 시 리셋
-  } catch (e) {
+    if (consecutiveErrors > 0) {
+      log(`[GALLERY] 네트워크 복구됨`);
+      if (galleryWindowRef && !galleryWindowRef.isDestroyed()) {
+        galleryWindowRef.webContents.send('gallery-connection-status', true);
+      }
+    }
+    consecutiveErrors = 0; 
+  } catch (e: any) {
     consecutiveErrors++;
-    log(`[GALLERY] doCheck 에러 (연속 ${consecutiveErrors}회): ${e.message}`);
+    log(`[GALLERY Error] (연속 ${consecutiveErrors}회): ${e.message}`);
+    if (galleryWindowRef && !galleryWindowRef.isDestroyed()) {
+      galleryWindowRef.webContents.send('gallery-connection-status', false);
+    }
   }
 
   checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
@@ -345,34 +385,40 @@ async function doCheck() {
 
 // ─── 공개 API ───
 
-function start(mainWindow, sidebarWindow) {
+export function start(mainWindow: BrowserWindow, sidebarWindow: BrowserWindow): void {
   mainWindowRef = mainWindow;
   sidebarWindowRef = sidebarWindow;
 
   // 저장된 상태 복원
-  const cfg = config.load();
+  const cfg = config.load() as any;
   lastSeenPostNo = cfg.galleryLastSeen || 0;
   watchedPosts = cfg.galleryWatched || {};
   notifyEnabled = cfg.galleryNotify !== false; // 기본 true
+  galleryKeywords = cfg.galleryKeywords || []; // 키워드 로드
 
   isRunning = true;
   log('[GALLERY] 갤러리 모니터 시작');
   doCheck();
 }
 
-function stop() {
+export function stop(): void {
   isRunning = false;
   if (checkTimer) { clearTimeout(checkTimer); checkTimer = null; }
   log('[GALLERY] 갤러리 모니터 중지');
 }
 
-function updateWindows(mainWindow, sidebarWindow) {
+export function updateWindows(mainWindow: BrowserWindow, sidebarWindow: BrowserWindow, galleryWindow: BrowserWindow | null = null): void {
   mainWindowRef = mainWindow;
   sidebarWindowRef = sidebarWindow;
+  if (galleryWindow) galleryWindowRef = galleryWindow;
+
+  // 설정에서 키워드가 바뀌었을 수 있으므로 다시 로드
+  const cfg = config.load() as any;
+  galleryKeywords = cfg.galleryKeywords || [];
 }
 
 /** 글 감시 추가 */
-async function addWatch(postNo) {
+export async function addWatch(postNo: number): Promise<WatchedPost> {
   const noStr = String(postNo);
   if (watchedPosts[noStr]) return watchedPosts[noStr];
 
@@ -397,7 +443,7 @@ async function addWatch(postNo) {
     saveWatchedPosts();
     log(`[GALLERY] 감시 추가: #${postNo} "${title}" (댓글 ${commentCount})`);
     return watchedPosts[noStr];
-  } catch (e) {
+  } catch (e: any) {
     log(`[GALLERY] 감시 추가 실패 #${postNo}: ${e.message}`);
     // 최소 정보로 추가
     watchedPosts[noStr] = { title: `#${postNo}`, commentCount: -1, addedAt: Date.now() };
@@ -407,48 +453,48 @@ async function addWatch(postNo) {
 }
 
 /** 글 감시 제거 */
-function removeWatch(postNo) {
+export function removeWatch(postNo: number): void {
   delete watchedPosts[String(postNo)];
   saveWatchedPosts();
   log(`[GALLERY] 감시 제거: #${postNo}`);
 }
 
 /** 감시 목록 조회 */
-function getWatchedPosts() {
+export function getWatchedPosts(): Record<string, WatchedPost> {
   return { ...watchedPosts };
 }
 
-function saveWatchedPosts() {
-  config.save({ galleryWatched: { ...watchedPosts } });
+function saveWatchedPosts(): void {
+  config.save({ galleryWatched: { ...watchedPosts } } as any);
+  // 갤러리 창이 열려있다면 즉시 화면 갱신 명령 전송
+  if (galleryWindowRef && !galleryWindowRef.isDestroyed()) {
+    galleryWindowRef.webContents.send('gallery-watched-update', watchedPosts);
+  }
 }
 
-function sendPostListToSidebar(posts) {
-  log(`[GALLERY] sendPostListToSidebar: ${posts.length}개, sidebarRef=${!!sidebarWindowRef}, destroyed=${sidebarWindowRef ? sidebarWindowRef.isDestroyed() : 'N/A'}`);
-  if (sidebarWindowRef && !sidebarWindowRef.isDestroyed()) {
-    sidebarWindowRef.webContents.send('gallery-posts', posts);
-    log(`[GALLERY] gallery-posts 이벤트 전송 완료`);
-  } else {
-    log(`[GALLERY] 사이드바 없음 - 전송 실패`);
+function sendPostListToSidebar(posts: Post[]): void {
+  if (galleryWindowRef && !galleryWindowRef.isDestroyed()) {
+    galleryWindowRef.webContents.send('gallery-posts', posts);
   }
 }
 
 /** 사이드바에 새 활동(새 글/댓글) 알림 */
-function sendNewActivity(type, count, postNo) {
+function sendNewActivity(type: 'post' | 'comment', count: number, postNo?: string): void {
   if (sidebarWindowRef && !sidebarWindowRef.isDestroyed()) {
     sidebarWindowRef.webContents.send('gallery-new-activity', { type, count, postNo });
   }
 }
 
 /** 즉시 체크 트리거 */
-async function forceCheck() {
+export async function forceCheck(): Promise<void> {
   await checkNewPosts();
   await checkWatchedComments();
 }
 
 /** 알림 on/off 설정 */
-function setNotifyEnabled(enabled) {
+export function setNotifyEnabled(enabled: boolean): void {
   notifyEnabled = !!enabled;
-  config.save({ galleryNotify: notifyEnabled });
+  config.save({ galleryNotify: notifyEnabled } as any);
 
   if (notifyEnabled) {
     // ON 전환 시 현재 상태를 기준점으로 리셋 (쌓인 알림 방지)
@@ -464,18 +510,6 @@ function setNotifyEnabled(enabled) {
   }
 }
 
-function getNotifyEnabled() {
+export function getNotifyEnabled(): boolean {
   return notifyEnabled;
 }
-
-module.exports = {
-  start,
-  stop,
-  updateWindows,
-  addWatch,
-  removeWatch,
-  getWatchedPosts,
-  forceCheck,
-  setNotifyEnabled,
-  getNotifyEnabled
-};

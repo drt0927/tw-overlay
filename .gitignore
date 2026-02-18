@@ -58,3 +58,6 @@ spec/fixtures/logo.png
 .gemini/dc_example/*
 .gemini/debug/*
 .gemini/planning/*
+
+# TS Migration Backup
+backup/

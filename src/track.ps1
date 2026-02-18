@@ -1,8 +1,7 @@
 param(
     [string]$processName,
-    [switch]$loop  # 상주 모드: stdin으로 "QUERY" 받으면 결과 반환
+    [switch]$loop
 )
-
 $signature = @'
 using System;
 using System.Runtime.InteropServices;
@@ -45,7 +44,7 @@ function Get-GameRect {
 
         $rect = New-Object RECT
         $res = [Window]::DwmGetWindowAttribute($p.MainWindowHandle, 9, [ref]$rect, [System.Runtime.InteropServices.Marshal]::SizeOf($rect))
-        
+
         if ($res -eq 0) {
             return "$($rect.Left),$($rect.Top),$($rect.Right),$($rect.Bottom)"
         } else {
@@ -61,7 +60,6 @@ function Get-GameRect {
 }
 
 if ($loop) {
-    # 상주 모드: stdin에서 명령을 읽고 결과를 stdout으로 반환
     Write-Output "READY"
     while ($true) {
         $cmd = [Console]::In.ReadLine()
@@ -74,7 +72,6 @@ if ($loop) {
             $p = Get-Process $processName -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Talesweaver*" } | Select-Object -First 1
             if ($p -and $p.MainWindowHandle -ne 0) {
                 $hwnd = $p.MainWindowHandle
-                # Alt 키 시뮬레이션으로 Windows 포커스 도용 방지 정책 우회
                 [Window]::keybd_event(0x12, 0, 0, 0)   # VK_MENU (Alt) down
                 [Window]::keybd_event(0x12, 0, 2, 0)   # VK_MENU (Alt) up
                 [Window]::ShowWindow($hwnd, 9) | Out-Null     # SW_RESTORE
@@ -87,7 +84,6 @@ if ($loop) {
         }
     }
 } else {
-    # 단발 실행 모드 (기존 호환)
     $result = Get-GameRect
     Write-Output $result
 }

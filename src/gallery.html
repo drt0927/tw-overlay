@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="panel-glass">
+  <div class="gallery-container drag-region">
+    <div class="settings-header no-drag">
+      <div class="flex items-center gap-2">
+        <span class="settings-title"><i data-lucide="bell" class="w-5 h-5 text-purple-500"></i> 갤러리 모니터</span>
+        <span id="keyword-badge" class="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full font-black border border-purple-500/30">전체 알림</span>
+      </div>
+      <div class="flex gap-2">
+        <button id="notify-toggle" onclick="toggleNotify()" class="text-slate-400 hover:text-purple-400" title="알림 설정">
+          <i id="notify-toggle-icon" data-lucide="bell" class="w-4 h-4"></i>
+        </button>
+        <button onclick="refreshGallery()" class="text-slate-400 hover:text-purple-400" title="새로고침"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+        <button onclick="window.close()" class="text-slate-400 hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+
+    <div class="space-y-4 no-drag flex-1 flex flex-col overflow-hidden">
+      <!-- 감시 추가 -->
+      <div class="flex gap-2">
+        <input id="watch-input" class="input-field flex-1" placeholder="글 번호 또는 URL 입력..." onkeypress="if(event.key==='Enter')addWatch()">
+        <button onclick="addWatch()" class="btn-primary py-1 px-4 font-black">추가</button>
+      </div>
+
+      <!-- 리스트 영역 -->
+      <div class="flex-1 custom-scroll overflow-y-auto space-y-4 pr-1">
+        <!-- 감시 목록 -->
+        <div>
+          <div class="section-label px-1 flex justify-between items-center">
+            <span>감시 중인 게시글</span>
+            <span id="watch-count" class="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 rounded-full">0</span>
+          </div>
+          <div id="watch-list" class="space-y-1.5 mt-2"></div>
+        </div>
+        
+        <!-- 최신 글 목록 -->
+        <div>
+          <div class="section-label px-1">최신 갤러리 게시글</div>
+          <div id="post-list" class="space-y-1 mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function refreshIcons() { lucide.createIcons(); }
+    
+    async function refreshGallery() {
+      const watchList = document.getElementById('watch-list');
+      const postList = document.getElementById('post-list');
+      
+      const originalWatchHTML = watchList.innerHTML;
+      if (!watchList.children.length) watchList.innerHTML = '<div class="text-[10px] text-slate-600 text-center py-4 animate-pulse">상태 조회 중...</div>';
+      
+      try {
+        const watched = await window.electronAPI.galleryForceCheck();
+        renderWatchList(watched);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderWatchList(watched) {
+      const list = document.getElementById('watch-list');
+      const countLabel = document.getElementById('watch-count');
+      list.innerHTML = '';
+      const entries = Object.entries(watched || {});
+      countLabel.innerText = entries.length;
+
+      if (entries.length === 0) {
+        list.innerHTML = '<div class="text-[10px] text-slate-600 text-center py-4 bg-white/5 rounded-xl border border-dashed border-white/10">감시 중인 글이 없습니다.</div>';
+        return;
+      }
+
+      entries.forEach(([no, info]) => {
+        const div = document.createElement('div');
+        div.className = 'post-item bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/40 relative group';
+        div.innerHTML = `
+          <div class="flex flex-col flex-1 truncate">
+            <span class="text-[9px] text-purple-400 font-black mb-0.5">#${no}</span>
+            <span class="truncate text-xs text-slate-200 font-bold">${info.title}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="flex items-center gap-1 text-[11px] font-black text-purple-400">
+              <i data-lucide="message-square" class="w-3 h-3"></i>
+              ${info.commentCount >= 0 ? info.commentCount : '?'}
+            </span>
+            <button onclick="event.stopPropagation(); removeWatch(${no})" class="text-slate-600 hover:text-red-400 transition-colors">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        div.onclick = () => window.electronAPI.galleryOpenPost(no);
+        list.appendChild(div);
+      });
+      refreshIcons();
+    }
+
+    async function addWatch() {
+      const input = document.getElementById('watch-input');
+      const btn = document.querySelector('.btn-primary');
+      const val = input.value.trim();
+      const match = val.match(/\d+/);
+      if (!match) return;
+      
+      const postNo = parseInt(match[0]);
+      
+      // UI 피드백 시작
+      input.disabled = true;
+      const originalBtnHTML = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>';
+      btn.disabled = true;
+      refreshIcons();
+      
+      try {
+        const success = await window.electronAPI.galleryAddWatch(postNo);
+        if (success) {
+          input.value = '';
+          const watched = await window.electronAPI.galleryGetWatched();
+          renderWatchList(watched);
+        } else {
+          alert('존재하지 않는 게시글이거나 정보를 불러올 수 없습니다.');
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        // UI 복구
+        input.disabled = false;
+        btn.innerHTML = originalBtnHTML;
+        btn.disabled = false;
+        input.focus();
+        refreshIcons();
+      }
+    }
+
+    async function removeWatch(no) {
+      window.electronAPI.galleryRemoveWatch(no);
+      const watched = await window.electronAPI.galleryGetWatched();
+      renderWatchList(watched);
+    }
+
+    window.electronAPI.onGalleryPosts((posts) => {
+      const list = document.getElementById('post-list');
+      list.innerHTML = '';
+      if (!posts || posts.length === 0) {
+        list.innerHTML = '<div class="text-[10px] text-slate-600 text-center py-4">게시글이 없습니다.</div>';
+        return;
+      }
+      posts.slice(0, 20).forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'post-item hover:bg-white/5 border border-transparent hover:border-white/10';
+        div.innerHTML = `
+          <div class="w-12 text-[9px] text-slate-500 font-bold">#${p.no}</div>
+          <div class="flex-1 truncate text-xs text-slate-400 group-hover:text-slate-200">${p.title}</div>
+          ${p.replyCount > 0 ? `<div class="text-[10px] text-purple-500/70 font-black ml-2">[${p.replyCount}]</div>` : ''}
+        `;
+        div.onclick = () => window.electronAPI.galleryOpenPost(p.no);
+        list.appendChild(div);
+      });
+    });
+
+    // 실시간 감시 목록 업데이트 수신
+    window.electronAPI.onGalleryWatchedUpdate((watched) => {
+      renderWatchList(watched);
+    });
+
+    // 설정 데이터 수신 (키워드 개수 업데이트용)
+    window.electronAPI.onConfigData((config) => {
+      const badge = document.getElementById('keyword-badge');
+      if (!badge) return;
+      const kwCount = config.galleryKeywords?.length || 0;
+      if (kwCount > 0) {
+        badge.innerText = `키워드 ${kwCount}`;
+        badge.className = 'text-[9px] bg-purple-600 text-white px-1.5 py-0.5 rounded-full font-black border border-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]';
+      } else {
+        badge.innerText = '전체 알림';
+        badge.className = 'text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full font-black border border-purple-500/30';
+      }
+    });
+
+    window.electronAPI.onGalleryConnectionStatus((isConnected) => {
+      const title = document.querySelector('.settings-title');
+      if (isConnected) {
+        title.innerHTML = '<i data-lucide="bell" class="w-5 h-5 text-purple-500"></i> 갤러리 모니터';
+      } else {
+        title.innerHTML = '<i data-lucide="wifi-off" class="w-5 h-5 text-red-500"></i> <span class="text-red-500 text-[10px] animate-pulse">연결 끊김</span>';
+      }
+      refreshIcons();
+    });
+
+    window.onload = async () => {
+      refreshGallery();
+      const enabled = await window.electronAPI.galleryGetNotify();
+      updateNotifyIcon(enabled);
+    };
+
+    function updateNotifyIcon(enabled) {
+      const icon = document.getElementById('notify-toggle-icon');
+      const btn = document.getElementById('notify-toggle');
+      if (enabled) {
+        icon.setAttribute('data-lucide', 'bell');
+        btn.className = 'text-purple-400 hover:text-purple-300';
+      } else {
+        icon.setAttribute('data-lucide', 'bell-off');
+        btn.className = 'text-slate-600 hover:text-slate-500';
+      }
+      refreshIcons();
+    }
+
+    async function toggleNotify() {
+      const current = await window.electronAPI.galleryGetNotify();
+      const newState = !current;
+      window.electronAPI.gallerySetNotify(newState);
+      updateNotifyIcon(newState);
+    }
+
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
+    refreshIcons();
+  </script>
+</body>
+</html>

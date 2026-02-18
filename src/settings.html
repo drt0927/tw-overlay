@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .settings-wrapper { display: flex; height: 100vh; overflow: hidden; border-radius: 12px; }
+    .settings-sidebar {
+      width: 240px; background: rgba(20, 20, 35, 0.95);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 0;
+    }
+    .drag-handle {
+      padding: 30px 24px; cursor: move; -webkit-app-region: drag;
+      background: linear-gradient(to bottom, rgba(168, 85, 247, 0.1), transparent);
+    }
+    .nav-container { flex: 1; -webkit-app-region: no-drag; padding: 10px 0; }
+    .nav-item {
+      padding: 12px 24px; cursor: pointer; color: var(--text-muted);
+      font-size: 13px; font-weight: 700; transition: all 0.2s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
+    .nav-item.active { color: var(--accent); background: rgba(168, 85, 247, 0.1); border-right: 3px solid var(--accent); }
+    
+    .content-area { flex: 1; padding: 40px; overflow-y: auto; background: rgba(15, 18, 30, 0.98); -webkit-app-region: no-drag; }
+    .settings-group { max-width: 800px; }
+    
+    .keyword-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #c084fc; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+    .slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .slot-card { transition: transform 0.2s, opacity 0.2s; cursor: grab; }
+    .slot-card:active { cursor: grabbing; }
+    .slot-card.dragging { opacity: 0.4; transform: scale(0.95); }
+    .slot-card.drag-over { border-color: var(--accent); background: rgba(168, 85, 247, 0.1); }
+  </style>
+</head>
+<body class="panel-glass overflow-hidden">
+  <div class="settings-wrapper">
+    <div class="settings-sidebar">
+      <div class="drag-handle">
+        <span class="text-xl font-black flex items-center gap-2 text-white">
+          <i data-lucide="sliders" class="w-6 h-6 text-purple-500"></i> 환경 설정
+        </span>
+        <p class="text-[10px] text-slate-500 mt-1 font-bold">드래그하여 이동</p>
+      </div>
+      
+      <div class="nav-container">
+        <div class="nav-item active" onclick="showSection('general', this)">
+          <i data-lucide="monitor" class="w-4 h-4"></i> 일반 설정
+        </div>
+        <div class="nav-item" onclick="showSection('gallery', this)">
+          <i data-lucide="bell" class="w-4 h-4"></i> 갤러리 알림
+        </div>
+        <div class="nav-item" onclick="showSection('slots', this)">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
+        </div>
+      </div>
+      
+      <div class="mt-auto p-4 space-y-2 mb-2">
+        <button onclick="saveSettings()" class="btn-primary w-full py-3 shadow-lg shadow-purple-900/20">저장 및 적용</button>
+        <button onclick="window.close()" class="w-full py-2 text-xs font-bold text-slate-500 hover:text-white transition-all">닫기 (ESC)</button>
+      </div>
+    </div>
+
+    <div class="content-area custom-scroll">
+      <div id="section-general" class="settings-section space-y-8">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="monitor" class="w-5 h-5"></i> 브라우저 기본 설정</h2>
+          <div class="space-y-6">
+            <div>
+              <label class="section-label">기본 웹사이트 (Home URL)</label>
+              <input type="text" id="home-url-input" class="input-field w-full text-sm py-3" placeholder="https://...">
+            </div>
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <label class="section-label">오버레이 너비 (px)</label>
+                <input type="number" id="width-input" class="input-field w-full font-mono py-3">
+              </div>
+              <div>
+                <label class="section-label">오버레이 높이 (px)</label>
+                <input type="number" id="height-input" class="input-field w-full font-mono py-3">
+              </div>
+            </div>
+            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" id="auto-launch-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">윈도우 시작 시 자동 실행</span>
+                  <p class="text-[11px] text-slate-500 mt-0.5">컴퓨터를 켜면 TW-Overlay가 자동으로 백그라운드에서 실행됩니다.</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-gallery" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="bell" class="w-5 h-5"></i> 갤러리 알림 필터링</h2>
+          <div class="space-y-6">
+            <div>
+              <label class="section-label">알림 키워드 등록</label>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="keyword-input" class="input-field flex-1 py-3" placeholder="예: 득템, 업데이트, 점검..." onkeypress="if(event.key==='Enter')addKeyword()">
+                <button onclick="addKeyword()" class="btn-primary px-6 font-black">추가</button>
+              </div>
+              <div id="keyword-list" class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-slots" class="settings-section space-y-8 hidden">
+        <div class="w-full">
+          <div class="flex justify-between items-end mb-6">
+            <h2 class="text-lg font-bold flex items-center gap-2"><i data-lucide="layout-grid" class="w-5 h-5"></i> 퀵슬롯 관리</h2>
+            <div class="flex items-center gap-4">
+              <p class="text-[10px] text-slate-500 font-bold italic">슬롯을 드래그하여 순서를 바꿀 수 있습니다.</p>
+              <button onclick="addNewSlot()" class="text-xs font-black text-purple-400 hover:text-purple-300 flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> 슬롯 추가
+              </button>
+            </div>
+          </div>
+          <div id="edit-list" class="slot-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="icon-picker-overlay" class="fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center hidden" onclick="if(event.target===this)closeIconPicker()">
+    <div class="bg-slate-900 border border-white/15 rounded-3xl w-[400px] max-h-[550px] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-white/10">
+        <div class="flex gap-3">
+          <input id="icon-search" class="input-field flex-1 py-3" placeholder="아이콘 검색..." oninput="renderIconGrid(this.value)">
+          <button onclick="closeIconPicker()" class="text-slate-400 p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="search-result-count" class="text-xs text-purple-400 font-bold mt-3 ml-1"></div>
+      </div>
+      <div id="icon-grid" class="flex-1 overflow-y-auto custom-scroll min-h-[300px]"></div>
+    </div>
+  </div>
+
+  <script>
+    function refreshIcons() { lucide.createIcons(); }
+    let currentSlots = [];
+    let currentKeywords = [];
+    let activeEditIndex = -1;
+    let ALL_ICONS = [];
+    let dragSrcIndex = -1;
+
+    function initIconList() {
+      if (ALL_ICONS.length === 0 && lucide && lucide.icons) {
+        ALL_ICONS = Object.keys(lucide.icons).sort();
+      }
+    }
+
+    function showSection(id, el) {
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('section-' + id).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      refreshIcons();
+    }
+
+    window.electronAPI.onConfigData((config) => {
+      document.getElementById('home-url-input').value = config.homeUrl || '';
+      document.getElementById('width-input').value = config.width || 800;
+      document.getElementById('height-input').value = config.height || 600;
+      document.getElementById('auto-launch-input').checked = !!config.autoLaunch;
+      currentSlots = JSON.parse(JSON.stringify(config.quickSlots || []));
+      currentKeywords = JSON.parse(JSON.stringify(config.galleryKeywords || []));
+      renderEditList();
+      renderKeywordList();
+    });
+
+    function renderKeywordList() {
+      const list = document.getElementById('keyword-list');
+      list.innerHTML = '';
+      if (currentKeywords.length === 0) {
+        list.innerHTML = '<span class="text-xs text-slate-600 p-2">등록된 키워드가 없습니다.</span>';
+        return;
+      }
+      currentKeywords.forEach((kw, i) => {
+        const span = document.createElement('span');
+        span.className = 'keyword-tag';
+        span.innerHTML = `${kw} <button onclick="removeKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+        list.appendChild(span);
+      });
+      refreshIcons();
+    }
+
+    function addKeyword() {
+      const input = document.getElementById('keyword-input');
+      const val = input.value.trim();
+      if (val && !currentKeywords.includes(val)) {
+        currentKeywords.push(val);
+        renderKeywordList();
+        input.value = '';
+      }
+    }
+
+    function removeKeyword(index) {
+      currentKeywords.splice(index, 1);
+      renderKeywordList();
+    }
+
+    function renderEditList() {
+      const list = document.getElementById('edit-list');
+      list.innerHTML = '';
+      currentSlots.forEach((slot, i) => {
+        const isText = slot.iconType === 'text';
+        const div = document.createElement('div');
+        div.className = 'slot-card bg-white/5 p-5 rounded-2xl border border-white/10 space-y-4 relative group hover:bg-white/[0.08] transition-all';
+        div.setAttribute('draggable', 'true');
+        div.dataset.index = i;
+
+        div.ondragstart = (e) => { dragSrcIndex = i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; };
+        div.ondragover = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+        div.ondragleave = (e) => { e.currentTarget.classList.remove('drag-over'); };
+        div.ondrop = (e) => {
+          e.preventDefault();
+          const targetIndex = parseInt(e.currentTarget.dataset.index);
+          if (dragSrcIndex !== targetIndex) {
+            const temp = currentSlots[dragSrcIndex];
+            currentSlots.splice(dragSrcIndex, 1);
+            currentSlots.splice(targetIndex, 0, temp);
+            renderEditList();
+          }
+        };
+        div.ondragend = (e) => { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over')); };
+
+        div.innerHTML = `
+          <button onclick="currentSlots.splice(${i},1);renderEditList()" class="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl z-10 border-2 border-slate-900">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <div class="flex gap-3 items-center" ondragstart="event.stopPropagation()">
+            <div class="flex-1">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-1 block">라벨</label>
+              <input class="input-field w-full" value="${slot.label || ''}" onchange="currentSlots[${i}].label=this.value">
+            </div>
+            <div class="w-24">
+              <div class="flex bg-black/40 rounded-lg p-1 gap-1 mt-4">
+                <button onclick="setIconType(${i},'icon')" class="flex-1 py-1 rounded text-[9px] font-black ${!isText ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40' : 'text-slate-500'}">아이콘</button>
+                <button onclick="setIconType(${i},'text')" class="flex-1 py-1 rounded text-[9px] font-black ${isText ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40' : 'text-slate-500'}">글자</button>
+              </div>
+            </div>
+            <div class="shrink-0 mt-4">
+              ${isText 
+                ? `<input class="input-field w-10 h-10 text-center text-lg font-black bg-purple-500/10 border-purple-500/30 text-purple-400 p-0" maxlength="1" value="${slot.textChar || ''}" oninput="currentSlots[${i}].textChar=this.value.toUpperCase(); renderEditList()">`
+                : `<button onclick="openIconPicker(${i})" class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 hover:border-purple-500 transition-all"><i data-lucide="${slot.icon || 'link'}" class="w-5 h-5"></i></button>`
+              }
+            </div>
+          </div>
+          <div ondragstart="event.stopPropagation()">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-1 block">URL</label>
+            <input class="input-field w-full text-xs" value="${slot.url}" onchange="currentSlots[${i}].url=this.value">
+          </div>
+          <div class="pt-1" ondragstart="event.stopPropagation()">
+            <label class="inline-flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" ${slot.external ? 'checked' : ''} onchange="currentSlots[${i}].external=this.checked" class="w-4 h-4 accent-purple-600">
+              <span class="text-[10px] font-bold text-slate-500 group-hover:text-slate-300">외부 브라우저로 열기</span>
+            </label>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+      refreshIcons();
+    }
+
+    function setIconType(index, type) {
+      currentSlots[index].iconType = type;
+      if (type === 'text' && !currentSlots[index].textChar) {
+        currentSlots[index].textChar = currentSlots[index].label?.substring(0,1).toUpperCase() || 'L';
+      }
+      renderEditList();
+    }
+
+    function openIconPicker(index) {
+      activeEditIndex = index;
+      document.getElementById('icon-picker-overlay').classList.remove('hidden');
+      renderIconGrid('');
+    }
+
+    function closeIconPicker() {
+      document.getElementById('icon-picker-overlay').classList.add('hidden');
+    }
+
+    let currentLoadedCount = 0;
+    const PAGE_SIZE = 120;
+    let filteredIcons = [];
+
+    function renderIconGrid(query) {
+      initIconList();
+      const grid = document.getElementById('icon-grid');
+      const countLabel = document.getElementById('search-result-count');
+      grid.innerHTML = '';
+      currentLoadedCount = 0;
+      const q = (query || '').toLowerCase().trim();
+      filteredIcons = q ? ALL_ICONS.filter(name => name.includes(q)) : ALL_ICONS;
+      countLabel.innerText = q ? `${filteredIcons.length}개의 아이콘 발견` : `전체 ${filteredIcons.length}개 아이콘`;
+      if (filteredIcons.length === 0) { grid.innerHTML = '<div class="p-12 text-center text-slate-600 text-sm font-bold">검색 결과가 없습니다.</div>'; return; }
+      const container = document.createElement('div');
+      container.id = 'icon-container-inner';
+      container.className = 'grid grid-cols-8 gap-2 p-6';
+      grid.appendChild(container);
+      loadMoreIcons();
+      grid.onscroll = () => { if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 50) loadMoreIcons(); };
+    }
+
+    function loadMoreIcons() {
+      const container = document.getElementById('icon-container-inner');
+      if (!container || currentLoadedCount >= filteredIcons.length) return;
+      const nextBatch = filteredIcons.slice(currentLoadedCount, currentLoadedCount + PAGE_SIZE);
+      nextBatch.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'w-10 h-10 flex items-center justify-center rounded-xl hover:bg-purple-500/20 text-slate-400 hover:text-white transition-all hover:scale-110';
+        btn.innerHTML = `<i data-lucide="${name}" class="w-5 h-5"></i>`;
+        btn.onclick = () => { currentSlots[activeEditIndex].icon = name; closeIconPicker(); renderEditList(); };
+        container.appendChild(btn);
+      });
+      currentLoadedCount += nextBatch.length;
+      refreshIcons();
+    }
+
+    function addNewSlot() {
+      currentSlots.push({ label: '새 링크', icon: 'link', url: '', external: false });
+      renderEditList();
+      const content = document.querySelector('.content-area');
+      content.scrollTo({ top: content.scrollHeight, behavior: 'smooth' });
+    }
+
+    function saveSettings() {
+      try {
+        const validSlots = currentSlots.filter(s => s && s.url && s.url.trim().length > 0);
+        validSlots.forEach(s => { if (!s.url.startsWith('http')) s.url = 'https://' + s.url.trim(); });
+        const homeUrlInput = document.getElementById('home-url-input').value.trim();
+        const settings = {
+          homeUrl: (homeUrlInput.startsWith('http')) ? homeUrlInput : 'https://' + homeUrlInput,
+          width: parseInt(document.getElementById('width-input').value) || 800,
+          height: parseInt(document.getElementById('height-input').value) || 600,
+          autoLaunch: document.getElementById('auto-launch-input').checked,
+          quickSlots: validSlots,
+          galleryKeywords: currentKeywords
+        };
+        window.electronAPI.applySettings(settings);
+        window.electronAPI.saveQuickSlots(validSlots);
+        setTimeout(() => { window.close(); }, 50);
+      } catch (e) { console.error(e); }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (!document.getElementById('icon-picker-overlay').classList.contains('hidden')) closeIconPicker();
+        else window.close();
+      }
+    });
+    refreshIcons();
+  </script>
+</body>
+</html>

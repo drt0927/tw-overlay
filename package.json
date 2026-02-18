@@ -1,12 +1,13 @@
 {
   "name": "tw-overlay",
-  "version": "1.0.4",
-  "description": "",
-  "main": "src/main.js",
+  "version": "1.0.5",
+  "description": "TalesWeaver Companion Browser",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
-    "dist": "electron-builder --win",
+    "build": "tsc && powershell -Command \"Copy-Item src/*.html, src/*.css, src/*.ps1 dist/ -ErrorAction SilentlyContinue; if (!(Test-Path dist/icons)) { New-Item -ItemType Directory dist/icons }; Copy-Item src/icons/* dist/icons/ -ErrorAction SilentlyContinue\"",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev",
+    "dist": "npm run build && electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "build": {
@@ -17,7 +18,7 @@
     },
     "asar": true,
     "asarUnpack": [
-      "src/track.ps1"
+      "dist/track.ps1"
     ],
     "win": {
       "target": [
@@ -32,7 +33,7 @@
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "files": [
-      "src/**/*",
+      "dist/**/*",
       "package.json",
       "node_modules/**/*"
     ]
@@ -45,6 +46,8 @@
   },
   "devDependencies": {
     "electron": "^40.4.0",
-    "electron-builder": "^26.7.0"
+    "electron-builder": "^26.7.0",
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3"
   }
 }

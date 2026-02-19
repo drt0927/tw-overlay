@@ -4,13 +4,13 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.0.5-violet.svg)
+![Version](https://img.shields.io/badge/version-1.0.6-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## ✨ 주요 기능 (v1.0.5 대규모 개편)
+## ✨ 주요 기능 (v1.0.6 대규모 개편)
 
 *   **🧲 4분할 독립 창 시스템:** 사이드바(메인), 오버레이, 설정, 갤러리 모니터를 각각의 독립된 창으로 분리하여 성능과 편의성을 극대화했습니다.
 *   **📐 정밀 자석 트래킹:** 게임 창의 위치를 실시간 감지하여 우측 바깥쪽에 자석처럼 달라붙습니다. 모든 독립 창은 사용자가 지정한 개별 상대 좌표를 완벽하게 기억합니다.
@@ -22,7 +22,7 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.0.5.exe` 파일을 다운로드하여 설치하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.0.6.exe` 파일을 다운로드하여 설치하세요.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
@@ -39,12 +39,10 @@
 - **UI:** Tailwind CSS, Lucide Icons
 - **Scripting:** PowerShell (Win32 API Tracking)
 
-## 📝 최신 업데이트 내역 (v1.0.5)
-- **TypeScript 마이그레이션**: 전 소스 코드 타입 안전성 확보.
-- **아키텍처 대개편**: 모든 패널을 독립 윈도우로 분리하여 리소스 관리 최적화.
-- **자석 기능 정밀화**: 1.0.4의 안정적인 추적 로직 복구 및 개별 오프셋 저장 시스템 구축.
-- **설정 UI 혁신**: 와이드 대시보드 도입, 퀵슬롯 드래그 앤 드롭, 무한 스크롤 아이콘 피커 추가.
-- **키워드 알림**: 갤러리 모니터에 사용자 정의 키워드 필터링 기능 추가.
+## 📝 최신 업데이트 내역 (v1.0.6)
+- **릴리즈 배포 무결성 확보**: `package.json` 버전 불일치 수정 및 자동 빌드 프로세스 정상화.
+- **문서화 최신화**: 가이드 및 요약 문서 1.0.6 버전으로 일괄 업데이트.
+- **빌드 시스템 점검**: TypeScript 컴파일 및 리소스 복사 로직 안정성 재점검.
 
 ## 📄 라이선스
 이 프로젝트는 ISC 라이선스를 따릅니다.

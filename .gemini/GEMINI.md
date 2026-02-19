@@ -1,9 +1,9 @@
-# 🚀 TW-Overlay 개발 가이드 (v1.0.5)
+# 🚀 TW-Overlay 개발 가이드 (v1.0.6)
 
 이 문서는 **TW-Overlay (TalesWeaver Companion Browser)** 프로젝트의 내부 구조와 개발 프로세스를 안내합니다. 상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하세요.
 
 ## 📌 프로젝트 소개
-TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드바 위젯과 전용 오버레이 브라우저를 제공하는 도구입니다. 1.0.5 버전부터는 완전한 **TypeScript 기반의 4분할 독립 창 시스템**으로 운영됩니다.
+TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드바 위젯과 전용 오버레이 브라우저를 제공하는 도구입니다. 1.0.6 버전부터는 향상된 안정성의 **TypeScript 기반의 4분할 독립 창 시스템**으로 운영됩니다.
 
 ## 🛠 기술 스택
 - **Language:** **TypeScript** (TSConfig 기반 컴파일)
@@ -48,10 +48,10 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 2. `package.json` 버전을 업데이트합니다.
 3. 버전 태그를 생성하고 푸시하면 GitHub Actions가 자동으로 빌드를 시작합니다.
    ```bash
-   git tag v1.0.5
-   git push origin v1.0.5
+   git tag v1.0.6
+   git push origin v1.0.6
    ```
 
 ---
-최종 수정일: 2026-02-18
+최종 수정일: 2026-02-19
 작성자: Gemini CLI Agent

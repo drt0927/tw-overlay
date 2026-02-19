@@ -1,5 +1,5 @@
 /**
- * IPC 이벤트 핸들러 모듈 - 1.0.5 모든 기능 복구 버전
+ * IPC 이벤트 핸들러 모듈 - 1.0.6 안정화 빌드
  */
 import { ipcMain, shell, app, BrowserWindow } from 'electron';
 import * as config from './config';

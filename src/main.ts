@@ -1,5 +1,5 @@
 /**
- * TW-Overlay 메인 프로세스 - 1.0.5 정식 복구 버전
+ * TW-Overlay 메인 프로세스 - 1.0.6 안정화 빌드
  */
 import { app, globalShortcut } from 'electron';
 import { POLLING_FAST_MS, POLLING_SLOW_MS, POLLING_COOLDOWN } from './modules/constants';

@@ -1,31 +1,32 @@
-# TalesWeaver Companion Browser (TW-Overlay) 최종 프로젝트 가이드
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.0.7)
 
-이 문서는 TypeScript 전환 및 4분할 창 시스템이 적용된 v1.0.6 버전을 기준으로 작성되었습니다.
+이 문서는 성능 최적화 및 자동 업데이트 시스템이 도입된 v1.0.7 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
-- **목적:** 테일즈위버(InphaseNXD.exe) 전용 지능형 오버레이 브라우저.
-- **최종 빌드:** **TypeScript**, Electron, 윈도우용 NSIS 설치형(.exe).
-- **UI/UX:** 1000px 와이드 대시보드, 자석형 사이드바 위젯, 보라색 하이테크 테마.
+- **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 게임 동기화 위젯.
+- **최종 빌드:** **TypeScript**, Electron, GitHub Actions 기반 CI/CD.
+- **주요 개선:** 구동 속도 최적화, 자동 업데이트 내장, 크로스 플랫폼 빌드 스크립트.
 
 ## 2. 주요 기능 명세
-- **Magnet Tracking (Fixed):** 1.0.4의 안정적인 좌표 계산 로직을 TS로 완벽 이식하여 게임 창 우측 바깥에 상시 고정.
-- **Independent Windows:** 메인(사이드바), 오버레이, 설정, 갤러리를 각각의 창으로 관리하여 메모리 및 성능 최적화.
-- **Smart Notification:** 키워드 필터링이 적용된 갤러리 모니터링 및 실시간 댓글 변화 감지.
-- **Advanced Dashboard:** 무한 스크롤 아이콘 피커, 드래그 앤 드롭 퀵슬롯 편집, 자동 실행 설정.
-- **Robustness:** PowerShell 프로세스 자동 복구 및 네트워크 상태 실시간 피드백.
+- **Splash Screen:** 앱 시작 시 로고와 로딩 상태를 즉시 노출하여 시스템 초기화 중 대기 시간 보완.
+- **Integrated Auto-Updater:** GitHub Releases와 연동된 앱 정보 메뉴를 통해 새 버전 확인, 다운로드, 재시작 설치 지원.
+- **Local Asset Performance:** Tailwind, Lucide 등 필수 라이브러리를 내장하여 창 전환 및 로딩 속도 획기적 단축.
+- **Modern Build System:** Node.js 기반 `copy-resources.js`를 통해 PowerShell 없이도 간결하고 안정적인 리소스 배포.
+- **Magnet Tracking:** 게임 창 좌표를 실시간 추적하여 사이드바와 오버레이를 유동적으로 동기화.
 
 ## 3. 기술 스택 및 구조
-- **Language:** TypeScript (TSConfig 기반 빌드).
-- **Frontend:** HTML5, Tailwind CSS, Lucide Icons (통합 style.css 관리).
-- **Backend:** Node.js (Electron Main), PowerShell (Window Tracking).
-- **Storage:** `positions` 객체 중심의 계층형 설정 저장 구조.
+- **Language:** TypeScript.
+- **Frontend:** HTML5, Tailwind CSS, Local JS Assets.
+- **Backend:** Node.js (Main), PowerShell (Tracking Service).
+- **Update Source:** GitHub Releases API via `electron-updater`.
 
-## 4. 실행 가이드
-1. **빌드:** `npm run build` (TS 컴파일 및 리소스 통합).
-2. **실행:** `npm start` (자석 기능 및 전체 모듈 활성화).
-3. **디버그:** `npm run dev` (모든 창의 개발자 도구 자동 호출).
+## 4. 실행 및 배포 가이드
+1. **빌드:** `npm run build` (Node 기반 리소스 통합).
+2. **배포:** `npm run dist` (GitHub 배포 설정 및 설치본 생성).
+3. **워크플로우:** [release_workflow.md](./release_workflow.md) 참고.
 
-## 5. 업데이트 히스토리 (v1.0.6 핵심)
-- **배포 프로세스 정상화.**
-- **안정화된 TypeScript 빌드 기반.**
-- **문서 최신화 및 릴리즈 무결성 확보.**
+## 5. 업데이트 히스토리 (v1.0.7 핵심)
+- **성능:** 외부 CDN 제거 및 창 생성 로직 개선으로 로딩 속도 최적화.
+- **업데이트:** 환경설정 내 통합 업데이트 UI 구현.
+- **안정성:** 부팅 로그 최적화 및 스플래시 화면 도입.
+- **빌드:** PowerShell 의존성 제거 및 빌드 자동화 스크립트 고도화.

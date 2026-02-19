@@ -9,6 +9,7 @@ import { log } from './logger';
 
 // --- 상태 관리 ---
 let mainWindow: BrowserWindow | null = null; // 사이드바
+let splashWindow: BrowserWindow | null = null; // 스플래시 화면
 let overlayWindow: BrowserWindow | null = null; // 오버레이
 let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
@@ -52,6 +53,7 @@ function savePosition(winType: 'overlay' | 'settings' | 'gallery', pos: WindowPo
 }
 
 export const getMainWindow = () => mainWindow;
+export const getSplashWindow = () => splashWindow;
 export const getOverlayWindow = () => overlayWindow;
 export const getSettingsWindow = () => settingsWindow;
 export const getGalleryWindow = () => galleryWindow;
@@ -61,6 +63,29 @@ export const getIsOverlayVisible = () => isOverlayVisible;
 /** 오버레이 창 준비 완료 시 콜백 등록 (순환 참조 회피) */
 export function onOverlayWindowReady(callback: () => void): void {
   onOverlayReady = callback;
+}
+
+/** 스플래시 화면 생성 */
+export function createSplashWindow(): BrowserWindow {
+  splashWindow = new BrowserWindow({
+    width: 400, height: 500,
+    frame: false, transparent: true, alwaysOnTop: true,
+    show: false, center: true, skipTaskbar: true,
+    resizable: false, movable: false, focusable: false,
+    webPreferences: { contextIsolation: true, nodeIntegration: false }
+  });
+  splashWindow.setIgnoreMouseEvents(true);
+  splashWindow.loadFile(path.join(__dirname, '..', 'splash.html'));
+  splashWindow.once('ready-to-show', () => { splashWindow?.show(); });
+  return splashWindow;
+}
+
+/** 스플래시 화면 종료 */
+export function closeSplashWindow(): void {
+  if (splashWindow) {
+    splashWindow.close();
+    splashWindow = null;
+  }
 }
 
 /** 메인 사이드바 생성 - 사용자 설정 반영 */
@@ -303,6 +328,8 @@ export function syncOverlay(currentRect: any): void {
       galleryWindow.setPosition(Math.round(gX + gW + galleryPos.offsetX), Math.round(gY + galleryPos.offsetY));
     }
     gameRect = { x: gX, y: gY, width: gW, height: gH };
+    // 좌표 동기화가 처음으로 성공하면 스플래시 창 닫기
+    closeSplashWindow();
   } else hideAll();
 }
 
@@ -354,4 +381,5 @@ export function hideAll(): void {
     if (win && win.isVisible()) win.hide();
   });
   isTracking = false;
+  closeSplashWindow();
 }

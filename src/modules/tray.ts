@@ -5,6 +5,7 @@ import { app, Tray, Menu, nativeImage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as wm from './windowManager';
+import { log } from './logger';
 
 let tray: Tray | null = null;
 
@@ -13,7 +14,7 @@ export function createTray(): Tray {
   
   // 아이콘 파일이 없는 경우를 대비한 방어 로직
   if (!fs.existsSync(iconPath)) {
-    console.warn('Tray icon not found at:', iconPath);
+    log(`[TRAY] 아이콘 파일을 찾을 수 없음: ${iconPath}`);
   }
   
   const icon = nativeImage.createFromPath(iconPath);

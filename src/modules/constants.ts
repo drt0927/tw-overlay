@@ -36,6 +36,7 @@ export interface AppConfig {
   galleryNotify?: boolean;
   overlayVisible?: boolean;
   autoLaunch?: boolean;
+  autoUpdateEnabled?: boolean;
   galleryKeywords?: string[];
   positions?: {
     overlay?: WindowPosition;
@@ -67,6 +68,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   url: 'https://www.youtube.com',
   homeUrl: 'https://www.youtube.com',
   quickSlots: [],
+  autoUpdateEnabled: true,
   positions: {
     overlay: { offsetX: 10, offsetY: 10 },
     settings: { offsetX: -1010, offsetY: 40 },

@@ -24,7 +24,6 @@ export function start(): void {
   if (isStopping) return;
   try {
     const scriptPath = getScriptPath();
-    log(`[TRACKER] 스크립트 경로 시도: ${scriptPath}`);
 
     psProcess = spawn('powershell', [
       '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath,
@@ -40,7 +39,6 @@ export function start(): void {
         const trimmed = line.trim();
         if (trimmed === 'READY') {
           psReady = true;
-          log('[TRACKER] PowerShell READY');
           continue;
         }
         

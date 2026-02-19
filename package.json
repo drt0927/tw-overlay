@@ -1,11 +1,12 @@
 {
   "name": "tw-overlay",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc && powershell -Command \"Copy-Item src/*.html, src/*.css, src/*.ps1 dist/ -ErrorAction SilentlyContinue; if (!(Test-Path dist/icons)) { New-Item -ItemType Directory dist/icons }; Copy-Item src/icons/* dist/icons/ -ErrorAction SilentlyContinue; if (!(Test-Path dist/assets)) { New-Item -ItemType Directory dist/assets }; Copy-Item src/assets/*.js dist/assets/ -ErrorAction SilentlyContinue\"",
+    "build": "tsc && node scripts/copy-resources.js",
     "start": "npm run build && electron .",
+    "only-dev": "electron . --dev",
     "dev": "npm run build && electron . --dev",
     "dist": "npm run build && electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,6 +17,13 @@
     "directories": {
       "output": "dist_electron"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "drt0927",
+        "repo": "tw-overlay"
+      }
+    ],
     "asar": true,
     "asarUnpack": [
       "dist/track.ps1"
@@ -42,12 +50,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron-store": "^11.0.2"
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.3"
   },
   "devDependencies": {
+    "@types/node": "^22.13.4",
     "electron": "^40.4.0",
     "electron-builder": "^26.7.0",
-    "@types/node": "^22.13.4",
     "typescript": "^5.7.3"
   }
 }

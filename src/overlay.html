@@ -82,11 +82,9 @@
         (s ? 'bg-violet-500 text-white' : 'bg-slate-700 text-slate-400');
     });
 
-    // 창 로드 시 및 지연 호출을 통해 확실하게 아이콘 생성
+    // 창 로드 시 아이콘 생성
     window.onload = refreshIcons;
     document.addEventListener('DOMContentLoaded', refreshIcons);
-    setTimeout(refreshIcons, 100);
-    setTimeout(refreshIcons, 500);
   </script>
 </body>
 </html>

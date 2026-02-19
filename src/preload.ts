@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
   saveQuickSlots: (slots: any[]) => ipcRenderer.send('save-quick-slots', slots),
   applySettings: (settings: any) => ipcRenderer.send('apply-settings', settings),
+  checkForUpdates: () => ipcRenderer.send('check-for-updates'),
+  startUpdateDownload: () => ipcRenderer.send('start-update-download'),
+  quitAndInstall: () => ipcRenderer.send('quit-and-install'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   
   // 갤러리 모니터
   galleryAddWatch: (postNo: number) => ipcRenderer.invoke('gallery-add-watch', postNo),
@@ -39,4 +43,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onGalleryNewActivity: (callback: (data: any) => void) => ipcRenderer.on('gallery-new-activity', (_event, data) => callback(data)),
   onGalleryWatchedUpdate: (callback: (watched: any) => void) => ipcRenderer.on('gallery-watched-update', (_event, watched) => callback(watched)),
   onGalleryConnectionStatus: (callback: (isConnected: boolean) => void) => ipcRenderer.on('gallery-connection-status', (_event, isConnected) => callback(isConnected)),
+  onUpdateStatus: (callback: (data: any) => void) => ipcRenderer.on('update-status', (_event, data) => callback(data)),
 });

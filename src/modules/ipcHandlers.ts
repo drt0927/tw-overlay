@@ -40,6 +40,17 @@ export function register(): void {
   ipcMain.on('toggle-gallery', () => { wm.toggleGalleryWindow(); });
   ipcMain.on('toggle-sidebar', () => { wm.toggleSidebar(); });
   ipcMain.on('toggle-overlay', () => { wm.toggleOverlay(); });
+  ipcMain.on('check-for-updates', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    import('./updater').then(mod => mod.manualCheckForUpdate(win));
+  });
+  ipcMain.on('start-update-download', () => {
+    import('./updater').then(mod => mod.startDownload());
+  });
+  ipcMain.on('quit-and-install', () => {
+    import('./updater').then(mod => mod.quitAndInstall());
+  });
+  ipcMain.handle('get-app-version', () => app.getVersion());
 
   ipcMain.on('open-external', (_e, url: string) => { if (url) shell.openExternal(url); });
 

@@ -1,5 +1,5 @@
 /**
- * TW-Overlay 메인 프로세스 - 1.0.6 안정화 빌드
+ * TW-Overlay 메인 프로세스 - 1.0.7 안정화 빌드
  */
 import { app, globalShortcut } from 'electron';
 import { POLLING_FAST_MS, POLLING_SLOW_MS, POLLING_COOLDOWN } from './modules/constants';
@@ -10,6 +10,9 @@ import * as wm from './modules/windowManager';
 import * as ipcHandlers from './modules/ipcHandlers';
 import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
+import { setupUpdater } from './modules/updater';
+
+log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
@@ -87,13 +90,24 @@ function startPolling(): void {
 }
 
 app.whenReady().then(() => {
+  // 1. 즉시 스플래시 화면 표시
+  wm.createSplashWindow();
+
+  // 2. 초기화 로직 즉시 실행
   const sidebar = wm.createMainWindow(); 
   tray.createTray();
   ipcHandlers.register();
   registerShortcuts();
+  
+  // 3. 트래커 및 폴링 즉시 시작
   tracker.start();
   startPolling();
-  
+
+  // 4. 업데이트 체크는 리소스 분산을 위해 약간의 지연 유지
+  setTimeout(() => {
+    setupUpdater(sidebar);
+  }, 5000); 
+
   const cfg = config.load();
   if (cfg.overlayVisible !== false) wm.setOverlayVisible(true);
 

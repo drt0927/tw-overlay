@@ -8,7 +8,7 @@ import { get_LOG_PATH, LOG_MAX_SIZE, IS_DEV } from './constants';
 export function log(message: string): void {
   const logMessage = `[${new Date().toISOString()}] ${message}
 `;
-  if (IS_DEV) console.log(message);
+  if (IS_DEV) console.log(logMessage);
   try {
     const logPath = get_LOG_PATH();
     if (fs.existsSync(logPath)) {

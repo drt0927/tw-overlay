@@ -84,7 +84,7 @@ function getBackoffMs(): number {
 // ─── HTTP 요청 유틸 ───
 function fetchPage(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: HEADERS, timeout: 10000 }, (res) => {
+    const req = https.get(url, { headers: HEADERS, timeout: 10000, rejectUnauthorized: false }, (res) => {
       // 리다이렉트 처리
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         fetchPage(res.headers.location).then(resolve).catch(reject);

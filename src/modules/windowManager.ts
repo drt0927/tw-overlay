@@ -60,6 +60,7 @@ export function createMainWindow(): BrowserWindow {
     height: 800, // 사용자 지정 높이 유지
     frame: false, 
     transparent: true, 
+    alwaysOnTop: true,
     show: false, 
     skipTaskbar: true,
     resizable: false, 
@@ -245,7 +246,8 @@ export function toggleOverlay(): boolean { return setOverlayVisible(!isOverlayVi
 export function syncOverlay(currentRect: any): void {
   if (!mainWindow || isApplyingSize) return;
   if (currentRect && currentRect.x > -10000) {
-    if (!mainWindow.isVisible()) mainWindow.show();
+    const wasVisible = mainWindow.isVisible();
+    if (!wasVisible) mainWindow.show();
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
 
     const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
@@ -273,7 +275,20 @@ export function syncOverlay(currentRect: any): void {
     // 사이드바 이동 (현재 너비 유지하면서 높이는 800 고정)
     const currentSidebarB = mainWindow.getBounds();
     isProgrammaticMove = true;
-    mainWindow.setBounds({ x: gX + gW, y: gY + 40, width: currentSidebarB.width, height: 800 });
+    const newSidebarBounds = { x: gX + gW, y: gY + 40, width: currentSidebarB.width, height: 800 };
+    mainWindow.setBounds(newSidebarBounds);
+
+    // 창이 새로 나타났을 때 마우스가 위에 있다면 즉시 클릭 가능하도록 설정
+    if (!wasVisible) {
+      const cursor = screen.getCursorScreenPoint();
+      // getBounds()는 DIP 단위, getCursorScreenPoint()도 DIP 단위 (일반적으로)
+      // 정확한 히트 테스트를 위해 현재 윈도우의 bounds 사용
+      const b = mainWindow.getBounds();
+      if (cursor.x >= b.x && cursor.x <= b.x + b.width &&
+          cursor.y >= b.y && cursor.y <= b.y + b.height) {
+        mainWindow.setIgnoreMouseEvents(false);
+      }
+    }
 
     if (settingsWindow && !settingsWindow.isDestroyed() && settingsWindow.isVisible()) {
       isProgrammaticMove = true;

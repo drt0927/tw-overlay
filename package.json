@@ -4,7 +4,7 @@
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc && powershell -Command \"Copy-Item src/*.html, src/*.css, src/*.ps1 dist/ -ErrorAction SilentlyContinue; if (!(Test-Path dist/icons)) { New-Item -ItemType Directory dist/icons }; Copy-Item src/icons/* dist/icons/ -ErrorAction SilentlyContinue\"",
+    "build": "tsc && powershell -Command \"Copy-Item src/*.html, src/*.css, src/*.ps1 dist/ -ErrorAction SilentlyContinue; if (!(Test-Path dist/icons)) { New-Item -ItemType Directory dist/icons }; Copy-Item src/icons/* dist/icons/ -ErrorAction SilentlyContinue; if (!(Test-Path dist/assets)) { New-Item -ItemType Directory dist/assets }; Copy-Item src/assets/*.js dist/assets/ -ErrorAction SilentlyContinue\"",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron . --dev",
     "dist": "npm run build && electron-builder --win",

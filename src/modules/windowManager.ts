@@ -287,6 +287,9 @@ export function syncOverlay(currentRect: any): void {
       if (cursor.x >= b.x && cursor.x <= b.x + b.width &&
           cursor.y >= b.y && cursor.y <= b.y + b.height) {
         mainWindow.setIgnoreMouseEvents(false);
+      } else {
+        // 마우스가 밖에 있다면 포워딩 훅을 재설정하여 진입 시 감지되도록 함
+        mainWindow.setIgnoreMouseEvents(true, { forward: true });
       }
     }
 

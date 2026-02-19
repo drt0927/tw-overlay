@@ -1,17 +1,18 @@
 /**
- * 창 관리 모듈 - 사용자 지정 설정(800px, AlwaysOnTop: false) 준수 버전
+ * 창 관리 모듈 - WebContentsView + 창별 독립 플래그 버전
  */
-import { BrowserWindow, BrowserView, screen, Rectangle } from 'electron';
+import { BrowserWindow, WebContentsView, screen, Rectangle } from 'electron';
 import * as path from 'path';
-import { MIN_W, MIN_H, IS_DEV, AppConfig, WindowPosition } from './constants';
+import { MIN_W, MIN_H, IS_DEV, AppConfig, WindowPosition, SIDEBAR_HEIGHT } from './constants';
 import * as config from './config';
+import { log } from './logger';
 
 // --- 상태 관리 ---
 let mainWindow: BrowserWindow | null = null; // 사이드바
 let overlayWindow: BrowserWindow | null = null; // 오버레이
 let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
-let view: BrowserView | null = null;
+let view: WebContentsView | null = null;
 
 let gameRect: Rectangle | null = null;
 let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
@@ -19,11 +20,18 @@ let settingsPos: WindowPosition = { offsetX: -1010, offsetY: 40 };
 let galleryPos: WindowPosition = { offsetX: -320, offsetY: 40 };
 
 let isTracking = false;
-let isProgrammaticMove = false;
+const isProgrammaticMoveMap: Record<string, boolean> = {};
 let isClickThrough = false;
 let isApplyingSize = false;
 let isSidebarCollapsed = false;
 let isOverlayVisible = false;
+let onOverlayReady: (() => void) | null = null;
+
+function setProgrammaticMove(key: string): void { isProgrammaticMoveMap[key] = true; }
+function consumeProgrammaticMove(key: string): boolean {
+  if (isProgrammaticMoveMap[key]) { isProgrammaticMoveMap[key] = false; return true; }
+  return false;
+}
 
 // 초기 설정 로드
 function init() {
@@ -50,14 +58,19 @@ export const getGalleryWindow = () => galleryWindow;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 
-/** 메인 사이드바 생성 - 사용자 설정 반영 (800px, alwaysOnTop: false) */
+/** 오버레이 창 준비 완료 시 콜백 등록 (순환 참조 회피) */
+export function onOverlayWindowReady(callback: () => void): void {
+  onOverlayReady = callback;
+}
+
+/** 메인 사이드바 생성 - 사용자 설정 반영 */
 export function createMainWindow(): BrowserWindow {
   const cfg = config.load();
   isOverlayVisible = cfg.overlayVisible !== false;
 
   mainWindow = new BrowserWindow({
     width: 38, 
-    height: 800, // 사용자 지정 높이 유지
+    height: SIDEBAR_HEIGHT,
     frame: false, 
     transparent: true, 
     alwaysOnTop: true,
@@ -80,9 +93,8 @@ export function createMainWindow(): BrowserWindow {
       mainWindow?.webContents.openDevTools({ mode: 'detach' });
     }
     mainWindow?.webContents.send('config-data', config.load());
-    mainWindow?.setIgnoreMouseEvents(true, { forward: true });
   });
-  mainWindow.on('move', () => { if (isProgrammaticMove) isProgrammaticMove = false; });
+  mainWindow.on('move', () => { consumeProgrammaticMove('main'); });
   return mainWindow;
 }
 
@@ -104,8 +116,8 @@ function createOverlayWindow(targetUrl?: string): void {
   overlayWindow.setOpacity(cfg.opacity);
   overlayWindow.loadFile(path.join(__dirname, '..', 'overlay.html'));
 
-  view = new BrowserView({ webPreferences: { backgroundThrottling: true } });
-  overlayWindow.setBrowserView(view);
+  view = new WebContentsView({ webPreferences: { backgroundThrottling: true } });
+  overlayWindow.contentView.addChildView(view);
   
   view.webContents.setWindowOpenHandler(({ url }) => {
     if (view) view.webContents.loadURL(url);
@@ -118,20 +130,20 @@ function createOverlayWindow(targetUrl?: string): void {
     if (view && overlayWindow) {
       const currentUrl = view.webContents.getURL();
       overlayWindow.webContents.send('url-change', currentUrl);
-      config.save({ url: currentUrl } as any);
+      config.save({ url: currentUrl });
     }
   };
   view.webContents.on('did-navigate', updateUrl);
   view.webContents.on('did-navigate-in-page', updateUrl);
 
   overlayWindow.on('move', () => {
-    if (isProgrammaticMove || isApplyingSize || !overlayWindow) { isProgrammaticMove = false; return; }
+    if (consumeProgrammaticMove('overlay') || isApplyingSize || !overlayWindow) return;
     const b = overlayWindow.getBounds();
     if (isTracking && gameRect) {
       const clampedX = Math.max(gameRect.x, Math.min(b.x, gameRect.x + gameRect.width - b.width));
       const clampedY = Math.max(gameRect.y, Math.min(b.y, gameRect.y + gameRect.height - b.height));
       if (Math.round(b.x) !== Math.round(clampedX) || Math.round(b.y) !== Math.round(clampedY)) {
-        isProgrammaticMove = true;
+        setProgrammaticMove('overlay');
         overlayWindow.setPosition(Math.round(clampedX), Math.round(clampedY));
         const finalB = overlayWindow.getBounds();
         overlayPos.offsetX = finalB.x - gameRect.x;
@@ -155,8 +167,8 @@ function createOverlayWindow(targetUrl?: string): void {
       overlayWindow?.webContents.openDevTools({ mode: 'detach' });
       view?.webContents.openDevTools({ mode: 'detach' });
     }
-    const gallery = require('./galleryMonitor');
-    gallery.updateWindows(overlayWindow, mainWindow, galleryWindow);
+    // 콜백으로 갤러리 모니터에 창 참조 전달 (순환 참조 회피)
+    if (onOverlayReady) onOverlayReady();
   });
 
   overlayWindow.on('closed', () => { overlayWindow = null; view = null; isTracking = false; });
@@ -183,7 +195,7 @@ export function toggleSettingsWindow(): void {
     if (IS_DEV) settingsWindow?.webContents.openDevTools({ mode: 'detach' });
   });
   settingsWindow.on('move', () => {
-    if (isProgrammaticMove || !settingsWindow || !gameRect) { isProgrammaticMove = false; return; }
+    if (consumeProgrammaticMove('settings') || !settingsWindow || !gameRect) return;
     const b = settingsWindow.getBounds();
     settingsPos.offsetX = b.x - (gameRect.x + gameRect.width);
     settingsPos.offsetY = b.y - gameRect.y;
@@ -206,11 +218,11 @@ export function toggleGalleryWindow(): void {
     galleryWindow?.webContents.send('config-data', config.load());
     galleryWindow?.show();
     if (IS_DEV) galleryWindow?.webContents.openDevTools({ mode: 'detach' });
-    const gallery = require('./galleryMonitor');
-    gallery.updateWindows(overlayWindow, mainWindow, galleryWindow);
+    // 콜백으로 갤러리 창 참조 전달 (순환 참조 회피)
+    if (onOverlayReady) onOverlayReady();
   });
   galleryWindow.on('move', () => {
-    if (isProgrammaticMove || !galleryWindow || !gameRect) { isProgrammaticMove = false; return; }
+    if (consumeProgrammaticMove('gallery') || !galleryWindow || !gameRect) return;
     const b = galleryWindow.getBounds();
     galleryPos.offsetX = b.x - (gameRect.x + gameRect.width);
     galleryPos.offsetY = b.y - gameRect.y;
@@ -237,7 +249,7 @@ export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean
     overlayWindow.close(); overlayWindow = null; view = null; isTracking = false;
   }
   if (mainWindow) mainWindow.webContents.send('overlay-status', isOverlayVisible);
-  config.save({ overlayVisible: isOverlayVisible } as any);
+  config.save({ overlayVisible: isOverlayVisible });
   return isOverlayVisible;
 }
 
@@ -267,38 +279,27 @@ export function syncOverlay(currentRect: any): void {
       const finalX = Math.max(gX, Math.min(targetX, gX + gW - newW));
       const finalY = Math.max(gY, Math.min(targetY, gY + gH - newH));
       if (Math.abs(b.x - finalX) > 1 || Math.abs(b.y - finalY) > 1) {
-        isProgrammaticMove = true;
+        setProgrammaticMove('overlay');
         overlayWindow.setBounds({ x: finalX, y: finalY, width: newW, height: newH });
       }
     } else if (isOverlayVisible && !overlayWindow) createOverlayWindow();
 
-    // 사이드바 이동 (현재 너비 유지하면서 높이는 800 고정)
+    // 사이드바 이동 (현재 너비 유지하면서 높이는 SIDEBAR_HEIGHT 고정)
     const currentSidebarB = mainWindow.getBounds();
-    isProgrammaticMove = true;
-    const newSidebarBounds = { x: gX + gW, y: gY + 40, width: currentSidebarB.width, height: 800 };
+    const wasOffScreen = currentSidebarB.x <= -1000;
+
+    setProgrammaticMove('main');
+    const newSidebarBounds = { x: gX + gW, y: gY + 40, width: currentSidebarB.width, height: SIDEBAR_HEIGHT };
     mainWindow.setBounds(newSidebarBounds);
 
-    // 창이 새로 나타났을 때 마우스가 위에 있다면 즉시 클릭 가능하도록 설정
-    if (!wasVisible) {
-      const cursor = screen.getCursorScreenPoint();
-      // getBounds()는 DIP 단위, getCursorScreenPoint()도 DIP 단위 (일반적으로)
-      // 정확한 히트 테스트를 위해 현재 윈도우의 bounds 사용
-      const b = mainWindow.getBounds();
-      if (cursor.x >= b.x && cursor.x <= b.x + b.width &&
-          cursor.y >= b.y && cursor.y <= b.y + b.height) {
-        mainWindow.setIgnoreMouseEvents(false);
-      } else {
-        // 마우스가 밖에 있다면 포워딩 훅을 재설정하여 진입 시 감지되도록 함
-        mainWindow.setIgnoreMouseEvents(true, { forward: true });
-      }
-    }
+
 
     if (settingsWindow && !settingsWindow.isDestroyed() && settingsWindow.isVisible()) {
-      isProgrammaticMove = true;
+      setProgrammaticMove('settings');
       settingsWindow.setPosition(Math.round(gX + gW + settingsPos.offsetX), Math.round(gY + settingsPos.offsetY));
     }
     if (galleryWindow && !galleryWindow.isDestroyed() && galleryWindow.isVisible()) {
-      isProgrammaticMove = true;
+      setProgrammaticMove('gallery');
       galleryWindow.setPosition(Math.round(gX + gW + galleryPos.offsetX), Math.round(gY + galleryPos.offsetY));
     }
     gameRect = { x: gX, y: gY, width: gW, height: gH };
@@ -309,9 +310,8 @@ export function applySettings(newSettings: any): void {
   // 사이드바 일시적 리사이징 요청 (툴팁 공간 확보)
   if (newSettings.isSidebarResize && mainWindow) {
     const b = mainWindow.getBounds();
-    isProgrammaticMove = true;
-    // 너비만 200으로 확장, 높이는 기존 800 유지
-    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: 800 });
+    setProgrammaticMove('main');
+    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: SIDEBAR_HEIGHT });
     return;
   }
 

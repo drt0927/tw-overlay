@@ -54,6 +54,7 @@ export const SAVE_DEBOUNCE_MS = 300;
 export const POLLING_FAST_MS = 100;
 export const POLLING_SLOW_MS = 500;
 export const POLLING_COOLDOWN = 5;
+export const SIDEBAR_HEIGHT = 800;
 export const PS_QUERY_TIMEOUT_MS = 3000;
 export const PS_RESTART_DELAY_MS = 1000;
 export const FOCUS_DELAY_MS = 50;

@@ -115,12 +115,10 @@
     wrapper.addEventListener('mouseenter', () => {
       // 툴팁 표시를 위해 윈도우 너비를 일시적으로 확장
       window.electronAPI.applySettings({ width: 200, height: 400, isSidebarResize: true });
-      window.electronAPI.setIgnoreMouseEvents(false);
     });
     wrapper.addEventListener('mouseleave', () => {
       // 마우스가 떠나면 다시 원래 크기로 축소
       window.electronAPI.applySettings({ width: 38, height: 400, isSidebarResize: true });
-      window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
       tooltip.style.display = 'none';
     });
     

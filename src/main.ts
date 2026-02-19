@@ -18,6 +18,22 @@ app.commandLine.appendSwitch('disable-renderer-backgrounding');
 let pollingTimer: NodeJS.Timeout | null = null;
 let gameWasEverFound = false;
 
+// ─── 중복 실행 방지 ───
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // 두 번째 인스턴스 실행 시도 시 기존 창 활성화
+    const mainWin = wm.getMainWindow();
+    if (mainWin) {
+      if (mainWin.isMinimized()) mainWin.restore();
+      mainWin.show();
+      mainWin.focus();
+    }
+  });
+}
+
 function registerShortcuts(): void {
   globalShortcut.unregisterAll();
   globalShortcut.register('CommandOrControl+Shift+T', () => {
@@ -80,7 +96,14 @@ app.whenReady().then(() => {
   
   const cfg = config.load();
   if (cfg.overlayVisible !== false) wm.setOverlayVisible(true);
-  gallery.start(wm.getOverlayWindow() as any, sidebar);
+
+  // 갤러리 모니터 시작 (overlay는 아직 미생성이므로 null 전달)
+  gallery.start(null, sidebar);
+
+  // 오버레이/갤러리 창 준비 완료 시 갤러리 모니터에 참조 업데이트
+  wm.onOverlayWindowReady(() => {
+    gallery.updateWindows(wm.getOverlayWindow(), wm.getMainWindow(), wm.getGalleryWindow());
+  });
 });
 
 app.on('before-quit', () => {

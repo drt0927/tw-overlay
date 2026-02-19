@@ -5,21 +5,16 @@
  * - 블락 방지: 랜덤 딜레이, 요청 간격 제한, 쿨다운
  */
 import * as https from 'https';
-import { Notification, BrowserWindow } from 'electron';
+import { Notification, BrowserWindow, shell } from 'electron';
 import { log } from './logger';
 import * as config from './config';
+import { WatchedPost } from './constants';
 
 interface Post {
   no: number;
   title: string;
   replyCount: number;
   writer: string;
-}
-
-interface WatchedPost {
-  title: string;
-  commentCount: number;
-  addedAt: number;
 }
 
 const GALLERY_ID = 'talesweaver';
@@ -232,14 +227,8 @@ function notify(title: string, body: string, postNo?: number): void {
     const noti = new Notification({ title, body, silent: false });
     noti.on('click', () => {
       if (postNo) {
-        const wm = require('./windowManager');
-        wm.setOverlayVisible(true); // 알림 클릭 시 오버레이 강제 오픈
-        
-        // 창이 생성될 시간을 고려하여 약간의 지연 후 URL 이동
-        setTimeout(() => {
-          const view = wm.getView();
-          if (view) view.webContents.loadURL(VIEW_URL(postNo));
-        }, 100);
+        shell.openExternal(VIEW_URL(postNo));
+        log(`[GALLERY] 알림 클릭: 외부 브라우저로 오픈 (#${postNo})`);
       }
     });
     noti.show();
@@ -353,10 +342,11 @@ async function doCheck(): Promise<void> {
     return;
   }
 
-  // 에러 백오프 적용
+  // 에러 백오프 적용 — 대기 후 에러 카운트를 줄여 재시도 허용
   const backoff = getBackoffMs();
   if (backoff > 0) {
     log(`[GALLERY] 백오프 ${Math.round(backoff / 1000)}초 대기 (연속 에러 ${consecutiveErrors}회)`);
+    consecutiveErrors = Math.max(0, consecutiveErrors - 1);
     checkTimer = setTimeout(doCheck, backoff);
     return;
   }
@@ -385,12 +375,12 @@ async function doCheck(): Promise<void> {
 
 // ─── 공개 API ───
 
-export function start(mainWindow: BrowserWindow, sidebarWindow: BrowserWindow): void {
-  mainWindowRef = mainWindow;
-  sidebarWindowRef = sidebarWindow;
+export function start(overlayWin: BrowserWindow | null, sidebarWin: BrowserWindow): void {
+  mainWindowRef = overlayWin;
+  sidebarWindowRef = sidebarWin;
 
   // 저장된 상태 복원
-  const cfg = config.load() as any;
+  const cfg = config.load();
   lastSeenPostNo = cfg.galleryLastSeen || 0;
   watchedPosts = cfg.galleryWatched || {};
   notifyEnabled = cfg.galleryNotify !== false; // 기본 true
@@ -407,13 +397,13 @@ export function stop(): void {
   log('[GALLERY] 갤러리 모니터 중지');
 }
 
-export function updateWindows(mainWindow: BrowserWindow, sidebarWindow: BrowserWindow, galleryWindow: BrowserWindow | null = null): void {
-  mainWindowRef = mainWindow;
-  sidebarWindowRef = sidebarWindow;
-  if (galleryWindow) galleryWindowRef = galleryWindow;
+export function updateWindows(overlayWin: BrowserWindow | null, sidebarWin: BrowserWindow | null, galleryWin: BrowserWindow | null = null): void {
+  if (overlayWin) mainWindowRef = overlayWin;
+  if (sidebarWin) sidebarWindowRef = sidebarWin;
+  if (galleryWin) galleryWindowRef = galleryWin;
 
   // 설정에서 키워드가 바뀌었을 수 있으므로 다시 로드
-  const cfg = config.load() as any;
+  const cfg = config.load();
   galleryKeywords = cfg.galleryKeywords || [];
 }
 

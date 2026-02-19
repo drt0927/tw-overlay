@@ -11,15 +11,19 @@ let psProcess: ChildProcess | null = null;
 let psReady = false;
 let psQueryResolve: ((value: any) => void) | null = null;
 let psBuffer = '';
+let isStopping = false;
+
+function getScriptPath(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', 'track.ps1');
+  }
+  return path.join(app.getAppPath(), 'dist', 'track.ps1');
+}
 
 export function start(): void {
+  if (isStopping) return;
   try {
-    // 1. 스크립트 경로를 더 명확하게 계산
-    let scriptPath = path.join(app.getAppPath(), 'dist', 'track.ps1');
-    if (app.isPackaged) {
-      scriptPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', 'track.ps1');
-    }
-    
+    const scriptPath = getScriptPath();
     log(`[TRACKER] 스크립트 경로 시도: ${scriptPath}`);
 
     psProcess = spawn('powershell', [
@@ -54,8 +58,26 @@ export function start(): void {
       }
     });
 
+    psProcess.stderr?.on('data', (data) => {
+      log(`[TRACKER STDERR] ${data.toString().trim()}`);
+    });
+
     psProcess.on('error', (err) => {
       log(`[TRACKER ERROR] spawn 에러: ${err.message}`);
+    });
+
+    // 프로세스 종료 시 자동 재시작
+    psProcess.on('exit', (code, signal) => {
+      psReady = false;
+      psProcess = null;
+      if (psQueryResolve) {
+        psQueryResolve(null);
+        psQueryResolve = null;
+      }
+      if (!isStopping) {
+        log(`[TRACKER] PowerShell 종료 (code=${code}, signal=${signal}), ${PS_RESTART_DELAY_MS}ms 후 재시작`);
+        setTimeout(() => start(), PS_RESTART_DELAY_MS);
+      }
     });
 
   } catch (e: any) {
@@ -80,10 +102,22 @@ export async function queryGameRect(): Promise<any> {
 }
 
 export function stop() {
+  isStopping = true;
   if (psProcess) {
+    try { psProcess.stdin?.write('EXIT\n'); } catch (_) {}
     psProcess.kill();
     psProcess = null;
   }
+  psReady = false;
 }
 
-export function focusGameWindow() {} // 형상 유지
+/** 게임 창에 포커스 전환 */
+export function focusGameWindow(): void {
+  if (!psReady || !psProcess) return;
+  try {
+    psProcess.stdin?.write('FOCUS\n');
+  } catch (e: any) {
+    log(`[TRACKER] FOCUS 명령 실패: ${e.message}`);
+  }
+}
+

@@ -223,25 +223,25 @@ function notify(title: string, body: string, postNo?: number): void {
 }
 
 // ─── 새 글 체크 ───
-async function checkNewPosts(): Promise<void> {
+async function checkNewPosts(): Promise<boolean> {
   try {
     const html = await fetchPage(LIST_URL);
     extractEsno(html);
     const posts = parsePostList(html);
-    if (posts.length === 0) return;
+    if (posts.length === 0) return true;
 
     const latestNo = Math.max(...posts.map(p => p.no));
 
     if (lastSeenPostNo === 0) {
       lastSeenPostNo = latestNo;
       config.save({ galleryLastSeen: latestNo } as any);
-      return;
+      return true;
     }
 
     const newPosts = posts.filter(p => p.no > lastSeenPostNo);
     if (newPosts.length > 0) {
       sendNewActivity('post', newPosts.length);
-      
+
       let toNotify = newPosts;
       if (galleryKeywords && galleryKeywords.length > 0) {
         const pattern = galleryKeywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -253,7 +253,7 @@ async function checkNewPosts(): Promise<void> {
       for (const p of notifyItems) {
         notify('🆕 새 글', `${p.title}${p.replyCount > 0 ? ` [${p.replyCount}]` : ''} - ${p.writer}`, p.no);
       }
-      
+
       if (toNotify.length > 3) {
         notify('🆕 새 글', `외 ${toNotify.length - 3}개의 키워드 일치 새 글이 있습니다.`);
       }
@@ -263,8 +263,10 @@ async function checkNewPosts(): Promise<void> {
     }
 
     sendPostListToSidebar(posts);
+    return true;
   } catch (e: any) {
     log(`[GALLERY] 목록 체크 실패: ${e.message}`);
+    return false;
   }
 }
 
@@ -313,8 +315,9 @@ async function doCheck(): Promise<void> {
     return;
   }
 
-  try {
-    await checkNewPosts();
+  const listSuccess = await checkNewPosts();
+
+  if (listSuccess) {
     await randomDelay();
     await checkWatchedComments();
     if (consecutiveErrors > 0) {
@@ -322,10 +325,10 @@ async function doCheck(): Promise<void> {
         galleryWindowRef.webContents.send('gallery-connection-status', true);
       }
     }
-    consecutiveErrors = 0; 
-  } catch (e: any) {
+    consecutiveErrors = 0;
+  } else {
     consecutiveErrors++;
-    log(`[GALLERY Error] (연속 ${consecutiveErrors}회): ${e.message}`);
+    log(`[GALLERY Error] 목록 체크 실패 (연속 ${consecutiveErrors}회)`);
     if (galleryWindowRef && !galleryWindowRef.isDestroyed()) {
       galleryWindowRef.webContents.send('gallery-connection-status', false);
     }

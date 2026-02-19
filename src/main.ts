@@ -1,8 +1,8 @@
 /**
- * TW-Overlay 메인 프로세스 - 1.0.7 안정화 빌드
+ * TW-Overlay 메인 프로세스 - 1.0.8 안정화 빌드
  */
 import { app, globalShortcut } from 'electron';
-import { POLLING_FAST_MS, POLLING_SLOW_MS, POLLING_COOLDOWN } from './modules/constants';
+import { POLLING_FAST_MS, POLLING_SLOW_MS, POLLING_COOLDOWN, appState } from './modules/constants';
 import { log } from './modules/logger';
 import * as config from './modules/config';
 import * as tracker from './modules/tracker';
@@ -11,13 +11,16 @@ import * as ipcHandlers from './modules/ipcHandlers';
 import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
 import { setupUpdater } from './modules/updater';
+import screenWatcher from './modules/screenWatcher';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-features', 'WebRtcAllowWgcDesktopCapturer');
+app.commandLine.appendSwitch('disable-gpu-sandbox');
 
-(app as any).isQuitting = false;
+appState.isQuitting = false;
 let pollingTimer: NodeJS.Timeout | null = null;
 let gameWasEverFound = false;
 
@@ -50,7 +53,7 @@ function startPolling(): void {
   let stableCount = 0;
 
   async function poll(): Promise<void> {
-    if ((app as any).isQuitting) return;
+    if (appState.isQuitting) return;
     const currentRect = await tracker.queryGameRect();
     let nextDelay = stableCount >= POLLING_COOLDOWN ? POLLING_SLOW_MS : POLLING_FAST_MS;
 
@@ -59,7 +62,7 @@ function startPolling(): void {
       return;
     }
 
-    if (currentRect && (currentRect as any).notRunning) {
+    if (currentRect && 'notRunning' in currentRect) {
       if (gameWasEverFound) { app.quit(); return; }
       wm.hideAll();
       stableCount = POLLING_COOLDOWN;
@@ -94,11 +97,11 @@ app.whenReady().then(() => {
   wm.createSplashWindow();
 
   // 2. 초기화 로직 즉시 실행
-  const sidebar = wm.createMainWindow(); 
+  const sidebar = wm.createMainWindow();
   tray.createTray();
   ipcHandlers.register();
   registerShortcuts();
-  
+
   // 3. 트래커 및 폴링 즉시 시작
   tracker.start();
   startPolling();
@@ -106,7 +109,7 @@ app.whenReady().then(() => {
   // 4. 업데이트 체크는 리소스 분산을 위해 약간의 지연 유지
   setTimeout(() => {
     setupUpdater(sidebar);
-  }, 5000); 
+  }, 5000);
 
   const cfg = config.load();
   if (cfg.overlayVisible !== false) wm.setOverlayVisible(true);
@@ -118,10 +121,36 @@ app.whenReady().then(() => {
   wm.onOverlayWindowReady(() => {
     gallery.updateWindows(wm.getOverlayWindow(), wm.getMainWindow(), wm.getGalleryWindow());
   });
+
+  // 화면 감지기 (보라색 장판)
+  screenWatcher.on('danger-detected', ({ density }) => {
+    // 오버레이 창에 알림
+    const overlayWin = wm.getOverlayWindow();
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      overlayWin.webContents.send('danger-alert', density);
+    }
+    // 감시 구역 창에 알림 (소리 재생용)
+    const monitorZone = wm.getMonitorZoneWindow();
+    if (monitorZone && !monitorZone.isDestroyed()) {
+      monitorZone.webContents.send('danger-alert', density);
+    }
+  });
+
+  screenWatcher.on('safe', () => {
+    const overlayWin = wm.getOverlayWindow();
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      overlayWin.webContents.send('danger-cleared');
+    }
+    const monitorZone = wm.getMonitorZoneWindow();
+    if (monitorZone && !monitorZone.isDestroyed()) {
+      monitorZone.webContents.send('danger-cleared');
+    }
+  });
 });
 
 app.on('before-quit', () => {
-  (app as any).isQuitting = true;
+  appState.isQuitting = true;
+  screenWatcher.stop();
   if (config.hasPending()) config.saveImmediate();
   gallery.stop();
   tray.destroyTray();

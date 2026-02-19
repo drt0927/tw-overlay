@@ -5,8 +5,21 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <style>
+    @keyframes danger-pulse {
+      0%, 100% { box-shadow: inset 0 0 50px 20px rgba(255, 0, 0, 0.5); border: 4px solid rgba(255, 0, 0, 0.8); }
+      50% { box-shadow: inset 0 0 80px 40px rgba(255, 0, 0, 0.8); border: 4px solid rgba(255, 0, 0, 1); }
+    }
+    .danger-active {
+      animation: danger-pulse 0.5s infinite;
+      z-index: 9999;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body class="bg-transparent text-white overflow-hidden select-none">
+  <div id="danger-layer" class="absolute inset-0 hidden pointer-events-none"></div>
+  
   <!-- 상단 컨트롤 바 -->
   <nav id="control-bar" class="glass h-10 flex items-center px-3 relative z-[5000]">
     <div id="loading-bar" class="absolute bottom-0 left-0 h-[2px] bg-purple-400 shadow-[0_0_10px_#c084fc] transition-all duration-500 opacity-0 w-0"></div>
@@ -45,7 +58,7 @@
     const urlInput = document.getElementById('url-input');
     const goBtn = document.getElementById('go-btn');
     const opacitySlider = document.getElementById('opacity-slider');
-
+    
     window.electronAPI.onConfigData((config) => {
       opacitySlider.value = config.opacity || 1.0;
     });
@@ -69,6 +82,19 @@
       let t = fixUrl(urlInput.value);
       if (t) window.electronAPI.navigate(t);
     };
+    
+    // 장판 감지 알림
+    window.electronAPI.onDangerAlert((density) => {
+      const dangerLayer = document.getElementById('danger-layer');
+      dangerLayer.classList.remove('hidden');
+      dangerLayer.classList.add('danger-active');
+    });
+
+    window.electronAPI.onDangerCleared(() => {
+      const dangerLayer = document.getElementById('danger-layer');
+      dangerLayer.classList.remove('danger-active');
+      dangerLayer.classList.add('hidden');
+    });
     
     urlInput.onkeypress = (e) => { if (e.key === 'Enter') nav(); };
     goBtn.onclick = nav;

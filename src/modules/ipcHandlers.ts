@@ -1,12 +1,27 @@
 /**
- * IPC 이벤트 핸들러 모듈 - 1.0.6 안정화 빌드
+ * IPC 이벤트 핸들러 모듈 - 1.0.8 안정화 빌드
  */
 import { ipcMain, shell, app, BrowserWindow } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import * as gallery from './galleryMonitor';
+import screenWatcher from './screenWatcher';
 
 export function register(): void {
+  // 순환 참조 회피: windowManager에서 감시 중지 시 콜백으로 screenWatcher.stop() 호출
+  wm.onScreenWatcherStop(() => {
+    screenWatcher.stop();
+  });
+
+  ipcMain.on('screen-watcher-toggle', (_e, enabled: boolean) => {
+    if (enabled) {
+      screenWatcher.start();
+      wm.setScreenWatching(true);
+    } else {
+      wm.setScreenWatching(false);
+    }
+  });
+
   ipcMain.on('set-ignore-mouse-events', (event, ignore: boolean, options: any) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) win.setIgnoreMouseEvents(ignore, options || {});
@@ -38,6 +53,7 @@ export function register(): void {
 
   ipcMain.on('toggle-settings', () => { wm.toggleSettingsWindow(); });
   ipcMain.on('toggle-gallery', () => { wm.toggleGalleryWindow(); });
+  ipcMain.on('toggle-monitor-zone', () => { wm.toggleMonitorZone(); });
   ipcMain.on('toggle-sidebar', () => { wm.toggleSidebar(); });
   ipcMain.on('toggle-overlay', () => { wm.toggleOverlay(); });
   ipcMain.on('check-for-updates', (event) => {

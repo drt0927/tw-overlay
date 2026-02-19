@@ -7,9 +7,13 @@ import { log } from './logger';
 import * as config from './config';
 
 let updateWin: BrowserWindow | null = null;
+let isSetup = false;
 
 export function setupUpdater(mainWindow: BrowserWindow | null) {
   updateWin = mainWindow;
+
+  if (isSetup) return;
+  isSetup = true;
 
   if (!app.isPackaged) {
     log('Development mode: skipping update check');
@@ -43,9 +47,9 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
-    updateWin?.webContents.send('update-status', { 
-      state: 'downloading', 
-      percent: Math.round(progressObj.percent) 
+    updateWin?.webContents.send('update-status', {
+      state: 'downloading',
+      percent: Math.round(progressObj.percent)
     });
     updateWin?.setProgressBar(progressObj.percent / 100);
   });

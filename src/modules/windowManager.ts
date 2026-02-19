@@ -3,7 +3,7 @@
  */
 import { BrowserWindow, WebContentsView, screen, Rectangle } from 'electron';
 import * as path from 'path';
-import { MIN_W, MIN_H, IS_DEV, AppConfig, WindowPosition, SIDEBAR_HEIGHT } from './constants';
+import { MIN_W, MIN_H, IS_DEV, AppConfig, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect } from './constants';
 import * as config from './config';
 import { log } from './logger';
 
@@ -13,6 +13,7 @@ let splashWindow: BrowserWindow | null = null; // 스플래시 화면
 let overlayWindow: BrowserWindow | null = null; // 오버레이
 let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
+let monitorZoneWindow: BrowserWindow | null = null; // 감시 구역 설정 창
 let view: WebContentsView | null = null;
 
 let gameRect: Rectangle | null = null;
@@ -26,7 +27,9 @@ let isClickThrough = false;
 let isApplyingSize = false;
 let isSidebarCollapsed = false;
 let isOverlayVisible = false;
+let isScreenWatching = false;
 let onOverlayReady: (() => void) | null = null;
+let onScreenWatchStop: (() => void) | null = null;
 
 function setProgrammaticMove(key: string): void { isProgrammaticMoveMap[key] = true; }
 function consumeProgrammaticMove(key: string): boolean {
@@ -57,12 +60,19 @@ export const getSplashWindow = () => splashWindow;
 export const getOverlayWindow = () => overlayWindow;
 export const getSettingsWindow = () => settingsWindow;
 export const getGalleryWindow = () => galleryWindow;
+export const getMonitorZoneWindow = () => monitorZoneWindow;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
+export const getGameRect = () => gameRect;
 
 /** 오버레이 창 준비 완료 시 콜백 등록 (순환 참조 회피) */
 export function onOverlayWindowReady(callback: () => void): void {
   onOverlayReady = callback;
+}
+
+/** 감시 중지 콜백 등록 (순환 참조 회피) */
+export function onScreenWatcherStop(callback: () => void): void {
+  onScreenWatchStop = callback;
 }
 
 /** 스플래시 화면 생성 */
@@ -94,25 +104,25 @@ export function createMainWindow(): BrowserWindow {
   isOverlayVisible = cfg.overlayVisible !== false;
 
   mainWindow = new BrowserWindow({
-    width: 38, 
+    width: SIDEBAR_WIDTH,
     height: SIDEBAR_HEIGHT,
-    frame: false, 
-    transparent: true, 
+    frame: false,
+    transparent: true,
     alwaysOnTop: true,
-    show: false, 
+    show: false,
     skipTaskbar: true,
-    resizable: false, 
-    thickFrame: false, 
-    focusable: false, 
+    resizable: false,
+    thickFrame: false,
+    focusable: false,
     acceptFirstMouse: true,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),
       contextIsolation: true, nodeIntegration: false
     }
   });
-  
+
   mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
-  
+
   mainWindow.on('ready-to-show', () => {
     if (IS_DEV) {
       mainWindow?.webContents.openDevTools({ mode: 'detach' });
@@ -137,13 +147,13 @@ function createOverlayWindow(targetUrl?: string): void {
       contextIsolation: true, nodeIntegration: false, backgroundThrottling: true
     }
   });
-  
+
   overlayWindow.setOpacity(cfg.opacity);
   overlayWindow.loadFile(path.join(__dirname, '..', 'overlay.html'));
 
   view = new WebContentsView({ webPreferences: { backgroundThrottling: true } });
   overlayWindow.contentView.addChildView(view);
-  
+
   view.webContents.setWindowOpenHandler(({ url }) => {
     if (view) view.webContents.loadURL(url);
     return { action: 'deny' };
@@ -259,7 +269,7 @@ export function toggleGalleryWindow(): void {
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
   const b = overlayWindow.getBounds();
-  view.setBounds({ x: 0, y: 40, width: b.width, height: b.height - 40 });
+  view.setBounds({ x: 0, y: OVERLAY_TOOLBAR_HEIGHT, width: b.width, height: b.height - OVERLAY_TOOLBAR_HEIGHT });
 }
 
 export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean {
@@ -280,7 +290,7 @@ export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean
 
 export function toggleOverlay(): boolean { return setOverlayVisible(!isOverlayVisible); }
 
-export function syncOverlay(currentRect: any): void {
+export function syncOverlay(currentRect: GameRect): void {
   if (!mainWindow || isApplyingSize) return;
   if (currentRect && currentRect.x > -10000) {
     const wasVisible = mainWindow.isVisible();
@@ -345,7 +355,7 @@ export function applySettings(newSettings: any): void {
   const current = config.load();
   const updated = { ...current, ...newSettings };
   config.saveImmediate(updated);
-  
+
   if (overlayWindow) {
     isApplyingSize = true;
     const b = overlayWindow.getBounds();
@@ -356,7 +366,7 @@ export function applySettings(newSettings: any): void {
     updateViewBounds();
     setTimeout(() => { isApplyingSize = false; }, 300);
   }
-  
+
   [mainWindow, overlayWindow, settingsWindow, galleryWindow].forEach(win => {
     win?.webContents.send('config-data', updated);
   });
@@ -377,9 +387,93 @@ export function toggleSidebar(): boolean {
 }
 
 export function hideAll(): void {
-  [overlayWindow, mainWindow, settingsWindow, galleryWindow].forEach(win => {
+  [overlayWindow, mainWindow, settingsWindow, galleryWindow, monitorZoneWindow].forEach(win => {
     if (win && win.isVisible()) win.hide();
   });
   isTracking = false;
   closeSplashWindow();
+}
+
+/** 감시 구역 설정 창 토글 (3-state: 닫힘 → 설정 → 감시 → 설정 → ...) */
+export function toggleMonitorZone(): void {
+  // 상태 1: 감시 중이면 → 감시 중지 + 설정 모드로 전환
+  if (isScreenWatching) {
+    setScreenWatching(false);
+    return;
+  }
+
+  // 상태 2: 창이 열려 있으면 → 닫기
+  if (monitorZoneWindow) {
+    monitorZoneWindow.close();
+    monitorZoneWindow = null;
+    return;
+  }
+
+  // 상태 3: 창이 닫혀 있으면 → 설정 모드로 열기
+  monitorZoneWindow = new BrowserWindow({
+    width: 210, height: 120,
+    frame: false, transparent: true, alwaysOnTop: true,
+    show: false, skipTaskbar: true,
+    resizable: false, // 크기 조절 고정
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload.js'),
+      contextIsolation: true, nodeIntegration: false
+    }
+  });
+
+  monitorZoneWindow.loadFile(path.join(__dirname, '..', 'monitor-zone.html'));
+
+  monitorZoneWindow.on('ready-to-show', () => {
+    // 게임 창 중앙에 초기 배치
+    if (gameRect) {
+      const centerX = Math.round(gameRect.x + (gameRect.width / 2) - 105);
+      const centerY = Math.round(gameRect.y + (gameRect.height / 2) - 60);
+      monitorZoneWindow?.setPosition(centerX, centerY);
+    }
+    monitorZoneWindow?.show();
+    monitorZoneWindow?.webContents.send('config-data', config.load());
+  });
+
+  monitorZoneWindow.on('closed', () => {
+    monitorZoneWindow = null;
+    // 창이 외부에서 닫히면 감시도 중지
+    if (isScreenWatching) {
+      setScreenWatching(false);
+    }
+  });
+}
+
+/** 감시 구역 창 클릭 투과 설정 */
+export function setMonitorZoneClickThrough(ignore: boolean): void {
+  if (monitorZoneWindow && !monitorZoneWindow.isDestroyed()) {
+    monitorZoneWindow.setIgnoreMouseEvents(ignore, { forward: true });
+    monitorZoneWindow.webContents.send('click-through-mode', ignore);
+  }
+}
+
+/** 현재 감시 구역의 좌표 반환 */
+export function getMonitorZoneBounds(): Rectangle | null {
+  if (!monitorZoneWindow || monitorZoneWindow.isDestroyed()) return null;
+  return monitorZoneWindow.getBounds();
+}
+
+/** 감시 상태 변경 및 사이드바 알림 */
+export function setScreenWatching(watching: boolean): void {
+  isScreenWatching = watching;
+  if (!watching && onScreenWatchStop) {
+    onScreenWatchStop();
+  }
+  notifyScreenWatcherStatus();
+}
+
+/** 감시 상태 조회 */
+export function getScreenWatching(): boolean {
+  return isScreenWatching;
+}
+
+/** 사이드바에 감시 상태 알림 */
+function notifyScreenWatcherStatus(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('screen-watcher-status', isScreenWatching);
+  }
 }

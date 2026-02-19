@@ -4,13 +4,13 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.0.7-violet.svg)
+![Version](https://img.shields.io/badge/version-1.0.8-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## ✨ 주요 기능 (v1.0.7 최적화 및 업데이트)
+## ✨ 주요 기능 (v1.0.8 최적화 및 업데이트)
 
 *   **⚡ 초고속 로딩:** 외부 CDN 의존성을 완전히 제거하고 라이브러리(Tailwind, Lucide)를 내장하여 창 전환 및 초기 구동 속도를 획기적으로 개선했습니다.
 *   **🆙 통합 자동 업데이트:** 이제 앱 내 '환경설정 > 앱 정보' 메뉴에서 새 버전을 확인하고, 다운로드 및 설치를 직접 관리할 수 있습니다.
@@ -22,7 +22,7 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.0.7.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.0.8.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
@@ -39,7 +39,9 @@
 - **Asset Management:** Localized JS Bundling
 - **Build System:** Custom Node.js Resource Orchestrator
 
-## 📝 최신 업데이트 내역 (v1.0.7)
+## 📝 최신 업데이트 내역 (v1.0.8)
+- **알람 기능 추가:** 보라색 장판 감지 시 효과음(.webm) 재생 기능이 추가되었습니다.
+- **리소스 최적화:** 사운드 에셋을 로컬 번들에 포함하여 오프라인 환경에서도 안정적인 알람을 보장합니다.
 - **성능 최적화:** 로컬 에셋 도입 및 창 생성 로직 개선으로 로딩 지연 해결.
 - **업데이트 시스템:** GitHub Releases 기반 자동 업데이트 확인 및 환경설정 내 통합 UI 구현.
 - **UX 개선:** 스플래시 화면 추가 및 초기 구동 부하 분산 처리.

@@ -4,12 +4,12 @@
 import { app } from 'electron';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
-import { GAME_PROCESS_NAME, PS_RESTART_DELAY_MS } from './constants';
+import { GAME_PROCESS_NAME, PS_RESTART_DELAY_MS, GameQueryResult } from './constants';
 import { log } from './logger';
 
 let psProcess: ChildProcess | null = null;
 let psReady = false;
-let psQueryResolve: ((value: any) => void) | null = null;
+let psQueryResolve: ((value: GameQueryResult) => void) | null = null;
 let psBuffer = '';
 let isStopping = false;
 
@@ -41,11 +41,11 @@ export function start(): void {
           psReady = true;
           continue;
         }
-        
+
         if (psQueryResolve) {
           const resolve = psQueryResolve;
           psQueryResolve = null;
-          
+
           if (trimmed === 'NOT_RUNNING') resolve({ notRunning: true });
           else if (trimmed === 'MINIMIZED') resolve(null);
           else if (trimmed.includes(',')) {
@@ -83,9 +83,9 @@ export function start(): void {
   }
 }
 
-export async function queryGameRect(): Promise<any> {
+export async function queryGameRect(): Promise<GameQueryResult> {
   if (!psReady || !psProcess || psQueryResolve) return undefined;
-  
+
   return new Promise((resolve) => {
     psQueryResolve = resolve;
     // 3초 타임아웃
@@ -102,7 +102,7 @@ export async function queryGameRect(): Promise<any> {
 export function stop() {
   isStopping = true;
   if (psProcess) {
-    try { psProcess.stdin?.write('EXIT\n'); } catch (_) {}
+    try { psProcess.stdin?.write('EXIT\n'); } catch (_) { }
     psProcess.kill();
     psProcess = null;
   }

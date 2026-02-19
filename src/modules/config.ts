@@ -13,7 +13,7 @@ export function load(): AppConfig {
   try {
     const configPath = get_CONFIG_PATH();
     if (fs.existsSync(configPath)) {
-      return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      return { ...DEFAULT_CONFIG, ...JSON.parse(fs.readFileSync(configPath, 'utf-8')) };
     }
   } catch (e: any) {
     log(`[CONFIG] 설정 로드 실패: ${e.message}`);

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <script src="assets/lucide.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+      border-radius: 8px;
+    }
+
+    #zone {
+      width: 100vw;
+      height: 100vh;
+      border: 3px solid #4ade80;
+      background: rgba(74, 222, 128, 0.15);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #4ade80;
+      font-family: 'Malgun Gothic', sans-serif;
+      font-size: 12px;
+      font-weight: bold;
+      -webkit-app-region: drag;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 1), 0 0 12px rgba(0, 0, 0, 0.6);
+      box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .label {
+      background: rgba(0, 0, 0, 0.75);
+      padding: 5px 10px;
+      border-radius: 4px;
+      pointer-events: none;
+      border: 1px solid rgba(74, 222, 128, 0.4);
+    }
+
+    .hint {
+      font-size: 10px;
+      margin-top: 6px;
+      font-weight: normal;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 3px 8px;
+      border-radius: 3px;
+    }
+
+    #start-btn {
+      margin-top: 8px;
+      padding: 4px 14px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid #4ade80;
+      border-radius: 4px;
+      color: #4ade80;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+      transition: background 0.2s;
+    }
+
+    #start-btn:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    #watch-guide {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: normal;
+      color: rgba(56, 189, 248, 0.9);
+      pointer-events: none;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      animation: fadeOut 1s ease 2.5s forwards;
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="zone">
+    <div class="label">🛡️ 장판 감시 구역 (210x120)</div>
+    <div class="hint">드래그하여 캐릭터 발밑에 맞추세요</div>
+    <button id="start-btn" onclick="startWatching()">▶ 감시 시작</button>
+    <div id="watch-guide">사이드바 <i data-lucide="shield-check"
+        style="width:12px;height:12px;display:inline-block;vertical-align:middle;"></i> 버튼을 클릭하여 종료</div>
+  </div>
+
+  <script>
+    const alertSound = new Audio('assets/sound/purple_alarm.webm');
+    let soundEnabled = true;
+    let soundVolume = 0.5;
+
+    function startWatching() {
+      window.electronAPI.toggleScreenWatcher(true);
+    }
+
+    window.electronAPI.onConfigData((config) => {
+      soundEnabled = config.dangerSoundEnabled !== false;
+      soundVolume = (config.dangerSoundVolume !== undefined ? config.dangerSoundVolume : 50) / 100;
+      alertSound.volume = soundVolume;
+    });
+
+    window.electronAPI.onDangerAlert(() => {
+      if (soundEnabled) {
+        alertSound.volume = soundVolume;
+        alertSound.currentTime = 0;
+        alertSound.play().catch(err => console.warn('Audio play failed:', err));
+      }
+    });
+
+    window.electronAPI.onDangerCleared(() => {
+      alertSound.pause();
+      alertSound.currentTime = 0;
+    });
+
+    let isWatching = false;
+
+    window.electronAPI.onClickThroughMode((isIgnore) => {
+      isWatching = isIgnore;
+      const zone = document.getElementById('zone');
+      const label = zone.querySelector('.label');
+      const hint = zone.querySelector('.hint');
+      const startBtn = document.getElementById('start-btn');
+      const watchGuide = document.getElementById('watch-guide');
+
+      if (isIgnore) {
+        zone.style.border = '2px solid rgba(56, 189, 248, 0.5)';
+        zone.style.background = 'rgba(56, 189, 248, 0.08)';
+        zone.style.boxShadow = 'inset 0 0 8px rgba(56, 189, 248, 0.15)';
+        label.style.display = 'none';
+        hint.style.display = 'none';
+        startBtn.style.display = 'none';
+        watchGuide.style.display = 'block';
+        watchGuide.style.animation = 'none';
+        void watchGuide.offsetWidth;
+        watchGuide.style.animation = 'fadeOut 1s ease 2.5s forwards';
+      } else {
+        zone.style.border = '3px solid #4ade80';
+        zone.style.background = 'rgba(74, 222, 128, 0.15)';
+        zone.style.boxShadow = 'inset 0 0 12px rgba(74, 222, 128, 0.2)';
+        watchGuide.style.display = 'none';
+        label.style.display = 'block';
+        hint.style.display = 'block';
+        startBtn.style.display = 'block';
+      }
+      lucide.createIcons();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !isWatching) window.close();
+    });
+  </script>
+</body>
+
+</html>

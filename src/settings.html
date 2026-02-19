@@ -1,45 +1,116 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
   <style>
-    .settings-wrapper { display: flex; height: 100vh; overflow: hidden; border-radius: 12px; }
-    .settings-sidebar {
-      width: 240px; background: rgba(20, 20, 35, 0.95);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; padding: 0;
+    .settings-wrapper {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      border-radius: 12px;
     }
+
+    .settings-sidebar {
+      width: 240px;
+      background: rgba(20, 20, 35, 0.95);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
     .drag-handle {
-      padding: 30px 24px; cursor: move; -webkit-app-region: drag;
+      padding: 30px 24px;
+      cursor: move;
+      -webkit-app-region: drag;
       background: linear-gradient(to bottom, rgba(168, 85, 247, 0.1), transparent);
     }
-    .nav-container { flex: 1; -webkit-app-region: no-drag; padding: 10px 0; }
+
+    .nav-container {
+      flex: 1;
+      -webkit-app-region: no-drag;
+      padding: 10px 0;
+    }
+
     .nav-item {
-      padding: 12px 24px; cursor: pointer; color: var(--text-muted);
-      font-size: 13px; font-weight: 700; transition: all 0.2s;
-      display: flex; align-items: center; gap: 10px;
+      padding: 12px 24px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
-    .nav-item.active { color: var(--accent); background: rgba(168, 85, 247, 0.1); border-right: 3px solid var(--accent); }
-    
-    .content-area { flex: 1; padding: 40px; overflow-y: auto; background: rgba(15, 18, 30, 0.98); -webkit-app-region: no-drag; }
-    .settings-group { max-width: 800px; }
-    
+
+    .nav-item:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      background: rgba(168, 85, 247, 0.1);
+      border-right: 3px solid var(--accent);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      background: rgba(15, 18, 30, 0.98);
+      -webkit-app-region: no-drag;
+    }
+
+    .settings-group {
+      max-width: 800px;
+    }
+
     .keyword-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3);
-      color: #c084fc; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #c084fc;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
     }
-    .slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .slot-card { transition: transform 0.2s, opacity 0.2s; cursor: grab; }
-    .slot-card:active { cursor: grabbing; }
-    .slot-card.dragging { opacity: 0.4; transform: scale(0.95); }
-    .slot-card.drag-over { border-color: var(--accent); background: rgba(168, 85, 247, 0.1); }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .slot-card {
+      transition: transform 0.2s, opacity 0.2s;
+      cursor: grab;
+    }
+
+    .slot-card:active {
+      cursor: grabbing;
+    }
+
+    .slot-card.dragging {
+      opacity: 0.4;
+      transform: scale(0.95);
+    }
+
+    .slot-card.drag-over {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.1);
+    }
   </style>
 </head>
+
 <body class="panel-glass overflow-hidden">
   <div class="settings-wrapper">
     <div class="settings-sidebar">
@@ -49,7 +120,7 @@
         </span>
         <p class="text-[10px] text-slate-500 mt-1 font-bold">드래그하여 이동</p>
       </div>
-      
+
       <div class="nav-container">
         <div class="nav-item active" onclick="showSection('general', this)">
           <i data-lucide="monitor" class="w-4 h-4"></i> 일반 설정
@@ -64,17 +135,19 @@
           <i data-lucide="info" class="w-4 h-4"></i> 앱 정보
         </div>
       </div>
-      
+
       <div class="mt-auto p-4 space-y-2 mb-2">
         <button onclick="saveSettings()" class="btn-primary w-full py-3 shadow-lg shadow-purple-900/20">저장 및 적용</button>
-        <button onclick="window.close()" class="w-full py-2 text-xs font-bold text-slate-500 hover:text-white transition-all">닫기 (ESC)</button>
+        <button onclick="window.close()"
+          class="w-full py-2 text-xs font-bold text-slate-500 hover:text-white transition-all">닫기 (ESC)</button>
       </div>
     </div>
 
     <div class="content-area custom-scroll">
       <div id="section-general" class="settings-section space-y-8">
         <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="monitor" class="w-5 h-5"></i> 브라우저 기본 설정</h2>
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="monitor" class="w-5 h-5"></i> 브라우저
+            기본 설정</h2>
           <div class="space-y-6">
             <div>
               <label class="section-label">기본 웹사이트 (Home URL)</label>
@@ -91,10 +164,40 @@
               </div>
             </div>
             <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+              <label class="section-label flex justify-between">
+                <span>장판 감지 민감도</span>
+                <span id="danger-threshold-val" class="text-purple-400 font-mono">2.0%</span>
+              </label>
+              <input type="range" id="danger-threshold-input" min="0.5" max="10.0" step="0.5" value="2.0"
+                class="w-full accent-purple-600 mt-2"
+                oninput="document.getElementById('danger-threshold-val').innerText = this.value + '%'">
+              <p class="text-[10px] text-slate-500 mt-2 font-bold italic">* 수치가 낮을수록 예민하게 반응합니다. (권장: 1.0%~3.0%)</p>
+            </div>
+            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" id="danger-sound-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">장판 감지 시 소리
+                    알림</span>
+                  <p class="text-[11px] text-slate-500 mt-0.5">보라색 장판이 감지되면 경고음을 재생합니다.</p>
+                </div>
+              </label>
+              <div class="mt-3 pl-8">
+                <label class="section-label flex justify-between">
+                  <span>알림 음량</span>
+                  <span id="danger-volume-val" class="text-purple-400 font-mono">50%</span>
+                </label>
+                <input type="range" id="danger-volume-input" min="0" max="100" step="5" value="50"
+                  class="w-full accent-purple-600 mt-1"
+                  oninput="document.getElementById('danger-volume-val').innerText = this.value + '%'">
+              </div>
+            </div>
+            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input type="checkbox" id="auto-launch-input" class="w-5 h-5 accent-purple-600">
                 <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">윈도우 시작 시 자동 실행</span>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">윈도우 시작 시 자동
+                    실행</span>
                   <p class="text-[11px] text-slate-500 mt-0.5">컴퓨터를 켜면 TW-Overlay가 자동으로 백그라운드에서 실행됩니다.</p>
                 </div>
               </label>
@@ -105,27 +208,32 @@
 
       <div id="section-about" class="settings-section space-y-8 hidden">
         <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> TW-Overlay 정보</h2>
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i>
+            TW-Overlay 정보</h2>
           <div class="space-y-6">
             <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                  <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 overflow-hidden">
-                    <img src="icons/icon.ico" alt="App Icon" class="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                  <div
+                    class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 overflow-hidden">
+                    <img src="icons/icon.ico" alt="App Icon"
+                      class="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
                   </div>
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
-                    <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version" class="text-purple-400">1.0.7</span></p>
+                    <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
+                        class="text-purple-400">1.0.8</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
                   <!-- 동적 버튼 컨테이너 -->
                   <div id="update-action-container">
-                    <button id="update-check-btn" onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트 확인</button>
+                    <button id="update-check-btn" onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트
+                      확인</button>
                   </div>
                 </div>
               </div>
-              
+
               <!-- 진행 상태 및 메시지 영역 -->
               <div id="update-message-area" class="hidden pt-4 border-t border-white/5 space-y-3">
                 <div class="flex justify-between items-center">
@@ -133,7 +241,8 @@
                   <span id="update-percent" class="text-xs font-black text-purple-400"></span>
                 </div>
                 <div id="update-progress-container" class="w-full bg-white/5 rounded-full h-2 overflow-hidden hidden">
-                  <div id="update-progress-bar" class="bg-purple-500 h-full transition-all duration-300" style="width: 0%"></div>
+                  <div id="update-progress-bar" class="bg-purple-500 h-full transition-all duration-300"
+                    style="width: 0%"></div>
                 </div>
                 <p id="update-status-desc" class="text-[11px] text-slate-500 font-bold"></p>
               </div>
@@ -143,7 +252,8 @@
               <label class="flex items-center gap-3 cursor-pointer group">
                 <input type="checkbox" id="auto-update-input" class="w-5 h-5 accent-purple-600">
                 <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">자동 업데이트 확인</span>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">자동 업데이트
+                    확인</span>
                   <p class="text-[11px] text-slate-500 mt-0.5">앱 시작 시 새로운 버전이 있는지 자동으로 확인합니다.</p>
                 </div>
               </label>
@@ -156,7 +266,8 @@
               </div>
               <div class="flex justify-between items-center text-xs">
                 <span class="text-slate-500 font-bold">GitHub 리포지토리</span>
-                <a href="#" onclick="window.electronAPI.openExternal('https://github.com/drt0927/tw-overlay')" class="text-purple-400 hover:text-purple-300 font-bold underline">바로가기</a>
+                <a href="#" onclick="window.electronAPI.openExternal('https://github.com/drt0927/tw-overlay')"
+                  class="text-purple-400 hover:text-purple-300 font-bold underline">바로가기</a>
               </div>
             </div>
           </div>
@@ -165,15 +276,19 @@
 
       <div id="section-gallery" class="settings-section space-y-8 hidden">
         <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="bell" class="w-5 h-5"></i> 갤러리 알림 필터링</h2>
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="bell" class="w-5 h-5"></i> 갤러리 알림
+            필터링</h2>
           <div class="space-y-6">
             <div>
               <label class="section-label">알림 키워드 등록</label>
               <div class="flex gap-2 mb-4">
-                <input type="text" id="keyword-input" class="input-field flex-1 py-3" placeholder="예: 득템, 업데이트, 점검..." onkeypress="if(event.key==='Enter')addKeyword()">
+                <input type="text" id="keyword-input" class="input-field flex-1 py-3" placeholder="예: 득템, 업데이트, 점검..."
+                  onkeypress="if(event.key==='Enter')addKeyword()">
                 <button onclick="addKeyword()" class="btn-primary px-6 font-black">추가</button>
               </div>
-              <div id="keyword-list" class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start"></div>
+              <div id="keyword-list"
+                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start">
+              </div>
             </div>
           </div>
         </div>
@@ -182,10 +297,12 @@
       <div id="section-slots" class="settings-section space-y-8 hidden">
         <div class="w-full">
           <div class="flex justify-between items-end mb-6">
-            <h2 class="text-lg font-bold flex items-center gap-2"><i data-lucide="layout-grid" class="w-5 h-5"></i> 퀵슬롯 관리</h2>
+            <h2 class="text-lg font-bold flex items-center gap-2"><i data-lucide="layout-grid" class="w-5 h-5"></i> 퀵슬롯
+              관리</h2>
             <div class="flex items-center gap-4">
               <p class="text-[10px] text-slate-500 font-bold italic">슬롯을 드래그하여 순서를 바꿀 수 있습니다.</p>
-              <button onclick="addNewSlot()" class="text-xs font-black text-purple-400 hover:text-purple-300 flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
+              <button onclick="addNewSlot()"
+                class="text-xs font-black text-purple-400 hover:text-purple-300 flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> 슬롯 추가
               </button>
             </div>
@@ -196,12 +313,16 @@
     </div>
   </div>
 
-  <div id="icon-picker-overlay" class="fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center hidden" onclick="if(event.target===this)closeIconPicker()">
-    <div class="bg-slate-900 border border-white/15 rounded-3xl w-[400px] max-h-[550px] flex flex-col shadow-2xl overflow-hidden">
+  <div id="icon-picker-overlay" class="fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center hidden"
+    onclick="if(event.target===this)closeIconPicker()">
+    <div
+      class="bg-slate-900 border border-white/15 rounded-3xl w-[400px] max-h-[550px] flex flex-col shadow-2xl overflow-hidden">
       <div class="p-5 border-b border-white/10">
         <div class="flex gap-3">
-          <input id="icon-search" class="input-field flex-1 py-3" placeholder="아이콘 검색..." oninput="renderIconGrid(this.value)">
-          <button onclick="closeIconPicker()" class="text-slate-400 p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
+          <input id="icon-search" class="input-field flex-1 py-3" placeholder="아이콘 검색..."
+            oninput="renderIconGrid(this.value)">
+          <button onclick="closeIconPicker()" class="text-slate-400 p-1"><i data-lucide="x"
+              class="w-6 h-6"></i></button>
         </div>
         <div id="search-result-count" class="text-xs text-purple-400 font-bold mt-3 ml-1"></div>
       </div>
@@ -237,11 +358,22 @@
       document.getElementById('height-input').value = config.height || 600;
       document.getElementById('auto-launch-input').checked = !!config.autoLaunch;
       document.getElementById('auto-update-input').checked = config.autoUpdateEnabled !== false;
+
+      const threshold = config.dangerThreshold || 2.0;
+      document.getElementById('danger-threshold-input').value = threshold;
+      document.getElementById('danger-threshold-val').innerText = threshold + '%';
+
+      document.getElementById('danger-sound-input').checked = config.dangerSoundEnabled !== false;
+
+      const volume = config.dangerSoundVolume !== undefined ? config.dangerSoundVolume : 50;
+      document.getElementById('danger-volume-input').value = volume;
+      document.getElementById('danger-volume-val').innerText = volume + '%';
+
       currentSlots = JSON.parse(JSON.stringify(config.quickSlots || []));
       currentKeywords = JSON.parse(JSON.stringify(config.galleryKeywords || []));
       renderEditList();
       renderKeywordList();
-      
+
       // 앱 버전 가져오기
       window.electronAPI.getAppVersion().then(v => {
         document.getElementById('app-version').innerText = v;
@@ -290,8 +422,8 @@
       updateMessageArea.classList.remove('hidden');
       updateProgressContainer.classList.add('hidden');
       updatePercent.innerText = '';
-      
-      switch(state) {
+
+      switch (state) {
         case 'checking':
           updateStatusTitle.innerText = '업데이트 확인 중';
           updateStatusDesc.innerText = 'GitHub 서버에서 새로운 버전을 찾고 있습니다...';
@@ -406,10 +538,10 @@
               </div>
             </div>
             <div class="shrink-0 mt-4">
-              ${isText 
-                ? `<input class="input-field w-10 h-10 text-center text-lg font-black bg-purple-500/10 border-purple-500/30 text-purple-400 p-0" maxlength="1" value="${slot.textChar || ''}" oninput="currentSlots[${i}].textChar=this.value.toUpperCase(); renderEditList()">`
-                : `<button onclick="openIconPicker(${i})" class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 hover:border-purple-500 transition-all"><i data-lucide="${slot.icon || 'link'}" class="w-5 h-5"></i></button>`
-              }
+              ${isText
+            ? `<input class="input-field w-10 h-10 text-center text-lg font-black bg-purple-500/10 border-purple-500/30 text-purple-400 p-0" maxlength="1" value="${slot.textChar || ''}" oninput="currentSlots[${i}].textChar=this.value.toUpperCase(); renderEditList()">`
+            : `<button onclick="openIconPicker(${i})" class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 hover:border-purple-500 transition-all"><i data-lucide="${slot.icon || 'link'}" class="w-5 h-5"></i></button>`
+          }
             </div>
           </div>
           <div ondragstart="event.stopPropagation()">
@@ -431,7 +563,7 @@
     function setIconType(index, type) {
       currentSlots[index].iconType = type;
       if (type === 'text' && !currentSlots[index].textChar) {
-        currentSlots[index].textChar = currentSlots[index].label?.substring(0,1).toUpperCase() || 'L';
+        currentSlots[index].textChar = currentSlots[index].label?.substring(0, 1).toUpperCase() || 'L';
       }
       renderEditList();
     }
@@ -499,6 +631,9 @@
           homeUrl: (homeUrlInput.startsWith('http')) ? homeUrlInput : 'https://' + homeUrlInput,
           width: parseInt(document.getElementById('width-input').value) || 800,
           height: parseInt(document.getElementById('height-input').value) || 600,
+          dangerThreshold: parseFloat(document.getElementById('danger-threshold-input').value) || 2.0,
+          dangerSoundEnabled: document.getElementById('danger-sound-input').checked,
+          dangerSoundVolume: parseInt(document.getElementById('danger-volume-input').value) || 50,
           autoLaunch: document.getElementById('auto-launch-input').checked,
           autoUpdateEnabled: document.getElementById('auto-update-input').checked,
           quickSlots: validSlots,
@@ -519,4 +654,5 @@
     refreshIcons();
   </script>
 </body>
+
 </html>

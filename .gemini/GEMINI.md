@@ -1,4 +1,4 @@
-# 🚀 TW-Overlay 개발 가이드 (v1.0.7)
+# 🚀 TW-Overlay 개발 가이드 (v1.0.8)
 
 이 문서는 **TW-Overlay (TalesWeaver Companion Browser)** 프로젝트의 내부 구조와 개발 프로세스를 안내합니다. 상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요.
 

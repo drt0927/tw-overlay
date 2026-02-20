@@ -17,7 +17,7 @@
 
     <!-- 갤러리 모니터 버튼 -->
     <div id="gallery-btn" class="gallery-btn p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
-      onclick="window.electronAPI.toggleGallery()" title="갤러리 모니터">
+      onclick="openGallery()" title="갤러리 모니터">
       <i data-lucide="bell" class="w-4 h-4"></i>
       <span id="noti-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
     </div>
@@ -184,6 +184,11 @@
       window.electronAPI.toggleMonitorZone();
     }
 
+    function openGallery() {
+      document.getElementById('noti-badge').classList.add('hidden');
+      window.electronAPI.toggleGallery();
+    }
+
     // ─── 마우스 클릭 통과 해제 및 윈도우 확장 최적화 ───
     const wrapper = document.getElementById('wrapper');
     wrapper.addEventListener('mouseenter', () => {
@@ -196,12 +201,9 @@
       tooltip.style.display = 'none';
     });
 
-    refreshIcons();
-  </script>
-</body>
-
-</html>
-  </script>
-</body>
-
-</html>
+        refreshIcons();
+      </script>
+    </body>
+    
+    </html>
+    

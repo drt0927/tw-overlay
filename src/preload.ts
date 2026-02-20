@@ -22,7 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
   saveQuickSlots: (slots: any[]) => ipcRenderer.send('save-quick-slots', slots),
   applySettings: (settings: any) => ipcRenderer.send('apply-settings', settings),
-  previewBossSound: (soundFile: string) => ipcRenderer.send('preview-boss-sound', soundFile),
+  previewBossSound: (soundFile: string, volume: number | null = null) => ipcRenderer.send('preview-boss-sound', soundFile, volume),
   checkForUpdates: () => ipcRenderer.send('check-for-updates'),
   startUpdateDownload: () => ipcRenderer.send('start-update-download'),
   quitAndInstall: () => ipcRenderer.send('quit-and-install'),

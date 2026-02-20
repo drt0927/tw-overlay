@@ -39,8 +39,8 @@ window.updateRangeValue = function(inputEl, targetId) {
 };
 
 // 사운드 미리보기
-window.playPreview = function(soundFile) {
+window.playPreview = function(soundFile, volume = null) {
   if (window.electronAPI && window.electronAPI.previewBossSound) {
-    window.electronAPI.previewBossSound(soundFile);
+    window.electronAPI.previewBossSound(soundFile, volume);
   }
 };

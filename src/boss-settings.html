@@ -124,7 +124,7 @@
                     onchange="changeSound('${name}', this.value)">
               ${soundFiles.map(s => `<option value="${s.file}" ${boss.soundFile === s.file ? 'selected' : ''}>${s.name}</option>`).join('')}
             </select>
-            <button onclick="window.playPreview('${boss.soundFile}')" class="w-8 h-8 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-lg text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="미리보기">
+            <button onclick="window.playPreview('${boss.soundFile}', config.fieldBossNotifyVolume)" class="w-8 h-8 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-lg text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="미리보기">
               <i data-lucide="play" class="w-3.5 h-3.5"></i>
             </button>
           </div>

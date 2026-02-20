@@ -245,15 +245,32 @@
               </div>
             </div>
 
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
-              <label class="section-label flex justify-between">
-                <span>필드 보스 알림 음량</span>
-                <span id="boss-volume-val" class="text-purple-400 font-mono">50%</span>
-              </label>
-              <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
-                class="w-full accent-purple-600 mt-2" oninput="window.updateRangeValue(this, 'boss-volume-val')">
-            </div>
-          </div>
+                                    <div class="p-4 bg-white/5 rounded-xl border border-white/5 space-y-4">
+                                      <div>
+                                        <label class="section-label flex justify-between mb-2">
+                                          <span>필드 보스 알림 음량</span>
+                                          <span id="boss-volume-val" class="text-purple-400 font-mono">50%</span>
+                                        </label>
+                                        <div class="flex gap-4 items-center">
+                                          <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
+                                            class="flex-1 accent-purple-600"
+                                            oninput="window.updateRangeValue(this, 'boss-volume-val')">
+                                        </div>
+                                      </div>
+                        
+                                      <div class="flex gap-2 items-end">
+                                        <div class="flex-1">
+                                          <label class="section-label">미리보기 사운드</label>
+                                          <select id="boss-preview-sound-input" class="input-field w-full text-xs py-2.5">
+                                            <!-- JS에서 렌더링 -->
+                                          </select>
+                                        </div>
+                                        <button onclick="previewBossVolume()" class="w-10 h-10 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="미리보기">
+                                          <i data-lucide="play" class="w-4 h-4"></i>
+                                        </button>
+                                      </div>
+                                      <p class="text-[10px] text-slate-500 font-bold italic">* 위 사운드 선택은 음량 테스트를 위한 미리보기용입니다. 보스별 실제 알림음은 각 보스 설정에서 변경하세요.</p>
+                                    </div>          </div>
         </div>
       </div>
 
@@ -347,7 +364,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.2.1</span></p>
+                        class="text-purple-400">1.2.2</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -496,6 +513,12 @@
       document.querySelectorAll('.boss-offset-check').forEach(check => {
         check.checked = currentOffsets.includes(parseInt(check.value));
       });
+
+      if (soundFiles.length > 0) {
+        const bossPreviewSelect = document.getElementById('boss-preview-sound-input');
+        bossPreviewSelect.innerHTML = soundFiles.map(s => `<option value="${s.file}" ${s.file === 'orb.mp3' ? 'selected' : ''}>${s.name}</option>`).join('');
+      }
+
       const bossVolume = config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50;
       document.getElementById('boss-volume-input').value = bossVolume;
       document.getElementById('boss-volume-val').innerText = bossVolume + '%';
@@ -813,8 +836,14 @@
 
     function previewDangerSound() {
       const soundFile = document.getElementById('danger-sound-file-input').value;
-      // 보스 미리보기 채널을 재사용하거나 필요시 분리 (현재는 동일한 미리보기 로직 사용 가능)
-      window.electronAPI.previewBossSound(soundFile);
+      const volume = parseInt(document.getElementById('danger-volume-input').value);
+      window.playPreview(soundFile, volume);
+    }
+
+    function previewBossVolume() {
+      const soundFile = document.getElementById('boss-preview-sound-input').value;
+      const volume = parseInt(document.getElementById('boss-volume-input').value);
+      window.playPreview(soundFile, volume);
     }
 
     window.addEventListener('keydown', (e) => {

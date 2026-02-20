@@ -73,9 +73,9 @@ export function register(): void {
 
   ipcMain.on('open-external', (_e, url: string) => { if (url) shell.openExternal(url); });
 
-  ipcMain.on('preview-boss-sound', (_e, soundFile: string) => {
+  ipcMain.on('preview-boss-sound', (_e, soundFile: string, volume: number | null) => {
     const sidebar = wm.getMainWindow();
-    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName: '미리보기', soundFile });
+    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName: '미리보기', soundFile, volume });
   });
 
   ipcMain.on('save-quick-slots', (_e, slots: any[]) => {

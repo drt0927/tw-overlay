@@ -85,10 +85,17 @@
     let bossNotifyVolume = 0.5;
 
     // 필드보스 알림 수신 및 사운드 재생
-    window.electronAPI.onPlayBossSound(({ bossName, soundFile }) => {
+    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume }) => {
       if (!soundFile) return;
       bossAudio.src = `assets/sound/${soundFile}`;
-      bossAudio.volume = bossNotifyVolume;
+      
+      // 전달받은 volume(0~100)이 있으면 사용, 없으면 설정된 기본값 사용
+      if (volume !== undefined && volume !== null) {
+        bossAudio.volume = volume / 100;
+      } else {
+        bossAudio.volume = bossNotifyVolume;
+      }
+      
       bossAudio.play().catch(e => console.error('Audio play failed:', e));
       
       // 알림이 왔을 때 버튼 강조 효과 (옵션)

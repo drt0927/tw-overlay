@@ -1,7 +1,7 @@
 /**
  * TW-Overlay 메인 프로세스 - 1.0.8 안정화 빌드
  */
-import { app, globalShortcut } from 'electron';
+import { app, globalShortcut, Notification } from 'electron';
 import { POLLING_FAST_MS, POLLING_SLOW_MS, POLLING_COOLDOWN, appState } from './modules/constants';
 import { log } from './modules/logger';
 import * as config from './modules/config';
@@ -12,8 +12,12 @@ import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
 import { setupUpdater } from './modules/updater';
 import screenWatcher from './modules/screenWatcher';
+import * as path from 'path';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
+
+// 윈도우 네이티브 알림을 위한 AppUserModelId 설정
+app.setAppUserModelId('com.filbertlab.twoverlay');
 
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
@@ -70,7 +74,20 @@ function startPolling(): void {
       return;
     }
 
-    if (!currentRect || currentRect.x <= -10000) {
+    // currentRect === null 인 경우가 최소화 상태임
+    if (!currentRect || (currentRect && 'x' in currentRect && currentRect.x <= -10000)) {
+      // 게임 창이 최소화되었을 때 감시 기능이 켜져 있다면 자동 종료 및 알림
+      if (currentRect === null && wm.getScreenWatching()) {
+        log('[POLL] Game minimized. Auto-stopping ScreenWatcher.');
+        wm.setScreenWatching(false); // windowManager가 내부적으로 screenWatcher.stop() 호출함
+        
+        new Notification({
+          title: 'TW-Overlay 알림',
+          body: '게임 창이 최소화되어 장판 감시를 종료합니다.',
+          icon: path.join(__dirname, 'icons', 'icon.ico')
+        }).show();
+      }
+
       wm.hideAll();
       stableCount = POLLING_COOLDOWN;
       pollingTimer = setTimeout(poll, POLLING_SLOW_MS);

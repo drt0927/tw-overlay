@@ -24,7 +24,7 @@
 
     <!-- 장판 감시 영역 -->
     <div id="zone-btn" class="p-2 cursor-pointer text-slate-600 hover:text-green-400 transition-colors"
-      onclick="window.electronAPI.toggleMonitorZone()" title="감시 영역 설정">
+      onclick="toggleZone()" title="감시 영역 설정">
       <i id="zone-icon" data-lucide="target" class="w-4 h-4"></i>
     </div>
 
@@ -43,9 +43,10 @@
       <i id="overlay-icon" data-lucide="layout" class="w-4 h-4"></i>
     </div>
 
-    <div class="p-2 cursor-pointer text-slate-400 hover:text-purple-400" onclick="window.electronAPI.toggleSettings()"
+    <div class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative" onclick="window.electronAPI.toggleSettings()"
       title="설정">
       <i data-lucide="settings" class="w-4 h-4"></i>
+      <span id="update-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
     </div>
 
     <div class="p-2 pb-4 cursor-pointer text-slate-400 hover:text-red-500" onclick="window.electronAPI.closeApp()"
@@ -65,6 +66,9 @@
     window.electronAPI.onScreenWatcherStatus((isWatching) => {
       const icon = document.getElementById('zone-icon');
       const btn = document.getElementById('zone-btn');
+      
+      // 감시 시작 시 로딩/깜빡임 효과 제거
+      btn.classList.remove('animate-pulse', 'text-purple-400');
 
       if (isWatching) {
         icon.setAttribute('data-lucide', 'shield-check');
@@ -78,6 +82,23 @@
         btn.title = '감시 영역 설정';
       }
       refreshIcons();
+    });
+
+    // 모니터 존 창 상태 수신 (설정 창 열림/닫힘)
+    window.electronAPI.onMonitorZoneWindowStatus((isOpen) => {
+      const btn = document.getElementById('zone-btn');
+      if (isOpen) {
+        // 창이 완전히 열리면 로딩 깜빡임 제거하고 활성색상(보라색) 유지
+        btn.classList.remove('animate-pulse');
+        btn.classList.add('text-purple-400');
+        btn.classList.remove('text-slate-600');
+      } else {
+        // 창이 닫히면 기본 상태로 복귀
+        if (!btn.classList.contains('text-green-400')) {
+          btn.classList.remove('text-purple-400');
+          btn.classList.add('text-slate-600');
+        }
+      }
     });
 
     // 사이드바 상태 반영
@@ -142,6 +163,27 @@
       document.getElementById('noti-badge').classList.remove('hidden');
     });
 
+    // 업데이트 상태 수신 (사이드바 설정 아이콘에 배지 표시)
+    window.electronAPI.onUpdateStatus((data) => {
+      const { state } = data;
+      const badge = document.getElementById('update-badge');
+      if (state === 'available' || state === 'ready') {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    });
+
+    function toggleZone() {
+      const btn = document.getElementById('zone-btn');
+      // 감시 중이 아닐 때만 로딩 효과 시작
+      if (!btn.classList.contains('text-green-400')) {
+        btn.classList.add('animate-pulse', 'text-purple-400');
+        btn.classList.remove('text-slate-600');
+      }
+      window.electronAPI.toggleMonitorZone();
+    }
+
     // ─── 마우스 클릭 통과 해제 및 윈도우 확장 최적화 ───
     const wrapper = document.getElementById('wrapper');
     wrapper.addEventListener('mouseenter', () => {
@@ -155,6 +197,10 @@
     });
 
     refreshIcons();
+  </script>
+</body>
+
+</html>
   </script>
 </body>
 

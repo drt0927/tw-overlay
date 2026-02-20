@@ -226,6 +226,11 @@ export function toggleSettingsWindow(): void {
       settingsWindow?.setPosition(targetX, targetY);
     }
     settingsWindow?.webContents.send('config-data', config.load());
+    // 현재 업데이트 상태가 있으면 함께 전송
+    import('./updater').then(mod => {
+      const status = mod.getCurrentStatus();
+      if (status) settingsWindow?.webContents.send('update-status', status);
+    });
     settingsWindow?.show();
     if (IS_DEV) settingsWindow?.webContents.openDevTools({ mode: 'detach' });
   });
@@ -313,7 +318,14 @@ export function syncOverlay(currentRect: GameRect): void {
       const targetY = Math.round(gY + overlayPos.offsetY);
       const finalX = Math.max(gX, Math.min(targetX, gX + gW - newW));
       const finalY = Math.max(gY, Math.min(targetY, gY + gH - newH));
-      if (Math.abs(b.x - finalX) > 1 || Math.abs(b.y - finalY) > 1) {
+      
+      // 2px 미만의 미세한 움직임은 무시 (지터링 방지 및 CPU 절약)
+      const diffX = Math.abs(b.x - finalX);
+      const diffY = Math.abs(b.y - finalY);
+      const diffW = Math.abs(b.width - newW);
+      const diffH = Math.abs(b.height - newH);
+
+      if (diffX > 2 || diffY > 2 || diffW > 2 || diffH > 2) {
         setProgrammaticMove('overlay');
         overlayWindow.setBounds({ x: finalX, y: finalY, width: newW, height: newH });
       }
@@ -321,11 +333,14 @@ export function syncOverlay(currentRect: GameRect): void {
 
     // 사이드바 이동 (현재 너비 유지하면서 높이는 SIDEBAR_HEIGHT 고정)
     const currentSidebarB = mainWindow.getBounds();
-    const wasOffScreen = currentSidebarB.x <= -1000;
+    const newSidebarX = gX + gW;
+    const newSidebarY = gY + 40;
 
-    setProgrammaticMove('main');
-    const newSidebarBounds = { x: gX + gW, y: gY + 40, width: currentSidebarB.width, height: SIDEBAR_HEIGHT };
-    mainWindow.setBounds(newSidebarBounds);
+    // 사이드바도 2px 미만 움직임은 무시
+    if (Math.abs(currentSidebarB.x - newSidebarX) > 2 || Math.abs(currentSidebarB.y - newSidebarY) > 2) {
+      setProgrammaticMove('main');
+      mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: SIDEBAR_HEIGHT });
+    }
 
 
 
@@ -424,6 +439,8 @@ export function toggleMonitorZone(): void {
   monitorZoneWindow.loadFile(path.join(__dirname, '..', 'monitor-zone.html'));
 
   monitorZoneWindow.on('ready-to-show', () => {
+    // 창이 준비되어 표시되기 직전에 사이드바에 '열림' 상태 전송
+    mainWindow?.webContents.send('monitor-zone-window-status', true);
     // 게임 창 중앙에 초기 배치
     if (gameRect) {
       const centerX = Math.round(gameRect.x + (gameRect.width / 2) - 105);
@@ -436,6 +453,8 @@ export function toggleMonitorZone(): void {
 
   monitorZoneWindow.on('closed', () => {
     monitorZoneWindow = null;
+    // 창이 닫히면 사이드바에 '닫힘' 상태 전송
+    mainWindow?.webContents.send('monitor-zone-window-status', false);
     // 창이 외부에서 닫히면 감시도 중지
     if (isScreenWatching) {
       setScreenWatching(false);

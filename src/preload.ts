@@ -95,4 +95,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('screen-watcher-status');
     ipcRenderer.on('screen-watcher-status', (_event, isWatching) => callback(isWatching));
   },
+  onMonitorZoneWindowStatus: (callback: (isOpen: boolean) => void) => {
+    ipcRenderer.removeAllListeners('monitor-zone-window-status');
+    ipcRenderer.on('monitor-zone-window-status', (_event, isOpen) => callback(isOpen));
+  },
+
+  // 장판 감시 (렌더러용)
+  onWatcherToggle: (callback: (enabled: boolean) => void) => {
+    ipcRenderer.removeAllListeners('watcher-toggle');
+    ipcRenderer.on('watcher-toggle', (_event, enabled) => callback(enabled));
+  },
+  onWatcherSourceId: (callback: (data: { sourceId: string, threshold: number }) => void) => {
+    ipcRenderer.removeAllListeners('watcher-source-id');
+    ipcRenderer.on('watcher-source-id', (_event, data) => callback(data));
+  },
+  sendDangerDetected: (density: number) => ipcRenderer.send('renderer-danger-detected', { density }),
+  sendDangerSafe: () => ipcRenderer.send('renderer-danger-safe'),
+  saveDebugImage: (dataUrl: string, fileName: string) => ipcRenderer.send('save-debug-image', dataUrl, fileName),
+  overlayReadyForWatcher: () => ipcRenderer.send('overlay-ready-for-watcher'),
 });

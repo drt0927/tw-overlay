@@ -2,17 +2,37 @@
  * 업데이트 관리 모듈 - UI 통합 버전 (dialog 제거)
  */
 import { autoUpdater } from 'electron-updater';
-import { BrowserWindow, app } from 'electron';
+import { BrowserWindow, app, Notification } from 'electron';
 import { log } from './logger';
 import * as config from './config';
+import * as path from 'path';
 
-let updateWin: BrowserWindow | null = null;
 let isSetup = false;
+let currentUpdateInfo: any = null;
+
+/** 모든 관련 창에 업데이트 상태 전송 */
+function broadcastStatus(data: any) {
+  currentUpdateInfo = data;
+  import('./windowManager').then(wm => {
+    const mainWin = wm.getMainWindow();
+    const settingsWin = wm.getSettingsWindow();
+    
+    if (mainWin && !mainWin.isDestroyed()) {
+      mainWin.webContents.send('update-status', data);
+    }
+    if (settingsWin && !settingsWin.isDestroyed()) {
+      settingsWin.webContents.send('update-status', data);
+    }
+  });
+}
 
 export function setupUpdater(mainWindow: BrowserWindow | null) {
-  updateWin = mainWindow;
-
-  if (isSetup) return;
+  if (isSetup) {
+    if (currentUpdateInfo) {
+      mainWindow?.webContents.send('update-status', currentUpdateInfo);
+    }
+    return;
+  }
   isSetup = true;
 
   if (!app.isPackaged) {
@@ -29,59 +49,86 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   autoUpdater.autoDownload = false;
 
   autoUpdater.on('checking-for-update', () => {
-    updateWin?.webContents.send('update-status', { state: 'checking' });
+    broadcastStatus({ state: 'checking' });
   });
 
   autoUpdater.on('update-available', (info) => {
     log(`Update available: ${info.version}`);
-    updateWin?.webContents.send('update-status', { state: 'available', version: info.version });
+    broadcastStatus({ state: 'available', version: info.version });
+
+    // 네이티브 알림 표시
+    try {
+      const notification = new Notification({
+        title: 'TW-Overlay 업데이트 알림',
+        body: `새로운 버전 v${info.version}이(가) 출시되었습니다.`,
+        icon: path.join(__dirname, '..', 'icons', 'icon.ico')
+      });
+      notification.show();
+      notification.on('click', () => {
+        import('./windowManager').then(wm => wm.toggleSettingsWindow());
+      });
+    } catch (e) {
+      log(`Notification error: ${e}`);
+    }
   });
 
   autoUpdater.on('update-not-available', () => {
-    updateWin?.webContents.send('update-status', { state: 'latest' });
+    broadcastStatus({ state: 'latest' });
   });
 
   autoUpdater.on('error', (err) => {
     log(`Error in auto-updater: ${err}`);
-    updateWin?.webContents.send('update-status', { state: 'error', message: err.message });
+    broadcastStatus({ state: 'error', message: err.message });
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
-    updateWin?.webContents.send('update-status', {
+    broadcastStatus({
       state: 'downloading',
       percent: Math.round(progressObj.percent)
     });
-    updateWin?.setProgressBar(progressObj.percent / 100);
+    
+    // 메인 창의 작업표시줄 진행바 업데이트
+    import('./windowManager').then(wm => {
+      wm.getMainWindow()?.setProgressBar(progressObj.percent / 100);
+    });
   });
 
   autoUpdater.on('update-downloaded', (info) => {
-    updateWin?.setProgressBar(-1);
-    updateWin?.webContents.send('update-status', { state: 'ready', version: info.version });
+    broadcastStatus({ state: 'ready', version: info.version });
+    import('./windowManager').then(wm => {
+      wm.getMainWindow()?.setProgressBar(-1);
+    });
   });
 
   // 초기 체크 실행
-  autoUpdater.checkForUpdatesAndNotify();
+  log('Starting auto update check...');
+  autoUpdater.checkForUpdates();
+}
+
+/** 현재 업데이트 상태 반환 */
+export function getCurrentStatus() {
+  return currentUpdateInfo;
 }
 
 /** 수동 업데이트 확인 */
 export async function manualCheckForUpdate(mainWindow: BrowserWindow | null) {
-  updateWin = mainWindow;
   if (!app.isPackaged) {
-    updateWin?.webContents.send('update-status', { state: 'dev-mode' });
+    mainWindow?.webContents.send('update-status', { state: 'dev-mode' });
     return;
   }
 
   try {
-    updateWin?.webContents.send('update-status', { state: 'checking' });
+    broadcastStatus({ state: 'checking' });
     await autoUpdater.checkForUpdates();
   } catch (err: any) {
     log(`Manual update check error: ${err}`);
-    updateWin?.webContents.send('update-status', { state: 'error', message: err.message });
+    broadcastStatus({ state: 'error', message: err.message });
   }
 }
 
 /** 업데이트 다운로드 시작 */
 export function startDownload() {
+  log('Starting update download...');
   autoUpdater.downloadUpdate();
 }
 

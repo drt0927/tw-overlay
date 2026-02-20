@@ -220,7 +220,17 @@ function createOverlayWindow(targetUrl?: string): void {
     if (onOverlayReady) onOverlayReady();
   });
 
-  overlayWindow.on('closed', () => { overlayWindow = null; view = null; isTracking = false; });
+  overlayWindow.on('closed', () => { 
+    if (view) {
+      try {
+        // @ts-ignore
+        view.webContents.destroy();
+      } catch (e) {}
+      view = null;
+    }
+    overlayWindow = null; 
+    isTracking = false; 
+  });
 }
 
 export function toggleSettingsWindow(): void {
@@ -383,7 +393,22 @@ export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean
   if (isOverlayVisible) createOverlayWindow(targetUrl);
   else if (overlayWindow) {
     savePosition('overlay', overlayPos, true);
-    overlayWindow.close(); overlayWindow = null; view = null; isTracking = false;
+    
+    // 내부 뷰를 명시적으로 제거하고 파괴하여 백그라운드 실행 방지
+    if (view) {
+      try {
+        overlayWindow.contentView.removeChildView(view);
+        // @ts-ignore: destroy is a valid method on WebContents
+        view.webContents.destroy();
+      } catch (e) {
+        log(`[WM] Error destroying view: ${e}`);
+      }
+      view = null;
+    }
+
+    overlayWindow.close(); 
+    overlayWindow = null; 
+    isTracking = false;
   }
   if (mainWindow) mainWindow.webContents.send('overlay-status', isOverlayVisible);
   config.save({ overlayVisible: isOverlayVisible });

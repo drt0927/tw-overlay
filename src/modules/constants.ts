@@ -94,7 +94,7 @@ export const SIDEBAR_HEIGHT = 800;
 export const PS_QUERY_TIMEOUT_MS = 3000;
 export const PS_RESTART_DELAY_MS = 1000;
 export const FOCUS_DELAY_MS = 50;
-export const SIDEBAR_WIDTH = 38;
+export const SIDEBAR_WIDTH = 200;
 export const OVERLAY_TOOLBAR_HEIGHT = 40;
 
 export const get_CONFIG_PATH = () => path.join(app.getPath('userData'), 'config.json');

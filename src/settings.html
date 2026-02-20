@@ -364,7 +364,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.2.2</span></p>
+                        class="text-purple-400">1.2.3</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -478,7 +478,6 @@
   </div>
 
   <script>
-    function refreshIcons() { lucide.createIcons(); }
     let currentSlots = [];
     let currentKeywords = [];
     let activeEditIndex = -1;
@@ -489,7 +488,19 @@
     async function initSettings() {
       soundFiles = await window.loadSoundList();
       window.bindEscapeClose();
-      // 아이콘 리스트는 피커 열 때 초기화
+      initIconList();
+    }
+
+    function initIconList() {
+      if (ALL_ICONS.length === 0 && typeof lucide !== 'undefined') {
+        // Lucide 아이콘 객체에서 실제 아이콘 키만 추출
+        const icons = lucide.icons || lucide;
+        ALL_ICONS = Object.keys(icons).filter(key => 
+          typeof icons[key] === 'object' || Array.isArray(icons[key])
+        ).sort();
+        // 유틸리티 함수 필터링
+        ALL_ICONS = ALL_ICONS.filter(name => !['createIcons', 'icons', 'createElement'].includes(name));
+      }
     }
 
     function showSection(id, el) {
@@ -761,7 +772,8 @@
       grid.innerHTML = '';
       currentLoadedCount = 0;
       const q = (query || '').toLowerCase().trim();
-      filteredIcons = q ? ALL_ICONS.filter(name => name.includes(q)) : ALL_ICONS;
+      // 대소문자 구분 없이 검색하도록 수정
+      filteredIcons = q ? ALL_ICONS.filter(name => name.toLowerCase().includes(q)) : ALL_ICONS;
       countLabel.innerText = q ? `${filteredIcons.length}개의 아이콘 발견` : `전체 ${filteredIcons.length}개 아이콘`;
       if (filteredIcons.length === 0) { grid.innerHTML = '<div class="p-12 text-center text-slate-600 text-sm font-bold">검색 결과가 없습니다.</div>'; return; }
       const container = document.createElement('div');
@@ -777,6 +789,8 @@
       if (!container || currentLoadedCount >= filteredIcons.length) return;
       const nextBatch = filteredIcons.slice(currentLoadedCount, currentLoadedCount + PAGE_SIZE);
       nextBatch.forEach(name => {
+        // 아이콘 이름을 Lucide 표준인 kebab-case로 변환 (예: ArrowRight -> arrow-right)
+        // 하지만 data-lucide는 PascalCase도 지원하므로 안전하게 이름을 그대로 사용하되 표시 최적화
         const btn = document.createElement('button');
         btn.className = 'w-10 h-10 flex items-center justify-center rounded-xl hover:bg-purple-500/20 text-slate-400 hover:text-white transition-all hover:scale-110';
         btn.innerHTML = `<i data-lucide="${name}" class="w-5 h-5"></i>`;
@@ -784,7 +798,7 @@
         container.appendChild(btn);
       });
       currentLoadedCount += nextBatch.length;
-      refreshIcons();
+      window.refreshIcons();
     }
 
     function addNewSlot() {

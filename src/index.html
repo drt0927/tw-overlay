@@ -17,32 +17,32 @@
 
     <!-- 갤러리 모니터 버튼 -->
     <div id="gallery-btn" class="gallery-btn p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
-      onclick="openGallery()" title="갤러리 모니터">
+      onclick="openGallery()" onmouseenter="showTooltip('갤러리 모니터', this)" onmouseleave="hideTooltip()">
       <i data-lucide="bell" class="w-4 h-4"></i>
       <span id="noti-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
     </div>
 
     <!-- 약어 사전 버튼 -->
     <div id="abbreviation-btn" class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
-      onclick="window.electronAPI.toggleAbbreviation()" title="약어 사전">
+      onclick="window.electronAPI.toggleAbbreviation()" onmouseenter="showTooltip('약어 사전', this)" onmouseleave="hideTooltip()">
       <i data-lucide="book-open" class="w-4 h-4"></i>
     </div>
 
     <!-- 버프 백과 버튼 -->
     <div id="buffs-btn" class="p-2 cursor-pointer text-slate-400 hover:text-yellow-400 relative"
-      onclick="window.electronAPI.toggleBuffs()" title="버프 백과 & 계산기">
+      onclick="window.electronAPI.toggleBuffs()" onmouseenter="showTooltip('버프 백과 & 계산기', this)" onmouseleave="hideTooltip()">
       <i data-lucide="zap" class="w-4 h-4"></i>
     </div>
 
     <!-- 필드보스 알림 설정 버튼 -->
     <div id="boss-btn" class="p-2 cursor-pointer text-slate-400 hover:text-blue-400 relative"
-      onclick="window.electronAPI.toggleBossSettings()" title="필드보스 알림 설정">
+      onclick="window.electronAPI.toggleBossSettings()" onmouseenter="showTooltip('필드보스 알림 설정', this)" onmouseleave="hideTooltip()">
       <i data-lucide="alarm-clock" class="w-4 h-4"></i>
     </div>
 
     <!-- 장판 감시 영역 -->
-    <div id="zone-btn" class="p-2 cursor-pointer text-slate-600 hover:text-green-400 transition-colors"
-      onclick="toggleZone()" title="감시 영역 설정">
+    <div id="zone-btn" class="p-2 cursor-pointer text-slate-400 hover:text-green-400 transition-colors"
+      onclick="toggleZone()" onmouseenter="showTooltip('장판 감시 설정', this)" onmouseleave="hideTooltip()">
       <i id="zone-icon" data-lucide="target" class="w-4 h-4"></i>
     </div>
 
@@ -51,24 +51,24 @@
 
     <!-- 홈 버튼 -->
     <div class="mt-auto p-2 cursor-pointer text-slate-400 hover:text-purple-400" onclick="window.electronAPI.goHome()"
-      title="홈 페이지">
+      onmouseenter="showTooltip('홈 페이지', this)" onmouseleave="hideTooltip()">
       <i data-lucide="home" class="w-4 h-4"></i>
     </div>
 
     <!-- 하단 유틸리티 버튼 -->
     <div id="overlay-toggle-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
-      onclick="window.electronAPI.toggleOverlay()" title="오버레이 토글">
+      onclick="window.electronAPI.toggleOverlay()" onmouseenter="showTooltip('오버레이 토글', this)" onmouseleave="hideTooltip()">
       <i id="overlay-icon" data-lucide="layout" class="w-4 h-4"></i>
     </div>
 
-    <div class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative" onclick="window.electronAPI.toggleSettings()"
-      title="설정">
+    <div class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
+      onclick="window.electronAPI.toggleSettings()" onmouseenter="showTooltip('환경 설정', this)" onmouseleave="hideTooltip()">
       <i data-lucide="settings" class="w-4 h-4"></i>
       <span id="update-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
     </div>
 
     <div class="p-2 pb-4 cursor-pointer text-slate-400 hover:text-red-500" onclick="window.electronAPI.closeApp()"
-      title="앱 종료">
+      onmouseenter="showTooltip('앱 종료', this)" onmouseleave="hideTooltip()">
       <i data-lucide="power" class="w-4 h-4"></i>
     </div>
   </div>
@@ -84,65 +84,76 @@
     const bossAudio = document.getElementById('boss-audio');
     let bossNotifyVolume = 0.5;
 
+    function showTooltip(text, el) {
+      const rect = el.getBoundingClientRect();
+      tooltip.innerText = text;
+      tooltip.style.top = `${rect.top + 4}px`;
+      tooltip.style.display = 'flex';
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+    }
+
     // 필드보스 알림 수신 및 사운드 재생
     window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume }) => {
       if (!soundFile) return;
       bossAudio.src = `assets/sound/${soundFile}`;
-      
+
       // 전달받은 volume(0~100)이 있으면 사용, 없으면 설정된 기본값 사용
       if (volume !== undefined && volume !== null) {
         bossAudio.volume = volume / 100;
       } else {
         bossAudio.volume = bossNotifyVolume;
       }
-      
+
       bossAudio.play().catch(e => console.error('Audio play failed:', e));
-      
+
       // 알림이 왔을 때 버튼 강조 효과 (옵션)
       const btn = document.getElementById('boss-btn');
       btn.classList.add('animate-bounce', 'text-blue-400');
       setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
     });
 
-    // 감시 상태 수신 → 아이콘 업데이트
-    window.electronAPI.onScreenWatcherStatus((isWatching) => {
-      const icon = document.getElementById('zone-icon');
-      const btn = document.getElementById('zone-btn');
-      
-      // 감시 시작 시 로딩/깜빡임 효과 제거
-      btn.classList.remove('animate-pulse', 'text-purple-400');
-
-      if (isWatching) {
-        icon.setAttribute('data-lucide', 'shield-check');
-        btn.classList.remove('text-slate-600');
-        btn.classList.add('text-green-400');
-        btn.title = '감시 중 (클릭하여 중지)';
-      } else {
-        icon.setAttribute('data-lucide', 'target');
-        btn.classList.remove('text-green-400');
-        btn.classList.add('text-slate-600');
-        btn.title = '감시 영역 설정';
-      }
-      refreshIcons();
-    });
-
-    // 모니터 존 창 상태 수신 (설정 창 열림/닫힘)
-    window.electronAPI.onMonitorZoneWindowStatus((isOpen) => {
-      const btn = document.getElementById('zone-btn');
-      if (isOpen) {
-        // 창이 완전히 열리면 로딩 깜빡임 제거하고 활성색상(보라색) 유지
-        btn.classList.remove('animate-pulse');
-        btn.classList.add('text-purple-400');
-        btn.classList.remove('text-slate-600');
-      } else {
-        // 창이 닫히면 기본 상태로 복귀
-        if (!btn.classList.contains('text-green-400')) {
-          btn.classList.remove('text-purple-400');
-          btn.classList.add('text-slate-600');
-        }
-      }
-    });
-
+        // 감시 상태 수신 → 아이콘 업데이트
+        window.electronAPI.onScreenWatcherStatus((isWatching) => {
+          const icon = document.getElementById('zone-icon');
+          const btn = document.getElementById('zone-btn');
+          
+          // 상태 변경 시 무조건 깜빡임 제거
+          btn.classList.remove('animate-pulse');
+    
+          if (isWatching) {
+            icon.setAttribute('data-lucide', 'shield-check');
+            btn.classList.remove('text-slate-400', 'text-purple-400');
+            btn.classList.add('text-green-400');
+            btn.title = '감시 중 (클릭하여 중지)';
+          } else {
+            icon.setAttribute('data-lucide', 'target');
+            btn.classList.remove('text-green-400', 'text-purple-400');
+            btn.classList.add('text-slate-400');
+            btn.title = '감시 영역 설정';
+          }
+          refreshIcons();
+        });
+    
+        // 모니터 존 창 상태 수신 (설정 창 열림/닫힘)
+        window.electronAPI.onMonitorZoneWindowStatus((isOpen) => {
+          const btn = document.getElementById('zone-btn');
+          // 창 상태가 변하면 깜빡임 중지
+          btn.classList.remove('animate-pulse');
+    
+          if (isOpen) {
+            btn.classList.add('text-purple-400');
+            btn.classList.remove('text-slate-400', 'text-green-400');
+          } else {
+            // 창이 닫힐 때, 감시 중이 아니라면 기본색으로
+            if (!btn.classList.contains('text-green-400')) {
+              btn.classList.remove('text-purple-400');
+              btn.classList.add('text-slate-400');
+            }
+          }
+        });
     // 사이드바 상태 반영
     window.electronAPI.onSidebarStatus((isCollapsed) => {
       document.getElementById('wrapper').className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';
@@ -221,10 +232,9 @@
 
     function toggleZone() {
       const btn = document.getElementById('zone-btn');
-      // 감시 중이 아닐 때만 로딩 효과 시작
-      if (!btn.classList.contains('text-green-400')) {
-        btn.classList.add('animate-pulse', 'text-purple-400');
-        btn.classList.remove('text-slate-600');
+      // 클릭 즉시 피드백을 위해 깜빡임만 추가 (실제 상태 변경은 메인 프로세스 응답 시 처리)
+      if (!btn.classList.contains('text-green-400') && !btn.classList.contains('text-purple-400')) {
+        btn.classList.add('animate-pulse');
       }
       window.electronAPI.toggleMonitorZone();
     }
@@ -234,21 +244,26 @@
       window.electronAPI.toggleGallery();
     }
 
-    // ─── 마우스 클릭 통과 해제 및 윈도우 확장 최적화 ───
+    // ─── 마우스 클릭 통과 지능형 제어 ───
     const wrapper = document.getElementById('wrapper');
+    
+    // 처음 시작할 때 사이드바 밖(200px 영역)은 클릭 통과 상태로 시작
+    window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+
     wrapper.addEventListener('mouseenter', () => {
-      // 툴팁 표시를 위해 윈도우 너비를 일시적으로 확장
-      window.electronAPI.applySettings({ width: 200, height: 400, isSidebarResize: true });
+      // 마우스가 사이드바 본체(38px) 안으로 들어오면 클릭 활성화
+      window.electronAPI.setIgnoreMouseEvents(false);
     });
+
     wrapper.addEventListener('mouseleave', () => {
-      // 마우스가 떠나면 다시 원래 크기로 축소
-      window.electronAPI.applySettings({ width: 38, height: 400, isSidebarResize: true });
+      // 마우스가 사이드바 본체를 벗어나면 다시 클릭 통과 (뒤의 게임 클릭 가능)
+      window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
       tooltip.style.display = 'none';
     });
 
-        refreshIcons();
-      </script>
-    </body>
-    
-    </html>
-    
+    // ─── 초기화 ───
+    refreshIcons();
+  </script>
+</body>
+
+</html>

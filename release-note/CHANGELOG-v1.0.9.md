@@ -1,4 +1,4 @@
-# TW-Overlay Release Notes - v1.0.9 (Expected)
+# TW-Overlay Release Notes - v1.0.9
 
 ## 🚀 주요 변경 사항
 
@@ -16,4 +16,4 @@
 - **갤러리 모니터 알림 개선**: 갤러리 창이 활성화된 상태에서도 사이드바에 레드닷 알림이 남거나 새로 발생하는 현상을 수정했습니다.
 
 ---
-**설치 방법:** 차기 버전 릴리즈 시 안내될 예정입니다.
+**설치 방법:** [Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 `twOverlay-Setup-1.0.9.exe`를 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.

@@ -1,5 +1,5 @@
 /**
- * TW-Overlay 메인 프로세스 - 1.0.8 안정화 빌드
+ * TW-Overlay 메인 프로세스 - 1.0.9 안정화 빌드
  */
 import { app, globalShortcut, Notification } from 'electron';
 import {

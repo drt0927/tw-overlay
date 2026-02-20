@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body {
       margin: 0;
@@ -85,7 +86,15 @@
       animation: fadeOut 1s ease 2.5s forwards;
     }
 
-    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 
@@ -100,7 +109,8 @@
   <video id="watch-video" style="display:none" muted playsinline></video>
 
   <script>
-    const alertSound = new Audio('assets/sound/purple_alarm.webm');
+    const alertSound = new Audio();
+    let currentSoundFile = '';
     let soundEnabled = true;
     let soundVolume = 0.5;
 
@@ -111,6 +121,12 @@
     window.electronAPI.onConfigData((config) => {
       soundEnabled = config.dangerSoundEnabled !== false;
       soundVolume = (config.dangerSoundVolume !== undefined ? config.dangerSoundVolume : 50) / 100;
+
+      const newSoundFile = config.dangerSoundFile || 'gongseubgyeongbo-gongseubgyeongbo.mp3';
+      if (currentSoundFile !== newSoundFile) {
+        currentSoundFile = newSoundFile;
+        alertSound.src = `assets/sound/${currentSoundFile}`;
+      }
       alertSound.volume = soundVolume;
     });
 
@@ -118,7 +134,7 @@
       if (soundEnabled) {
         alertSound.volume = soundVolume;
         alertSound.currentTime = 0;
-        alertSound.play().catch(e => {});
+        alertSound.play().catch(e => { });
       }
     });
 
@@ -155,7 +171,7 @@
         window.electronAPI.overlayReadyForWatcher();
         return;
       }
-      
+
       try {
         if (watchStream) {
           watchStream.getTracks().forEach(t => t.stop());
@@ -180,7 +196,7 @@
           watchInterval = setInterval(performAnalysis, 1000);
           saveCount = 0;
         };
-      } catch (e) {}
+      } catch (e) { }
     }
 
     function stopWatchingStream() {
@@ -198,41 +214,41 @@
       const { gameRect, zoneBounds } = watchRects;
       const vW = watchVideo.videoWidth;
       const vH = watchVideo.videoHeight;
-      
+
       const scaleX = vW / gameRect.width;
       const scaleY = vH / gameRect.height;
-      
+
       const cropX = Math.floor((zoneBounds.x - gameRect.x) * scaleX);
       const cropY = Math.floor((zoneBounds.y - gameRect.y) * scaleY);
       const cropW = Math.floor(zoneBounds.width * scaleX);
       const cropH = Math.floor(zoneBounds.height * scaleY);
-      
+
       if (cropW <= 0 || cropH <= 0) return;
 
       watchCanvas.width = cropW;
       watchCanvas.height = cropH;
       watchCtx.drawImage(watchVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-      
+
       const imageData = watchCtx.getImageData(0, 0, cropW, cropH);
       const data = imageData.data;
-      
+
       const STEP = 5;
       let matchCount = 0;
       let sampled = 0;
-      
+
       for (let i = 0; i < data.length; i += 4 * STEP) {
         sampled++;
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
-        
+
         if (r > 150 && b > 180 && g < 200) {
           if (b > g + 20) matchCount++;
         }
       }
-      
+
       const density = sampled > 0 ? matchCount / sampled : 0;
-      
+
       if (saveCount === 0) {
         window.electronAPI.saveDebugImage(watchCanvas.toDataURL('image/png'), 'debug_capture.png');
         saveCount++;
@@ -264,7 +280,7 @@
         hint.style.display = 'none';
         startBtn.style.display = 'none';
         watchGuide.style.display = 'block';
-        
+
         startWatchingStream();
       } else {
         zone.style.border = '3px solid #4ade80';
@@ -273,18 +289,24 @@
         hint.style.display = 'block';
         startBtn.style.display = 'block';
         watchGuide.style.display = 'none';
-        
+
         stopWatchingStream();
       }
     });
 
     window.onload = () => {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      window.refreshIcons();
+      window.bindEscapeClose();
       window.electronAPI.overlayReadyForWatcher();
     };
 
+    // Escape 키 로직은 bindEscapeClose에서 처리하지만, 
+    // 감시 중일 때는 닫히지 않도록 커스텀 핸들러가 필요할 수 있음
+    // 현재 bindEscapeClose는 단순 window.close()이므로 감시 상태를 체크하도록 유지
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !isWatching) window.close();
+      if (e.key === 'Escape' && isWatching) {
+        e.stopImmediatePropagation(); // 감시 중일 때는 닫기 방지
+      }
     });
   </script>
 </body>

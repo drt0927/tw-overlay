@@ -82,11 +82,13 @@
     function refreshIcons() { lucide.createIcons(); }
     const tooltip = document.getElementById('tooltip');
     const bossAudio = document.getElementById('boss-audio');
+    let bossNotifyVolume = 0.5;
 
     // 필드보스 알림 수신 및 사운드 재생
     window.electronAPI.onPlayBossSound(({ bossName, soundFile }) => {
       if (!soundFile) return;
       bossAudio.src = `assets/sound/${soundFile}`;
+      bossAudio.volume = bossNotifyVolume;
       bossAudio.play().catch(e => console.error('Audio play failed:', e));
       
       // 알림이 왔을 때 버튼 강조 효과 (옵션)
@@ -151,6 +153,9 @@
 
     // 설정 데이터 수신 및 슬롯 렌더링
     window.electronAPI.onConfigData((config) => {
+      // 보스 알림 음량 업데이트 (0.0 ~ 1.0 범위)
+      bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
+
       // 초기 상태 아이콘 설정
       const isVisible = config.overlayVisible !== false;
       const iconContainer = document.getElementById('overlay-toggle-btn');

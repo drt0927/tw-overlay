@@ -60,8 +60,10 @@ export interface AppConfig {
   dangerThreshold?: number;
   dangerSoundEnabled?: boolean;
   dangerSoundVolume?: number;
+  dangerSoundFile?: string;
   fieldBossNotifyEnabled?: boolean;
   fieldBossNotifyOffsets?: number[]; // [0, 1, 5, 10] 분 전
+  fieldBossNotifyVolume?: number;
   fieldBossSettings?: Record<string, BossSetting>;
   positions?: {
     overlay?: WindowPosition;
@@ -115,14 +117,16 @@ export const DEFAULT_CONFIG: AppConfig = {
   dangerThreshold: 2.0,
   dangerSoundEnabled: true,
   dangerSoundVolume: 50,
+  dangerSoundFile: 'gongseubgyeongbo-gongseubgyeongbo.mp3',
   fieldBossNotifyEnabled: true,
   fieldBossNotifyOffsets: [5],
+  fieldBossNotifyVolume: 50,
   fieldBossSettings: {
-    '골론': { name: '골론', enabled: true, soundFile: 'purple_alarm.webm' },
-    '파멸의 기원': { name: '파멸의 기원', enabled: true, soundFile: 'purple_alarm.webm' },
-    '스페르첸드': { name: '스페르첸드', enabled: true, soundFile: 'purple_alarm.webm' },
-    '골모답': { name: '골모답', enabled: true, soundFile: 'purple_alarm.webm' },
-    '아칸': { name: '아칸', enabled: true, soundFile: 'purple_alarm.webm' },
+    '골론': { name: '골론', enabled: true, soundFile: 'uaaaaa.webm' },
+    '파멸의 기원': { name: '파멸의 기원', enabled: true, soundFile: 'uaaaaa.webm' },
+    '스페르첸드': { name: '스페르첸드', enabled: true, soundFile: 'uaaaaa.webm' },
+    '골모답': { name: '골모답', enabled: true, soundFile: 'uaaaaa.webm' },
+    '아칸': { name: '아칸', enabled: true, soundFile: 'uaaaaa.webm' },
   },
   positions: {
     overlay: { offsetX: 10, offsetY: 10 },

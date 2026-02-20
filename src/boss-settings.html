@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body { background: transparent; color: white; overflow: hidden; }
     .boss-item { 
@@ -56,41 +57,6 @@
   </div>
 
   <div class="flex-1 overflow-hidden flex flex-col no-drag">
-    <!-- Master Toggle -->
-    <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
-      <div>
-        <span class="text-xs font-black text-slate-200 uppercase tracking-tighter">전체 알림 활성화</span>
-        <p class="text-[10px] text-slate-500 font-bold">모든 보스의 알림을 끄거나 켭니다.</p>
-      </div>
-      <label class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" id="master-toggle" class="sr-only peer" onchange="updateMasterToggle()">
-        <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-      </label>
-    </div>
-
-    <!-- Notify Offsets Section -->
-    <div class="px-4 py-3 bg-white/[0.02] border-b border-white/5">
-      <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter block mb-2">알림 시점 선택</span>
-      <div class="flex justify-between items-center">
-        <label class="flex items-center gap-2 cursor-pointer group">
-          <input type="checkbox" value="10" class="offset-check w-4 h-4 accent-purple-600" onchange="updateOffsets()">
-          <span class="text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors">10분 전</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer group">
-          <input type="checkbox" value="5" class="offset-check w-4 h-4 accent-purple-600" onchange="updateOffsets()">
-          <span class="text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors">5분 전</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer group">
-          <input type="checkbox" value="1" class="offset-check w-4 h-4 accent-purple-600" onchange="updateOffsets()">
-          <span class="text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors">1분 전</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer group">
-          <input type="checkbox" value="0" class="offset-check w-4 h-4 accent-purple-600" onchange="updateOffsets()">
-          <span class="text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors">정각</span>
-        </label>
-      </div>
-    </div>
-
     <!-- Boss List -->
     <div id="boss-list" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
       <div class="text-center py-10 text-slate-500 text-xs font-bold">설정을 불러오는 중...</div>
@@ -100,17 +66,14 @@
   <script>
     let config = null;
     let bossTimes = {};
+    let soundFiles = [];
     const ALLOWED_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
 
-    const SOUND_FILES = [
-      { name: '기본 알림 (Purple)', file: 'purple_alarm.webm' },
-      { name: '🚨 공습경보', file: 'gongseubgyeongbo-gongseubgyeongbo.mp3' },
-      { name: '🎯 잡았죠?', file: 'jabassjyo.mp3' },
-      { name: '😎 카리스마', file: 'kariseumaisseo.mp3' },
-      { name: '👋 가버려!', file: 'ralro-gabeoryeo-gabeoryeo.mp3' },
-      { name: '⚔️ 진격의 거인', file: 'shingeki-no-kyojin-ost-attack-on-titan2.mp3' },
-      { name: '💢 개X끼야!', file: 'yai-gaesaeggiya.mp3' }
-    ];
+    window.onload = async () => {
+      soundFiles = await window.loadSoundList();
+      window.bindEscapeClose();
+      render();
+    };
 
     window.electronAPI.onConfigData((data) => {
       config = data;
@@ -123,18 +86,10 @@
     });
 
     function render() {
-      if (!config || Object.keys(bossTimes).length === 0) return;
+      if (!config || Object.keys(bossTimes).length === 0 || soundFiles.length === 0) return;
 
       const now = new Date();
       const currentHHmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-      document.getElementById('master-toggle').checked = config.fieldBossNotifyEnabled;
-
-      // 오프셋 체크박스 상태 업데이트
-      const currentOffsets = config.fieldBossNotifyOffsets || [0];
-      document.querySelectorAll('.offset-check').forEach(check => {
-        check.checked = currentOffsets.includes(parseInt(check.value));
-      });
 
       const list = document.getElementById('boss-list');
       list.innerHTML = '';
@@ -142,7 +97,7 @@
       // 허용된 보스만 필터링하여 렌더링
       ALLOWED_BOSSES.forEach(name => {
         // 기존 설정이 있으면 가져오고, 없으면 기본값 생성
-        const boss = config.fieldBossSettings?.[name] || { name, enabled: true, soundFile: 'purple_alarm.webm' };
+        const boss = config.fieldBossSettings?.[name] || { name, enabled: true, soundFile: 'orb.mp3' };
         const times = bossTimes[name] || [];
         
         const div = document.createElement('div');
@@ -167,9 +122,9 @@
           <div class="flex gap-2 items-center">
             <select class="flex-1 input-field py-2 text-[11px] font-bold" 
                     onchange="changeSound('${name}', this.value)">
-              ${SOUND_FILES.map(s => `<option value="${s.file}" ${boss.soundFile === s.file ? 'selected' : ''}>${s.name}</option>`).join('')}
+              ${soundFiles.map(s => `<option value="${s.file}" ${boss.soundFile === s.file ? 'selected' : ''}>${s.name}</option>`).join('')}
             </select>
-            <button onclick="previewSound('${name}', '${boss.soundFile}')" class="w-8 h-8 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-lg text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="미리보기">
+            <button onclick="window.playPreview('${boss.soundFile}')" class="w-8 h-8 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-lg text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="미리보기">
               <i data-lucide="play" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -177,20 +132,7 @@
         list.appendChild(div);
       });
 
-      lucide.createIcons();
-    }
-
-    function updateMasterToggle() {
-      const enabled = document.getElementById('master-toggle').checked;
-      window.electronAPI.applySettings({ fieldBossNotifyEnabled: enabled });
-    }
-
-    function updateOffsets() {
-      const offsets = [];
-      document.querySelectorAll('.offset-check:checked').forEach(check => {
-        offsets.push(parseInt(check.value));
-      });
-      window.electronAPI.applySettings({ fieldBossNotifyOffsets: offsets });
+      window.refreshIcons();
     }
 
     function toggleBoss(name, enabled) {
@@ -204,19 +146,6 @@
       settings[name] = { ...settings[name], name, soundFile: file };
       window.electronAPI.applySettings({ fieldBossSettings: settings });
     }
-
-    function previewSound(name, currentSound) {
-      // 설정된 사운드를 즉시 재생하기 위해 현재 선택된 값을 가져옴
-      const settings = config.fieldBossSettings?.[name];
-      const soundToPlay = settings ? settings.soundFile : currentSound;
-      window.electronAPI.previewBossSound(soundToPlay);
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') window.close();
-    });
-
-    lucide.createIcons();
   </script>
 </body>
 </html>

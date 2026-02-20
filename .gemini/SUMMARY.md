@@ -1,14 +1,16 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.2.0)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.2.1)
 
-이 문서는 필드 보스 알림 시스템 및 버프 프리셋 관리 기능이 강화된 v1.2.0 버전을 기준으로 작성되었습니다.
+이 문서는 환경설정 탭 시스템 및 사운드 커스터마이징이 강화된 v1.2.1 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 게임 동기화 위젯.
 - **최종 빌드:** **TypeScript**, Electron, GitHub Actions 기반 CI/CD.
-- **주요 개선:** 필드 보스 알림 시스템, 버프 프리셋 수정/저장, 지능형 시간 표시 UI.
+- **주요 개선:** 환경설정 탭 분리(6개), 장판/보스 음량 개별 조절, UI 유틸리티 공통화.
 
 ## 2. 주요 기능 명세
-- **Field Boss Notifier (New):** 필드 보스 출현 시간 알림 및 커스텀 사운드 설정. 현재 시간 기준 지능형 시간 표시.
+- **Multi-Tab Settings (New):** 설정을 6개의 카테고리로 분류하여 직관적인 UI 제공.
+- **Sound Customization (Enhanced):** 15종의 알림음 선택 및 개별 음량 조절 기능.
+- **Field Boss Notifier:** 필드 보스 출현 시간 알림 및 지능형 시간 표시 UI.
 - **Buff Manager & Calculator:** 공식 가이드 기반의 버프 백과사전. 선택한 버프들의 대미지, 능력치, 경험치, 레어 확률 등을 실시간으로 합산.
 - **Smart Checklist:** 상호 배타적인 버프(중복 사용 불가)를 자동으로 감지하여 비활성화하는 지능형 로직.
 - **Custom Presets:** 사용자가 자주 사용하는 도핑 조합을 이름과 함께 저장하고 원클릭으로 불러오는 개인화 기능.

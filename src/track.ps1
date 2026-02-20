@@ -34,8 +34,19 @@ if (-not ([System.Management.Automation.PSTypeName]'Window').Type) {
     Add-Type -TypeDefinition $signature
 }
 
-function Get-GameRect {
+function Find-GameProcess {
+    # 방법 1: 프로세스 이름으로 정확히 찾기
     $p = Get-Process $processName -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Talesweaver*" } | Select-Object -First 1
+    
+    # 방법 2: 이름으로 못 찾은 경우 모든 프로세스에서 제목으로 찾기
+    if (-not $p) {
+        $p = Get-Process | Where-Object { $_.MainWindowTitle -like "*Talesweaver*" } | Select-Object -First 1
+    }
+    return $p
+}
+
+function Get-GameRect {
+    $p = Find-GameProcess
 
     if ($p -and $p.MainWindowHandle -ne 0) {
         if ([Window]::IsIconic($p.MainWindowHandle)) {
@@ -68,8 +79,21 @@ if ($loop) {
             $result = Get-GameRect
             Write-Output $result
         }
+        elseif ($cmd -eq "BOOST") {
+            $p = Find-GameProcess
+            if ($p) {
+                if ($p.PriorityClass -ne 'High') {
+                    $p.PriorityClass = 'High'
+                    Write-Output "BOOSTED"
+                } else {
+                    Write-Output "ALREADY_HIGH"
+                }
+            } else {
+                Write-Output "BOOST_FAIL"
+            }
+        }
         elseif ($cmd -eq "FOCUS") {
-            $p = Get-Process $processName -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Talesweaver*" } | Select-Object -First 1
+            $p = Find-GameProcess
             if ($p -and $p.MainWindowHandle -ne 0) {
                 $hwnd = $p.MainWindowHandle
                 [Window]::keybd_event(0x12, 0, 0, 0)   # VK_MENU (Alt) down

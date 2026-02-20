@@ -2,7 +2,15 @@
  * TW-Overlay 메인 프로세스 - 1.0.8 안정화 빌드
  */
 import { app, globalShortcut, Notification } from 'electron';
-import { POLLING_FAST_MS, POLLING_SLOW_MS, POLLING_COOLDOWN, appState } from './modules/constants';
+import {
+  POLLING_FAST_MS,
+  POLLING_STABLE_MS,
+  POLLING_UNFOCUSED_MS,
+  POLLING_MINIMIZED_MS,
+  POLLING_IDLE_MS,
+  STABLE_THRESHOLD_COUNT,
+  appState
+} from './modules/constants';
 import { log } from './modules/logger';
 import * as config from './modules/config';
 import * as tracker from './modules/tracker';
@@ -13,8 +21,17 @@ import * as tray from './modules/tray';
 import { setupUpdater } from './modules/updater';
 import screenWatcher from './modules/screenWatcher';
 import * as path from 'path';
+import os from 'os';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
+
+// 앱 자체의 우선순위를 낮추어 게임에 리소스 양보
+try {
+  os.setPriority(process.pid, os.constants.priority.PRIORITY_BELOW_NORMAL);
+  log(`[BOOT] App priority set to BelowNormal`);
+} catch (e) {
+  log(`[BOOT] Failed to set app priority: ${e}`);
+}
 
 // 윈도우 네이티브 알림을 위한 AppUserModelId 설정
 app.setAppUserModelId('com.filbertlab.twoverlay');
@@ -55,13 +72,16 @@ function registerShortcuts(): void {
 function startPolling(): void {
   let lastResult = '';
   let stableCount = 0;
+  let isBoosted = false;
 
   async function poll(): Promise<void> {
     if (appState.isQuitting) return;
+    
     const currentRect = await tracker.queryGameRect();
-    let nextDelay = stableCount >= POLLING_COOLDOWN ? POLLING_SLOW_MS : POLLING_FAST_MS;
+    let nextDelay = POLLING_FAST_MS;
 
-    if (currentRect === undefined) {
+    // 1. 응답이 없거나 상태 메시지(string)인 경우 예외 처리
+    if (currentRect === undefined || typeof currentRect === 'string') {
       pollingTimer = setTimeout(poll, POLLING_FAST_MS);
       return;
     }
@@ -69,41 +89,62 @@ function startPolling(): void {
     if (currentRect && 'notRunning' in currentRect) {
       if (gameWasEverFound) { app.quit(); return; }
       wm.hideAll();
-      stableCount = POLLING_COOLDOWN;
-      pollingTimer = setTimeout(poll, POLLING_SLOW_MS);
+      stableCount = 0;
+      isBoosted = false;
+      pollingTimer = setTimeout(poll, POLLING_IDLE_MS);
       return;
     }
 
-    // currentRect === null 인 경우가 최소화 상태임
+    // 2. 최소화 상태 확인
     if (!currentRect || (currentRect && 'x' in currentRect && currentRect.x <= -10000)) {
-      // 게임 창이 최소화되었을 때 감시 기능이 켜져 있다면 자동 종료 및 알림
       if (currentRect === null && wm.getScreenWatching()) {
         log('[POLL] Game minimized. Auto-stopping ScreenWatcher.');
-        wm.setScreenWatching(false); // windowManager가 내부적으로 screenWatcher.stop() 호출함
-        
+        wm.setScreenWatching(false);
         new Notification({
           title: 'TW-Overlay 알림',
           body: '게임 창이 최소화되어 장판 감시를 종료합니다.',
           icon: path.join(__dirname, 'icons', 'icon.ico')
         }).show();
       }
-
       wm.hideAll();
-      stableCount = POLLING_COOLDOWN;
-      pollingTimer = setTimeout(poll, POLLING_SLOW_MS);
+      stableCount = 0;
+      pollingTimer = setTimeout(poll, POLLING_MINIMIZED_MS);
       return;
     }
 
+    // 3. 게임 발견 시 최초 1회 성능 강화(우선순위 상향) 시도
     gameWasEverFound = true;
+    if (!isBoosted) {
+      tracker.boostGameProcess().then(res => {
+        if (res === 'BOOSTED' || res === 'ALREADY_HIGH') {
+          log(`[POLL] Game process priority elevated: ${res}`);
+          isBoosted = true;
+        }
+      });
+    }
+
+    // 4. 위치 동기화 및 가변 폴링 로직
     const currentResult = JSON.stringify(currentRect);
-    if (currentResult !== lastResult || (wm.getMainWindow() && !wm.getMainWindow()?.isVisible())) {
+    const mainWin = wm.getMainWindow();
+    const isVisible = mainWin && mainWin.isVisible();
+
+    if (currentResult !== lastResult || !isVisible) {
+      // 위치가 바뀌었거나 사이드바가 안 보이면 즉시 동기화 (빠른 폴링)
       wm.syncOverlay(currentRect);
       lastResult = currentResult;
       stableCount = 0;
+      nextDelay = POLLING_FAST_MS;
     } else {
+      // 위치가 고정된 상태
       stableCount++;
+      if (stableCount >= STABLE_THRESHOLD_COUNT) {
+        // 1초(10프레임) 이상 고정 시 주기를 늘림 (사용자 제안 반영)
+        nextDelay = POLLING_STABLE_MS;
+      } else {
+        nextDelay = POLLING_FAST_MS;
+      }
     }
-    nextDelay = stableCount >= POLLING_COOLDOWN ? POLLING_SLOW_MS : POLLING_FAST_MS;
+
     pollingTimer = setTimeout(poll, nextDelay);
   }
   poll();

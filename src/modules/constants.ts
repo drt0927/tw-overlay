@@ -35,7 +35,7 @@ export interface GameNotRunning {
   notRunning: true;
 }
 
-export type GameQueryResult = GameRect | GameNotRunning | null | undefined;
+export type GameQueryResult = GameRect | GameNotRunning | string | null | undefined;
 
 export interface AppConfig {
   width: number;
@@ -69,6 +69,11 @@ export const MIN_H = 300;
 export const LOG_MAX_SIZE = 1 * 1024 * 1024; // 1MB
 export const SAVE_DEBOUNCE_MS = 300;
 export const POLLING_FAST_MS = 100;
+export const POLLING_STABLE_MS = 1000;
+export const POLLING_UNFOCUSED_MS = 2000;
+export const POLLING_MINIMIZED_MS = 2000;
+export const POLLING_IDLE_MS = 3000;
+export const STABLE_THRESHOLD_COUNT = 10;
 export const POLLING_SLOW_MS = 1000;
 export const POLLING_COOLDOWN = 3;
 export const SIDEBAR_HEIGHT = 800;

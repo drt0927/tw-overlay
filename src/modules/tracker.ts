@@ -48,6 +48,7 @@ export function start(): void {
 
           if (trimmed === 'NOT_RUNNING') resolve({ notRunning: true });
           else if (trimmed === 'MINIMIZED') resolve(null);
+          else if (trimmed === 'BOOSTED' || trimmed === 'ALREADY_HIGH' || trimmed === 'BOOST_FAIL' || trimmed === 'FOCUSED' || trimmed === 'FOCUS_FAIL') resolve(trimmed);
           else if (trimmed.includes(',')) {
             const [l, t, r, b] = trimmed.split(',').map(Number);
             resolve({ x: l, y: t, width: r - l, height: b - t });
@@ -107,6 +108,22 @@ export function stop() {
     psProcess = null;
   }
   psReady = false;
+}
+
+/** 게임 프로세스 우선순위 상향 */
+export async function boostGameProcess(): Promise<string | undefined> {
+  if (!psReady || !psProcess || psQueryResolve) return undefined;
+
+  return new Promise((resolve) => {
+    psQueryResolve = resolve as any;
+    setTimeout(() => { if (psQueryResolve === (resolve as any)) { psQueryResolve = null; resolve(undefined); } }, 3000);
+    try {
+      psProcess?.stdin?.write('BOOST\n');
+    } catch (e) {
+      psQueryResolve = null;
+      resolve(undefined);
+    }
+  });
 }
 
 /** 게임 창에 포커스 전환 */

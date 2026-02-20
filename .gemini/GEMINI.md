@@ -3,7 +3,7 @@
 이 문서는 **TW-Overlay (TalesWeaver Companion Browser)** 프로젝트의 내부 구조와 개발 프로세스를 안내합니다. 상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요.
 
 ## 📌 프로젝트 소개
-TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드바 위젯과 전용 오버레이 브라우저를 제공하는 도구입니다. 1.0.7 버전부터는 **강력한 자동 업데이트 시스템**과 **성능 최적화된 로딩 프로세스**를 제공합니다.
+TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드바 위젯과 전용 오버레이 브라우저를 제공하는 도구입니다.
 
 ## 🛠 기술 스택
 - **Language:** **TypeScript** (TSConfig 기반 컴파일)

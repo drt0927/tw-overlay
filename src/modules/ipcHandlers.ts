@@ -54,6 +54,7 @@ export function register(): void {
   ipcMain.on('toggle-settings', () => { wm.toggleSettingsWindow(); });
   ipcMain.on('toggle-gallery', () => { wm.toggleGalleryWindow(); });
   ipcMain.on('toggle-abbreviation', () => { wm.toggleAbbreviationWindow(); });
+  ipcMain.on('toggle-buffs', () => { wm.toggleBuffsWindow(); });
   ipcMain.on('toggle-monitor-zone', () => { wm.toggleMonitorZone(); });
   ipcMain.on('toggle-sidebar', () => { wm.toggleSidebar(); });
   ipcMain.on('toggle-overlay', () => { wm.toggleOverlay(); });

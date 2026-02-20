@@ -14,6 +14,7 @@ let overlayWindow: BrowserWindow | null = null; // 오버레이
 let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
 let abbreviationWindow: BrowserWindow | null = null;
+let buffsWindow: BrowserWindow | null = null;
 let monitorZoneWindow: BrowserWindow | null = null; // 감시 구역 설정 창
 let view: WebContentsView | null = null;
 
@@ -22,6 +23,7 @@ let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
 let settingsPos: WindowPosition = { offsetX: -1010, offsetY: 40 };
 let galleryPos: WindowPosition = { offsetX: -320, offsetY: 40 };
 let abbreviationPos: WindowPosition = { offsetX: -320, offsetY: 40 };
+let buffsPos: WindowPosition = { offsetX: -1000, offsetY: 40 };
 let monitorZonePos: WindowPosition = { offsetX: 400, offsetY: 300 };
 
 let isTracking = false;
@@ -48,12 +50,12 @@ function init() {
     if (cfg.positions.settings) settingsPos = { ...cfg.positions.settings };
     if (cfg.positions.gallery) galleryPos = { ...cfg.positions.gallery };
     if (cfg.positions.abbreviation) abbreviationPos = { ...cfg.positions.abbreviation };
-    if (cfg.positions.monitorZone) monitorZonePos = { ...cfg.positions.monitorZone };
+    if (cfg.positions.buffs) buffsPos = { ...cfg.positions.buffs };
   }
 }
 init();
 
-function savePosition(winType: 'overlay' | 'settings' | 'gallery' | 'abbreviation' | 'monitorZone', pos: WindowPosition, immediate = false) {
+function savePosition(winType: 'overlay' | 'settings' | 'gallery' | 'abbreviation' | 'buffs', pos: WindowPosition, immediate = false) {
   const currentCfg = config.load();
   const positions = { ...(currentCfg.positions || {}), [winType]: { ...pos } };
   if (immediate) config.saveImmediate({ positions } as any);
@@ -66,6 +68,7 @@ export const getOverlayWindow = () => overlayWindow;
 export const getSettingsWindow = () => settingsWindow;
 export const getGalleryWindow = () => galleryWindow;
 export const getAbbreviationWindow = () => abbreviationWindow;
+export const getBuffsWindow = () => buffsWindow;
 export const getMonitorZoneWindow = () => monitorZoneWindow;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
@@ -301,6 +304,30 @@ export function toggleAbbreviationWindow(): void {
   abbreviationWindow.on('closed', () => { abbreviationWindow = null; });
 }
 
+export function toggleBuffsWindow(): void {
+  if (buffsWindow) { buffsWindow.close(); return; }
+  buffsWindow = new BrowserWindow({
+    width: 1000, height: 700, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
+  });
+  buffsWindow.loadFile(path.join(__dirname, '..', 'buffs.html'));
+  buffsWindow.on('ready-to-show', () => {
+    if (gameRect) {
+      buffsWindow?.setPosition(Math.round(gameRect.x + gameRect.width + buffsPos.offsetX), Math.round(gameRect.y + buffsPos.offsetY));
+    }
+    buffsWindow?.show();
+    if (IS_DEV) buffsWindow?.webContents.openDevTools({ mode: 'detach' });
+  });
+  buffsWindow.on('move', () => {
+    if (consumeProgrammaticMove('buffs') || !buffsWindow || !gameRect) return;
+    const b = buffsWindow.getBounds();
+    buffsPos.offsetX = b.x - (gameRect.x + gameRect.width);
+    buffsPos.offsetY = b.y - gameRect.y;
+    savePosition('buffs', buffsPos);
+  });
+  buffsWindow.on('closed', () => { buffsWindow = null; });
+}
+
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
   const b = overlayWindow.getBounds();
@@ -386,6 +413,10 @@ export function syncOverlay(currentRect: GameRect): void {
       setProgrammaticMove('abbreviation');
       abbreviationWindow.setPosition(Math.round(gX + gW + abbreviationPos.offsetX), Math.round(gY + abbreviationPos.offsetY));
     }
+    if (buffsWindow && !buffsWindow.isDestroyed() && buffsWindow.isVisible()) {
+      setProgrammaticMove('buffs');
+      buffsWindow.setPosition(Math.round(gX + gW + buffsPos.offsetX), Math.round(gY + buffsPos.offsetY));
+    }
     if (monitorZoneWindow && !monitorZoneWindow.isDestroyed() && monitorZoneWindow.isVisible()) {
       setProgrammaticMove('monitorZone');
       monitorZoneWindow.setPosition(Math.round(gX + monitorZonePos.offsetX), Math.round(gY + monitorZonePos.offsetY));
@@ -420,7 +451,7 @@ export function applySettings(newSettings: any): void {
     setTimeout(() => { isApplyingSize = false; }, 300);
   }
 
-  [mainWindow, overlayWindow, settingsWindow, galleryWindow].forEach(win => {
+  [mainWindow, overlayWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow].forEach(win => {
     win?.webContents.send('config-data', updated);
   });
 }
@@ -440,7 +471,7 @@ export function toggleSidebar(): boolean {
 }
 
 export function hideAll(): void {
-  [overlayWindow, mainWindow, settingsWindow, galleryWindow, abbreviationWindow, monitorZoneWindow].forEach(win => {
+  [overlayWindow, mainWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow, monitorZoneWindow].forEach(win => {
     if (win && win.isVisible()) win.hide();
   });
   isTracking = false;
@@ -494,7 +525,6 @@ export function toggleMonitorZone(): void {
     const b = monitorZoneWindow.getBounds();
     monitorZonePos.offsetX = b.x - gameRect.x;
     monitorZonePos.offsetY = b.y - gameRect.y;
-    savePosition('monitorZone', monitorZonePos);
   });
 
   monitorZoneWindow.on('closed', () => {

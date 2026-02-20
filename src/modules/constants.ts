@@ -59,7 +59,7 @@ export interface AppConfig {
     settings?: WindowPosition;
     gallery?: WindowPosition;
     abbreviation?: WindowPosition;
-    monitorZone?: WindowPosition;
+    buffs?: WindowPosition;
   };
 }
 
@@ -110,7 +110,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     settings: { offsetX: -1010, offsetY: 40 },
     gallery: { offsetX: -320, offsetY: 40 },
     abbreviation: { offsetX: -320, offsetY: 40 },
-    monitorZone: { offsetX: 400, offsetY: 300 }
+    buffs: { offsetX: -1000, offsetY: 40 }
   }
 };
 

@@ -34,6 +34,12 @@
       <i data-lucide="zap" class="w-4 h-4"></i>
     </div>
 
+    <!-- 필드보스 알림 설정 버튼 -->
+    <div id="boss-btn" class="p-2 cursor-pointer text-slate-400 hover:text-blue-400 relative"
+      onclick="window.electronAPI.toggleBossSettings()" title="필드보스 알림 설정">
+      <i data-lucide="alarm-clock" class="w-4 h-4"></i>
+    </div>
+
     <!-- 장판 감시 영역 -->
     <div id="zone-btn" class="p-2 cursor-pointer text-slate-600 hover:text-green-400 transition-colors"
       onclick="toggleZone()" title="감시 영역 설정">
@@ -69,10 +75,25 @@
 
   <!-- 툴팁 -->
   <div id="tooltip" class="tw-tooltip"></div>
+  <!-- 오디오 재생기 -->
+  <audio id="boss-audio" class="hidden"></audio>
 
   <script>
     function refreshIcons() { lucide.createIcons(); }
     const tooltip = document.getElementById('tooltip');
+    const bossAudio = document.getElementById('boss-audio');
+
+    // 필드보스 알림 수신 및 사운드 재생
+    window.electronAPI.onPlayBossSound(({ bossName, soundFile }) => {
+      if (!soundFile) return;
+      bossAudio.src = `assets/sound/${soundFile}`;
+      bossAudio.play().catch(e => console.error('Audio play failed:', e));
+      
+      // 알림이 왔을 때 버튼 강조 효과 (옵션)
+      const btn = document.getElementById('boss-btn');
+      btn.classList.add('animate-bounce', 'text-blue-400');
+      setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
+    });
 
     // 감시 상태 수신 → 아이콘 업데이트
     window.electronAPI.onScreenWatcherStatus((isWatching) => {

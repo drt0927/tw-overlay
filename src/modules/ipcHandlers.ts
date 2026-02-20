@@ -55,6 +55,7 @@ export function register(): void {
   ipcMain.on('toggle-gallery', () => { wm.toggleGalleryWindow(); });
   ipcMain.on('toggle-abbreviation', () => { wm.toggleAbbreviationWindow(); });
   ipcMain.on('toggle-buffs', () => { wm.toggleBuffsWindow(); });
+  ipcMain.on('toggle-boss-settings', () => { wm.toggleBossSettingsWindow(); });
   ipcMain.on('toggle-monitor-zone', () => { wm.toggleMonitorZone(); });
   ipcMain.on('toggle-sidebar', () => { wm.toggleSidebar(); });
   ipcMain.on('toggle-overlay', () => { wm.toggleOverlay(); });
@@ -71,6 +72,11 @@ export function register(): void {
   ipcMain.handle('get-app-version', () => app.getVersion());
 
   ipcMain.on('open-external', (_e, url: string) => { if (url) shell.openExternal(url); });
+
+  ipcMain.on('preview-boss-sound', (_e, soundFile: string) => {
+    const sidebar = wm.getMainWindow();
+    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName: '미리보기', soundFile });
+  });
 
   ipcMain.on('save-quick-slots', (_e, slots: any[]) => {
     config.saveImmediate({ quickSlots: slots });

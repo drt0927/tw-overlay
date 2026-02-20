@@ -18,6 +18,7 @@ import * as wm from './modules/windowManager';
 import * as ipcHandlers from './modules/ipcHandlers';
 import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
+import * as bossNotifier from './modules/bossNotifier';
 import { setupUpdater } from './modules/updater';
 import screenWatcher from './modules/screenWatcher';
 import * as path from 'path';
@@ -163,6 +164,7 @@ app.whenReady().then(() => {
   // 3. 트래커 및 폴링 즉시 시작
   tracker.start();
   startPolling();
+  bossNotifier.start();
 
   // 4. 업데이트 체크는 리소스 분산을 위해 약간의 지연 유지
   setTimeout(() => {

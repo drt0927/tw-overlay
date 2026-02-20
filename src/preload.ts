@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleGallery: () => ipcRenderer.send('toggle-gallery'),
   toggleAbbreviation: () => ipcRenderer.send('toggle-abbreviation'),
   toggleBuffs: () => ipcRenderer.send('toggle-buffs'),
+  toggleBossSettings: () => ipcRenderer.send('toggle-boss-settings'),
   toggleMonitorZone: () => ipcRenderer.send('toggle-monitor-zone'),
   setIgnoreMouseEvents: (ignore: boolean, options: any) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),
@@ -21,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
   saveQuickSlots: (slots: any[]) => ipcRenderer.send('save-quick-slots', slots),
   applySettings: (settings: any) => ipcRenderer.send('apply-settings', settings),
+  previewBossSound: (soundFile: string) => ipcRenderer.send('preview-boss-sound', soundFile),
   checkForUpdates: () => ipcRenderer.send('check-for-updates'),
   startUpdateDownload: () => ipcRenderer.send('start-update-download'),
   quitAndInstall: () => ipcRenderer.send('quit-and-install'),
@@ -100,6 +102,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onMonitorZoneWindowStatus: (callback: (isOpen: boolean) => void) => {
     ipcRenderer.removeAllListeners('monitor-zone-window-status');
     ipcRenderer.on('monitor-zone-window-status', (_event, isOpen) => callback(isOpen));
+  },
+  onBossTimesData: (callback: (times: Record<string, string[]>) => void) => {
+    ipcRenderer.removeAllListeners('boss-times-data');
+    ipcRenderer.on('boss-times-data', (_event, times) => callback(times));
+  },
+  onPlayBossSound: (callback: (data: { bossName: string, soundFile: string }) => void) => {
+    ipcRenderer.removeAllListeners('play-boss-sound');
+    ipcRenderer.on('play-boss-sound', (_event, data) => callback(data));
   },
 
   // 장판 감시 (렌더러용)

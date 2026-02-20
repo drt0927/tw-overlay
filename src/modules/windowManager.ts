@@ -6,6 +6,7 @@ import * as path from 'path';
 import { MIN_W, MIN_H, IS_DEV, AppConfig, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect } from './constants';
 import * as config from './config';
 import { log } from './logger';
+import * as bossNotifier from './bossNotifier';
 
 // --- 상태 관리 ---
 let mainWindow: BrowserWindow | null = null; // 사이드바
@@ -15,6 +16,7 @@ let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
 let abbreviationWindow: BrowserWindow | null = null;
 let buffsWindow: BrowserWindow | null = null;
+let bossSettingsWindow: BrowserWindow | null = null;
 let monitorZoneWindow: BrowserWindow | null = null; // 감시 구역 설정 창
 let view: WebContentsView | null = null;
 
@@ -24,6 +26,7 @@ let settingsPos: WindowPosition = { offsetX: -1010, offsetY: 40 };
 let galleryPos: WindowPosition = { offsetX: -320, offsetY: 40 };
 let abbreviationPos: WindowPosition = { offsetX: -320, offsetY: 40 };
 let buffsPos: WindowPosition = { offsetX: -1000, offsetY: 40 };
+let bossSettingsPos: WindowPosition = { offsetX: -320, offsetY: 40 };
 let monitorZonePos: WindowPosition = { offsetX: 400, offsetY: 300 };
 
 let isTracking = false;
@@ -51,11 +54,12 @@ function init() {
     if (cfg.positions.gallery) galleryPos = { ...cfg.positions.gallery };
     if (cfg.positions.abbreviation) abbreviationPos = { ...cfg.positions.abbreviation };
     if (cfg.positions.buffs) buffsPos = { ...cfg.positions.buffs };
+    if (cfg.positions.bossSettings) bossSettingsPos = { ...cfg.positions.bossSettings };
   }
 }
 init();
 
-function savePosition(winType: 'overlay' | 'settings' | 'gallery' | 'abbreviation' | 'buffs', pos: WindowPosition, immediate = false) {
+function savePosition(winType: 'overlay' | 'settings' | 'gallery' | 'abbreviation' | 'buffs' | 'bossSettings', pos: WindowPosition, immediate = false) {
   const currentCfg = config.load();
   const positions = { ...(currentCfg.positions || {}), [winType]: { ...pos } };
   if (immediate) config.saveImmediate({ positions } as any);
@@ -69,6 +73,7 @@ export const getSettingsWindow = () => settingsWindow;
 export const getGalleryWindow = () => galleryWindow;
 export const getAbbreviationWindow = () => abbreviationWindow;
 export const getBuffsWindow = () => buffsWindow;
+export const getBossSettingsWindow = () => bossSettingsWindow;
 export const getMonitorZoneWindow = () => monitorZoneWindow;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
@@ -328,6 +333,41 @@ export function toggleBuffsWindow(): void {
   buffsWindow.on('closed', () => { buffsWindow = null; });
 }
 
+export function toggleBossSettingsWindow(): void {
+  if (bossSettingsWindow) { bossSettingsWindow.close(); return; }
+  bossSettingsWindow = new BrowserWindow({
+    width: 320, height: 600, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
+  });
+  bossSettingsWindow.loadFile(path.join(__dirname, '..', 'boss-settings.html'));
+  bossSettingsWindow.on('ready-to-show', () => {
+    if (gameRect) {
+      bossSettingsWindow?.setPosition(Math.round(gameRect.x + gameRect.width + bossSettingsPos.offsetX), Math.round(gameRect.y + bossSettingsPos.offsetY));
+    }
+    const cfg = config.load();
+    bossSettingsWindow?.webContents.send('config-data', cfg);
+    
+    // 보스 시간 데이터 전송
+    const bossTimes: Record<string, string[]> = {};
+    const bosses = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
+    bosses.forEach(name => {
+      bossTimes[name] = bossNotifier.getBossTimes(name);
+    });
+    bossSettingsWindow?.webContents.send('boss-times-data', bossTimes);
+
+    bossSettingsWindow?.show();
+    if (IS_DEV) bossSettingsWindow?.webContents.openDevTools({ mode: 'detach' });
+  });
+  bossSettingsWindow.on('move', () => {
+    if (consumeProgrammaticMove('bossSettings') || !bossSettingsWindow || !gameRect) return;
+    const b = bossSettingsWindow.getBounds();
+    bossSettingsPos.offsetX = b.x - (gameRect.x + gameRect.width);
+    bossSettingsPos.offsetY = b.y - gameRect.y;
+    savePosition('bossSettings', bossSettingsPos);
+  });
+  bossSettingsWindow.on('closed', () => { bossSettingsWindow = null; });
+}
+
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
   const b = overlayWindow.getBounds();
@@ -417,6 +457,10 @@ export function syncOverlay(currentRect: GameRect): void {
       setProgrammaticMove('buffs');
       buffsWindow.setPosition(Math.round(gX + gW + buffsPos.offsetX), Math.round(gY + buffsPos.offsetY));
     }
+    if (bossSettingsWindow && !bossSettingsWindow.isDestroyed() && bossSettingsWindow.isVisible()) {
+      setProgrammaticMove('bossSettings');
+      bossSettingsWindow.setPosition(Math.round(gX + gW + bossSettingsPos.offsetX), Math.round(gY + bossSettingsPos.offsetY));
+    }
     if (monitorZoneWindow && !monitorZoneWindow.isDestroyed() && monitorZoneWindow.isVisible()) {
       setProgrammaticMove('monitorZone');
       monitorZoneWindow.setPosition(Math.round(gX + monitorZonePos.offsetX), Math.round(gY + monitorZonePos.offsetY));
@@ -451,7 +495,7 @@ export function applySettings(newSettings: any): void {
     setTimeout(() => { isApplyingSize = false; }, 300);
   }
 
-  [mainWindow, overlayWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow].forEach(win => {
+  [mainWindow, overlayWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow, bossSettingsWindow].forEach(win => {
     win?.webContents.send('config-data', updated);
   });
 }
@@ -471,7 +515,7 @@ export function toggleSidebar(): boolean {
 }
 
 export function hideAll(): void {
-  [overlayWindow, mainWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow, monitorZoneWindow].forEach(win => {
+  [overlayWindow, mainWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow, bossSettingsWindow, monitorZoneWindow].forEach(win => {
     if (win && win.isVisible()) win.hide();
   });
   isTracking = false;

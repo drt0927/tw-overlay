@@ -41,10 +41,12 @@
           <h2 class="text-xs font-black text-slate-500 uppercase tracking-widest px-1">도핑 프리셋</h2>
           
           <!-- Standard Set -->
-          <div id="standard-preset-card" class="bg-gradient-to-br from-yellow-600/20 to-orange-600/20 border border-yellow-500/30 rounded-xl p-5 transition-all">
+          <div id="standard-preset-card" onclick="selectPreset('standard')" class="cursor-pointer bg-gradient-to-br from-yellow-600/20 to-orange-600/20 border border-yellow-500/30 rounded-xl p-5 transition-all hover:bg-yellow-600/30 active:scale-[0.98] group relative">
             <div class="flex justify-between items-center mb-3">
               <span class="text-sm font-black text-yellow-400">기본 도핑 세트</span>
-              <button id="standard-preset-btn" onclick="applyStandardSet()" class="text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-black px-4 py-1.5 rounded-lg transition-transform active:scale-95 shadow-lg shadow-yellow-900/20">적용</button>
+              <div id="standard-deselect" class="hidden text-yellow-600 hover:text-yellow-400 transition-colors" onclick="event.stopPropagation(); deselectPreset()">
+                <i data-lucide="x-circle" class="w-5 h-5"></i>
+              </div>
             </div>
             <p class="text-xs text-slate-400 leading-relaxed font-medium">눈사람, 改-각성/신뢰, 이자벨 3종, 클럽 P, 앰플, 신속포션 (총 9종)</p>
           </div>
@@ -54,8 +56,11 @@
             <div class="flex items-center justify-between px-1">
               <span class="text-xs font-bold text-slate-400">나만의 프리셋</span>
               <div class="flex gap-1.5">
-                <input id="preset-name" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs w-36 focus:outline-none focus:border-purple-500 transition-colors" placeholder="이름 입력...">
-                <button onclick="saveCurrentPreset()" class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">저장</button>
+                <input id="preset-name" 
+                       onfocus="handleInputFocus()" 
+                       class="no-drag bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs w-36 focus:outline-none focus:border-purple-500 transition-colors" 
+                       placeholder="이름 입력...">
+                <button onclick="saveCurrentPreset()" class="no-drag text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">저장</button>
               </div>
             </div>
             
@@ -106,7 +111,7 @@
             <i data-lucide="alert-triangle" class="w-4 h-4 inline align-bottom mr-2"></i>
             <span id="warning-text"></span>
           </div>
-          <button onclick="resetSelection()" class="text-sm bg-white/5 hover:bg-red-500/20 hover:text-red-400 border border-white/10 hover:border-red-500/30 px-6 py-2.5 rounded-xl text-slate-400 font-bold transition-all">초기화</button>
+          <button onclick="resetSelection()" class="text-sm bg-white/5 hover:bg-red-500/20 hover:text-red-400 border border-white/10 hover:border-red-500/30 px-6 py-2.5 rounded-xl text-slate-400 font-bold transition-all">전체 해제</button>
         </div>
       </div>
     </div>
@@ -167,6 +172,13 @@
       border: 1px solid rgba(239, 68, 68, 0.2);
     }
 
+    /* 시스템 프리셋 잠금 시 스타일 */
+    .system-locked .buff-card {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.5);
+    }
+
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
@@ -178,6 +190,8 @@
     let selectedBuffIds = new Set();
     let currentCategory = 'ALL';
     let activePresetId = null;
+
+    const STANDARD_BUFFS = ['util_snowman','dmg_potion_plus','stat_trust_plus','stat_izabel_fixed','stat_izabel_ratio','dmg_izabel','dmg_club_p','util_ampoule','util_haste'];
 
     window.onload = async () => {
       await loadData();
@@ -214,6 +228,15 @@
       return saved ? JSON.parse(saved) : [];
     }
 
+    // 이름 입력창 클릭 시 처리
+    function handleInputFocus() {
+      // 프리셋이 선택된 상태에서 클릭하면 전체 초기화
+      if (activePresetId !== null) {
+        deselectPreset();
+      }
+      // 일반 선택 모드일 때는 선택된 버프를 유지 (그대로 둠)
+    }
+
     function saveCurrentPreset() {
       if (selectedBuffIds.size === 0) return alert('선택된 버프가 없습니다.');
       const nameInput = document.getElementById('preset-name');
@@ -228,13 +251,45 @@
       renderPresets();
     }
 
-    function loadPreset(presetId) {
+    function updatePreset(presetId) {
       const presets = getPresets();
-      const preset = presets.find(p => p.id === presetId);
-      if (!preset) return;
+      const idx = presets.findIndex(p => p.id === presetId);
+      if (idx === -1) return;
+      
+      presets[idx].buffIds = Array.from(selectedBuffIds);
+      localStorage.setItem('buff_presets', JSON.stringify(presets));
+      renderPresets();
+      // 저장 완료 시각적 피드백은 renderPresets에서 처리됨
+    }
+
+    function selectPreset(id) {
+      // 프리셋 선택 시 이름 입력창 초기화 (UX 일관성)
+      document.getElementById('preset-name').value = '';
+
+      // 이미 선택된 프리셋을 다시 클릭하면 해제 (토글 기능)
+      if (activePresetId === id) {
+        deselectPreset();
+        return;
+      }
+
+      if (id === 'standard') {
+        selectedBuffIds = new Set(STANDARD_BUFFS);
+        activePresetId = 'standard';
+      } else {
+        const presets = getPresets();
+        const preset = presets.find(p => p.id === id);
+        if (!preset) return;
+        selectedBuffIds = new Set(preset.buffIds);
+        activePresetId = id;
+      }
+      saveCurrentSelection();
+      renderPresets();
+      renderList(document.getElementById('search-input').value);
+    }
+
+    function deselectPreset() {
       selectedBuffIds.clear();
-      preset.buffIds.forEach(id => { if (allBuffs.find(b => b.id === id)) selectedBuffIds.add(id); });
-      activePresetId = presetId;
+      activePresetId = null;
       saveCurrentSelection();
       renderPresets();
       renderList(document.getElementById('search-input').value);
@@ -245,24 +300,27 @@
       if (!confirm('삭제하시겠습니까?')) return;
       const filtered = getPresets().filter(p => p.id !== presetId);
       localStorage.setItem('buff_presets', JSON.stringify(filtered));
-      if (activePresetId === presetId) { activePresetId = null; saveCurrentSelection(); }
-      renderPresets();
+      if (activePresetId === presetId) {
+        deselectPreset();
+      } else {
+        renderPresets();
+      }
     }
 
     function renderPresets() {
       const container = document.getElementById('user-preset-list');
       const presets = getPresets();
+      
+      // 시스템 프리셋 카드 상태 업데이트
       const stdCard = document.getElementById('standard-preset-card');
-      const stdBtn = document.getElementById('standard-preset-btn');
+      const stdDeselect = document.getElementById('standard-deselect');
       
       if (activePresetId === 'standard') {
         stdCard.classList.add('ring-2', 'ring-yellow-400', 'bg-yellow-600/40');
-        stdBtn.textContent = '적용됨';
-        stdBtn.classList.replace('bg-yellow-500', 'bg-white');
+        stdDeselect.classList.remove('hidden');
       } else {
         stdCard.classList.remove('ring-2', 'ring-yellow-400', 'bg-yellow-600/40');
-        stdBtn.textContent = '적용';
-        stdBtn.classList.replace('bg-white', 'bg-yellow-500');
+        stdDeselect.classList.add('hidden');
       }
 
       if (presets.length === 0) {
@@ -272,16 +330,32 @@
 
       container.innerHTML = presets.map(p => {
         const isActive = activePresetId === p.id;
+        
+        // 변경 사항 확인 (Original vs Current)
+        const isModified = isActive && (JSON.stringify(p.buffIds.sort()) !== JSON.stringify(Array.from(selectedBuffIds).sort()));
+
         return `
-          <div onclick="loadPreset(${p.id})" 
+          <div onclick="selectPreset(${p.id})" 
                class="group relative bg-slate-800/40 border ${isActive ? 'ring-2 ring-purple-500 border-purple-400 bg-purple-900/20' : 'border-white/10'} hover:bg-slate-800/60 rounded-xl p-4 cursor-pointer transition-all active:scale-[0.98]">
             <div class="flex justify-between items-start mb-1.5">
               <span class="text-xs font-black ${isActive ? 'text-purple-300' : 'text-slate-300'}">${p.name}</span>
-              <button onclick="deletePreset(event, ${p.id})" class="text-slate-600 hover:text-red-400 transition-colors">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
+              <div class="flex gap-2">
+                ${isModified ? `
+                  <button onclick="event.stopPropagation(); updatePreset(${p.id})" class="text-green-400 hover:text-green-300 transition-colors" title="현재 상태로 업데이트">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+                ${isActive ? `
+                  <button onclick="event.stopPropagation(); deselectPreset()" class="text-purple-400 hover:text-white transition-colors" title="선택 해제">
+                    <i data-lucide="x-circle" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+                <button onclick="deletePreset(event, ${p.id})" class="text-slate-600 hover:text-red-400 transition-colors" title="삭제">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
-            <p class="text-[11px] text-slate-500 font-medium">${p.buffIds.length}개의 버프</p>
+            <p class="text-[11px] text-slate-500 font-medium">${isActive ? selectedBuffIds.size : p.buffIds.length}개의 버프 ${isModified ? '<span class="text-purple-400/70 ml-1">(수정됨)</span>' : ''}</p>
           </div>
         `;
       }).join('');
@@ -291,6 +365,15 @@
     function renderList(query = '') {
       const list = document.getElementById('buff-list');
       list.innerHTML = '';
+      
+      // 시스템 프리셋 모드일 때 컨테이너가 아닌 '내부 카드'들의 클릭만 차단 (스크롤은 허용)
+      const isSystemLocked = activePresetId === 'standard';
+      if (isSystemLocked) {
+        list.classList.add('system-locked');
+      } else {
+        list.classList.remove('system-locked');
+      }
+
       const filtered = allBuffs.filter(item => {
         if (currentCategory !== 'ALL' && item.category !== currentCategory) return false;
         if (query && !item.name.includes(query) && !item.effect.includes(query)) return false;
@@ -309,6 +392,7 @@
         const card = document.createElement('div');
         card.className = `buff-card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`;
         card.onclick = () => toggleSelection(buff.id);
+        
         let tags = [];
         if (buff.removeOnExit) tags.push('<span class="buff-tag">종료 시 삭제</span>');
         if (buff.removeOnDeath) tags.push('<span class="buff-tag">사망 시 삭제</span>');
@@ -326,15 +410,35 @@
         `;
         list.appendChild(card);
       });
-      if (filtered.length === 0) list.innerHTML = `<div class="col-span-full text-center py-20 text-slate-600 text-sm font-bold">검색 결과가 없습니다.</div>`;
+      
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="col-span-full text-center py-20 text-slate-600 text-sm font-bold">검색 결과가 없습니다.</div>`;
+      }
+      
       updateSummary();
       lucide.createIcons();
     }
 
     function toggleSelection(id) {
-      if (selectedBuffIds.has(id)) selectedBuffIds.delete(id);
-      else selectedBuffIds.add(id);
-      activePresetId = null;
+      // 시스템 프리셋 모드에서는 선택 불가 (딤드 처리되어 도달하지 않아야 하지만 방어 로직)
+      if (activePresetId === 'standard') return;
+
+      const buff = allBuffs.find(b => b.id === id);
+      if (!buff) return;
+
+      if (selectedBuffIds.has(id)) {
+        selectedBuffIds.delete(id);
+      } else {
+        // 중복 그룹 처리
+        if (buff.group && buff.group !== 'none') {
+          selectedBuffIds.forEach(sid => {
+            const b = allBuffs.find(x => x.id === sid);
+            if (b && b.group === buff.group) selectedBuffIds.delete(sid);
+          });
+        }
+        selectedBuffIds.add(id);
+      }
+
       saveCurrentSelection();
       renderPresets();
       renderList(document.getElementById('search-input').value);
@@ -344,14 +448,23 @@
       const summaryEl = document.getElementById('total-stats');
       const warningEl = document.getElementById('warnings');
       const warningText = document.getElementById('warning-text');
+      
       if (selectedBuffIds.size === 0) {
         summaryEl.textContent = "선택된 버프 없음";
         summaryEl.className = "text-sm font-bold text-slate-500 mt-1";
         warningEl.classList.add('hidden');
         return;
       }
+
+      if (activePresetId === 'standard') {
+        summaryEl.className = "text-base font-black leading-tight mt-1 flex flex-wrap gap-y-1 opacity-80";
+      } else {
+        summaryEl.className = "text-base font-black leading-tight mt-1 flex flex-wrap gap-y-1";
+      }
+
       let stats = { dmg: { pct: 0 }, stat: { pct: 0, fix: 0 }, exp: { pct: 0 }, rare: { pct: 0 }, crit: { pct: 0 }, speed: { fix: 0 }, attr: { fix: 0 } };
       let hasDeathRisk = false, hasExitRisk = false;
+      
       selectedBuffIds.forEach(id => {
         const buff = allBuffs.find(b => b.id === id);
         if (!buff) return;
@@ -369,6 +482,7 @@
         if (buff.removeOnDeath) hasDeathRisk = true;
         if (buff.removeOnExit) hasExitRisk = true;
       });
+
       let html = [];
       const add = (l, v, c) => {
         let p = [];
@@ -376,6 +490,7 @@
         if (v.pct > 0) p.push(`+${v.pct}%`);
         if (p.length > 0) html.push(`<span class="${c}">${l} ${p.join(' / ')}</span>`);
       };
+
       if (stats.dmg.pct > 0) html.push(`<span class="text-orange-400">대미지 +${stats.dmg.pct}%</span>`);
       add('능력치', stats.stat, 'text-blue-400');
       if (stats.crit.pct > 0) html.push(`<span class="text-cyan-400">크리 +${stats.crit.pct}%</span>`);
@@ -383,8 +498,9 @@
       if (stats.rare.pct > 0) html.push(`<span class="text-purple-400 font-black">레어 +${stats.rare.pct}%</span>`);
       if (stats.speed.fix > 0) html.push(`<span class="text-slate-300">이속 +${stats.speed.fix}</span>`);
       if (stats.attr.fix > 0) html.push(`<span class="text-slate-300">속성 +${stats.attr.fix}</span>`);
+      
       summaryEl.innerHTML = html.join(' <span class="text-slate-700 mx-2">|</span> ');
-      summaryEl.className = "text-base font-black leading-tight mt-1 flex flex-wrap gap-y-1";
+
       if (hasDeathRisk || hasExitRisk) {
         let wrns = [];
         if (hasDeathRisk) wrns.push("사망 시 삭제");
@@ -395,21 +511,11 @@
     }
 
     function resetSelection() {
-      if (!confirm('모든 선택을 초기화할까요?')) return;
-      selectedBuffIds.clear(); activePresetId = null; saveCurrentSelection(); renderPresets(); renderList();
+      if (!confirm('현재 선택된 프리셋과 버프 선택을 모두 해제할까요?')) return;
+      deselectPreset();
     }
 
     function handleSearch() { renderList(document.getElementById('search-input').value); }
-
-    function applyStandardSet() {
-      selectedBuffIds.clear();
-      activePresetId = 'standard';
-      const standardIds = ['util_snowman','dmg_potion_plus','stat_trust_plus','stat_izabel_fixed','stat_izabel_ratio','dmg_izabel','dmg_club_p','util_ampoule','util_haste'];
-      standardIds.forEach(id => selectedBuffIds.add(id));
-      saveCurrentSelection();
-      renderPresets();
-      renderList(document.getElementById('search-input').value);
-    }
 
     function filterCategory(cat) {
       currentCategory = cat;

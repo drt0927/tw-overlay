@@ -32,7 +32,8 @@
       "target": [
         "nsis"
       ],
-      "icon": "src/icons/icon.ico"
+      "icon": "src/icons/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": true,

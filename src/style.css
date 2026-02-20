@@ -43,7 +43,7 @@ body {
 .input-field:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.5); }
 
 /* 스크롤바 */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 

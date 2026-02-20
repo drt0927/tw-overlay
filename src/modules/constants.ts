@@ -58,6 +58,8 @@ export interface AppConfig {
     overlay?: WindowPosition;
     settings?: WindowPosition;
     gallery?: WindowPosition;
+    abbreviation?: WindowPosition;
+    monitorZone?: WindowPosition;
   };
 }
 
@@ -106,7 +108,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   positions: {
     overlay: { offsetX: 10, offsetY: 10 },
     settings: { offsetX: -1010, offsetY: 40 },
-    gallery: { offsetX: -320, offsetY: 40 }
+    gallery: { offsetX: -320, offsetY: 40 },
+    abbreviation: { offsetX: -320, offsetY: 40 },
+    monitorZone: { offsetX: 400, offsetY: 300 }
   }
 };
 

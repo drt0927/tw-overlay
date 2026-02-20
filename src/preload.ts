@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleOverlay: () => ipcRenderer.send('toggle-overlay'),
   toggleSettings: () => ipcRenderer.send('toggle-settings'),
   toggleGallery: () => ipcRenderer.send('toggle-gallery'),
+  toggleAbbreviation: () => ipcRenderer.send('toggle-abbreviation'),
   toggleMonitorZone: () => ipcRenderer.send('toggle-monitor-zone'),
   setIgnoreMouseEvents: (ignore: boolean, options: any) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),

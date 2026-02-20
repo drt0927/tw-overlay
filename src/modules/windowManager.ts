@@ -13,6 +13,7 @@ let splashWindow: BrowserWindow | null = null; // 스플래시 화면
 let overlayWindow: BrowserWindow | null = null; // 오버레이
 let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
+let abbreviationWindow: BrowserWindow | null = null;
 let monitorZoneWindow: BrowserWindow | null = null; // 감시 구역 설정 창
 let view: WebContentsView | null = null;
 
@@ -20,6 +21,8 @@ let gameRect: Rectangle | null = null;
 let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
 let settingsPos: WindowPosition = { offsetX: -1010, offsetY: 40 };
 let galleryPos: WindowPosition = { offsetX: -320, offsetY: 40 };
+let abbreviationPos: WindowPosition = { offsetX: -320, offsetY: 40 };
+let monitorZonePos: WindowPosition = { offsetX: 400, offsetY: 300 };
 
 let isTracking = false;
 const isProgrammaticMoveMap: Record<string, boolean> = {};
@@ -44,11 +47,13 @@ function init() {
     if (cfg.positions.overlay) overlayPos = { ...cfg.positions.overlay };
     if (cfg.positions.settings) settingsPos = { ...cfg.positions.settings };
     if (cfg.positions.gallery) galleryPos = { ...cfg.positions.gallery };
+    if (cfg.positions.abbreviation) abbreviationPos = { ...cfg.positions.abbreviation };
+    if (cfg.positions.monitorZone) monitorZonePos = { ...cfg.positions.monitorZone };
   }
 }
 init();
 
-function savePosition(winType: 'overlay' | 'settings' | 'gallery', pos: WindowPosition, immediate = false) {
+function savePosition(winType: 'overlay' | 'settings' | 'gallery' | 'abbreviation' | 'monitorZone', pos: WindowPosition, immediate = false) {
   const currentCfg = config.load();
   const positions = { ...(currentCfg.positions || {}), [winType]: { ...pos } };
   if (immediate) config.saveImmediate({ positions } as any);
@@ -60,6 +65,7 @@ export const getSplashWindow = () => splashWindow;
 export const getOverlayWindow = () => overlayWindow;
 export const getSettingsWindow = () => settingsWindow;
 export const getGalleryWindow = () => galleryWindow;
+export const getAbbreviationWindow = () => abbreviationWindow;
 export const getMonitorZoneWindow = () => monitorZoneWindow;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
@@ -271,6 +277,30 @@ export function toggleGalleryWindow(): void {
   galleryWindow.on('closed', () => { galleryWindow = null; });
 }
 
+export function toggleAbbreviationWindow(): void {
+  if (abbreviationWindow) { abbreviationWindow.close(); return; }
+  abbreviationWindow = new BrowserWindow({
+    width: 320, height: 500, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
+  });
+  abbreviationWindow.loadFile(path.join(__dirname, '..', 'abbreviation.html'));
+  abbreviationWindow.on('ready-to-show', () => {
+    if (gameRect) {
+      abbreviationWindow?.setPosition(Math.round(gameRect.x + gameRect.width + abbreviationPos.offsetX), Math.round(gameRect.y + abbreviationPos.offsetY));
+    }
+    abbreviationWindow?.show();
+    if (IS_DEV) abbreviationWindow?.webContents.openDevTools({ mode: 'detach' });
+  });
+  abbreviationWindow.on('move', () => {
+    if (consumeProgrammaticMove('abbreviation') || !abbreviationWindow || !gameRect) return;
+    const b = abbreviationWindow.getBounds();
+    abbreviationPos.offsetX = b.x - (gameRect.x + gameRect.width);
+    abbreviationPos.offsetY = b.y - gameRect.y;
+    savePosition('abbreviation', abbreviationPos);
+  });
+  abbreviationWindow.on('closed', () => { abbreviationWindow = null; });
+}
+
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
   const b = overlayWindow.getBounds();
@@ -352,6 +382,14 @@ export function syncOverlay(currentRect: GameRect): void {
       setProgrammaticMove('gallery');
       galleryWindow.setPosition(Math.round(gX + gW + galleryPos.offsetX), Math.round(gY + galleryPos.offsetY));
     }
+    if (abbreviationWindow && !abbreviationWindow.isDestroyed() && abbreviationWindow.isVisible()) {
+      setProgrammaticMove('abbreviation');
+      abbreviationWindow.setPosition(Math.round(gX + gW + abbreviationPos.offsetX), Math.round(gY + abbreviationPos.offsetY));
+    }
+    if (monitorZoneWindow && !monitorZoneWindow.isDestroyed() && monitorZoneWindow.isVisible()) {
+      setProgrammaticMove('monitorZone');
+      monitorZoneWindow.setPosition(Math.round(gX + monitorZonePos.offsetX), Math.round(gY + monitorZonePos.offsetY));
+    }
     gameRect = { x: gX, y: gY, width: gW, height: gH };
     // 좌표 동기화가 처음으로 성공하면 스플래시 창 닫기
     closeSplashWindow();
@@ -402,7 +440,7 @@ export function toggleSidebar(): boolean {
 }
 
 export function hideAll(): void {
-  [overlayWindow, mainWindow, settingsWindow, galleryWindow, monitorZoneWindow].forEach(win => {
+  [overlayWindow, mainWindow, settingsWindow, galleryWindow, abbreviationWindow, monitorZoneWindow].forEach(win => {
     if (win && win.isVisible()) win.hide();
   });
   isTracking = false;
@@ -441,14 +479,22 @@ export function toggleMonitorZone(): void {
   monitorZoneWindow.on('ready-to-show', () => {
     // 창이 준비되어 표시되기 직전에 사이드바에 '열림' 상태 전송
     mainWindow?.webContents.send('monitor-zone-window-status', true);
-    // 게임 창 중앙에 초기 배치
+    // 항상 게임 창 중앙에 초기 배치 (210x120 크기 기준)
     if (gameRect) {
-      const centerX = Math.round(gameRect.x + (gameRect.width / 2) - 105);
-      const centerY = Math.round(gameRect.y + (gameRect.height / 2) - 60);
-      monitorZoneWindow?.setPosition(centerX, centerY);
+      monitorZonePos.offsetX = Math.round((gameRect.width - 210) / 2);
+      monitorZonePos.offsetY = Math.round((gameRect.height - 120) / 2);
+      monitorZoneWindow?.setPosition(Math.round(gameRect.x + monitorZonePos.offsetX), Math.round(gameRect.y + monitorZonePos.offsetY));
     }
     monitorZoneWindow?.show();
     monitorZoneWindow?.webContents.send('config-data', config.load());
+  });
+
+  monitorZoneWindow.on('move', () => {
+    if (consumeProgrammaticMove('monitorZone') || !monitorZoneWindow || !gameRect) return;
+    const b = monitorZoneWindow.getBounds();
+    monitorZonePos.offsetX = b.x - gameRect.x;
+    monitorZonePos.offsetY = b.y - gameRect.y;
+    savePosition('monitorZone', monitorZonePos);
   });
 
   monitorZoneWindow.on('closed', () => {

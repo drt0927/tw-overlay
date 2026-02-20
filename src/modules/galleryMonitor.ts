@@ -423,6 +423,11 @@ function sendPostListToSidebar(posts: Post[]): void {
 
 /** 사이드바에 새 활동(새 글/댓글) 알림 */
 function sendNewActivity(type: 'post' | 'comment', count: number, postNo?: string): void {
+  // 갤러리 창이 열려 있고 활성화된 상태라면 사이드바 레드닷 알림을 보내지 않음 (사용자가 이미 보고 있음)
+  if (galleryWindowRef && !galleryWindowRef.isDestroyed() && galleryWindowRef.isVisible()) {
+    return;
+  }
+
   if (sidebarWindowRef && !sidebarWindowRef.isDestroyed()) {
     sidebarWindowRef.webContents.send('gallery-new-activity', { type, count, postNo });
   }

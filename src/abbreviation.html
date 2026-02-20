@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+</head>
+<body class="panel-glass">
+  <div class="gallery-container drag-region">
+    <div class="settings-header no-drag">
+      <div class="flex items-center gap-2">
+        <span class="settings-title"><i data-lucide="book-open" class="w-5 h-5 text-purple-500"></i> 약어 사전</span>
+      </div>
+      <button onclick="window.close()" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+
+    <div class="space-y-3 no-drag flex-1 flex flex-col overflow-hidden">
+      <!-- 검색 입력 -->
+      <div class="relative group">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-purple-400 transition-colors"></i>
+        <input id="search-input" class="input-field w-full pl-9 pr-4 py-2 text-xs" placeholder="약어 또는 풀네임 검색..." oninput="handleSearch()">
+      </div>
+
+      <!-- 카테고리 칩 -->
+      <div id="category-container" class="flex gap-1.5 overflow-x-auto pb-1 custom-scroll no-drag">
+        <button class="cat-chip active" onclick="filterCategory('전체')">전체</button>
+        <button class="cat-chip" onclick="filterCategory('캐릭터')">캐릭터</button>
+        <button class="cat-chip" onclick="filterCategory('던전')">던전</button>
+        <button class="cat-chip" onclick="filterCategory('필드 보스')">보스</button>
+        <button class="cat-chip" onclick="filterCategory('스페셜 스킬')">스킬</button>
+        <button class="cat-chip" onclick="filterCategory('팀 게시판')">팀게</button>
+        <button class="cat-chip" onclick="filterCategory('실전 예시')">예시</button>
+      </div>
+
+      <!-- 결과 리스트 -->
+      <div id="result-list" class="flex-1 custom-scroll overflow-y-auto space-y-2 pr-1">
+        <!-- 결과가 여기에 렌더링됨 -->
+      </div>
+
+      <!-- 출처 표시 -->
+      <div class="mt-auto pt-2 pb-1 border-t border-white/5 no-drag">
+        <p class="text-[9px] text-slate-500 text-center leading-tight">
+          Data Source: <span class="text-purple-400/80 cursor-pointer hover:underline" onclick="window.electronAPI.openExternal('https://tales.nexon.com/Community/Walkthrough/66063')">테일즈위버 공식 홈페이지</span><br>
+          Author: 하이아칸 서버 - 알롱지
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cat-chip {
+      flex-shrink: 0;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      transition: all 0.2s;
+    }
+    .cat-chip:hover { background: rgba(168, 85, 247, 0.1); color: #c084fc; }
+    .cat-chip.active { background: #7c3aed; border-color: #a855f7; color: white; }
+
+    .abbr-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px;
+      transition: all 0.2s;
+    }
+    .abbr-card:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(168, 85, 247, 0.3); }
+    
+    .abbr-badge {
+      font-size: 11px;
+      font-weight: 900;
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.15);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+  </style>
+
+  <script>
+    let allData = [];
+    let currentCategory = '전체';
+
+    async function loadData() {
+      try {
+        const response = await fetch('assets/data/abbreviations.json');
+        allData = await response.json();
+        renderResults();
+      } catch (e) {
+        console.error('Failed to load abbreviations:', e);
+      }
+    }
+
+    function renderResults(filterText = '') {
+      const list = document.getElementById('result-list');
+      list.innerHTML = '';
+      
+      const query = filterText.toLowerCase().trim();
+      
+      const filtered = allData.filter(item => {
+        // 카테고리 필터
+        if (currentCategory !== '전체' && item.category !== currentCategory) return false;
+        
+        // 검색어 필터
+        if (!query) return true;
+        
+        const matchTerm = item.term.toLowerCase().includes(query);
+        const matchAbbr = item.abbrs.some(a => a.abbr.toLowerCase().includes(query) || a.desc.toLowerCase().includes(query));
+        
+        return matchTerm || matchAbbr;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="text-center py-10 text-slate-600 text-xs font-bold">검색 결과가 없습니다.</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'abbr-card space-y-2';
+        
+        let abbrsHtml = item.abbrs.map(a => `
+          <div class="flex flex-col gap-1 p-2 bg-black/20 rounded-lg border border-white/5">
+            <div class="flex items-center justify-between">
+              <span class="abbr-badge">${a.abbr}</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed font-medium">${a.desc}</p>
+          </div>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-black text-slate-200">${item.term}</span>
+            <span class="text-[9px] text-slate-500 font-bold bg-white/5 px-1.5 py-0.5 rounded">${item.category}</span>
+          </div>
+          <div class="space-y-1.5">
+            ${abbrsHtml}
+          </div>
+        `;
+        list.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function handleSearch() {
+      const input = document.getElementById('search-input');
+      renderResults(input.value);
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      
+      // UI 업데이트
+      const chips = document.querySelectorAll('.cat-chip');
+      chips.forEach(chip => {
+        const text = chip.innerText;
+        const isActive = (text === cat) || 
+                         (cat === '전체' && text === '전체') || 
+                         (cat === '필드 보스' && text === '보스') || 
+                         (cat === '팀 게시판' && text === '팀게') || 
+                         (cat === '스페셜 스킬' && text === '스킬') ||
+                         (cat === '실전 예시' && text === '예시');
+        
+        if (isActive) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+      
+      handleSearch();
+    }
+
+    window.onload = loadData;
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
+  </script>
+</body>
+</html>

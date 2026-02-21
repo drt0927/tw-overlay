@@ -1,26 +1,26 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.2.3)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.3.0)
 
-이 문서는 지능형 클릭 통과 및 오버레이 리소스 최적화가 적용된 v1.2.3 버전을 기준으로 작성되었습니다.
+이 문서는 **Native Win32 엔진** 도입과 **게임 최적화(Fast Ping)** 기능이 추가된 v1.3.0 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 게임 동기화 위젯.
-- **최종 빌드:** **TypeScript**, Electron, GitHub Actions 기반 CI/CD.
-- **주요 개선:** 환경설정 탭 분리(6개), 장판/보스 음량 개별 조절, UI 유틸리티 공통화.
+- **최종 빌드:** **TypeScript**, Electron, **Native Win32 API(Koffi)** 기반.
+- **주요 개선:** PowerShell 의존성 제거, GDI 직접 캡처 방식의 장판 감시, 사이드바 메뉴 관리 기능 추가.
 
 ## 2. 주요 기능 명세
-- **Multi-Tab Settings (New):** 설정을 6개의 카테고리로 분류하여 직관적인 UI 제공.
-- **Sound Customization (Enhanced):** 15종의 알림음 선택 및 개별 음량 조절 기능.
+- **Native Window Tracker:** Win32 API를 직접 호출하여 창 위치를 추적 (응답 속도 획기적 개선).
+- **Fast Ping (Game Optimizer):** 네이글 알고리즘 최적화를 통한 게임 응답 속도 향상 기능.
+- **Sidebar Menu Management:** 사용자가 사이드바에 표시할 메뉴를 직접 선택할 수 있는 커스터마이징 기능.
+- **Multi-Tab Settings:** 설정을 8개의 카테고리로 분류하여 직관적인 UI 제공.
 - **Field Boss Notifier:** 필드 보스 출현 시간 알림 및 지능형 시간 표시 UI.
-- **Buff Manager & Calculator:** 공식 가이드 기반의 버프 백과사전. 선택한 버프들의 대미지, 능력치, 경험치, 레어 확률 등을 실시간으로 합산.
-- **Smart Checklist:** 상호 배타적인 버프(중복 사용 불가)를 자동으로 감지하여 비활성화하는 지능형 로직.
-- **Custom Presets:** 사용자가 자주 사용하는 도핑 조합을 이름과 함께 저장하고 원클릭으로 불러오는 개인화 기능.
-- **Performance Booster:** 게임 프로세스(`InphaseNXD`) 감지 시 CPU 우선순위를 '높음'으로 설정하여 프레임 안정성 확보.
-- **Magnet Tracking:** 게임 창 좌표를 실시간 추적하여 사이드바와 오버레이를 유동적으로 동기화.
+- **Buff Manager & Calculator:** 선택한 버프들의 효과를 실시간으로 합산하고 프리셋으로 저장/관리.
+- **Smart Z-Order:** 게임 창 활성 상태에 따른 오버레이 레이어 지능형 전환 시스템.
+- **Performance Booster:** 게임 프로세스(`InphaseNXD`) 감지 시 CPU 우선순위를 '높음'으로 자동 설정.
 
 ## 3. 기술 스택 및 구조
 - **Language:** TypeScript.
 - **Frontend:** HTML5, Tailwind CSS, Local JS Assets (Lucide, Tailwind).
-- **Backend:** Node.js (Main), PowerShell (Tracking Service & Process Priority).
+- **Backend:** Node.js (Main), **Native Win32 API via Koffi** (Tracking & GDI Capture).
 - **Update Source:** GitHub Releases API via `electron-updater`.
 
 ## 4. 실행 및 배포 가이드

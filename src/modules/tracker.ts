@@ -1,138 +1,255 @@
 /**
- * 게임 창 추적 모듈 - 안전성 극대화 버전
+ * 게임 창 추적 모듈 - Native Win32 API (Koffi) 버전
+ * 
+ * [주요 기능]
+ * 1. WinEventHook을 통한 실시간 창 이동 및 포커스 감지
+ * 2. 샌드위치 Z-Order 로직: 게임 위에 붙으면서도 다른 앱(브라우저 등) 뒤로 숨음
+ * 3. 메모리 및 깜박임 최적화 (Buffer 재사용 및 포커스 캐싱)
  */
-import { app } from 'electron';
-import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
-import { GAME_PROCESS_NAME, PS_RESTART_DELAY_MS, GameQueryResult } from './constants';
+import { GAME_PROCESS_NAME, GameQueryResult } from './constants';
 import { log } from './logger';
+import * as win32 from './win32';
+import koffi from 'koffi';
 
-let psProcess: ChildProcess | null = null;
-let psReady = false;
-let psQueryResolve: ((value: GameQueryResult) => void) | null = null;
-let psBuffer = '';
-let isStopping = false;
+let cachedHwnd: bigint | null = null;
+let lastProcessId: number | null = null;
+let hEventHook: bigint | null = null;
+let onWindowEventCallback: (() => void) | null = null;
+let lastIsGameOrAppFocused: boolean = false;
 
-function getScriptPath(): string {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', 'track.ps1');
-  }
-  return path.join(app.getAppPath(), 'dist', 'track.ps1');
+// --- 메모리 최적화를 위한 재사용 버퍼 ---
+const titleBuffer = Buffer.alloc(512);
+const nameBuffer = Buffer.alloc(512);
+const pidPtr = Buffer.alloc(4);
+const sizePtr = Buffer.alloc(4);
+const rectOut = { left: 0, top: 0, right: 0, bottom: 0 };
+
+// --- 콜백 등록 ---
+
+// 1. 창 열거(EnumWindows) 콜백
+const EnumWindowsProc = koffi.proto('__stdcall', 'bool', ['intptr', 'intptr']);
+const EnumWindowsProcPtr = koffi.pointer(EnumWindowsProc);
+
+const enumCallback = koffi.register((hwnd: bigint, lParam: bigint) => {
+    const titleLen = win32.GetWindowTextW(hwnd, titleBuffer, 256);
+    if (titleLen === 0) return true;
+
+    const title = titleBuffer.toString('utf16le', 0, titleLen * 2);
+    if (title.includes('Talesweaver')) {
+        win32.GetWindowThreadProcessId(hwnd, pidPtr);
+        const pid = pidPtr.readUInt32LE(0);
+
+        let hProcess = 0n;
+        try {
+            hProcess = win32.OpenProcess(win32.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (hProcess !== 0n) {
+                // 기존 싱글톤 버퍼(sizePtr, nameBuffer) 재사용
+                sizePtr.writeUInt32LE(256, 0);
+                if (win32.QueryFullProcessImageNameW(hProcess, 0, nameBuffer, sizePtr)) {
+                    const nameLen = sizePtr.readUInt32LE(0);
+                    const fullPath = nameBuffer.toString('utf16le', 0, nameLen * 2);
+                    if (fullPath.toLowerCase().includes(GAME_PROCESS_NAME.toLowerCase())) {
+                        // @ts-ignore
+                        _tempFoundHwnd = hwnd;
+                        // @ts-ignore
+                        _tempFoundPid = pid;
+                        return false; 
+                    }
+                }
+            }
+        } catch (e) {
+        } finally {
+            if (hProcess !== 0n) win32.CloseHandle(hProcess);
+        }
+    }
+    return true;
+}, EnumWindowsProcPtr);
+
+// 2. 윈도우 이벤트(WinEvent) 콜백
+const WinEventProcProto = koffi.proto('__stdcall', 'void', ['intptr', 'uint32', 'intptr', 'int32', 'int32', 'uint32', 'uint32']);
+const WinEventProcPtr = koffi.pointer(WinEventProcProto);
+
+const winEventProcInstance = koffi.register((hWinEventHook: bigint, event: number, hwnd: bigint, idObject: number, idChild: number, dwEventThread: number, dwmsEventTime: number) => {
+    if (cachedHwnd && hwnd === cachedHwnd) {
+        if (onWindowEventCallback) onWindowEventCallback();
+    }
+}, WinEventProcPtr);
+
+let _tempFoundHwnd: bigint | null = null;
+let _tempFoundPid: number | null = null;
+
+// --- 내부 함수 ---
+
+function setupEventHook(): void {
+    if (hEventHook) return;
+    hEventHook = win32.SetWinEventHook(
+        win32.EVENT_SYSTEM_FOREGROUND,
+        win32.EVENT_OBJECT_LOCATIONCHANGE,
+        0n,
+        winEventProcInstance,
+        0, 
+        0,
+        win32.WINEVENT_OUTOFCONTEXT
+    );
 }
 
+function findGameWindow(): bigint | null {
+    _tempFoundHwnd = null;
+    _tempFoundPid = null;
+    try {
+        win32.EnumWindows(enumCallback, 0);
+    } catch (e) {
+        log(`[TRACKER] EnumWindows Error: ${e}`);
+    }
+
+    if (_tempFoundHwnd) {
+        lastProcessId = _tempFoundPid;
+        setupEventHook();
+        return _tempFoundHwnd;
+    }
+    return null;
+}
+
+function isHwndValid(hwnd: bigint): boolean {
+    if (!hwnd) return false;
+    const threadId = win32.GetWindowThreadProcessId(hwnd, pidPtr);
+    if (threadId === 0) return false;
+    return pidPtr.readUInt32LE(0) === lastProcessId;
+}
+
+// --- 외부 API ---
+
 export function start(): void {
-  if (isStopping) return;
-  try {
-    const scriptPath = getScriptPath();
+    log('[TRACKER] Native tracker initialized.');
+}
 
-    psProcess = spawn('powershell', [
-      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath,
-      '-processName', GAME_PROCESS_NAME, '-loop'
-    ], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
-
-    psProcess.stdout?.on('data', (data) => {
-      psBuffer += data.toString();
-      const lines = psBuffer.split(/\r?\n/);
-      psBuffer = lines.pop() || '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed === 'READY') {
-          psReady = true;
-          continue;
-        }
-
-        if (psQueryResolve) {
-          const resolve = psQueryResolve;
-          psQueryResolve = null;
-
-          if (trimmed === 'NOT_RUNNING') resolve({ notRunning: true });
-          else if (trimmed === 'MINIMIZED') resolve(null);
-          else if (trimmed === 'BOOSTED' || trimmed === 'ALREADY_HIGH' || trimmed === 'BOOST_FAIL' || trimmed === 'FOCUSED' || trimmed === 'FOCUS_FAIL') resolve(trimmed);
-          else if (trimmed.includes(',')) {
-            const [l, t, r, b] = trimmed.split(',').map(Number);
-            resolve({ x: l, y: t, width: r - l, height: b - t });
-          } else resolve(null);
-        }
-      }
-    });
-
-    psProcess.stderr?.on('data', (data) => {
-      log(`[TRACKER STDERR] ${data.toString().trim()}`);
-    });
-
-    psProcess.on('error', (err) => {
-      log(`[TRACKER ERROR] spawn 에러: ${err.message}`);
-    });
-
-    // 프로세스 종료 시 자동 재시작
-    psProcess.on('exit', (code, signal) => {
-      psReady = false;
-      psProcess = null;
-      if (psQueryResolve) {
-        psQueryResolve(null);
-        psQueryResolve = null;
-      }
-      if (!isStopping) {
-        log(`[TRACKER] PowerShell 종료 (code=${code}, signal=${signal}), ${PS_RESTART_DELAY_MS}ms 후 재시작`);
-        setTimeout(() => start(), PS_RESTART_DELAY_MS);
-      }
-    });
-
-  } catch (e: any) {
-    log(`[TRACKER CRITICAL] ${e.message}`);
-  }
+export function setWindowEventListener(callback: () => void): void {
+    onWindowEventCallback = callback;
 }
 
 export async function queryGameRect(): Promise<GameQueryResult> {
-  if (!psReady || !psProcess || psQueryResolve) return undefined;
-
-  return new Promise((resolve) => {
-    psQueryResolve = resolve;
-    // 3초 타임아웃
-    setTimeout(() => { if (psQueryResolve === resolve) { psQueryResolve = null; resolve(null); } }, 3000);
     try {
-      psProcess?.stdin?.write('QUERY\n');
-    } catch (e) {
-      psQueryResolve = null;
-      resolve(null);
+        if (!cachedHwnd || !isHwndValid(cachedHwnd)) {
+            cachedHwnd = findGameWindow();
+            if (!cachedHwnd) return { notRunning: true };
+            log(`[TRACKER] Found game window: ${cachedHwnd} (PID: ${lastProcessId})`);
+        }
+
+        if (win32.IsIconic(cachedHwnd)) return null;
+
+        let res = win32.DwmGetWindowAttribute(cachedHwnd, win32.DWMWA_EXTENDED_FRAME_BOUNDS, rectOut, 16);
+        if (res !== 0 && !win32.GetWindowRect(cachedHwnd, rectOut)) {
+            return 'ERROR: Failed to get rect';
+        }
+
+        return {
+            x: rectOut.left,
+            y: rectOut.top,
+            width: rectOut.right - rectOut.left,
+            height: rectOut.bottom - rectOut.top,
+            gameHwnd: cachedHwnd.toString(),
+            isForeground: win32.GetForegroundWindow() === cachedHwnd
+        };
+    } catch (e: any) {
+        log(`[TRACKER] queryGameRect Error: ${e.message}`);
+        return undefined;
     }
-  });
 }
 
 export function stop() {
-  isStopping = true;
-  if (psProcess) {
-    try { psProcess.stdin?.write('EXIT\n'); } catch (_) { }
-    psProcess.kill();
-    psProcess = null;
-  }
-  psReady = false;
-}
-
-/** 게임 프로세스 우선순위 상향 */
-export async function boostGameProcess(): Promise<string | undefined> {
-  if (!psReady || !psProcess || psQueryResolve) return undefined;
-
-  return new Promise((resolve) => {
-    psQueryResolve = resolve as any;
-    setTimeout(() => { if (psQueryResolve === (resolve as any)) { psQueryResolve = null; resolve(undefined); } }, 3000);
-    try {
-      psProcess?.stdin?.write('BOOST\n');
-    } catch (e) {
-      psQueryResolve = null;
-      resolve(undefined);
+    if (hEventHook) {
+        win32.UnhookWinEvent(hEventHook);
+        hEventHook = null;
     }
-  });
+    cachedHwnd = null;
 }
 
-/** 게임 창에 포커스 전환 */
+/** 
+ * 오버레이 창들을 게임 바로 위로 올림 (Z-Order 샌드위치 최적화 로직)
+ */
+export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: string[]): { isGameOrAppFocused: boolean } {
+    if (!gameHwndStr || electronHwnds.length === 0 || !win32.SetWindowPos) return { isGameOrAppFocused: false };
+    
+    let isFocused = false;
+    try {
+        const gameHwnd = BigInt(gameHwndStr);
+        const flags = win32.SWP_NOMOVE | win32.SWP_NOSIZE | win32.SWP_NOACTIVATE | 
+                      win32.SWP_NOOWNERZORDER | win32.SWP_NOSENDCHANGING |
+                      win32.SWP_DEFERERASE | win32.SWP_NOCOPYBITS;
+
+        const fgHwnd = win32.GetForegroundWindow();
+        const isGameFocused = (fgHwnd === gameHwnd);
+        const electronHwndBigInts = electronHwnds.map(h => BigInt(h));
+        const isOurAppFocused = electronHwndBigInts.some(h => h === fgHwnd);
+        
+        isFocused = isGameFocused || isOurAppFocused;
+        const focusStateChanged = (isFocused !== lastIsGameOrAppFocused);
+        
+        if (isFocused) {
+            // 1. 활성화 상태: 오버레이를 계층 내 최상단(HWND_TOP)으로 정렬
+            if (focusStateChanged) {
+                let hwndInsertAfter = win32.HWND_TOP;
+                for (const hBigInt of electronHwndBigInts) {
+                    win32.SetWindowPos(hBigInt, hwndInsertAfter, 0, 0, 0, 0, flags);
+                    hwndInsertAfter = hBigInt;
+                }
+            }
+        } 
+        else {
+            // 2. 비활성화 상태: 게임 창의 바로 앞(Z+1)에 샌드위치 배치
+            const prevHwnd = win32.GetWindow(gameHwnd, win32.GW_HWNDPREV);
+            const isAlreadySandwiched = electronHwndBigInts.some(h => h === prevHwnd);
+
+            if (focusStateChanged || !isAlreadySandwiched) {
+                if (prevHwnd !== 0n && !isAlreadySandwiched) {
+                    // [순서 바로잡기] 가비지 생성을 피하기 위해 역순 루프 사용
+                    let hwndInsertAfter = prevHwnd;
+                    for (let i = electronHwndBigInts.length - 1; i >= 0; i--) {
+                        const hBigInt = electronHwndBigInts[i];
+                        win32.SetWindowPos(hBigInt, hwndInsertAfter, 0, 0, 0, 0, flags);
+                        hwndInsertAfter = hBigInt;
+                    }
+                }
+            }
+        }
+
+        lastIsGameOrAppFocused = isFocused;
+
+    } catch (e: any) {
+        log(`[TRACKER] Promote failed: ${e.message}`);
+    }
+    return { isGameOrAppFocused: isFocused };
+}
+
+export async function boostGameProcess(): Promise<string | undefined> {
+    if (!lastProcessId) return 'BOOST_FAIL';
+    let hProcess = 0n;
+    try {
+        hProcess = win32.OpenProcess(win32.PROCESS_SET_INFORMATION, false, lastProcessId);
+        if (hProcess === 0n) return 'BOOST_FAIL';
+        return win32.SetPriorityClass(hProcess, win32.HIGH_PRIORITY_CLASS) ? 'BOOSTED' : 'BOOST_FAIL';
+    } catch (e) {
+        return 'BOOST_FAIL';
+    } finally {
+        if (hProcess !== 0n) win32.CloseHandle(hProcess);
+    }
+}
+
 export function focusGameWindow(): void {
-  if (!psReady || !psProcess) return;
-  try {
-    psProcess.stdin?.write('FOCUS\n');
-  } catch (e: any) {
-    log(`[TRACKER] FOCUS 명령 실패: ${e.message}`);
-  }
-}
+    if (!cachedHwnd || !isHwndValid(cachedHwnd)) return;
+    try {
+        // 이미 게임 창이 활성화 상태라면 아무것도 하지 않습니다 (깜박임 방지)
+        const fgHwnd = win32.GetForegroundWindow();
+        if (fgHwnd === cachedHwnd) return;
 
+        // Alt 키 트릭 (SetForegroundWindow 제약 우회)
+        win32.keybd_event(win32.VK_MENU, 0, 0, 0); 
+        win32.keybd_event(win32.VK_MENU, 0, win32.KEYEVENTF_KEYUP, 0); 
+        
+        win32.ShowWindow(cachedHwnd, win32.SW_RESTORE);
+        win32.BringWindowToTop(cachedHwnd);
+        win32.SetForegroundWindow(cachedHwnd);
+    } catch (e: any) {
+        log(`[TRACKER] Focus failed: ${e.message}`);
+    }
+}

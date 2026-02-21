@@ -1,23 +1,46 @@
 /**
- * 창 관리 모듈 - WebContentsView + 창별 독립 플래그 버전
+ * 창 관리 모듈 - WebContentsView + 동적 Z-Order 스택 버전
  */
 import { BrowserWindow, WebContentsView, screen, Rectangle } from 'electron';
 import * as path from 'path';
-import { MIN_W, MIN_H, IS_DEV, AppConfig, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect } from './constants';
+import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect } from './constants';
 import * as config from './config';
 import { log } from './logger';
 import * as bossNotifier from './bossNotifier';
 
 // --- 상태 관리 ---
-let mainWindow: BrowserWindow | null = null; // 사이드바
-let splashWindow: BrowserWindow | null = null; // 스플래시 화면
-let overlayWindow: BrowserWindow | null = null; // 오버레이
+let activeWindowsStack: BrowserWindow[] = []; // 창 겹침 순서 스택 (뒤로 갈수록 위쪽)
+
+/** 창을 스택의 맨 위(가장 나중)로 이동 */
+function pushToStack(win: BrowserWindow | null): void {
+  if (!win || win.isDestroyed()) return;
+  activeWindowsStack = activeWindowsStack.filter(w => w !== win && !w.isDestroyed());
+  activeWindowsStack.push(win);
+}
+
+/** 창이 닫힐 때 스택에서 제거 */
+function removeFromStack(win: BrowserWindow | null): void {
+  activeWindowsStack = activeWindowsStack.filter(w => w !== win);
+}
+
+/** 창에 포커스/표시 이벤트 리스너 등록 */
+function attachStackListeners(win: BrowserWindow): void {
+  win.on('focus', () => pushToStack(win));
+  win.on('show', () => pushToStack(win));
+  win.on('closed', () => removeFromStack(win));
+  // 생성 즉시 스택에 추가
+  pushToStack(win);
+}
+
+let mainWindow: BrowserWindow | null = null;
+let splashWindow: BrowserWindow | null = null;
+let overlayWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 let galleryWindow: BrowserWindow | null = null;
 let abbreviationWindow: BrowserWindow | null = null;
 let buffsWindow: BrowserWindow | null = null;
 let bossSettingsWindow: BrowserWindow | null = null;
-let monitorZoneWindow: BrowserWindow | null = null; // 감시 구역 설정 창
+let monitorZoneWindow: BrowserWindow | null = null;
 let view: WebContentsView | null = null;
 
 let gameRect: Rectangle | null = null;
@@ -59,7 +82,7 @@ function init() {
 }
 init();
 
-function savePosition(winType: 'overlay' | 'settings' | 'gallery' | 'abbreviation' | 'buffs' | 'bossSettings', pos: WindowPosition, immediate = false) {
+function savePosition(winType: string, pos: WindowPosition, immediate = false) {
   const currentCfg = config.load();
   const positions = { ...(currentCfg.positions || {}), [winType]: { ...pos } };
   if (immediate) config.saveImmediate({ positions } as any);
@@ -79,21 +102,13 @@ export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
 
-/** 오버레이 창 준비 완료 시 콜백 등록 (순환 참조 회피) */
-export function onOverlayWindowReady(callback: () => void): void {
-  onOverlayReady = callback;
-}
+export function onOverlayWindowReady(callback: () => void): void { onOverlayReady = callback; }
+export function onScreenWatcherStop(callback: () => void): void { onScreenWatchStop = callback; }
 
-/** 감시 중지 콜백 등록 (순환 참조 회피) */
-export function onScreenWatcherStop(callback: () => void): void {
-  onScreenWatchStop = callback;
-}
-
-/** 스플래시 화면 생성 */
 export function createSplashWindow(): BrowserWindow {
   splashWindow = new BrowserWindow({
     width: 400, height: 500,
-    frame: false, transparent: true, alwaysOnTop: true,
+    frame: false, transparent: true, alwaysOnTop: false,
     show: false, center: true, skipTaskbar: true,
     resizable: false, movable: false, focusable: false,
     webPreferences: { contextIsolation: true, nodeIntegration: false }
@@ -104,31 +119,18 @@ export function createSplashWindow(): BrowserWindow {
   return splashWindow;
 }
 
-/** 스플래시 화면 종료 */
 export function closeSplashWindow(): void {
-  if (splashWindow) {
-    splashWindow.close();
-    splashWindow = null;
-  }
+  if (splashWindow) { splashWindow.close(); splashWindow = null; }
 }
 
-/** 메인 사이드바 생성 - 사용자 설정 반영 */
 export function createMainWindow(): BrowserWindow {
   const cfg = config.load();
   isOverlayVisible = cfg.overlayVisible !== false;
 
   mainWindow = new BrowserWindow({
-    width: SIDEBAR_WIDTH,
-    height: SIDEBAR_HEIGHT,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    show: false,
-    skipTaskbar: true,
-    resizable: false,
-    thickFrame: false,
-    focusable: false,
-    acceptFirstMouse: true,
+    width: SIDEBAR_WIDTH, height: SIDEBAR_HEIGHT,
+    frame: false, transparent: true, alwaysOnTop: false, show: false, skipTaskbar: true,
+    resizable: false, thickFrame: false, focusable: false, acceptFirstMouse: true,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),
       contextIsolation: true, nodeIntegration: false
@@ -136,18 +138,15 @@ export function createMainWindow(): BrowserWindow {
   });
 
   mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
-
   mainWindow.on('ready-to-show', () => {
-    if (IS_DEV) {
-      mainWindow?.webContents.openDevTools({ mode: 'detach' });
-    }
+    if (IS_DEV) mainWindow?.webContents.openDevTools({ mode: 'detach' });
     mainWindow?.webContents.send('config-data', config.load());
   });
   mainWindow.on('move', () => { consumeProgrammaticMove('main'); });
+  attachStackListeners(mainWindow);
   return mainWindow;
 }
 
-/** 오버레이 브라우저 생성 */
 function createOverlayWindow(targetUrl?: string): void {
   if (overlayWindow) return;
   const cfg = config.load();
@@ -155,17 +154,17 @@ function createOverlayWindow(targetUrl?: string): void {
   overlayWindow = new BrowserWindow({
     width: cfg.width, height: cfg.height,
     minWidth: MIN_W, minHeight: MIN_H,
-    frame: false, transparent: true, alwaysOnTop: true, show: false, skipTaskbar: true,
+    frame: false, transparent: true, alwaysOnTop: false, show: false, skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),
-      contextIsolation: true, nodeIntegration: false, backgroundThrottling: true
+      contextIsolation: true, nodeIntegration: false, backgroundThrottling: false
     }
   });
 
   overlayWindow.setOpacity(cfg.opacity);
   overlayWindow.loadFile(path.join(__dirname, '..', 'overlay.html'));
 
-  view = new WebContentsView({ webPreferences: { backgroundThrottling: true } });
+  view = new WebContentsView({ webPreferences: { backgroundThrottling: false } });
   overlayWindow.contentView.addChildView(view);
 
   view.webContents.setWindowOpenHandler(({ url }) => {
@@ -216,29 +215,31 @@ function createOverlayWindow(targetUrl?: string): void {
       overlayWindow?.webContents.openDevTools({ mode: 'detach' });
       view?.webContents.openDevTools({ mode: 'detach' });
     }
-    // 콜백으로 갤러리 모니터에 창 참조 전달 (순환 참조 회피)
     if (onOverlayReady) onOverlayReady();
   });
 
-  overlayWindow.on('closed', () => { 
+  overlayWindow.on('closed', () => {
     if (view) {
       try {
-        // @ts-ignore
+        // @ts-ignore: destroy exists at runtime but not in type defs
         view.webContents.destroy();
-      } catch (e) {}
+      } catch (e) { }
       view = null;
     }
-    overlayWindow = null; 
-    isTracking = false; 
+    overlayWindow = null;
+    isTracking = false;
   });
+
+  attachStackListeners(overlayWindow);
 }
 
 export function toggleSettingsWindow(): void {
   if (settingsWindow) { settingsWindow.close(); return; }
   settingsWindow = new BrowserWindow({
-    width: 1000, height: 650, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    width: 1000, height: 650, frame: false, transparent: true, alwaysOnTop: false, show: false,
     webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
+  attachStackListeners(settingsWindow);
   settingsWindow.loadFile(path.join(__dirname, '..', 'settings.html'));
   settingsWindow.on('ready-to-show', () => {
     if (gameRect) {
@@ -250,7 +251,6 @@ export function toggleSettingsWindow(): void {
       settingsWindow?.setPosition(targetX, targetY);
     }
     settingsWindow?.webContents.send('config-data', config.load());
-    // 현재 업데이트 상태가 있으면 함께 전송
     import('./updater').then(mod => {
       const status = mod.getCurrentStatus();
       if (status) settingsWindow?.webContents.send('update-status', status);
@@ -271,9 +271,10 @@ export function toggleSettingsWindow(): void {
 export function toggleGalleryWindow(): void {
   if (galleryWindow) { galleryWindow.close(); return; }
   galleryWindow = new BrowserWindow({
-    width: 320, height: 500, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    width: 320, height: 500, frame: false, transparent: true, alwaysOnTop: false, show: false,
     webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
+  attachStackListeners(galleryWindow);
   galleryWindow.loadFile(path.join(__dirname, '..', 'gallery.html'));
   galleryWindow.on('ready-to-show', () => {
     if (gameRect) {
@@ -282,7 +283,6 @@ export function toggleGalleryWindow(): void {
     galleryWindow?.webContents.send('config-data', config.load());
     galleryWindow?.show();
     if (IS_DEV) galleryWindow?.webContents.openDevTools({ mode: 'detach' });
-    // 콜백으로 갤러리 창 참조 전달 (순환 참조 회피)
     if (onOverlayReady) onOverlayReady();
   });
   galleryWindow.on('move', () => {
@@ -298,9 +298,10 @@ export function toggleGalleryWindow(): void {
 export function toggleAbbreviationWindow(): void {
   if (abbreviationWindow) { abbreviationWindow.close(); return; }
   abbreviationWindow = new BrowserWindow({
-    width: 320, height: 500, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    width: 320, height: 500, frame: false, transparent: true, alwaysOnTop: false, show: false,
     webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
+  attachStackListeners(abbreviationWindow);
   abbreviationWindow.loadFile(path.join(__dirname, '..', 'abbreviation.html'));
   abbreviationWindow.on('ready-to-show', () => {
     if (gameRect) {
@@ -322,9 +323,10 @@ export function toggleAbbreviationWindow(): void {
 export function toggleBuffsWindow(): void {
   if (buffsWindow) { buffsWindow.close(); return; }
   buffsWindow = new BrowserWindow({
-    width: 1000, height: 700, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    width: 1000, height: 700, frame: false, transparent: true, alwaysOnTop: false, show: false,
     webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
+  attachStackListeners(buffsWindow);
   buffsWindow.loadFile(path.join(__dirname, '..', 'buffs.html'));
   buffsWindow.on('ready-to-show', () => {
     if (gameRect) {
@@ -346,9 +348,10 @@ export function toggleBuffsWindow(): void {
 export function toggleBossSettingsWindow(): void {
   if (bossSettingsWindow) { bossSettingsWindow.close(); return; }
   bossSettingsWindow = new BrowserWindow({
-    width: 320, height: 600, frame: false, transparent: true, alwaysOnTop: true, show: false,
+    width: 320, height: 600, frame: false, transparent: true, alwaysOnTop: false, show: false,
     webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
+  attachStackListeners(bossSettingsWindow);
   bossSettingsWindow.loadFile(path.join(__dirname, '..', 'boss-settings.html'));
   bossSettingsWindow.on('ready-to-show', () => {
     if (gameRect) {
@@ -356,15 +359,10 @@ export function toggleBossSettingsWindow(): void {
     }
     const cfg = config.load();
     bossSettingsWindow?.webContents.send('config-data', cfg);
-    
-    // 보스 시간 데이터 전송
     const bossTimes: Record<string, string[]> = {};
     const bosses = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
-    bosses.forEach(name => {
-      bossTimes[name] = bossNotifier.getBossTimes(name);
-    });
+    bosses.forEach(name => { bossTimes[name] = bossNotifier.getBossTimes(name); });
     bossSettingsWindow?.webContents.send('boss-times-data', bossTimes);
-
     bossSettingsWindow?.show();
     if (IS_DEV) bossSettingsWindow?.webContents.openDevTools({ mode: 'detach' });
   });
@@ -376,6 +374,26 @@ export function toggleBossSettingsWindow(): void {
     savePosition('bossSettings', bossSettingsPos);
   });
   bossSettingsWindow.on('closed', () => { bossSettingsWindow = null; });
+}
+
+export function setAllAlwaysOnTop(enabled: boolean): void {
+  [
+    mainWindow, overlayWindow, settingsWindow, galleryWindow,
+    abbreviationWindow, buffsWindow, bossSettingsWindow, monitorZoneWindow
+  ].forEach(win => {
+    if (win && !win.isDestroyed()) {
+      if (win.isAlwaysOnTop()) win.setAlwaysOnTop(false);
+    }
+  });
+}
+
+export function getAllWindowHwnds(): string[] {
+  return activeWindowsStack
+    .filter(win => win && !win.isDestroyed() && win.isVisible())
+    .map(win => {
+      const handle = win!.getNativeWindowHandle();
+      return handle.readBigUint64LE().toString();
+    });
 }
 
 export function updateViewBounds(): void {
@@ -393,21 +411,16 @@ export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean
   if (isOverlayVisible) createOverlayWindow(targetUrl);
   else if (overlayWindow) {
     savePosition('overlay', overlayPos, true);
-    
-    // 내부 뷰를 명시적으로 제거하고 파괴하여 백그라운드 실행 방지
     if (view) {
       try {
         overlayWindow.contentView.removeChildView(view);
-        // @ts-ignore: destroy is a valid method on WebContents
+        // @ts-ignore: destroy exists at runtime but not in type defs
         view.webContents.destroy();
-      } catch (e) {
-        log(`[WM] Error destroying view: ${e}`);
-      }
+      } catch (e) { log(`[WM] Error destroying view: ${e}`); }
       view = null;
     }
-
-    overlayWindow.close(); 
-    overlayWindow = null; 
+    overlayWindow.close();
+    overlayWindow = null;
     isTracking = false;
   }
   if (mainWindow) mainWindow.webContents.send('overlay-status', isOverlayVisible);
@@ -441,7 +454,6 @@ export function syncOverlay(currentRect: GameRect): void {
       const finalX = Math.max(gX, Math.min(targetX, gX + gW - newW));
       const finalY = Math.max(gY, Math.min(targetY, gY + gH - newH));
       
-      // 2px 미만의 미세한 움직임은 무시 (지터링 방지 및 CPU 절약)
       const diffX = Math.abs(b.x - finalX);
       const diffY = Math.abs(b.y - finalY);
       const diffW = Math.abs(b.width - newW);
@@ -453,18 +465,14 @@ export function syncOverlay(currentRect: GameRect): void {
       }
     } else if (isOverlayVisible && !overlayWindow) createOverlayWindow();
 
-    // 사이드바 이동 (현재 너비 유지하면서 높이는 SIDEBAR_HEIGHT 고정)
     const currentSidebarB = mainWindow.getBounds();
     const newSidebarX = gX + gW;
     const newSidebarY = gY + 40;
 
-    // 사이드바도 2px 미만 움직임은 무시
     if (Math.abs(currentSidebarB.x - newSidebarX) > 2 || Math.abs(currentSidebarB.y - newSidebarY) > 2) {
       setProgrammaticMove('main');
       mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: SIDEBAR_HEIGHT });
     }
-
-
 
     if (settingsWindow && !settingsWindow.isDestroyed() && settingsWindow.isVisible()) {
       setProgrammaticMove('settings');
@@ -491,24 +499,20 @@ export function syncOverlay(currentRect: GameRect): void {
       monitorZoneWindow.setPosition(Math.round(gX + monitorZonePos.offsetX), Math.round(gY + monitorZonePos.offsetY));
     }
     gameRect = { x: gX, y: gY, width: gW, height: gH };
-    // 좌표 동기화가 처음으로 성공하면 스플래시 창 닫기
     closeSplashWindow();
   } else hideAll();
 }
 
 export function applySettings(newSettings: any): void {
-  // 사이드바 일시적 리사이징 요청 (툴팁 공간 확보)
   if (newSettings.isSidebarResize && mainWindow) {
     const b = mainWindow.getBounds();
     setProgrammaticMove('main');
     mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: SIDEBAR_HEIGHT });
     return;
   }
-
   const current = config.load();
   const updated = { ...current, ...newSettings };
   config.saveImmediate(updated);
-
   if (overlayWindow) {
     isApplyingSize = true;
     const b = overlayWindow.getBounds();
@@ -519,7 +523,6 @@ export function applySettings(newSettings: any): void {
     updateViewBounds();
     setTimeout(() => { isApplyingSize = false; }, 300);
   }
-
   [mainWindow, overlayWindow, settingsWindow, galleryWindow, abbreviationWindow, buffsWindow, bossSettingsWindow].forEach(win => {
     win?.webContents.send('config-data', updated);
   });
@@ -547,39 +550,19 @@ export function hideAll(): void {
   closeSplashWindow();
 }
 
-/** 감시 구역 설정 창 토글 (3-state: 닫힘 → 설정 → 감시 → 설정 → ...) */
 export function toggleMonitorZone(): void {
-  // 상태 1: 감시 중이면 → 감시 중지 + 설정 모드로 전환
-  if (isScreenWatching) {
-    setScreenWatching(false);
-    return;
-  }
-
-  // 상태 2: 창이 열려 있으면 → 닫기
-  if (monitorZoneWindow) {
-    monitorZoneWindow.close();
-    monitorZoneWindow = null;
-    return;
-  }
-
-  // 상태 3: 창이 닫혀 있으면 → 설정 모드로 열기
+  if (isScreenWatching) { setScreenWatching(false); return; }
+  if (monitorZoneWindow) { monitorZoneWindow.close(); monitorZoneWindow = null; return; }
   monitorZoneWindow = new BrowserWindow({
     width: 210, height: 120,
-    frame: false, transparent: true, alwaysOnTop: true,
-    show: false, skipTaskbar: true,
-    resizable: false, // 크기 조절 고정
-    webPreferences: {
-      preload: path.join(__dirname, '..', 'preload.js'),
-      contextIsolation: true, nodeIntegration: false
-    }
+    frame: false, transparent: true, alwaysOnTop: false,
+    show: false, skipTaskbar: true, resizable: false,
+    webPreferences: { preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false }
   });
-
+  attachStackListeners(monitorZoneWindow);
   monitorZoneWindow.loadFile(path.join(__dirname, '..', 'monitor-zone.html'));
-
   monitorZoneWindow.on('ready-to-show', () => {
-    // 창이 준비되어 표시되기 직전에 사이드바에 '열림' 상태 전송
     mainWindow?.webContents.send('monitor-zone-window-status', true);
-    // 항상 게임 창 중앙에 초기 배치 (210x120 크기 기준)
     if (gameRect) {
       monitorZonePos.offsetX = Math.round((gameRect.width - 210) / 2);
       monitorZonePos.offsetY = Math.round((gameRect.height - 120) / 2);
@@ -588,26 +571,19 @@ export function toggleMonitorZone(): void {
     monitorZoneWindow?.show();
     monitorZoneWindow?.webContents.send('config-data', config.load());
   });
-
   monitorZoneWindow.on('move', () => {
     if (consumeProgrammaticMove('monitorZone') || !monitorZoneWindow || !gameRect) return;
     const b = monitorZoneWindow.getBounds();
     monitorZonePos.offsetX = b.x - gameRect.x;
     monitorZonePos.offsetY = b.y - gameRect.y;
   });
-
   monitorZoneWindow.on('closed', () => {
     monitorZoneWindow = null;
-    // 창이 닫히면 사이드바에 '닫힘' 상태 전송
     mainWindow?.webContents.send('monitor-zone-window-status', false);
-    // 창이 외부에서 닫히면 감시도 중지
-    if (isScreenWatching) {
-      setScreenWatching(false);
-    }
+    if (isScreenWatching) setScreenWatching(false);
   });
 }
 
-/** 감시 구역 창 클릭 투과 설정 */
 export function setMonitorZoneClickThrough(ignore: boolean): void {
   if (monitorZoneWindow && !monitorZoneWindow.isDestroyed()) {
     monitorZoneWindow.setIgnoreMouseEvents(ignore, { forward: true });
@@ -615,27 +591,19 @@ export function setMonitorZoneClickThrough(ignore: boolean): void {
   }
 }
 
-/** 현재 감시 구역의 좌표 반환 */
 export function getMonitorZoneBounds(): Rectangle | null {
   if (!monitorZoneWindow || monitorZoneWindow.isDestroyed()) return null;
   return monitorZoneWindow.getBounds();
 }
 
-/** 감시 상태 변경 및 사이드바 알림 */
 export function setScreenWatching(watching: boolean): void {
   isScreenWatching = watching;
-  if (!watching && onScreenWatchStop) {
-    onScreenWatchStop();
-  }
+  if (!watching && onScreenWatchStop) onScreenWatchStop();
   notifyScreenWatcherStatus();
 }
 
-/** 감시 상태 조회 */
-export function getScreenWatching(): boolean {
-  return isScreenWatching;
-}
+export function getScreenWatching(): boolean { return isScreenWatching; }
 
-/** 사이드바에 감시 상태 알림 */
 function notifyScreenWatcherStatus(): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('screen-watcher-status', isScreenWatching);

@@ -42,10 +42,10 @@ function copyDir(src, dest) {
 // 1. dist 폴더 준비
 ensureDir(distDir);
 
-// 2. 개별 리소스 복사 (.html, .css, .ps1)
+// 2. 개별 리소스 복사 (.html, .css)
 const files = fs.readdirSync(srcDir);
 files.forEach(file => {
-  if (file.endsWith('.html') || file.endsWith('.css') || file.endsWith('.ps1')) {
+  if (file.endsWith('.html') || file.endsWith('.css')) {
     copyFile(path.join(srcDir, file), path.join(distDir, file));
   }
 });

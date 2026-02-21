@@ -282,13 +282,13 @@
           <div class="space-y-6">
             <div class="p-4 bg-white/5 rounded-xl border border-white/5">
               <label class="section-label flex justify-between">
-                <span>감지 민감도</span>
-                <span id="danger-threshold-val" class="text-purple-400 font-mono">2.0%</span>
+                <span>감지 임계치 (비율)</span>
+                <span id="danger-threshold-val" class="text-purple-400 font-mono">10.0%</span>
               </label>
-              <input type="range" id="danger-threshold-input" min="0.5" max="10.0" step="0.5" value="2.0"
+              <input type="range" id="danger-threshold-input" min="0.5" max="50.0" step="0.5" value="10.0"
                 class="w-full accent-purple-600 mt-2"
                 oninput="document.getElementById('danger-threshold-val').innerText = this.value + '%'">
-              <p class="text-[10px] text-slate-500 mt-2 font-bold italic">* 수치가 낮을수록 예민하게 반응합니다. (권장: 1.0%~3.0%)</p>
+              <p class="text-[10px] text-slate-500 mt-2 font-bold italic">* 보라색 장판의 비율이 이 값보다 높으면 경보가 울립니다. (추천: 10% ~ 15%)</p>
             </div>
             <div class="p-4 bg-white/5 rounded-xl border border-white/5 space-y-4">
               <label class="flex items-center gap-3 cursor-pointer group">

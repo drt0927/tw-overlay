@@ -87,13 +87,8 @@
     }
 
     @keyframes fadeOut {
-      from {
-        opacity: 1;
-      }
-
-      to {
-        opacity: 0;
-      }
+      from { opacity: 1; }
+      to { opacity: 0; }
     }
   </style>
 </head>
@@ -105,8 +100,6 @@
     <button id="start-btn" onclick="startWatching()">▶ 감시 시작</button>
     <div id="watch-guide">사이드바 방패 아이콘을 클릭하여 종료</div>
   </div>
-
-  <video id="watch-video" style="display:none" muted playsinline></video>
 
   <script>
     const alertSound = new Audio();
@@ -143,145 +136,21 @@
       alertSound.currentTime = 0;
     });
 
-    let isWatching = false;
-    let watchInterval = null;
-    let watchStream = null;
-    let watchSourceId = null;
-    let watchThreshold = 0.02;
-    let watchRects = null;
-    let saveCount = 0;
-
-    const watchVideo = document.getElementById('watch-video');
-    const watchCanvas = document.createElement('canvas');
-    const watchCtx = watchCanvas.getContext('2d', { willReadFrequently: true });
-
     window.electronAPI.onWatcherToggle((enabled) => {
-      if (!enabled) stopWatchingStream();
-    });
-
-    window.electronAPI.onWatcherSourceId((data) => {
-      watchSourceId = data.sourceId;
-      watchThreshold = data.threshold;
-      watchRects = { gameRect: data.gameRect, zoneBounds: data.zoneBounds };
-      if (isWatching) startWatchingStream();
-    });
-
-    async function startWatchingStream() {
-      if (!watchSourceId) {
-        window.electronAPI.overlayReadyForWatcher();
-        return;
-      }
-
-      try {
-        if (watchStream) {
-          watchStream.getTracks().forEach(t => t.stop());
-        }
-
-        watchStream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: watchSourceId,
-              minWidth: 400,
-              minHeight: 300
-            }
-          }
-        });
-
-        watchVideo.srcObject = watchStream;
-        watchVideo.onloadedmetadata = () => {
-          watchVideo.play();
-          if (watchInterval) clearInterval(watchInterval);
-          watchInterval = setInterval(performAnalysis, 1000);
-          saveCount = 0;
-        };
-      } catch (e) { }
-    }
-
-    function stopWatchingStream() {
-      if (watchInterval) clearInterval(watchInterval);
-      watchInterval = null;
-      if (watchStream) {
-        watchStream.getTracks().forEach(t => t.stop());
-        watchStream = null;
-      }
-    }
-
-    async function performAnalysis() {
-      if (!isWatching || !watchVideo.videoWidth || !watchRects) return;
-
-      const { gameRect, zoneBounds } = watchRects;
-      const vW = watchVideo.videoWidth;
-      const vH = watchVideo.videoHeight;
-
-      const scaleX = vW / gameRect.width;
-      const scaleY = vH / gameRect.height;
-
-      const cropX = Math.floor((zoneBounds.x - gameRect.x) * scaleX);
-      const cropY = Math.floor((zoneBounds.y - gameRect.y) * scaleY);
-      const cropW = Math.floor(zoneBounds.width * scaleX);
-      const cropH = Math.floor(zoneBounds.height * scaleY);
-
-      if (cropW <= 0 || cropH <= 0) return;
-
-      watchCanvas.width = cropW;
-      watchCanvas.height = cropH;
-      watchCtx.drawImage(watchVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-
-      const imageData = watchCtx.getImageData(0, 0, cropW, cropH);
-      const data = imageData.data;
-
-      const STEP = 5;
-      let matchCount = 0;
-      let sampled = 0;
-
-      for (let i = 0; i < data.length; i += 4 * STEP) {
-        sampled++;
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        if (r > 150 && b > 180 && g < 200) {
-          if (b > g + 20) matchCount++;
-        }
-      }
-
-      const density = sampled > 0 ? matchCount / sampled : 0;
-
-      if (saveCount === 0) {
-        window.electronAPI.saveDebugImage(watchCanvas.toDataURL('image/png'), 'debug_capture.png');
-        saveCount++;
-      }
-
-      if (density > watchThreshold) {
-        if (saveCount < 11) {
-          window.electronAPI.saveDebugImage(watchCanvas.toDataURL('image/png'), 'danger_capture.png');
-          saveCount++;
-        }
-        window.electronAPI.sendDangerDetected(density);
-      } else {
-        window.electronAPI.sendDangerSafe();
-      }
-    }
-
-    window.electronAPI.onClickThroughMode((isIgnore) => {
-      isWatching = isIgnore;
       const zone = document.getElementById('zone');
       const label = zone.querySelector('.label');
       const hint = zone.querySelector('.hint');
       const startBtn = document.getElementById('start-btn');
       const watchGuide = document.getElementById('watch-guide');
 
-      if (isIgnore) {
-        zone.style.border = '2px solid rgba(56, 189, 248, 0.5)';
-        zone.style.background = 'rgba(56, 189, 248, 0.08)';
+      if (enabled) {
+        // 감시 중일 때: 배경만 투명으로 하여 캡처 방해 제거, 테두리는 가시성을 위해 유지
+        zone.style.border = '2px solid rgba(56, 189, 248, 0.5)'; 
+        zone.style.background = 'transparent';
         label.style.display = 'none';
         hint.style.display = 'none';
         startBtn.style.display = 'none';
         watchGuide.style.display = 'block';
-
-        startWatchingStream();
       } else {
         zone.style.border = '3px solid #4ade80';
         zone.style.background = 'rgba(74, 222, 128, 0.15)';
@@ -289,8 +158,6 @@
         hint.style.display = 'block';
         startBtn.style.display = 'block';
         watchGuide.style.display = 'none';
-
-        stopWatchingStream();
       }
     });
 
@@ -300,12 +167,9 @@
       window.electronAPI.overlayReadyForWatcher();
     };
 
-    // Escape 키 로직은 bindEscapeClose에서 처리하지만, 
-    // 감시 중일 때는 닫히지 않도록 커스텀 핸들러가 필요할 수 있음
-    // 현재 bindEscapeClose는 단순 window.close()이므로 감시 상태를 체크하도록 유지
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isWatching) {
-        e.stopImmediatePropagation(); // 감시 중일 때는 닫기 방지
+      if (e.key === 'Escape') {
+        // 감시 중일 때는 실수로 닫히는 것 방지 (사이드바 아이콘으로 종료 권장)
       }
     });
   </script>

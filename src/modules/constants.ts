@@ -29,6 +29,8 @@ export interface GameRect {
   y: number;
   width: number;
   height: number;
+  gameHwnd?: string;
+  isForeground?: boolean;
 }
 
 export interface GameNotRunning {
@@ -114,7 +116,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     }
   ],
   autoUpdateEnabled: true,
-  dangerThreshold: 2.0,
+  dangerThreshold: 10.0,
   dangerSoundEnabled: true,
   dangerSoundVolume: 50,
   dangerSoundFile: 'gongseubgyeongbo-gongseubgyeongbo.mp3',

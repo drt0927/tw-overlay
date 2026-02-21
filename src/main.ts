@@ -26,14 +26,6 @@ import os from 'os';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
-// 앱 자체의 우선순위를 낮추어 게임에 리소스 양보
-try {
-  os.setPriority(process.pid, os.constants.priority.PRIORITY_BELOW_NORMAL);
-  log(`[BOOT] App priority set to BelowNormal`);
-} catch (e) {
-  log(`[BOOT] Failed to set app priority: ${e}`);
-}
-
 // 윈도우 네이티브 알림을 위한 AppUserModelId 설정
 app.setAppUserModelId('com.filbertlab.twoverlay');
 
@@ -65,15 +57,43 @@ if (!gotTheLock) {
 function registerShortcuts(): void {
   globalShortcut.unregisterAll();
   globalShortcut.register('CommandOrControl+Shift+T', () => {
-    wm.toggleClickThrough();
-    tracker.focusGameWindow();
+    const isClickThrough = wm.toggleClickThrough();
+
+    // 마우스 투과가 활성화되었을 때만 게임 창에 포커스를 줍니다.
+    // 이때 즉시 포커스를 주면 윈도우 매니저가 투과 설정과 포커스 전환을 동시에 처리하느라 
+    // 깜박임이 길어질 수 있으므로, 아주 짧은 지연(50ms)을 줍니다.
+    if (isClickThrough) {
+      setTimeout(() => {
+        tracker.focusGameWindow();
+      }, 50);
+    }
   });
 }
 
 function startPolling(): void {
-  let lastResult = '';
+  let lastRect: any = null;
   let stableCount = 0;
   let isBoosted = false;
+
+  const rectEquals = (a: any, b: any) => {
+    if (!a || !b) return a === b;
+    return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height && a.isForeground === b.isForeground;
+  };
+
+  // 윈도우 이벤트(이동, 활성화 등) 발생 시 즉시 폴링 함수 실행
+  let isProcessingEvent = false;
+  tracker.setWindowEventListener(() => {
+    if (isProcessingEvent) return;
+    
+    if (pollingTimer) {
+      clearTimeout(pollingTimer);
+      isProcessingEvent = true;
+      setTimeout(() => {
+        isProcessingEvent = false;
+        poll();
+      }, 16);
+    }
+  });
 
   async function poll(): Promise<void> {
     if (appState.isQuitting) return;
@@ -81,7 +101,6 @@ function startPolling(): void {
     const currentRect = await tracker.queryGameRect();
     let nextDelay = POLLING_FAST_MS;
 
-    // 1. 응답이 없거나 상태 메시지(string)인 경우 예외 처리
     if (currentRect === undefined || typeof currentRect === 'string') {
       pollingTimer = setTimeout(poll, POLLING_FAST_MS);
       return;
@@ -96,7 +115,6 @@ function startPolling(): void {
       return;
     }
 
-    // 2. 최소화 상태 확인
     if (!currentRect || (currentRect && 'x' in currentRect && currentRect.x <= -10000)) {
       if (currentRect === null && wm.getScreenWatching()) {
         log('[POLL] Game minimized. Auto-stopping ScreenWatcher.');
@@ -113,7 +131,6 @@ function startPolling(): void {
       return;
     }
 
-    // 3. 게임 발견 시 최초 1회 성능 강화(우선순위 상향) 시도
     gameWasEverFound = true;
     if (!isBoosted) {
       tracker.boostGameProcess().then(res => {
@@ -124,33 +141,31 @@ function startPolling(): void {
       });
     }
 
-    // 4. 위치 동기화 및 가변 폴링 로직
-    const currentResult = JSON.stringify(currentRect);
     const mainWin = wm.getMainWindow();
     const isVisible = mainWin && mainWin.isVisible();
 
-    if (currentResult !== lastResult || !isVisible) {
-      // 위치가 바뀌었거나 사이드바가 안 보이면 즉시 동기화 (빠른 폴링)
-      wm.syncOverlay(currentRect);
-      lastResult = currentResult;
+    if (!rectEquals(currentRect, lastRect) || !isVisible) {
+      wm.syncOverlay(currentRect as any);
+      if (currentRect && 'gameHwnd' in currentRect) {
+        const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, wm.getAllWindowHwnds());
+        wm.setAllAlwaysOnTop(isGameOrAppFocused);
+      }
+      lastRect = currentRect;
       stableCount = 0;
       nextDelay = POLLING_FAST_MS;
     } else {
-      // 위치가 고정된 상태
-      stableCount++;
-      if (stableCount >= STABLE_THRESHOLD_COUNT) {
-        // 1초(10프레임) 이상 고정 시 주기를 늘림 (사용자 제안 반영)
-        nextDelay = POLLING_STABLE_MS;
-      } else {
-        nextDelay = POLLING_FAST_MS;
+      if (currentRect && 'gameHwnd' in currentRect) {
+        const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, wm.getAllWindowHwnds());
+        wm.setAllAlwaysOnTop(isGameOrAppFocused);
       }
+      stableCount++;
+      nextDelay = (stableCount >= STABLE_THRESHOLD_COUNT) ? POLLING_STABLE_MS : POLLING_FAST_MS;
     }
 
     pollingTimer = setTimeout(poll, nextDelay);
   }
   poll();
 }
-
 app.whenReady().then(() => {
   // 1. 즉시 스플래시 화면 표시
   wm.createSplashWindow();

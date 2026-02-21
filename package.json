@@ -25,9 +25,7 @@
       }
     ],
     "asar": true,
-    "asarUnpack": [
-      "dist/track.ps1"
-    ],
+    "asarUnpack": [],
     "win": {
       "target": [
         "nsis"
@@ -52,7 +50,8 @@
   "license": "ISC",
   "dependencies": {
     "electron-store": "^11.0.2",
-    "electron-updater": "^6.8.3"
+    "electron-updater": "^6.8.3",
+    "koffi": "^2.15.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

@@ -649,10 +649,15 @@
     let soundFiles = [];
 
     async function initSettings() {
+      // 1. 필수적인 초기화만 즉시 실행
       soundFiles = await window.loadSoundList();
       window.bindEscapeClose();
-      initIconList();
-      checkOptimizeStatus();
+      
+      // 2. 창이 표시된 후 무거운 작업 지연 실행 (버벅임 방지)
+      setTimeout(() => {
+        initIconList();
+        checkOptimizeStatus();
+      }, 500);
     }
 
     // --- 최적화 (Fast Ping) 로직 ---
@@ -692,14 +697,13 @@
     }
 
     function initIconList() {
-      if (ALL_ICONS.length === 0 && typeof lucide !== 'undefined') {
-        // Lucide 아이콘 객체에서 실제 아이콘 키만 추출
+      if (ALL_ICONS.length > 0) return;
+      if (typeof lucide !== 'undefined') {
         const icons = lucide.icons || lucide;
         ALL_ICONS = Object.keys(icons).filter(key =>
-          typeof icons[key] === 'object' || Array.isArray(icons[key])
+          (typeof icons[key] === 'object' || Array.isArray(icons[key])) &&
+          !['createIcons', 'icons', 'createElement'].includes(key)
         ).sort();
-        // 유틸리티 함수 필터링
-        ALL_ICONS = ALL_ICONS.filter(name => !['createIcons', 'icons', 'createElement'].includes(name));
       }
     }
 
@@ -959,6 +963,7 @@
     }
 
     function openIconPicker(index) {
+      initIconList();
       activeEditIndex = index;
       document.getElementById('icon-picker-overlay').classList.remove('hidden');
       renderIconGrid('');

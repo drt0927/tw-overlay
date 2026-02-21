@@ -1,120 +1,71 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8">
   <script src="assets/lucide.min.js"></script>
   <script src="assets/ui-utils.js"></script>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: transparent;
-      border-radius: 8px;
-    }
-
+    body { margin: 0; padding: 0; overflow: hidden; background: transparent; font-family: 'Malgun Gothic', sans-serif; }
     #zone {
-      width: 100vw;
-      height: 100vh;
-      border: 3px solid #4ade80;
-      background: rgba(74, 222, 128, 0.15);
+      width: 100vw; height: 100vh;
+      border: 3px solid #a855f7;
+      background: rgba(168, 85, 247, 0.1);
       box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #4ade80;
-      font-family: 'Malgun Gothic', sans-serif;
-      font-size: 12px;
-      font-weight: bold;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
       -webkit-app-region: drag;
-      text-shadow: 0 0 6px rgba(0, 0, 0, 1), 0 0 12px rgba(0, 0, 0, 0.6);
-      box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.2);
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
+      border-radius: 16px;
     }
-
+    .content-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .label {
-      background: rgba(0, 0, 0, 0.75);
-      padding: 5px 10px;
-      border-radius: 4px;
-      pointer-events: none;
-      border: 1px solid rgba(74, 222, 128, 0.4);
+      background: rgba(15, 18, 30, 0.9); padding: 4px 12px; border-radius: 99px;
+      border: 1px solid rgba(168, 85, 247, 0.4); color: #c084fc; font-size: 11px; font-weight: 900;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-
     .hint {
-      font-size: 10px;
-      margin-top: 6px;
-      font-weight: normal;
-      color: #fff;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 3px 8px;
-      border-radius: 3px;
+      font-size: 10px; color: rgba(255, 255, 255, 0.6);
+      background: rgba(0, 0, 0, 0.4); padding: 2px 8px; border-radius: 6px; font-weight: 500;
     }
-
     #start-btn {
-      margin-top: 8px;
-      padding: 4px 14px;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid #4ade80;
-      border-radius: 4px;
-      color: #4ade80;
-      font-size: 11px;
-      font-weight: bold;
-      cursor: pointer;
-      -webkit-app-region: no-drag;
-      transition: background 0.2s;
+      margin-top: 4px; padding: 6px 16px; background: #a855f7; border: none; border-radius: 10px;
+      color: white; font-size: 11px; font-weight: 900; cursor: pointer; -webkit-app-region: no-drag;
+      transition: all 0.2s; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
     }
-
-    #start-btn:hover {
-      background: rgba(0, 0, 0, 0.8);
-    }
-
+    #start-btn:hover { background: #9333ea; transform: translateY(-1px); }
+    #start-btn:active { transform: scale(0.95); }
     #watch-guide {
-      display: none;
-      align-items: center;
-      gap: 4px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: normal;
-      color: rgba(56, 189, 248, 0.9);
-      pointer-events: none;
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      animation: fadeOut 1s ease 2.5s forwards;
+      display: none; position: absolute; background: rgba(15, 18, 30, 0.8);
+      padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      animation: fadeInOut 3s ease-in-out forwards; pointer-events: none;
     }
-
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(10px); }
+      15% { opacity: 1; transform: translateY(0); }
+      85% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
     }
   </style>
 </head>
-
 <body>
   <div id="zone">
-    <div class="label">🛡️ 장판 감시 구역</div>
-    <div class="hint">발밑에 위치시키고 시작하세요</div>
-    <button id="start-btn" onclick="startWatching()">▶ 감시 시작</button>
+    <div class="content-box">
+      <div class="label">🛡️ 장판 감시 구역</div>
+      <div class="hint">발밑에 위치시키고 시작하세요</div>
+      <button id="start-btn" onclick="startWatching()">▶ 감시 시작</button>
+    </div>
     <div id="watch-guide">사이드바 방패 아이콘을 클릭하여 종료</div>
   </div>
-
   <script>
     const alertSound = new Audio();
     let currentSoundFile = '';
     let soundEnabled = true;
     let soundVolume = 0.5;
-
-    function startWatching() {
-      window.electronAPI.toggleScreenWatcher(true);
-    }
-
+    function startWatching() { window.electronAPI.toggleScreenWatcher(true); }
     window.electronAPI.onConfigData((config) => {
       soundEnabled = config.dangerSoundEnabled !== false;
       soundVolume = (config.dangerSoundVolume !== undefined ? config.dangerSoundVolume : 50) / 100;
-
       const newSoundFile = config.dangerSoundFile || 'gongseubgyeongbo-gongseubgyeongbo.mp3';
       if (currentSoundFile !== newSoundFile) {
         currentSoundFile = newSoundFile;
@@ -122,7 +73,6 @@
       }
       alertSound.volume = soundVolume;
     });
-
     window.electronAPI.onDangerAlert(() => {
       if (soundEnabled) {
         alertSound.volume = soundVolume;
@@ -130,49 +80,31 @@
         alertSound.play().catch(e => { });
       }
     });
-
     window.electronAPI.onDangerCleared(() => {
       alertSound.pause();
       alertSound.currentTime = 0;
     });
-
     window.electronAPI.onWatcherToggle((enabled) => {
       const zone = document.getElementById('zone');
-      const label = zone.querySelector('.label');
-      const hint = zone.querySelector('.hint');
-      const startBtn = document.getElementById('start-btn');
+      const content = zone.querySelector('.content-box');
       const watchGuide = document.getElementById('watch-guide');
-
       if (enabled) {
-        // 감시 중일 때: 배경만 투명으로 하여 캡처 방해 제거, 테두리는 가시성을 위해 유지
-        zone.style.border = '2px solid rgba(56, 189, 248, 0.5)'; 
+        zone.style.border = '2px solid rgba(56, 189, 248, 0.4)'; 
         zone.style.background = 'transparent';
-        label.style.display = 'none';
-        hint.style.display = 'none';
-        startBtn.style.display = 'none';
+        content.style.display = 'none';
         watchGuide.style.display = 'block';
       } else {
-        zone.style.border = '3px solid #4ade80';
-        zone.style.background = 'rgba(74, 222, 128, 0.15)';
-        label.style.display = 'block';
-        hint.style.display = 'block';
-        startBtn.style.display = 'block';
+        zone.style.border = '3px solid #a855f7';
+        zone.style.background = 'rgba(168, 85, 247, 0.1)';
+        content.style.display = 'flex';
         watchGuide.style.display = 'none';
       }
     });
-
     window.onload = () => {
       window.refreshIcons();
       window.bindEscapeClose();
       window.electronAPI.overlayReadyForWatcher();
     };
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        // 감시 중일 때는 실수로 닫히는 것 방지 (사이드바 아이콘으로 종료 권장)
-      }
-    });
   </script>
 </body>
-
 </html>

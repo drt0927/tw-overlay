@@ -6,6 +6,7 @@ import * as config from './config';
 import * as wm from './windowManager';
 import * as gallery from './galleryMonitor';
 import screenWatcher from './screenWatcher';
+import * as optimizer from './optimizer';
 
 export function register(): void {
   // 순환 참조 회피: windowManager에서 감시 중지 시 콜백으로 screenWatcher.stop() 호출
@@ -59,6 +60,16 @@ export function register(): void {
   ipcMain.on('toggle-monitor-zone', () => { wm.toggleMonitorZone(); });
   ipcMain.on('toggle-sidebar', () => { wm.toggleSidebar(); });
   ipcMain.on('toggle-overlay', () => { wm.toggleOverlay(); });
+  ipcMain.on('toggle-click-through', () => { wm.toggleClickThrough(); });
+
+  // 네트워크 최적화 (Fast Ping) 핸들러
+  ipcMain.handle('get-optimization-status', async () => {
+    return await optimizer.getOptimizationStatus();
+  });
+  ipcMain.handle('set-optimization', async (_e, enable: boolean) => {
+    return await optimizer.setOptimization(enable);
+  });
+
   ipcMain.on('check-for-updates', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     import('./updater').then(mod => mod.manualCheckForUpdate(win));

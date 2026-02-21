@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 창 제어
   toggleSidebar: () => ipcRenderer.send('toggle-sidebar'),
   toggleOverlay: () => ipcRenderer.send('toggle-overlay'),
+  toggleClickThrough: () => ipcRenderer.send('toggle-click-through'),
   toggleSettings: () => ipcRenderer.send('toggle-settings'),
   toggleGallery: () => ipcRenderer.send('toggle-gallery'),
   toggleAbbreviation: () => ipcRenderer.send('toggle-abbreviation'),
@@ -28,6 +29,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitAndInstall: () => ipcRenderer.send('quit-and-install'),
   toggleScreenWatcher: (enabled: boolean) => ipcRenderer.send('screen-watcher-toggle', enabled),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getOptimizationStatus: () => ipcRenderer.invoke('get-optimization-status'),
+  setOptimization: (enable: boolean) => ipcRenderer.invoke('set-optimization', enable),
 
   // 갤러리 모니터
   galleryAddWatch: (postNo: number) => ipcRenderer.invoke('gallery-add-watch', postNo),

@@ -50,7 +50,7 @@
     <div id="slot-container" class="slot-container flex flex-col gap-2 mt-2"></div>
 
     <!-- 홈 버튼 -->
-    <div class="mt-auto p-2 cursor-pointer text-slate-400 hover:text-purple-400" onclick="window.electronAPI.goHome()"
+    <div id="home-btn" class="mt-auto p-2 cursor-pointer text-slate-400 hover:text-purple-400" onclick="window.electronAPI.goHome()"
       onmouseenter="showTooltip('홈 페이지', this)" onmouseleave="hideTooltip()">
       <i data-lucide="home" class="w-4 h-4"></i>
     </div>
@@ -59,6 +59,11 @@
     <div id="overlay-toggle-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
       onclick="window.electronAPI.toggleOverlay()" onmouseenter="showTooltip('오버레이 토글', this)" onmouseleave="hideTooltip()">
       <i id="overlay-icon" data-lucide="layout" class="w-4 h-4"></i>
+    </div>
+
+    <div id="click-through-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
+      onclick="window.electronAPI.toggleClickThrough()" onmouseenter="showTooltip('마우스 투과 토글 (Ctrl+Shift+T)', this)" onmouseleave="hideTooltip()">
+      <i id="click-through-icon" data-lucide="mouse-pointer-2" class="w-4 h-4"></i>
     </div>
 
     <div class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
@@ -154,6 +159,15 @@
             }
           }
         });
+    // 오버레이 아이콘 갱신 함수
+    function updateOverlayIcon(isVisible) {
+      const iconContainer = document.getElementById('overlay-toggle-btn');
+      if (iconContainer) {
+        iconContainer.innerHTML = `<i id="overlay-icon" data-lucide="${isVisible ? 'layout-template' : 'layout'}" class="w-4 h-4 ${isVisible ? 'text-white' : 'text-slate-600'}"></i>`;
+        refreshIcons();
+      }
+    }
+
     // 사이드바 상태 반영
     window.electronAPI.onSidebarStatus((isCollapsed) => {
       document.getElementById('wrapper').className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';
@@ -162,10 +176,22 @@
       refreshIcons();
     });
 
-    // 오버레이 아이콘 갱신
-    window.electronAPI.onOverlayStatus((isVisible) => {
-      const iconContainer = document.getElementById('overlay-toggle-btn');
-      iconContainer.innerHTML = `<i id="overlay-icon" data-lucide="${isVisible ? 'layout-template' : 'layout'}" class="w-4 h-4 ${isVisible ? 'text-white' : 'text-slate-600'}"></i>`;
+    // 오버레이 아이콘 갱신 이벤트 수신
+    window.electronAPI.onOverlayStatus(updateOverlayIcon);
+
+    // 마우스 투과 상태 수신
+    window.electronAPI.onClickThroughStatus((isClickThrough) => {
+      const icon = document.getElementById('click-through-icon');
+      const btn = document.getElementById('click-through-btn');
+      if (isClickThrough) {
+        icon.setAttribute('data-lucide', 'mouse-pointer-off');
+        btn.classList.add('text-green-400');
+        btn.classList.remove('text-slate-400');
+      } else {
+        icon.setAttribute('data-lucide', 'mouse-pointer-2');
+        btn.classList.add('text-slate-400');
+        btn.classList.remove('text-green-400');
+      }
       refreshIcons();
     });
 
@@ -174,10 +200,18 @@
       // 보스 알림 음량 업데이트 (0.0 ~ 1.0 범위)
       bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
 
-      // 초기 상태 아이콘 설정
+      // 메뉴 노출 제어 (기본값은 모두 노출)
+      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'zone-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      const visibleMenuIds = config.visibleMenuIds || menuIds;
+      
+      menuIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = visibleMenuIds.includes(id) ? 'flex' : 'none';
+      });
+
+      // 초기 상태 아이콘 설정 (onOverlayStatus와 연동되므로 여기서 명시적 호출 제거 가능)
       const isVisible = config.overlayVisible !== false;
-      const iconContainer = document.getElementById('overlay-toggle-btn');
-      iconContainer.innerHTML = `<i id="overlay-icon" data-lucide="${isVisible ? 'layout-template' : 'layout'}" class="w-4 h-4 ${isVisible ? 'text-white' : 'text-slate-600'}"></i>`;
+      updateOverlayIcon(isVisible);
 
       const container = document.getElementById('slot-container');
       container.innerHTML = '';

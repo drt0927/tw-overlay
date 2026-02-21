@@ -109,6 +109,16 @@
       border-color: var(--accent);
       background: rgba(168, 85, 247, 0.1);
     }
+
+    /* 드롭다운(select) 다크 모드 스타일 최적화 */
+    select {
+      color-scheme: dark;
+    }
+
+    select option {
+      background-color: #1a1b2e;
+      color: white;
+    }
   </style>
 </head>
 
@@ -123,7 +133,10 @@
       </div>
 
       <div class="nav-container">
-        <div class="nav-item active" onclick="showSection('overlay', this)">
+        <div class="nav-item active" onclick="showSection('general', this)">
+          <i data-lucide="settings-2" class="w-4 h-4"></i> 일반 설정
+        </div>
+        <div class="nav-item" onclick="showSection('overlay', this)">
           <i data-lucide="layout" class="w-4 h-4"></i> 오버레이 설정
         </div>
         <div class="nav-item" onclick="showSection('gallery', this)">
@@ -138,6 +151,9 @@
         <div class="nav-item" onclick="showSection('slots', this)">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
         </div>
+        <div class="nav-item" onclick="showSection('optimize', this)">
+          <i data-lucide="zap" class="w-4 h-4"></i> 게임 최적화 (핑업)
+        </div>
         <div class="nav-item" onclick="showSection('about', this)">
           <i data-lucide="info" class="w-4 h-4"></i> 앱 정보
         </div>
@@ -151,56 +167,146 @@
     </div>
 
     <div class="content-area custom-scroll">
-      <!-- 1. 오버레이 설정 -->
-      <div id="section-overlay" class="settings-section space-y-8">
+      <!-- 0. 일반 설정 -->
+      <div id="section-general" class="settings-section space-y-8">
         <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="layout"
-              class="w-5 h-5 text-purple-500"></i> 브라우저 기본 설정</h2>
-          <div class="space-y-6">
-            <div>
-              <label class="section-label">기본 웹사이트 (Home URL)</label>
-              <input type="text" id="home-url-input" class="input-field w-full text-sm py-3" placeholder="https://...">
-            </div>
-            <div class="grid grid-cols-2 gap-6">
-              <div>
-                <label class="section-label">오버레이 너비 (px)</label>
-                <input type="number" id="width-input" class="input-field w-full font-mono py-3">
-              </div>
-              <div>
-                <label class="section-label">오버레이 높이 (px)</label>
-                <input type="number" id="height-input" class="input-field w-full font-mono py-3">
-              </div>
-            </div>
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
-              <label class="flex items-center gap-3 cursor-pointer group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="settings-2"
+              class="w-5 h-5 text-purple-500"></i> 앱 일반 설정</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="grid grid-cols-2 gap-4">
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
                 <input type="checkbox" id="auto-launch-input" class="w-5 h-5 accent-purple-600">
                 <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">윈도우 시작 시 자동
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">윈도우 시작 시
                     실행</span>
-                  <p class="text-[11px] text-slate-500 mt-0.5">컴퓨터를 켜면 TW-Overlay가 자동으로 실행됩니다.</p>
+                  <p class="text-[10px] text-slate-500 mt-0.5">컴퓨터를 켜면 자동 실행</p>
                 </div>
               </label>
+
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
+                <input type="checkbox" id="auto-update-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">자동 업데이트
+                    확인</span>
+                  <p class="text-[10px] text-slate-500 mt-0.5">시작 시 새 버전 체크</p>
+                </div>
+              </label>
+            </div>
+
+            <div class="pt-6 border-t border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="list-checks" class="w-4 h-4 text-purple-400"></i> 사이드바 메뉴 관리
+              </label>
+              <div class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="gallery-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">갤러리 모니터</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="abbreviation-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">약어 사전</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="buffs-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">버프 백과 & 계산기</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="boss-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">필드보스 알림</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="zone-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">장판 감시 설정</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="home-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">홈 페이지</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="overlay-toggle-btn"
+                    class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">오버레이 토글</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="click-through-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">마우스 투과 토글</span>
+                </label>
+              </div>
+              <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 체크 해제 시 사이드바에서 해당 메뉴가 숨겨집니다.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 2. 갤러리 알림 설정 (기존 유지) -->
+      <!-- 1. 오버레이 설정 -->
+      <div id="section-overlay" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="monitor"
+              class="w-5 h-5 text-purple-500"></i> 브라우저 기본 설정</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="space-y-6">
+              <div>
+                <label class="section-label flex items-center gap-2 mb-3">
+                  <i data-lucide="home" class="w-4 h-4 text-purple-400"></i> 기본 웹사이트 (Home URL)
+                </label>
+                <input type="text" id="home-url-input" class="input-field w-full text-sm py-3 px-4 bg-black/40"
+                  placeholder="https://...">
+              </div>
+
+              <div class="grid grid-cols-2 gap-6 pt-2">
+                <div>
+                  <label class="section-label flex items-center gap-2 mb-3">
+                    <i data-lucide="maximize" class="w-4 h-4 text-purple-400"></i> 오버레이 너비
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="width-input"
+                      class="input-field w-full font-mono py-3 px-4 bg-black/40 pr-10">
+                    <span
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold uppercase">px</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="section-label flex items-center gap-2 mb-3">
+                    <i data-lucide="minimize" class="w-4 h-4 text-purple-400"></i> 오버레이 높이
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="height-input"
+                      class="input-field w-full font-mono py-3 px-4 bg-black/40 pr-10">
+                    <span
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold uppercase">px</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 갤러리 알림 설정 -->
       <div id="section-gallery" class="settings-section space-y-8 hidden">
         <div class="settings-group">
           <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="bell"
               class="w-5 h-5 text-purple-500"></i> 갤러리 알림 필터링</h2>
-          <div class="space-y-6">
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
             <div>
-              <label class="section-label">알림 키워드 등록</label>
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="key" class="w-4 h-4 text-purple-400"></i> 알림 키워드 등록
+              </label>
               <div class="flex gap-2 mb-4">
-                <input type="text" id="keyword-input" class="input-field flex-1 py-3" placeholder="예: 득템, 업데이트, 점검..."
-                  onkeypress="if(event.key==='Enter')addKeyword()">
-                <button onclick="addKeyword()" class="btn-primary px-6 font-black">추가</button>
+                <input type="text" id="keyword-input" class="input-field flex-1 py-3 px-4 bg-black/40"
+                  placeholder="예: 득템, 업데이트, 점검..." onkeypress="if(event.key==='Enter')addKeyword()">
+                <button onclick="addKeyword()"
+                  class="btn-primary px-6 font-black shadow-lg shadow-purple-900/20">추가</button>
               </div>
               <div id="keyword-list"
-                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start">
+                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[120px] align-content-start">
               </div>
+              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1">* 입력한 키워드가 갤러리 제목에 포함되면 알림이 발생합니다.</p>
             </div>
           </div>
         </div>
@@ -211,6 +317,20 @@
         <div class="settings-group">
           <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="alarm-clock"
               class="w-5 h-5 text-purple-500"></i> 필드보스 알림 설정</h2>
+
+          <!-- 강조 안내 문구 -->
+          <div
+            class="p-4 mb-6 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-start gap-3 shadow-lg shadow-blue-900/10">
+            <i data-lucide="alarm-clock" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="text-sm font-black text-blue-300">알림음 설정 안내</p>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                각 보스별 개별 알림음은 <span class="text-white font-bold bg-blue-500/20 px-1 rounded">사이드바의 [필드보스 알림 설정]</span>
+                메뉴에서 직접 변경할 수 있습니다.
+              </p>
+            </div>
+          </div>
+
           <div class="space-y-6">
             <div class="p-4 bg-white/5 rounded-xl border border-white/5">
               <label class="flex items-center gap-3 cursor-pointer group">
@@ -245,32 +365,46 @@
               </div>
             </div>
 
-                                    <div class="p-4 bg-white/5 rounded-xl border border-white/5 space-y-4">
-                                      <div>
-                                        <label class="section-label flex justify-between mb-2">
-                                          <span>필드 보스 알림 음량</span>
-                                          <span id="boss-volume-val" class="text-purple-400 font-mono">50%</span>
-                                        </label>
-                                        <div class="flex gap-4 items-center">
-                                          <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
-                                            class="flex-1 accent-purple-600"
-                                            oninput="window.updateRangeValue(this, 'boss-volume-val')">
-                                        </div>
-                                      </div>
-                        
-                                      <div class="flex gap-2 items-end">
-                                        <div class="flex-1">
-                                          <label class="section-label">미리보기 사운드</label>
-                                          <select id="boss-preview-sound-input" class="input-field w-full text-xs py-2.5">
-                                            <!-- JS에서 렌더링 -->
-                                          </select>
-                                        </div>
-                                        <button onclick="previewBossVolume()" class="w-10 h-10 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="미리보기">
-                                          <i data-lucide="play" class="w-4 h-4"></i>
-                                        </button>
-                                      </div>
-                                      <p class="text-[10px] text-slate-500 font-bold italic">* 위 사운드 선택은 음량 테스트를 위한 미리보기용입니다. 보스별 실제 알림음은 각 보스 설정에서 변경하세요.</p>
-                                    </div>          </div>
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <div>
+                <label class="section-label flex justify-between mb-4">
+                  <span class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-purple-400"></i>
+                    공통 알림 음량</span>
+                  <span id="boss-volume-val" class="text-purple-400 font-mono text-base">50%</span>
+                </label>
+                <div class="flex gap-4 items-center px-1">
+                  <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
+                    class="flex-1 h-1.5 accent-purple-600 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    oninput="window.updateRangeValue(this, 'boss-volume-val')">
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-white/5">
+                <label class="section-label mb-3 block text-xs text-slate-400 uppercase tracking-wider">알림 음량
+                  테스트</label>
+                <div class="flex gap-3 items-center bg-black/40 p-3 rounded-xl border border-white/5">
+                  <div class="flex-1">
+                    <select id="boss-preview-sound-input"
+                      class="bg-transparent w-full text-xs py-2 focus:outline-none text-slate-200">
+                      <!-- JS에서 렌더링 -->
+                    </select>
+                  </div>
+                  <button onclick="previewBossVolume()"
+                    class="w-12 h-10 flex items-center justify-center bg-purple-600/20 border border-purple-500/40 rounded-lg text-purple-400 hover:bg-purple-600 hover:text-white transition-all shadow-lg active:scale-95"
+                    title="소리 재생">
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                  </button>
+                </div>
+                <div class="mt-4 flex items-start gap-2 px-1">
+                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">
+                    <span class="text-purple-400/80 font-bold italic">위 사운드 선택은 음량 확인을 위한 테스트 전용입니다.</span><br>
+                    실제 보스별 알림음은 사이드바 메뉴에서 개별적으로 지정하셔야 합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -279,49 +413,66 @@
         <div class="settings-group">
           <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="shield-alert"
               class="w-5 h-5 text-purple-500"></i> 장판 감지 설정</h2>
+
           <div class="space-y-6">
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
-              <label class="section-label flex justify-between">
-                <span>감지 임계치 (비율)</span>
-                <span id="danger-threshold-val" class="text-purple-400 font-mono">10.0%</span>
-              </label>
-              <input type="range" id="danger-threshold-input" min="0.5" max="50.0" step="0.5" value="10.0"
-                class="w-full accent-purple-600 mt-2"
-                oninput="document.getElementById('danger-threshold-val').innerText = this.value + '%'">
-              <p class="text-[10px] text-slate-500 mt-2 font-bold italic">* 보라색 장판의 비율이 이 값보다 높으면 경보가 울립니다. (추천: 10% ~ 15%)</p>
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <div>
+                <label class="section-label flex justify-between items-center mb-4">
+                  <span class="flex items-center gap-2"><i data-lucide="scan-eye" class="w-4 h-4 text-purple-400"></i>
+                    감지 민감도 (보라색 비율)</span>
+                  <span id="danger-threshold-val" class="text-purple-400 font-mono text-base">10.0%</span>
+                </label>
+                <input type="range" id="danger-threshold-input" min="0.5" max="50.0" step="0.5" value="10.0"
+                  class="w-full h-1.5 accent-purple-600 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                  oninput="document.getElementById('danger-threshold-val').innerText = this.value + '%'">
+                <div class="flex justify-between text-[10px] text-slate-600 font-bold mt-2 uppercase tracking-tighter">
+                  <span>낮음 (민감)</span>
+                  <span>추천 (10~15%)</span>
+                  <span>높음 (둔함)</span>
+                </div>
+              </div>
             </div>
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5 space-y-4">
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input type="checkbox" id="danger-sound-input" class="w-5 h-5 accent-purple-600">
+
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-red-500/5 rounded-xl border border-red-500/10 hover:border-red-500/30 transition-all">
+                <input type="checkbox" id="danger-sound-input" class="w-5 h-5 accent-red-600">
                 <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">장판 감지 시 소리
-                    알림</span>
-                  <p class="text-[11px] text-slate-500 mt-0.5">보라색 장판이 감지되면 알림음을 재생합니다.</p>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">위험 감지 시 소리
+                    경보</span>
+                  <p class="text-[11px] text-slate-500 mt-0.5 font-medium">보라색 장판이 감지되면 즉시 경보음을 재생합니다.</p>
                 </div>
               </label>
 
-              <div id="danger-sound-settings" class="pl-8 space-y-4">
-                <div class="flex gap-2 items-end">
-                  <div class="flex-1">
-                    <label class="section-label">알림 사운드 선택</label>
-                    <select id="danger-sound-file-input" class="input-field w-full text-xs py-2.5">
-                      <!-- JS에서 렌더링 -->
-                    </select>
+              <div id="danger-sound-settings" class="space-y-6 pt-4 border-t border-white/5">
+                <div>
+                  <label class="section-label flex justify-between items-center mb-4">
+                    <span class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-red-400"></i> 경보
+                      알림 음량</span>
+                    <span id="danger-volume-val" class="text-red-400 font-mono text-base">50%</span>
+                  </label>
+                  <div class="px-1">
+                    <input type="range" id="danger-volume-input" min="0" max="100" step="5" value="50"
+                      class="w-full h-1.5 accent-red-600 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                      oninput="window.updateRangeValue(this, 'danger-volume-val')">
                   </div>
-                  <button onclick="previewDangerSound()"
-                    class="w-10 h-10 flex items-center justify-center bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm"
-                    title="미리보기">
-                    <i data-lucide="play" class="w-4 h-4"></i>
-                  </button>
                 </div>
 
-                <div>
-                  <label class="section-label flex justify-between">
-                    <span>알림 음량</span>
-                    <span id="danger-volume-val" class="text-purple-400 font-mono">50%</span>
-                  </label>
-                  <input type="range" id="danger-volume-input" min="0" max="100" step="5" value="50"
-                    class="w-full accent-purple-600 mt-1" oninput="window.updateRangeValue(this, 'danger-volume-val')">
+                <div class="bg-black/40 p-4 rounded-xl border border-white/5 space-y-3">
+                  <label class="section-label text-xs text-slate-500 uppercase tracking-wider">경보 사운드 선택</label>
+                  <div class="flex gap-3">
+                    <div class="flex-1">
+                      <select id="danger-sound-file-input"
+                        class="bg-transparent w-full text-xs py-2 focus:outline-none text-slate-200">
+                        <!-- JS에서 렌더링 -->
+                      </select>
+                    </div>
+                    <button onclick="previewDangerSound()"
+                      class="w-12 h-10 flex items-center justify-center bg-red-600/20 border border-red-500/40 rounded-lg text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-lg active:scale-95"
+                      title="미리듣기">
+                      <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -347,7 +498,67 @@
         </div>
       </div>
 
-      <!-- 6. 앱 정보 (기존 유지) -->
+      <!-- 6. 게임 최적화 (핑업) -->
+      <div id="section-optimize" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="zap"
+              class="w-5 h-5 text-purple-500"></i> 게임 네트워크 최적화 (Fast Ping)</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
+              <div class="flex items-center gap-4">
+                <div id="optimize-status-icon"
+                  class="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-slate-800 text-slate-500">
+                  <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">네트워크 최적화 상태</p>
+                  <h3 id="optimize-status-text" class="text-lg font-black text-slate-300">확인 중...</h3>
+                </div>
+              </div>
+              <div id="optimize-action-btn-container">
+                <button disabled class="btn-primary px-6 py-2.5 opacity-50 cursor-not-allowed">확인 중</button>
+              </div>
+            </div>
+
+            <!-- 관리자 권한 경고 (필요 시 노출) -->
+            <div id="admin-warning"
+              class="hidden p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+              <i data-lucide="shield-alert" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
+              <div>
+                <p class="text-xs font-black text-red-300 tracking-tight">관리자 권한 필요</p>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                  레지스트리를 수정하기 위해 관리자 권한이 필요합니다. 앱을 종료하고 <span class="text-white font-bold underline">관리자 권한으로 다시
+                    실행</span>해주세요.
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
+                <i data-lucide="info" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+                <div class="text-[11px] text-slate-400 leading-relaxed space-y-2">
+                  <p><span class="text-blue-300 font-bold">Nagle's Algorithm 최적화</span>: 윈도우의 패킷 전송 지연 기능을 꺼서 게임 응답 속도를
+                    높입니다. (일명 패스트핑/핑업 설정)</p>
+                  <p>레지스트리가 올바르게 설정되었는지 직접 확인하고 싶으시다면, 아래 출처 사이트의 안내를 참고하여 레지스트리 편집기에서 직접 확인하실 수 있습니다.</p>
+                  <p class="font-bold text-slate-500 italic">* 본 설정은 시스템 레지스트리를 직접 수정하며, 활성화된 모든 네트워크 어댑터에 적용됩니다.</p>
+                </div>
+              </div>
+
+              <!-- 출처 표시 -->
+              <div class="pt-4 flex justify-end">
+                <a href="#"
+                  onclick="window.electronAPI.openExternal('https://paduck.co.kr/blog/2023/08/30/%EB%84%A4%EC%9D%B4%EA%B8%80-%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98nagles-algorithm-%ED%8C%A8%ED%95%91-%ED%8C%A8%EC%8A%A4%ED%8A%B8-%ED%95%91-%ED%95%91%EC%97%85-%EC%9D%B4%EB%9F%B0%EA%B2%8C-%EB%8F%84/')"
+                  class="text-[10px] text-slate-600 hover:text-blue-400 transition-colors flex items-center gap-1.5 font-bold italic">
+                  <i data-lucide="link" class="w-3 h-3"></i> 정보 출처: 파덕의 IT 블로그 (네이글 알고리즘 최적화)
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. 앱 정보 (기존 유지) -->
       <div id="section-about" class="settings-section space-y-8 hidden">
         <div class="settings-group">
           <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i>
@@ -390,17 +601,6 @@
               </div>
             </div>
 
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input type="checkbox" id="auto-update-input" class="w-5 h-5 accent-purple-600">
-                <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">자동 업데이트
-                    확인</span>
-                  <p class="text-[11px] text-slate-500 mt-0.5">앱 시작 시 새로운 버전이 있는지 자동으로 확인합니다.</p>
-                </div>
-              </label>
-            </div>
-
             <div class="space-y-4 pt-4 border-t border-white/5">
               <div class="flex justify-between items-center text-xs">
                 <span class="text-slate-500 font-bold">개발자</span>
@@ -418,43 +618,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div id="section-gallery" class="settings-section space-y-8 hidden">
-        <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="bell" class="w-5 h-5"></i> 갤러리 알림
-            필터링</h2>
-          <div class="space-y-6">
-            <div>
-              <label class="section-label">알림 키워드 등록</label>
-              <div class="flex gap-2 mb-4">
-                <input type="text" id="keyword-input" class="input-field flex-1 py-3" placeholder="예: 득템, 업데이트, 점검..."
-                  onkeypress="if(event.key==='Enter')addKeyword()">
-                <button onclick="addKeyword()" class="btn-primary px-6 font-black">추가</button>
-              </div>
-              <div id="keyword-list"
-                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="section-slots" class="settings-section space-y-8 hidden">
-        <div class="w-full">
-          <div class="flex justify-between items-end mb-6">
-            <h2 class="text-lg font-bold flex items-center gap-2"><i data-lucide="layout-grid" class="w-5 h-5"></i> 퀵슬롯
-              관리</h2>
-            <div class="flex items-center gap-4">
-              <p class="text-[10px] text-slate-500 font-bold italic">슬롯을 드래그하여 순서를 바꿀 수 있습니다.</p>
-              <button onclick="addNewSlot()"
-                class="text-xs font-black text-purple-400 hover:text-purple-300 flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i> 슬롯 추가
-              </button>
-            </div>
-          </div>
-          <div id="edit-list" class="slot-grid"></div>
         </div>
       </div>
     </div>
@@ -489,13 +652,50 @@
       soundFiles = await window.loadSoundList();
       window.bindEscapeClose();
       initIconList();
+      checkOptimizeStatus();
+    }
+
+    // --- 최적화 (Fast Ping) 로직 ---
+    async function checkOptimizeStatus() {
+      const status = await window.electronAPI.getOptimizationStatus();
+      const statusIcon = document.getElementById('optimize-status-icon');
+      const statusText = document.getElementById('optimize-status-text');
+      const btnContainer = document.getElementById('optimize-action-btn-container');
+      const adminWarning = document.getElementById('admin-warning');
+
+      if (!status.isAdmin) {
+        adminWarning.classList.remove('hidden');
+      } else {
+        adminWarning.classList.add('hidden');
+      }
+
+      if (status.enabled) {
+        statusIcon.className = 'w-12 h-12 rounded-2xl flex items-center justify-center border border-green-500/30 bg-green-500/10 text-green-400 shadow-lg shadow-green-900/10';
+        statusText.innerText = '최적화 적용 중';
+        statusText.classList.add('text-green-400');
+        statusText.classList.remove('text-slate-300');
+        btnContainer.innerHTML = `<button onclick="setOptimization(false)" class="bg-red-500 hover:bg-red-600 text-white font-black text-xs px-6 py-2.5 rounded-xl shadow-lg shadow-red-900/40 transition-all active:scale-95 border border-red-400/30">최적화 해제</button>`;
+      } else {
+        statusIcon.className = 'w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-slate-800 text-slate-500';
+        statusText.innerText = '최적화 해제됨';
+        statusText.classList.add('text-slate-300');
+        statusText.classList.remove('text-green-400');
+        btnContainer.innerHTML = `<button onclick="setOptimization(true)" class="btn-primary px-6 py-2.5 shadow-lg shadow-purple-900/40 ${!status.isAdmin ? 'opacity-50 cursor-not-allowed' : ''}" ${!status.isAdmin ? 'disabled' : ''}>최적화 적용</button>`;
+      }
+      window.refreshIcons();
+    }
+
+    async function setOptimization(enable) {
+      const result = await window.electronAPI.setOptimization(enable);
+      alert(result.message);
+      checkOptimizeStatus();
     }
 
     function initIconList() {
       if (ALL_ICONS.length === 0 && typeof lucide !== 'undefined') {
         // Lucide 아이콘 객체에서 실제 아이콘 키만 추출
         const icons = lucide.icons || lucide;
-        ALL_ICONS = Object.keys(icons).filter(key => 
+        ALL_ICONS = Object.keys(icons).filter(key =>
           typeof icons[key] === 'object' || Array.isArray(icons[key])
         ).sort();
         // 유틸리티 함수 필터링
@@ -517,6 +717,13 @@
       document.getElementById('height-input').value = config.height || 600;
       document.getElementById('auto-launch-input').checked = !!config.autoLaunch;
       document.getElementById('auto-update-input').checked = config.autoUpdateEnabled !== false;
+
+      // 메뉴 노출 설정 로드
+      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'zone-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      const visibleMenuIds = config.visibleMenuIds || allMenuIds;
+      document.querySelectorAll('.menu-visible-check').forEach(check => {
+        check.checked = visibleMenuIds.includes(check.value);
+      });
 
       // 필드보스 설정 로드
       document.getElementById('boss-notify-enabled-input').checked = config.fieldBossNotifyEnabled !== false;
@@ -815,6 +1022,12 @@
 
         const homeUrlInput = document.getElementById('home-url-input').value.trim();
 
+        // 사이드바 메뉴 노출 설정 취합
+        const visibleMenuIds = [];
+        document.querySelectorAll('.menu-visible-check:checked').forEach(check => {
+          visibleMenuIds.push(check.value);
+        });
+
         // 보스 알림 오프셋 취합
         const bossOffsets = [];
         document.querySelectorAll('.boss-offset-check:checked').forEach(check => {
@@ -827,6 +1040,7 @@
           height: parseInt(document.getElementById('height-input').value) || 600,
           autoLaunch: document.getElementById('auto-launch-input').checked,
           autoUpdateEnabled: document.getElementById('auto-update-input').checked,
+          visibleMenuIds,
 
           // 필드보스 설정
           fieldBossNotifyEnabled: document.getElementById('boss-notify-enabled-input').checked,

@@ -141,6 +141,7 @@ export function createMainWindow(): BrowserWindow {
   mainWindow.on('ready-to-show', () => {
     if (IS_DEV) mainWindow?.webContents.openDevTools({ mode: 'detach' });
     mainWindow?.webContents.send('config-data', config.load());
+    mainWindow?.webContents.send('click-through-status', isClickThrough);
   });
   mainWindow.on('move', () => { consumeProgrammaticMove('main'); });
   attachStackListeners(mainWindow);
@@ -228,6 +229,7 @@ function createOverlayWindow(targetUrl?: string): void {
     }
     overlayWindow = null;
     isTracking = false;
+    isClickThrough = false; // 오버레이 닫힘 시 투과 상태 초기화
   });
 
   attachStackListeners(overlayWindow);
@@ -533,6 +535,7 @@ export function toggleClickThrough(): boolean {
   isClickThrough = !isClickThrough;
   overlayWindow.setIgnoreMouseEvents(isClickThrough);
   overlayWindow.webContents.send('click-through-status', isClickThrough);
+  if (mainWindow) mainWindow.webContents.send('click-through-status', isClickThrough);
   return isClickThrough;
 }
 

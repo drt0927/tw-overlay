@@ -1,0 +1,63 @@
+{
+  "name": "tw-overlay",
+  "version": "1.6.0",
+  "description": "TalesWeaver Companion Browser",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-resources.js",
+    "start": "npm run build && electron .",
+    "only-dev": "electron . --dev",
+    "dev": "npm run build && electron . --dev",
+    "dist": "npm run build && electron-builder --win",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.filbertlab.twoverlay",
+    "productName": "twOverlay",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "drt0927",
+        "repo": "tw-overlay"
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/icons/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "files": [
+      "dist/**/*",
+      "dist/assets/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.3",
+    "koffi": "^2.15.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "electron": "^40.4.0",
+    "electron-builder": "^26.7.0",
+    "typescript": "^5.7.3"
+  }
+}

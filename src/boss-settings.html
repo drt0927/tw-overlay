@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>필드보스 알림 설정</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+  <style>
+    body { background: transparent; color: white; overflow: hidden; }
+    .boss-item { 
+      background: rgba(30, 35, 60, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .boss-item:hover { 
+      background: rgba(168, 85, 247, 0.08); 
+      border-color: rgba(168, 85, 247, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .boss-item.disabled { opacity: 0.6; filter: grayscale(0.5); }
+    
+    .time-tag {
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.2s;
+    }
+    .time-tag.past {
+      background: rgba(100, 116, 139, 0.1);
+      border: 1px solid rgba(100, 116, 139, 0.2);
+      color: #64748b;
+      text-decoration: line-through;
+    }
+    .time-tag.future {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #c084fc;
+    }
+
+    select { color-scheme: dark; }
+    select option { background: #1a1b2e; color: white; }
+    
+    .drag-handle {
+      padding: 18px 20px;
+      cursor: move;
+      -webkit-app-region: drag;
+      background: linear-gradient(to bottom, rgba(168, 85, 247, 0.15), transparent);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .no-drag { -webkit-app-region: no-drag; }
+    
+    .notice-banner {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.05));
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+  </style>
+</head>
+<body class="panel-glass p-0 h-screen flex flex-col">
+  <!-- Header -->
+  <div class="drag-handle flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/30">
+        <i data-lucide="alarm-clock" class="w-5 h-5 text-purple-400"></i>
+      </div>
+      <div class="flex flex-col">
+        <span class="text-xs font-black text-white tracking-tight">보스별 알림 설정</span>
+        <span class="text-[9px] text-slate-500 font-bold">시간별 개별 사운드 지정</span>
+      </div>
+    </div>
+    <button onclick="window.close()" class="no-drag w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-full transition-colors">
+      <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-hidden flex flex-col no-drag">
+    <!-- Notice -->
+    <div class="p-3">
+      <div class="notice-banner p-3 rounded-xl flex items-start gap-3">
+        <i data-lucide="info" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+        <p class="text-[10px] text-slate-300 leading-normal font-medium">
+          각 보스의 스위치를 켜면 설정된 시점에 맞춰 알림이 울립니다. <span class="text-blue-300 font-bold underline cursor-help" title="환경설정 > 필드보스 알림에서 일괄 음량 조절이 가능합니다.">음량 조절은?</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Boss List -->
+    <div id="boss-list" class="flex-1 overflow-y-auto px-3 pb-4 space-y-3 custom-scroll">
+      <div class="flex flex-col items-center justify-center py-20 text-slate-600 gap-3">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+        <span class="text-xs font-bold">설정을 불러오는 중...</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let config = null;
+    let bossTimes = {};
+    let soundFiles = [];
+    const ALLOWED_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
+
+    window.onload = async () => {
+      soundFiles = await window.loadSoundList();
+      window.bindEscapeClose();
+      render();
+    };
+
+    window.electronAPI.onConfigData((data) => {
+      config = data;
+      render();
+    });
+
+    window.electronAPI.onBossTimesData((times) => {
+      bossTimes = times;
+      render();
+    });
+
+    function render() {
+      if (!config || Object.keys(bossTimes).length === 0 || soundFiles.length === 0) return;
+
+      const now = new Date();
+      const currentHHmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const list = document.getElementById('boss-list');
+      list.innerHTML = '';
+
+      // 허용된 보스만 필터링하여 렌더링
+      ALLOWED_BOSSES.forEach(name => {
+        // 기존 설정이 있으면 가져오고, 없으면 기본값 생성
+        const boss = config.fieldBossSettings?.[name] || { name, enabled: true, soundFile: 'orb.mp3' };
+        const times = bossTimes[name] || [];
+        
+        const div = document.createElement('div');
+        div.className = `boss-item p-4 rounded-2xl flex flex-col gap-4 shadow-sm ${!boss.enabled ? 'disabled' : ''}`;
+        
+        div.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex flex-col gap-2.5 flex-1">
+              <div class="flex items-center gap-2">
+                <i data-lucide="skull" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span class="text-xs font-black text-slate-100 tracking-tight">${name}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                ${times.map(t => {
+                  const isPast = t < currentHHmm;
+                  return `<span class="time-tag ${isPast ? 'past' : 'future'}">${t}</span>`;
+                }).join('')}
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer no-drag">
+              <input type="checkbox" class="sr-only peer" ${boss.enabled ? 'checked' : ''} onchange="toggleBoss('${name}', this.checked)">
+              <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-[16px] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-300 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-purple-500 peer-checked:after:bg-white"></div>
+            </label>
+          </div>
+          <div class="flex gap-2.5 items-center pt-2 border-t border-white/5">
+            <div class="flex-1 bg-black/40 rounded-xl px-3 border border-white/5 hover:border-purple-500/30 transition-colors">
+              <select class="w-full bg-transparent py-2.5 text-[11px] font-black text-slate-300 focus:outline-none" 
+                      onchange="changeSound('${name}', this.value)">
+                ${soundFiles.map(s => `<option value="${s.file}" ${boss.soundFile === s.file ? 'selected' : ''}>${s.name}</option>`).join('')}
+              </select>
+            </div>
+            <button onclick="window.playPreview('${boss.soundFile}', config.fieldBossNotifyVolume)" class="w-10 h-10 flex items-center justify-center bg-purple-600/20 border border-purple-500/40 rounded-xl text-purple-400 hover:bg-purple-600 hover:text-white transition-all shadow-lg active:scale-90" title="미리듣기">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            </button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      window.refreshIcons();
+    }
+
+    function toggleBoss(name, enabled) {
+      const settings = { ...config.fieldBossSettings };
+      settings[name] = { ...settings[name], name, enabled };
+      window.electronAPI.applySettings({ fieldBossSettings: settings });
+    }
+
+    function changeSound(name, file) {
+      const settings = { ...config.fieldBossSettings };
+      settings[name] = { ...settings[name], name, soundFile: file };
+      window.electronAPI.applySettings({ fieldBossSettings: settings });
+    }
+  </script>
+</body>
+</html>

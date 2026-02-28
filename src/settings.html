@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .settings-wrapper {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .settings-sidebar {
+      width: 240px;
+      background: rgba(20, 20, 35, 0.95);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
+    .drag-handle {
+      padding: 30px 24px;
+      cursor: move;
+      -webkit-app-region: drag;
+      background: linear-gradient(to bottom, rgba(168, 85, 247, 0.1), transparent);
+    }
+
+    .nav-container {
+      flex: 1;
+      -webkit-app-region: no-drag;
+      padding: 10px 0;
+    }
+
+    .nav-item {
+      padding: 12px 24px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-item:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      background: rgba(168, 85, 247, 0.1);
+      border-right: 3px solid var(--accent);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      background: rgba(15, 18, 30, 0.98);
+      -webkit-app-region: no-drag;
+    }
+
+    .settings-group {
+      max-width: 800px;
+    }
+
+    .keyword-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #c084fc;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .slot-card {
+      transition: transform 0.2s, opacity 0.2s;
+      cursor: grab;
+    }
+
+    .slot-card:active {
+      cursor: grabbing;
+    }
+
+    .slot-card.dragging {
+      opacity: 0.4;
+      transform: scale(0.95);
+    }
+
+    .slot-card.drag-over {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.1);
+    }
+
+    /* 드롭다운(select) 다크 모드 스타일 최적화 */
+    select {
+      color-scheme: dark;
+    }
+
+    select option {
+      background-color: #1a1b2e;
+      color: white;
+    }
+
+    /* ─── 로딩 오버레이 ─── */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: rgba(15, 18, 30, 0.98);
+      border-radius: 12px;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .loading-overlay.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(168, 85, 247, 0.15);
+      border-top-color: #a855f7;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(148, 163, 184, 0.7);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+
+<body class="panel-glass overflow-hidden">
+  <!-- 로딩 오버레이 -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">설정을 불러오는 중...</span>
+  </div>
+
+  <div class="settings-wrapper">
+    <div class="settings-sidebar">
+      <div class="drag-handle">
+        <span class="text-xl font-black flex items-center gap-2 text-white">
+          <i data-lucide="sliders" class="w-6 h-6 text-purple-500"></i> 환경 설정
+        </span>
+        <p class="text-[10px] text-slate-500 mt-1 font-bold">드래그하여 이동</p>
+      </div>
+
+      <div class="nav-container">
+        <div class="nav-item active" onclick="showSection('general', this)">
+          <i data-lucide="settings-2" class="w-4 h-4"></i> 일반 설정
+        </div>
+        <div class="nav-item" onclick="showSection('overlay', this)">
+          <i data-lucide="layout" class="w-4 h-4"></i> 오버레이 설정
+        </div>
+        <div class="nav-item" onclick="showSection('gallery', this)">
+          <i data-lucide="bell" class="w-4 h-4"></i> 갤러리 알림
+        </div>
+        <div class="nav-item" onclick="showSection('trade', this)">
+          <i data-lucide="store" class="w-4 h-4"></i> 거래 게시판
+        </div>
+        <div class="nav-item" onclick="showSection('boss', this)">
+          <i data-lucide="alarm-clock" class="w-4 h-4"></i> 필드보스 알림
+        </div>
+        <div class="nav-item" onclick="showSection('slots', this)">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
+        </div>
+        <div class="nav-item" onclick="showSection('optimize', this)">
+          <i data-lucide="zap" class="w-4 h-4"></i> 게임 최적화 (패스트핑)
+        </div>
+        <div class="nav-item" onclick="showSection('about', this)">
+          <i data-lucide="info" class="w-4 h-4"></i> 앱 정보
+        </div>
+      </div>
+
+      <div class="mt-auto p-4 space-y-2 mb-2">
+        <button onclick="saveSettings()" class="btn-primary w-full py-3 shadow-lg shadow-purple-900/20">저장 및 적용</button>
+        <button onclick="window.close()"
+          class="w-full py-2 text-xs font-bold text-slate-500 hover:text-white transition-all">닫기 (ESC)</button>
+      </div>
+    </div>
+
+    <div class="content-area custom-scroll">
+      <!-- 0. 일반 설정 -->
+      <div id="section-general" class="settings-section space-y-8">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="settings-2"
+              class="w-5 h-5 text-purple-500"></i> 앱 일반 설정</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="grid grid-cols-2 gap-4">
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
+                <input type="checkbox" id="auto-launch-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">윈도우 시작 시
+                    실행</span>
+                  <p class="text-[10px] text-slate-500 mt-0.5">컴퓨터를 켜면 자동 실행</p>
+                </div>
+              </label>
+
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
+                <input type="checkbox" id="auto-update-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">자동 업데이트
+                    확인</span>
+                  <p class="text-[10px] text-slate-500 mt-0.5">시작 시 새 버전 체크</p>
+                </div>
+              </label>
+
+            </div>
+
+            <div class="pt-6 border-t border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="list-checks" class="w-4 h-4 text-purple-400"></i> 사이드바 메뉴 관리
+              </label>
+              <div class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="gallery-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">갤러리 모니터</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="abbreviation-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">약어 사전</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="buffs-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">버프 백과 & 계산기</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="boss-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">필드보스 알림</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="eta-ranking-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">에타 랭킹 조회</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="trade-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">거래 게시판</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="home-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">홈 페이지</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="overlay-toggle-btn"
+                    class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">오버레이 토글</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="click-through-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">마우스 투과 토글</span>
+                </label>
+              </div>
+              <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 체크 해제 시 사이드바에서 해당 메뉴가 숨겨집니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. 오버레이 설정 -->
+      <div id="section-overlay" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="monitor"
+              class="w-5 h-5 text-purple-500"></i> 브라우저 기본 설정</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="space-y-6">
+              <div>
+                <label class="section-label flex items-center gap-2 mb-3">
+                  <i data-lucide="home" class="w-4 h-4 text-purple-400"></i> 기본 웹사이트 (Home URL)
+                </label>
+                <input type="text" id="home-url-input" class="input-field w-full text-sm py-3 px-4 bg-black/40"
+                  placeholder="https://...">
+              </div>
+
+              <div class="grid grid-cols-2 gap-6 pt-2">
+                <div>
+                  <label class="section-label flex items-center gap-2 mb-3">
+                    <i data-lucide="maximize" class="w-4 h-4 text-purple-400"></i> 오버레이 너비
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="width-input"
+                      class="input-field w-full font-mono py-3 px-4 bg-black/40 pr-10">
+                    <span
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold uppercase">px</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="section-label flex items-center gap-2 mb-3">
+                    <i data-lucide="minimize" class="w-4 h-4 text-purple-400"></i> 오버레이 높이
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="height-input"
+                      class="input-field w-full font-mono py-3 px-4 bg-black/40 pr-10">
+                    <span
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold uppercase">px</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 갤러리 알림 설정 -->
+      <div id="section-gallery" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="bell"
+              class="w-5 h-5 text-purple-500"></i> 갤러리 알림 필터링</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+            <div>
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="key" class="w-4 h-4 text-purple-400"></i> 알림 키워드 등록
+              </label>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="keyword-input" class="input-field flex-1 py-3 px-4 bg-black/40"
+                  placeholder="예: 득템, 업데이트, 점검..." onkeypress="if(event.key==='Enter')addKeyword()">
+                <button onclick="addKeyword()"
+                  class="btn-primary px-6 font-black shadow-lg shadow-purple-900/20">추가</button>
+              </div>
+              <div id="keyword-list"
+                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[120px] align-content-start">
+              </div>
+              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1">* 입력한 키워드가 갤러리 제목에 포함되면 알림이 발생합니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 필드보스 알림 설정 (신설) -->
+      <div id="section-boss" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="alarm-clock"
+              class="w-5 h-5 text-purple-500"></i> 필드보스 알림 설정</h2>
+
+          <!-- 강조 안내 문구 -->
+          <div
+            class="p-4 mb-6 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-start gap-3 shadow-lg shadow-blue-900/10">
+            <i data-lucide="alarm-clock" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="text-sm font-black text-blue-300">알림음 설정 안내</p>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                각 보스별 개별 알림음은 <span class="text-white font-bold bg-blue-500/20 px-1 rounded">사이드바의 [필드보스 알림 설정]</span>
+                메뉴에서 직접 변경할 수 있습니다.
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" id="boss-notify-enabled-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">필드보스 알림
+                    활성화</span>
+                  <p class="text-[11px] text-slate-500 mt-0.5">보스 출현 시간에 맞춰 알림을 보냅니다.</p>
+                </div>
+              </label>
+            </div>
+
+            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+              <label class="section-label block mb-3">알림 시점 선택</label>
+              <div class="flex justify-between items-center px-2">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" value="10" class="boss-offset-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">10분 전</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" value="5" class="boss-offset-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">5분 전</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" value="1" class="boss-offset-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">1분 전</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" value="0" class="boss-offset-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">정각</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <div>
+                <label class="section-label flex justify-between mb-4">
+                  <span class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-purple-400"></i>
+                    공통 알림 음량</span>
+                  <span id="boss-volume-val" class="text-purple-400 font-mono text-base">50%</span>
+                </label>
+                <div class="flex gap-4 items-center px-1">
+                  <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
+                    class="flex-1 h-1.5 accent-purple-600 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    oninput="window.updateRangeValue(this, 'boss-volume-val')">
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-white/5">
+                <label class="section-label mb-3 block text-xs text-slate-400 uppercase tracking-wider">알림 음량
+                  테스트</label>
+                <div class="flex gap-3 items-center bg-black/40 p-3 rounded-xl border border-white/5">
+                  <div class="flex-1">
+                    <select id="boss-preview-sound-input"
+                      class="bg-transparent w-full text-xs py-2 focus:outline-none text-slate-200">
+                      <!-- JS에서 렌더링 -->
+                    </select>
+                  </div>
+                  <button onclick="previewBossVolume()"
+                    class="w-12 h-10 flex items-center justify-center bg-purple-600/20 border border-purple-500/40 rounded-lg text-purple-400 hover:bg-purple-600 hover:text-white transition-all shadow-lg active:scale-95"
+                    title="소리 재생">
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                  </button>
+                </div>
+                <div class="mt-4 flex items-start gap-2 px-1">
+                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">
+                    <span class="text-purple-400/80 font-bold italic">위 사운드 선택은 음량 확인을 위한 테스트 전용입니다.</span><br>
+                    실제 보스별 알림음은 사이드바 메뉴에서 개별적으로 지정하셔야 합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 거래 게시판 설정 (신설) -->
+      <div id="section-trade" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="store"
+              class="w-5 h-5 text-emerald-500"></i> 매직위버 거래 게시판</h2>
+          <div class="space-y-6">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <label class="section-label flex items-center gap-2">
+                <i data-lucide="server" class="w-4 h-4 text-emerald-400"></i> 모니터링 대상 서버
+              </label>
+              <div class="flex gap-6 mt-3">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="radio" name="trade-server" value="RyXp" class="w-4 h-4 accent-emerald-600">
+                  <span class="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">하이아칸</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="radio" name="trade-server" value="Siwv" class="w-4 h-4 accent-emerald-600">
+                  <span class="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">네냐플</span>
+                </label>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-2 italic flex items-center gap-1"><i data-lucide="info"
+                  class="w-3 h-3"></i> 둘 중 지정된 하나의 서버만 매 5분 모니터링합니다.</p>
+            </div>
+
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="key" class="w-4 h-4 text-emerald-400"></i> 알림 키워드 등록
+              </label>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="trade-keyword-input" class="input-field flex-1 py-3 px-4 bg-black/40"
+                  placeholder="예: 득템, 업데이트, 점검..." onkeypress="if(event.key==='Enter')addTradeKeyword()">
+                <button onclick="addTradeKeyword()"
+                  class="btn-primary !bg-emerald-600 hover:!bg-emerald-500 px-6 font-black shadow-lg shadow-emerald-900/20">추가</button>
+              </div>
+              <div id="trade-keyword-list"
+                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[120px] align-content-start">
+              </div>
+              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1">* 거래게시판의 제목에 등록된 키워드가 포함된 경우 알림을 발송합니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. 퀵슬롯 관리 (기존 유지) -->
+      <div id="section-slots" class="settings-section space-y-8 hidden">
+        <div class="w-full">
+          <div class="flex justify-between items-end mb-6">
+            <h2 class="text-lg font-bold flex items-center gap-2"><i data-lucide="layout-grid"
+                class="w-5 h-5 text-purple-500"></i> 퀵슬롯 관리</h2>
+            <div class="flex items-center gap-4">
+              <p class="text-[10px] text-slate-500 font-bold italic">슬롯을 드래그하여 순서를 바꿀 수 있습니다.</p>
+              <button onclick="addNewSlot()"
+                class="text-xs font-black text-purple-400 hover:text-purple-300 flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> 슬롯 추가
+              </button>
+            </div>
+          </div>
+          <div id="edit-list" class="slot-grid"></div>
+        </div>
+      </div>
+
+      <!-- 6. 게임 최적화 (핑업) -->
+      <div id="section-optimize" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="zap"
+              class="w-5 h-5 text-purple-500"></i> 게임 네트워크 최적화 (Fast Ping)</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
+              <div class="flex items-center gap-4">
+                <div id="optimize-status-icon"
+                  class="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-slate-800 text-slate-500">
+                  <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">네트워크 최적화 상태</p>
+                  <h3 id="optimize-status-text" class="text-lg font-black text-slate-300">확인 중...</h3>
+                </div>
+              </div>
+              <div id="optimize-action-btn-container">
+                <button disabled class="btn-primary px-6 py-2.5 opacity-50 cursor-not-allowed">확인 중</button>
+              </div>
+            </div>
+
+            <!-- 관리자 권한 경고 (필요 시 노출) -->
+            <div id="admin-warning"
+              class="hidden p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+              <i data-lucide="shield-alert" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
+              <div>
+                <p class="text-xs font-black text-red-300 tracking-tight">관리자 권한 필요</p>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                  레지스트리를 수정하기 위해 관리자 권한이 필요합니다. 앱을 종료하고 <span class="text-white font-bold underline">관리자 권한으로 다시
+                    실행</span>해주세요.
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
+                <i data-lucide="info" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+                <div class="text-[11px] text-slate-400 leading-relaxed space-y-2">
+                  <p><span class="text-blue-300 font-bold">Nagle's Algorithm 최적화</span>: 윈도우의 패킷 전송 지연 기능을 꺼서 게임 응답 속도를
+                    높입니다. (일명 패스트핑/핑업 설정)</p>
+                  <p>레지스트리가 올바르게 설정되었는지 직접 확인하고 싶으시다면, 아래 출처 사이트의 안내를 참고하여 레지스트리 편집기에서 직접 확인하실 수 있습니다.</p>
+                  <p class="font-bold text-slate-500 italic">* 본 설정은 시스템 레지스트리를 직접 수정하며, 활성화된 모든 네트워크 어댑터에 적용됩니다.</p>
+                </div>
+              </div>
+
+              <!-- 출처 표시 -->
+              <div class="pt-4 flex justify-end">
+                <a href="#"
+                  onclick="window.electronAPI.openExternal('https://paduck.co.kr/blog/2023/08/30/%EB%84%A4%EC%9D%B4%EA%B8%80-%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98nagles-algorithm-%ED%8C%A8%ED%95%91-%ED%8C%A8%EC%8A%A4%ED%8A%B8-%ED%95%91-%ED%95%91%EC%97%85-%EC%9D%B4%EB%9F%B0%EA%B2%8C-%EB%8F%84/')"
+                  class="text-[10px] text-slate-600 hover:text-blue-400 transition-colors flex items-center gap-1.5 font-bold italic">
+                  <i data-lucide="link" class="w-3 h-3"></i> 정보 출처: 파덕의 IT 블로그 (네이글 알고리즘 최적화)
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. 앱 정보 (기존 유지) -->
+      <div id="section-about" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i>
+            TW-Overlay 정보</h2>
+          <div class="space-y-6">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div
+                    class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 overflow-hidden">
+                    <img src="icons/icon.ico" alt="App Icon"
+                      class="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-black text-white">TW-Overlay</h3>
+                    <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
+                        class="text-purple-400">1.5.0</span></p>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                  <!-- 동적 버튼 컨테이너 -->
+                  <div id="update-action-container">
+                    <button id="update-check-btn" onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트
+                      확인</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 진행 상태 및 메시지 영역 -->
+              <div id="update-message-area" class="hidden pt-4 border-t border-white/5 space-y-3">
+                <div class="flex justify-between items-center">
+                  <span id="update-status-title" class="text-sm font-black text-white">업데이트 확인 중</span>
+                  <span id="update-percent" class="text-xs font-black text-purple-400"></span>
+                </div>
+                <div id="update-progress-container" class="w-full bg-white/5 rounded-full h-2 overflow-hidden hidden">
+                  <div id="update-progress-bar" class="bg-purple-500 h-full transition-all duration-300"
+                    style="width: 0%"></div>
+                </div>
+                <p id="update-status-desc" class="text-[11px] text-slate-500 font-bold"></p>
+              </div>
+            </div>
+
+            <div class="space-y-4 pt-4 border-t border-white/5">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500 font-bold">개발자</span>
+                <span class="text-slate-300 font-bold">drt0927</span>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500 font-bold">GitHub 리포지토리</span>
+                <a href="#" onclick="window.electronAPI.openExternal('https://github.com/drt0927/tw-overlay')"
+                  class="text-purple-400 hover:text-purple-300 font-bold underline">바로가기</a>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500 font-bold">서비스 개선 제안 / 버그 제보</span>
+                <a href="#" onclick="window.electronAPI.openExternal('https://forms.gle/cooHKG1JSiKRRTAZA')"
+                  class="text-purple-400 hover:text-purple-300 font-bold underline">의견 보내기</a>
+              </div>
+              <div class="flex justify-between items-center text-xs pt-4 mt-2 border-t border-white/5">
+                <span class="text-slate-400 font-bold flex items-center gap-1.5"><i data-lucide="coffee"
+                    class="w-4 h-4 text-[#FFDD00]"></i> 개발자에게 힘 보태기</span>
+                <a href="#" onclick="window.electronAPI.openExternal('https://buymeacoffee.com/drt0927')"
+                  class="bg-[#FFDD00]/10 text-[#FFDD00] hover:bg-[#FFDD00]/20 px-3 py-1.5 rounded-lg border border-[#FFDD00]/20 font-black transition-all flex items-center gap-1.5">
+                  Buy Me a Coffee
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="icon-picker-overlay" class="fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center hidden"
+    onclick="if(event.target===this)closeIconPicker()">
+    <div
+      class="bg-slate-900 border border-white/15 rounded-3xl w-[400px] max-h-[550px] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-white/10">
+        <div class="flex gap-3">
+          <input id="icon-search" class="input-field flex-1 py-3" placeholder="아이콘 검색..."
+            oninput="renderIconGrid(this.value)">
+          <button onclick="closeIconPicker()" class="text-slate-400 p-1"><i data-lucide="x"
+              class="w-6 h-6"></i></button>
+        </div>
+        <div id="search-result-count" class="text-xs text-purple-400 font-bold mt-3 ml-1"></div>
+      </div>
+      <div id="icon-grid" class="flex-1 overflow-y-auto custom-scroll min-h-[300px]"></div>
+    </div>
+  </div>
+
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+
+  <script>
+    let currentSlots = [];
+    let currentKeywords = [];
+    let tradeKeywordsList = [];
+    let activeEditIndex = -1;
+    let ALL_ICONS = [];
+    let dragSrcIndex = -1;
+    let soundFiles = [];
+
+    let _configReady = false;
+    let _initReady = false;
+    let _fallbackTimer = setTimeout(() => {
+      // 3초 후 강제 해제 (무한 로딩 방지)
+      _configReady = true;
+      _initReady = true;
+      hideLoading();
+    }, 3000);
+
+    function hideLoading() {
+      if (!_configReady || !_initReady) return;
+      if (_fallbackTimer) {
+        clearTimeout(_fallbackTimer);
+        _fallbackTimer = null;
+      }
+
+      // 하드코딩된 지연 시간 대신 브라우저의 메인 스레드가 유휴 상태(Idle)가 될 때까지 기다립니다.
+      // Tailwind CSS의 런타임 컴파일과 Lucide 아이콘 렌더링 등 무거운 작업이 완전히 끝난 시점을 정확히 포착합니다.
+      const removeOverlay = () => {
+        requestAnimationFrame(() => {
+          const overlay = document.getElementById('loading-overlay');
+          if (overlay) overlay.classList.add('fade-out');
+        });
+      };
+
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(removeOverlay, { timeout: 1500 }); // 혹시라도 무한 대기하지 않도록 1.5초 타임아웃
+      } else {
+        setTimeout(removeOverlay, 500); // 폴백
+      }
+    }
+
+    async function initSettings() {
+      soundFiles = await window.loadSoundList();
+      window.bindEscapeClose();
+      initIconList();
+      await checkOptimizeStatus();
+      _initReady = true;
+      hideLoading();
+    }
+
+    // --- 최적화 (Fast Ping) 로직 ---
+    async function checkOptimizeStatus() {
+      const status = await window.electronAPI.getOptimizationStatus();
+      const statusIcon = document.getElementById('optimize-status-icon');
+      const statusText = document.getElementById('optimize-status-text');
+      const btnContainer = document.getElementById('optimize-action-btn-container');
+      const adminWarning = document.getElementById('admin-warning');
+
+      if (!status.isAdmin) {
+        adminWarning.classList.remove('hidden');
+      } else {
+        adminWarning.classList.add('hidden');
+      }
+
+      if (status.enabled) {
+        statusIcon.className = 'w-12 h-12 rounded-2xl flex items-center justify-center border border-green-500/30 bg-green-500/10 text-green-400 shadow-lg shadow-green-900/10';
+        statusText.innerText = '최적화 적용 중';
+        statusText.classList.add('text-green-400');
+        statusText.classList.remove('text-slate-300');
+        btnContainer.innerHTML = `<button onclick="setOptimization(false)" class="bg-red-500 hover:bg-red-600 text-white font-black text-xs px-6 py-2.5 rounded-xl shadow-lg shadow-red-900/40 transition-all active:scale-95 border border-red-400/30">최적화 해제</button>`;
+      } else {
+        statusIcon.className = 'w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-slate-800 text-slate-500';
+        statusText.innerText = '최적화 해제됨';
+        statusText.classList.add('text-slate-300');
+        statusText.classList.remove('text-green-400');
+        btnContainer.innerHTML = `<button onclick="setOptimization(true)" class="btn-primary px-6 py-2.5 shadow-lg shadow-purple-900/40 ${!status.isAdmin ? 'opacity-50 cursor-not-allowed' : ''}" ${!status.isAdmin ? 'disabled' : ''}>최적화 적용</button>`;
+      }
+      window.refreshIcons();
+    }
+
+    async function setOptimization(enable) {
+      const result = await window.electronAPI.setOptimization(enable);
+      alert(result.message);
+      checkOptimizeStatus();
+    }
+
+    function initIconList() {
+      if (ALL_ICONS.length > 0) return;
+      if (typeof lucide !== 'undefined') {
+        const icons = lucide.icons || lucide;
+        ALL_ICONS = Object.keys(icons).filter(key =>
+          (typeof icons[key] === 'object' || Array.isArray(icons[key])) &&
+          !['createIcons', 'icons', 'createElement'].includes(key)
+        ).sort();
+      }
+    }
+
+    function showSection(id, el) {
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('section-' + id).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      window.refreshIcons();
+    }
+
+    window.electronAPI.onConfigData((config) => {
+      document.getElementById('home-url-input').value = config.homeUrl || '';
+      document.getElementById('width-input').value = config.width || 800;
+      document.getElementById('height-input').value = config.height || 600;
+      document.getElementById('auto-launch-input').checked = !!config.autoLaunch;
+      document.getElementById('auto-update-input').checked = config.autoUpdateEnabled !== false;
+
+      // 모든 메뉴 목록 (신규 추가 시 이 배열만 업데이트하면 됨)
+      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      let hiddenMenuIds = config.hiddenMenuIds;
+
+      // 구버전(visibleMenuIds 방식) 마이그레이션 처리
+      if (!hiddenMenuIds && config.visibleMenuIds) {
+        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+        hiddenMenuIds = oldKnownMenuIds.filter(id => !config.visibleMenuIds.includes(id));
+      } else if (!hiddenMenuIds) {
+        hiddenMenuIds = [];
+      }
+
+      document.querySelectorAll('.menu-visible-check').forEach(check => {
+        // 숨겨진 목록(hiddenMenuIds)에 없어야 보이므로 checked = true 가 됨
+        check.checked = !hiddenMenuIds.includes(check.value);
+      });
+
+      // 필드보스 설정 로드
+      document.getElementById('boss-notify-enabled-input').checked = config.fieldBossNotifyEnabled !== false;
+      const currentOffsets = config.fieldBossNotifyOffsets || [0];
+      document.querySelectorAll('.boss-offset-check').forEach(check => {
+        check.checked = currentOffsets.includes(parseInt(check.value));
+      });
+
+      if (soundFiles.length > 0) {
+        const bossPreviewSelect = document.getElementById('boss-preview-sound-input');
+        bossPreviewSelect.innerHTML = soundFiles.map(s => `<option value="${s.file}" ${s.file === 'orb.mp3' ? 'selected' : ''}>${s.name}</option>`).join('');
+      }
+
+      const bossVolume = config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50;
+      document.getElementById('boss-volume-input').value = bossVolume;
+      document.getElementById('boss-volume-val').innerText = bossVolume + '%';
+
+      currentSlots = JSON.parse(JSON.stringify(config.quickSlots || []));
+      currentKeywords = JSON.parse(JSON.stringify(config.galleryKeywords || []));
+      tradeKeywordsList = JSON.parse(JSON.stringify(config.tradeKeywords || []));
+
+      const tradeServer = config.tradeServer || 'RyXp';
+      document.querySelectorAll('input[name="trade-server"]').forEach(radio => {
+        if (radio.value === tradeServer) radio.checked = true;
+      });
+
+      renderEditList();
+      renderKeywordList();
+      renderTradeKeywordList();
+
+      // 앱 버전 가져오기
+      window.electronAPI.getAppVersion().then(v => {
+        document.getElementById('app-version').innerText = v;
+      });
+
+      // config 로드 완료
+      _configReady = true;
+      hideLoading();
+    });
+
+    // 초기화 실행
+    initSettings();
+
+    // 설정 탭 강제 전환 IPC (다른 창에서 호출 시)
+    window.electronAPI.onOpenSettingsTab((tabId) => {
+      const tabEl = document.querySelector(`.nav-item[onclick="showSection('${tabId}', this)"]`);
+      if (tabEl) {
+        showSection(tabId, tabEl);
+      }
+    });
+
+    // --- 업데이트 UI 로직 ---
+    const updateActionContainer = document.getElementById('update-action-container');
+    const updateMessageArea = document.getElementById('update-message-area');
+    const updateStatusTitle = document.getElementById('update-status-title');
+    const updateStatusDesc = document.getElementById('update-status-desc');
+    const updatePercent = document.getElementById('update-percent');
+    const updateProgressContainer = document.getElementById('update-progress-container');
+    const updateProgressBar = document.getElementById('update-progress-bar');
+
+    function checkUpdates() {
+      window.electronAPI.checkForUpdates();
+    }
+
+    function startDownload() {
+      const btn = document.getElementById('update-action-container').querySelector('button');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '준비 중...';
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        btn.classList.remove('animate-bounce');
+      }
+      updateStatusDesc.innerText = '업데이트 서버에서 파일을 요청하고 있습니다.';
+      window.electronAPI.startUpdateDownload();
+    }
+
+    function quitAndInstall() {
+      const btn = document.getElementById('update-action-container').querySelector('button');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '설치 준비 중...';
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+      updateStatusDesc.innerText = '앱을 종료하고 업데이트 설치를 시작합니다.';
+      window.electronAPI.quitAndInstall();
+    }
+
+    // 메인 프로세스로부터 업데이트 상태 수신
+    window.electronAPI.onUpdateStatus((data) => {
+      const { state, version, percent, message } = data;
+      updateMessageArea.classList.remove('hidden');
+      updateProgressContainer.classList.add('hidden');
+      updatePercent.innerText = '';
+
+      switch (state) {
+        case 'checking':
+          updateStatusTitle.innerText = '업데이트 확인 중';
+          updateStatusDesc.innerText = 'GitHub 서버에서 새로운 버전을 찾고 있습니다...';
+          updateActionContainer.innerHTML = '<button disabled class="btn-primary px-6 py-2.5 opacity-50 cursor-not-allowed">확인 중</button>';
+          break;
+        case 'available':
+          updateStatusTitle.innerText = '새 버전 발견! (v' + version + ')';
+          updateStatusDesc.innerText = '새로운 업데이트를 다운로드할 준비가 되었습니다.';
+          updateActionContainer.innerHTML = `<button onclick="startDownload()" class="btn-primary px-6 py-2.5 animate-bounce">다운로드 시작</button>`;
+          break;
+        case 'latest':
+          updateStatusTitle.innerText = '최신 버전 사용 중';
+          updateStatusDesc.innerText = '현재 최신 버전을 사용하고 있습니다. (v' + document.getElementById('app-version').innerText + ')';
+          updateActionContainer.innerHTML = '<button onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트 확인</button>';
+          break;
+        case 'downloading':
+          updateStatusTitle.innerText = '업데이트 다운로드 중';
+          updateStatusDesc.innerText = '백그라운드에서 설치 파일을 다운로드하고 있습니다.';
+          updatePercent.innerText = percent + '%';
+          updateProgressContainer.classList.remove('hidden');
+          updateProgressBar.style.width = percent + '%';
+          updateActionContainer.innerHTML = '<button disabled class="btn-primary px-6 py-2.5 opacity-50 cursor-not-allowed">다운로드 중</button>';
+          break;
+        case 'ready':
+          updateStatusTitle.innerText = '업데이트 설치 준비 완료';
+          updateStatusDesc.innerText = '모든 파일이 준비되었습니다. 재시작하여 업데이트를 완료하세요.';
+          updateActionContainer.innerHTML = '<button onclick="quitAndInstall()" class="btn-primary px-6 py-2.5 bg-green-600 hover:bg-green-500 shadow-lg shadow-green-900/40 border-none">재시작 및 설치</button>';
+          break;
+        case 'error':
+          updateStatusTitle.innerText = '업데이트 오류 발생';
+          updateStatusDesc.innerText = '오류: ' + (message || '알 수 없는 오류');
+          updateActionContainer.innerHTML = '<button onclick="checkUpdates()" class="btn-primary px-6 py-2.5">다시 시도</button>';
+          break;
+        case 'dev-mode':
+          updateStatusDesc.innerText = '업데이트 확인은 빌드된 패키지 환경에서만 작동합니다.';
+          updateActionContainer.innerHTML = '<button onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트 확인</button>';
+          break;
+      }
+      window.refreshIcons();
+    });
+
+    function renderKeywordList() {
+      const list = document.getElementById('keyword-list');
+      list.innerHTML = '';
+      if (currentKeywords.length === 0) {
+        list.innerHTML = '<span class="text-xs text-slate-600 p-2">등록된 키워드가 없습니다.</span>';
+        return;
+      }
+      currentKeywords.forEach((kw, i) => {
+        const span = document.createElement('span');
+        span.className = 'keyword-tag';
+        span.innerHTML = `${kw} <button onclick="removeKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+        list.appendChild(span);
+      });
+      window.refreshIcons();
+    }
+
+    function addKeyword() {
+      const input = document.getElementById('keyword-input');
+      const val = input.value.trim();
+      if (val && !currentKeywords.includes(val)) {
+        currentKeywords.push(val);
+        renderKeywordList();
+        input.value = '';
+      }
+    }
+
+    function removeKeyword(index) {
+      currentKeywords.splice(index, 1);
+      renderKeywordList();
+    }
+
+    function renderTradeKeywordList() {
+      const list = document.getElementById('trade-keyword-list');
+      list.innerHTML = '';
+      if (tradeKeywordsList.length === 0) {
+        list.innerHTML = '<span class="text-xs text-slate-600 p-2">등록된 거래 게시판 키워드가 없습니다.</span>';
+        return;
+      }
+      tradeKeywordsList.forEach((kw, i) => {
+        const span = document.createElement('span');
+        span.className = 'keyword-tag !border-emerald-500/30 !text-emerald-400 !bg-emerald-500/10';
+        span.innerHTML = `${kw} <button onclick="removeTradeKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+        list.appendChild(span);
+      });
+      window.refreshIcons();
+    }
+
+    function addTradeKeyword() {
+      const input = document.getElementById('trade-keyword-input');
+      const val = input.value.trim();
+      if (val && !tradeKeywordsList.includes(val)) {
+        tradeKeywordsList.push(val);
+        renderTradeKeywordList();
+        input.value = '';
+      }
+    }
+
+    function removeTradeKeyword(index) {
+      tradeKeywordsList.splice(index, 1);
+      renderTradeKeywordList();
+    }
+
+    function renderEditList() {
+      const list = document.getElementById('edit-list');
+      list.innerHTML = '';
+      currentSlots.forEach((slot, i) => {
+        const isText = slot.iconType === 'text';
+        const div = document.createElement('div');
+        div.className = 'slot-card bg-white/5 p-5 rounded-2xl border border-white/10 space-y-4 relative group hover:bg-white/[0.08] transition-all';
+        div.setAttribute('draggable', 'true');
+        div.dataset.index = i;
+
+        div.ondragstart = (e) => { dragSrcIndex = i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; };
+        div.ondragover = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+        div.ondragleave = (e) => { e.currentTarget.classList.remove('drag-over'); };
+        div.ondrop = (e) => {
+          e.preventDefault();
+          const targetIndex = parseInt(e.currentTarget.dataset.index);
+          if (dragSrcIndex !== targetIndex) {
+            const temp = currentSlots[dragSrcIndex];
+            currentSlots.splice(dragSrcIndex, 1);
+            currentSlots.splice(targetIndex, 0, temp);
+            renderEditList();
+          }
+        };
+        div.ondragend = (e) => { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over')); };
+
+        div.innerHTML = `
+          <button onclick="currentSlots.splice(${i},1);renderEditList()" class="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl z-10 border-2 border-slate-900">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <div class="flex gap-3 items-center" ondragstart="event.stopPropagation()">
+            <div class="flex-1">
+              <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-1 block">라벨</label>
+              <input class="input-field w-full" value="${slot.label || ''}" onchange="currentSlots[${i}].label=this.value">
+            </div>
+            <div class="w-24">
+              <div class="flex bg-black/40 rounded-lg p-1 gap-1 mt-4">
+                <button onclick="setIconType(${i},'icon')" class="flex-1 py-1 rounded text-[9px] font-black ${!isText ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40' : 'text-slate-500'}">아이콘</button>
+                <button onclick="setIconType(${i},'text')" class="flex-1 py-1 rounded text-[9px] font-black ${isText ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40' : 'text-slate-500'}">글자</button>
+              </div>
+            </div>
+            <div class="shrink-0 mt-4">
+              ${isText
+            ? `<input class="input-field w-10 h-10 text-center text-lg font-black bg-purple-500/10 border-purple-500/30 text-purple-400 p-0" maxlength="1" value="${slot.textChar || ''}" oninput="currentSlots[${i}].textChar=this.value.toUpperCase(); renderEditList()">`
+            : `<button onclick="openIconPicker(${i})" class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 hover:border-purple-500 transition-all"><i data-lucide="${slot.icon || 'link'}" class="w-5 h-5"></i></button>`
+          }
+            </div>
+          </div>
+          <div ondragstart="event.stopPropagation()">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-1 block">URL</label>
+            <input class="input-field w-full text-xs" value="${slot.url}" onchange="currentSlots[${i}].url=this.value">
+          </div>
+          <div class="pt-1" ondragstart="event.stopPropagation()">
+            <label class="inline-flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" ${slot.external ? 'checked' : ''} onchange="currentSlots[${i}].external=this.checked" class="w-4 h-4 accent-purple-600">
+              <span class="text-[10px] font-bold text-slate-500 group-hover:text-slate-300">외부 브라우저로 열기</span>
+            </label>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+      window.refreshIcons();
+    }
+
+    function setIconType(index, type) {
+      currentSlots[index].iconType = type;
+      if (type === 'text' && !currentSlots[index].textChar) {
+        currentSlots[index].textChar = currentSlots[index].label?.substring(0, 1).toUpperCase() || 'L';
+      }
+      renderEditList();
+    }
+
+    function openIconPicker(index) {
+      initIconList();
+      activeEditIndex = index;
+      document.getElementById('icon-picker-overlay').classList.remove('hidden');
+      renderIconGrid('');
+    }
+
+    function closeIconPicker() {
+      document.getElementById('icon-picker-overlay').classList.add('hidden');
+    }
+
+    let currentLoadedCount = 0;
+    const PAGE_SIZE = 120;
+    let filteredIcons = [];
+
+    function renderIconGrid(query) {
+      initIconList();
+      const grid = document.getElementById('icon-grid');
+      const countLabel = document.getElementById('search-result-count');
+      grid.innerHTML = '';
+      currentLoadedCount = 0;
+      const q = (query || '').toLowerCase().trim();
+      // 대소문자 구분 없이 검색하도록 수정
+      filteredIcons = q ? ALL_ICONS.filter(name => name.toLowerCase().includes(q)) : ALL_ICONS;
+      countLabel.innerText = q ? `${filteredIcons.length}개의 아이콘 발견` : `전체 ${filteredIcons.length}개 아이콘`;
+      if (filteredIcons.length === 0) { grid.innerHTML = '<div class="p-12 text-center text-slate-600 text-sm font-bold">검색 결과가 없습니다.</div>'; return; }
+      const container = document.createElement('div');
+      container.id = 'icon-container-inner';
+      container.className = 'grid grid-cols-8 gap-2 p-6';
+      grid.appendChild(container);
+      loadMoreIcons();
+      grid.onscroll = () => { if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 50) loadMoreIcons(); };
+    }
+
+    function loadMoreIcons() {
+      const container = document.getElementById('icon-container-inner');
+      if (!container || currentLoadedCount >= filteredIcons.length) return;
+      const nextBatch = filteredIcons.slice(currentLoadedCount, currentLoadedCount + PAGE_SIZE);
+      nextBatch.forEach(name => {
+        // 아이콘 이름을 Lucide 표준인 kebab-case로 변환 (예: ArrowRight -> arrow-right)
+        // 하지만 data-lucide는 PascalCase도 지원하므로 안전하게 이름을 그대로 사용하되 표시 최적화
+        const btn = document.createElement('button');
+        btn.className = 'w-10 h-10 flex items-center justify-center rounded-xl hover:bg-purple-500/20 text-slate-400 hover:text-white transition-all hover:scale-110';
+        btn.innerHTML = `<i data-lucide="${name}" class="w-5 h-5"></i>`;
+        btn.onclick = () => { currentSlots[activeEditIndex].icon = name; closeIconPicker(); renderEditList(); };
+        container.appendChild(btn);
+      });
+      currentLoadedCount += nextBatch.length;
+      window.refreshIcons();
+    }
+
+    function addNewSlot() {
+      currentSlots.push({ label: '새 링크', icon: 'link', url: '', external: false });
+      renderEditList();
+      const content = document.querySelector('.content-area');
+      content.scrollTo({ top: content.scrollHeight, behavior: 'smooth' });
+    }
+
+    function saveSettings() {
+      try {
+        const validSlots = currentSlots.filter(s => s && s.url && s.url.trim().length > 0);
+        validSlots.forEach(s => { if (!s.url.startsWith('http')) s.url = 'https://' + s.url.trim(); });
+
+        const homeUrlInput = document.getElementById('home-url-input').value.trim();
+
+        // 사이드바 메뉴 숨김 설정 취합
+        // (사용자가 의도적으로 체크를 끈 항목들만 수집하여 저장)
+        const hiddenMenuIds = [];
+        document.querySelectorAll('.menu-visible-check:not(:checked)').forEach(check => {
+          hiddenMenuIds.push(check.value);
+        });
+
+        // 보스 알림 오프셋 취합
+        const bossOffsets = [];
+        document.querySelectorAll('.boss-offset-check:checked').forEach(check => {
+          bossOffsets.push(parseInt(check.value));
+        });
+
+        const tradeServerParams = document.querySelector('input[name="trade-server"]:checked');
+        const tradeServerValue = tradeServerParams ? tradeServerParams.value : 'RyXp';
+        window.electronAPI.tradeSetServer(tradeServerValue);
+
+        const settings = {
+          homeUrl: (homeUrlInput.startsWith('http')) ? homeUrlInput : 'https://' + homeUrlInput,
+          width: parseInt(document.getElementById('width-input').value) || 800,
+          height: parseInt(document.getElementById('height-input').value) || 600,
+          autoLaunch: document.getElementById('auto-launch-input').checked,
+          autoUpdateEnabled: document.getElementById('auto-update-input').checked,
+          hiddenMenuIds, // 앞으로는 숨긴 목록 값을 우선으로 기준 삼음
+
+          // 필드보스 설정
+          fieldBossNotifyEnabled: document.getElementById('boss-notify-enabled-input').checked,
+          fieldBossNotifyOffsets: bossOffsets,
+          fieldBossNotifyVolume: parseInt(document.getElementById('boss-volume-input').value) || 50,
+
+          quickSlots: validSlots,
+          galleryKeywords: currentKeywords,
+          tradeKeywords: tradeKeywordsList,
+          tradeServer: tradeServerValue
+        };
+        window.electronAPI.applySettings(settings);
+        window.electronAPI.saveQuickSlots(validSlots);
+        setTimeout(() => { window.close(); }, 50);
+      } catch (e) { console.error(e); }
+    }
+
+    function previewBossVolume() {
+      const soundFile = document.getElementById('boss-preview-sound-input').value;
+      const volume = parseInt(document.getElementById('boss-volume-input').value);
+      window.playPreview(soundFile, volume);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (!document.getElementById('icon-picker-overlay').classList.contains('hidden')) closeIconPicker();
+        else window.close();
+      }
+    });
+  </script>
+</body>
+
+</html>

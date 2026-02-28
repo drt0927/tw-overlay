@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+</head>
+
+<body>
+  <div id="wrapper" class="sidebar-wrapper">
+    <!-- 사이드바 접기/펴기 -->
+    <div class="toggle-btn cursor-pointer" onclick="window.electronAPI.toggleSidebar()" title="사이드바 토글">
+      <i id="toggle-icon" data-lucide="chevron-left"></i>
+    </div>
+
+    <!-- 갤러리 모니터 버튼 -->
+    <div id="gallery-btn" class="gallery-btn p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
+      onclick="openGallery()" onmouseenter="showTooltip('갤러리 모니터', this)" onmouseleave="hideTooltip()">
+      <i data-lucide="bell" class="w-4 h-4"></i>
+      <span id="noti-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+    </div>
+
+    <!-- 거래 게시판 버튼 -->
+    <div id="trade-btn" class="p-2 cursor-pointer text-slate-400 hover:text-emerald-400 relative"
+      onclick="window.electronAPI.toggleTrade()" onmouseenter="showTooltip('거래 게시판', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="store" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 약어 사전 버튼 -->
+    <div id="abbreviation-btn" class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
+      onclick="window.electronAPI.toggleAbbreviation()" onmouseenter="showTooltip('약어 사전', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="book-open" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 버프 백과 버튼 -->
+    <div id="buffs-btn" class="p-2 cursor-pointer text-slate-400 hover:text-yellow-400 relative"
+      onclick="window.electronAPI.toggleBuffs()" onmouseenter="showTooltip('버프 백과 & 계산기', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="zap" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 필드보스 알림 설정 버튼 -->
+    <div id="boss-btn" class="p-2 cursor-pointer text-slate-400 hover:text-blue-400 relative"
+      onclick="window.electronAPI.toggleBossSettings()" onmouseenter="showTooltip('필드보스 알림 설정', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="alarm-clock" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 에타 랭킹 버튼 -->
+    <div id="eta-ranking-btn" class="p-2 cursor-pointer text-slate-400 hover:text-pink-400 relative"
+      onclick="window.electronAPI.toggleEtaRanking()" onmouseenter="showTooltip('에타 랭킹 조회', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="trophy" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 퀵슬롯 컨테이너 -->
+    <div id="slot-container" class="slot-container flex flex-col gap-2 mt-2"></div>
+
+    <!-- 홈 버튼 -->
+    <div id="home-btn" class="mt-auto p-2 cursor-pointer text-slate-400 hover:text-purple-400"
+      onclick="window.electronAPI.goHome()" onmouseenter="showTooltip('홈 페이지', this)" onmouseleave="hideTooltip()">
+      <i data-lucide="home" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 하단 유틸리티 버튼 -->
+    <div id="overlay-toggle-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
+      onclick="window.electronAPI.toggleOverlay()" onmouseenter="showTooltip('오버레이 토글', this)"
+      onmouseleave="hideTooltip()">
+      <i id="overlay-icon" data-lucide="layout" class="w-4 h-4"></i>
+    </div>
+
+    <div id="click-through-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
+      onclick="window.electronAPI.toggleClickThrough()" onmouseenter="showTooltip('마우스 투과 토글 (Ctrl+Shift+T)', this)"
+      onmouseleave="hideTooltip()">
+      <i id="click-through-icon" data-lucide="mouse-pointer-2" class="w-4 h-4"></i>
+    </div>
+
+    <!-- 커피 후원 버튼 -->
+    <div class="p-2 cursor-pointer text-[#FFDD00]/90 hover:text-[#FFDD00] hover:scale-110 transition-transform relative"
+      onclick="window.electronAPI.openExternal('https://buymeacoffee.com/drt0927')"
+      onmouseenter="showTooltip('개발자에게 커피 후원하기 ☕', this)" onmouseleave="hideTooltip()">
+      <i data-lucide="coffee" class="w-4 h-4"></i>
+    </div>
+
+    <div class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
+      onclick="window.electronAPI.toggleSettings()" onmouseenter="showTooltip('환경 설정', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="settings" class="w-4 h-4"></i>
+      <span id="update-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+    </div>
+
+    <div class="p-2 pb-4 cursor-pointer text-slate-400 hover:text-red-500" onclick="window.electronAPI.closeApp()"
+      onmouseenter="showTooltip('앱 종료', this)" onmouseleave="hideTooltip()">
+      <i data-lucide="power" class="w-4 h-4"></i>
+    </div>
+  </div>
+
+  <!-- 툴팁 -->
+  <div id="tooltip" class="tw-tooltip"></div>
+  <!-- 오디오 재생기 -->
+  <audio id="boss-audio" class="hidden"></audio>
+
+  <script>
+    function refreshIcons() { lucide.createIcons(); }
+    const tooltip = document.getElementById('tooltip');
+    const bossAudio = document.getElementById('boss-audio');
+    let bossNotifyVolume = 0.5;
+
+    function showTooltip(text, el) {
+      const rect = el.getBoundingClientRect();
+      tooltip.innerText = text;
+      tooltip.style.top = `${rect.top + 4}px`;
+      tooltip.style.display = 'flex';
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+    }
+
+    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume }) => {
+      if (!soundFile) return;
+      bossAudio.src = `assets/sound/${soundFile}`;
+      bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
+      bossAudio.play().catch(e => console.error('Audio play failed:', e));
+      const btn = document.getElementById('boss-btn');
+      btn.classList.add('animate-bounce', 'text-blue-400');
+      setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
+    });
+
+    function updateOverlayIcon(isVisible) {
+      const iconContainer = document.getElementById('overlay-toggle-btn');
+      if (iconContainer) {
+        iconContainer.innerHTML = `<i id="overlay-icon" data-lucide="${isVisible ? 'layout-template' : 'layout'}" class="w-4 h-4 ${isVisible ? 'text-white' : 'text-slate-600'}"></i>`;
+        refreshIcons();
+      }
+    }
+
+    window.electronAPI.onSidebarStatus((isCollapsed) => {
+      document.getElementById('wrapper').className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';
+      document.getElementById('toggle-icon').setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+      tooltip.style.display = 'none';
+      refreshIcons();
+    });
+
+    window.electronAPI.onOverlayStatus(updateOverlayIcon);
+
+    window.electronAPI.onClickThroughStatus((isClickThrough) => {
+      const icon = document.getElementById('click-through-icon');
+      const btn = document.getElementById('click-through-btn');
+      if (isClickThrough) { icon.setAttribute('data-lucide', 'mouse-pointer-off'); btn.classList.add('text-green-400'); btn.classList.remove('text-slate-400'); }
+      else { icon.setAttribute('data-lucide', 'mouse-pointer-2'); btn.classList.add('text-slate-400'); btn.classList.remove('text-green-400'); }
+      refreshIcons();
+    });
+
+    window.electronAPI.onConfigData((config) => {
+      bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
+      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'eta-ranking-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      let hiddenMenuIds = config.hiddenMenuIds || [];
+      if (!config.hiddenMenuIds && config.visibleMenuIds) {
+        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+        hiddenMenuIds = oldKnownMenuIds.filter(id => !config.visibleMenuIds.includes(id));
+      }
+      menuIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = hiddenMenuIds.includes(id) ? 'none' : 'flex'; });
+      updateOverlayIcon(config.overlayVisible !== false);
+      const container = document.getElementById('slot-container');
+      container.innerHTML = '';
+      (config.quickSlots || []).forEach(slot => {
+        const btn = document.createElement('div');
+        btn.className = 'tw-slot';
+        btn.innerHTML = slot.iconType === 'text' && slot.textChar ? `<span class="tw-slot-text">${slot.textChar}</span>` : `<i data-lucide="${slot.icon || 'link'}"></i>`;
+        if (slot.external) { const dot = document.createElement('div'); dot.className = 'external-dot'; btn.appendChild(dot); }
+        btn.onmouseenter = () => { const rect = btn.getBoundingClientRect(); tooltip.innerText = slot.label || 'LINK'; tooltip.style.top = `${rect.top + 4}px`; tooltip.style.display = 'flex'; };
+        btn.onmouseleave = () => { tooltip.style.display = 'none'; };
+        btn.onclick = () => { if (slot.external) window.electronAPI.openExternal(slot.url); else window.electronAPI.navigate(slot.url); };
+        container.appendChild(btn);
+      });
+      refreshIcons();
+      if (!window._sidebarInitialized) { window.electronAPI.sidebarReady(); window._sidebarInitialized = true; }
+    });
+
+    window.electronAPI.onGalleryNewActivity(() => { document.getElementById('noti-badge').classList.remove('hidden'); });
+    window.electronAPI.onUpdateStatus((data) => {
+      const badge = document.getElementById('update-badge');
+      if (data.state === 'available' || data.state === 'ready') badge.classList.remove('hidden');
+      else badge.classList.add('hidden');
+    });
+
+    function openGallery() { document.getElementById('noti-badge').classList.add('hidden'); window.electronAPI.toggleGallery(); }
+
+    const wrapper = document.getElementById('wrapper');
+    // 초기 상태: 투과 활성화
+    window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+
+    wrapper.addEventListener('mouseenter', () => {
+      window.electronAPI.setIgnoreMouseEvents(false);
+    });
+
+    // [보강] 복구 직후 마우스가 이미 위에 있을 때를 위해 mousemove 추가
+    wrapper.addEventListener('mousemove', () => {
+      window.electronAPI.setIgnoreMouseEvents(false);
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+      window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+      tooltip.style.display = 'none';
+    });
+    refreshIcons();
+  </script>
+</body>
+
+</html>

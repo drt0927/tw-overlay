@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root {
+  --bg-dark: rgba(15, 18, 30, 0.95);
+  --bg-panel: rgb(18, 18, 28);
+  --bg-input: rgba(0, 0, 0, 0.3);
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --accent: #a855f7;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-dark: #475569;
+  --border: rgba(255, 255, 255, 0.12);
+}
+
+body {
+  margin: 0; padding: 0;
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  background: transparent;
+  color: white;
+  overflow: hidden;
+  user-select: none;
+  letter-spacing: -0.01em;
+}
+
+/* 공통 클래스 */
+.glass { background: var(--bg-dark); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); }
+.panel-glass { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
+
+/* 입력창 */
+.input-field {
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s;
+}
+.input-field:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.5); }
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+/* ─── 사이드바 스타일 ─── */
+.sidebar-wrapper {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 0; width: 38px; height: 100vh;
+  box-sizing: border-box;
+  background: rgba(15, 18, 30, 0.95); /* 투명도를 살짝 낮춤 */
+  border-left: 1px solid var(--border);
+  transition: width 0.3s ease;
+  position: absolute; left: 0; top: 0;
+}
+
+.slot-container {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 2px;
+}
+
+/* 사이드바 슬롯 영역 전용 슬림 스크롤바 */
+.slot-container::-webkit-scrollbar {
+  width: 2px;
+}
+.slot-container::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 10px;
+}
+.slot-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-wrapper.collapsed { width: 20px; border-left: 2px solid var(--primary); }
+.sidebar-wrapper.collapsed .slot-container,
+.sidebar-wrapper.collapsed .settings-btn,
+.sidebar-wrapper.collapsed #close-app-btn { display: none; }
+
+.sidebar-wrapper.collapsed .gallery-btn { padding: 4px 0; }
+.sidebar-wrapper.collapsed .gallery-btn i { width: 14px; height: 14px; }
+
+.tw-slot {
+  width: 28px; height: 28px;
+  flex-shrink: 0; /* 크기 찌그러짐 방지 */
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid white;
+  outline: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative; transition: all 0.2s;
+  margin-bottom: 6px;
+}
+.tw-slot:hover {
+  border-color: #c084fc;
+  background: linear-gradient(145deg, #2e1065, #1e1b4b);
+  transform: scale(1.05);
+}
+
+/* 전역 아이콘 스타일 */
+svg.lucide {
+  display: inline-block;
+  vertical-align: middle;
+  stroke: currentColor;
+  fill: none;
+}
+
+.tw-slot i, .tw-slot svg {
+  width: 16px;
+  height: 16px;
+  color: #ffffff;
+}
+
+.tw-slot-text { font-size: 13px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+
+.external-dot {
+  position: absolute; top: -2px; right: -2px;
+  width: 7px; height: 7px;
+  background: #a855f7; border: 1.5px solid #0f172a; border-radius: 50%;
+}
+
+/* 툴팁 */
+.tw-tooltip {
+  position: fixed; left: 42px;
+  background: rgba(18, 18, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 2px 8px; border-radius: 6px;
+  pointer-events: none; z-index: 9999;
+  display: none; align-items: center; white-space: nowrap;
+  backdrop-filter: blur(8px);
+  color: white; font-size: 11px; font-weight: 500;
+}
+
+/* 아이콘 피커 전용 스타일 */
+.icon-grid-items { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 10px; }
+.icon-pick-btn { 
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--text-muted);
+}
+.icon-pick-btn:hover { background: rgba(168, 85, 247, 0.2); color: white; border-color: var(--accent); }
+
+
+/* ─── 슬라이더 (Range Input) 커스텀 ─── */
+input[type="range"] {
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.1);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  background: #a855f7;
+  border-radius: 50%;
+  margin-top: -5px; /* (트랙높이/2) - (핸들높이/2) */
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+  transition: all 0.2s;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  background: #c084fc;
+  transform: scale(1.2);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.8);
+}
+
+/* ─── 환경 설정 윈도우 스타일 ─── */
+.settings-container {
+  width: 100%; height: 100vh;
+  display: flex; flex-direction: column;
+  padding: 20px; box-sizing: border-box;
+}
+.settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.settings-title { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.settings-section { margin-bottom: 24px; }
+.section-label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: block; }
+
+/* ─── 갤러리 윈도우 스타일 ─── */
+.gallery-container {
+  width: 100%; height: 100vh;
+  display: flex; flex-direction: column;
+  padding: 12px; box-sizing: border-box;
+}
+.post-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px; border-radius: 8px; cursor: pointer;
+  transition: background 0.2s;
+}
+.post-item:hover { background: rgba(255,255,255,0.05); }
+
+/* 버튼 스타일 */
+.btn-primary {
+  background: var(--primary); color: white; border: none; padding: 8px 16px;
+  border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--primary-hover); }

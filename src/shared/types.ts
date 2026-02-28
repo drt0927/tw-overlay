@@ -97,7 +97,8 @@ export interface GalleryActivity {
 }
 
 export interface UpdateStatusInfo {
-    state: 'checking' | 'available' | 'latest' | 'downloading' | 'ready' | 'error' | 'dev-mode';
+    state: 'checking' | 'available' | 'latest' | 'downloading' | 'ready' | 'error' | 'dev-mode' | 'mandatory';
+    isMandatory?: boolean;
     version?: string;
     percent?: number;
     message?: string;

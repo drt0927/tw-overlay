@@ -115,6 +115,7 @@ let isToolbarShown = true;
 let isSidebarCollapsed = false;
 let isOverlayVisible = false;
 let onOverlayReady: (() => void) | null = null;
+let mandatoryUpdateLock = false;
 
 function setProgrammaticMove(key: string): void { isProgrammaticMoveMap[key] = true; }
 function consumeProgrammaticMove(key: string): boolean {
@@ -158,7 +159,10 @@ export const getGameRect = () => gameRect;
 export function onOverlayWindowReady(callback: () => void): void { onOverlayReady = callback; }
 
 export function createSplashWindow(): BrowserWindow {
-  splashWindow = new BrowserWindow(getStandardOptions(400, 500, { center: true, skipTaskbar: true, resizable: false, movable: false, focusable: false }));
+  splashWindow = new BrowserWindow(getStandardOptions(400, 500, {
+    center: true, skipTaskbar: true, resizable: false, movable: false, focusable: false,
+    webPreferences: { preload: path.join(__dirname, '..', 'splashPreload.js'), contextIsolation: true, nodeIntegration: false }
+  }));
   splashWindow.setIgnoreMouseEvents(true);
   splashWindow.loadFile(path.join(__dirname, '..', 'splash.html'));
   splashWindow.once('ready-to-show', () => { splashWindow?.show(); });
@@ -166,7 +170,26 @@ export function createSplashWindow(): BrowserWindow {
 }
 
 export function closeSplashWindow(): void {
+  if (mandatoryUpdateLock) return; // 필수 업데이트 진행 중에는 스플래시 유지
   if (splashWindow) { splashWindow.close(); splashWindow = null; }
+}
+
+/** 필수 업데이트 잠금 설정 — 잠금 중에는 스플래시만 표시 */
+export function setMandatoryUpdateLock(lock: boolean): void {
+  mandatoryUpdateLock = lock;
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.setIgnoreMouseEvents(false);
+    splashWindow.setAlwaysOnTop(lock);
+    if (lock) splashWindow.focus();
+  }
+  if (lock) {
+    // 사이드바, 오버레이, 모든 독립 창 숨기기
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
+    if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide();
+    Object.values(windowRegistry).forEach(winCfg => {
+      if (winCfg.ref && !winCfg.ref.isDestroyed()) winCfg.ref.hide();
+    });
+  }
 }
 
 export function createMainWindow(): BrowserWindow {
@@ -354,6 +377,7 @@ export function updateViewBounds(): void {
   }
 }
 export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean {
+  if (mandatoryUpdateLock) return isOverlayVisible; // 필수 업데이트 중에는 오버레이 조작 차단
   if (isOverlayVisible === visible && (visible ? !!overlayWindow : !overlayWindow)) { if (visible && targetUrl && view) view.webContents.loadURL(targetUrl); return isOverlayVisible; }
   isOverlayVisible = visible;
   if (isOverlayVisible) createOverlayWindow(targetUrl);
@@ -370,6 +394,7 @@ export function toggleOverlay(): boolean { return setOverlayVisible(!isOverlayVi
 
 export function syncOverlay(currentRect: GameRect): void {
   if (!mainWindow || isApplyingSize) return;
+  if (mandatoryUpdateLock) return; // 필수 업데이트 중에는 창 동기화 중지
   if (currentRect && currentRect.x > -10000) {
     if (!mainWindow.isVisible()) mainWindow.show();
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();

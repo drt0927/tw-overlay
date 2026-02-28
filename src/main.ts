@@ -73,6 +73,11 @@ app.whenReady().then(() => {
       unregisterClickThroughShortcut();
     }
   });
+
+  // DEV 테스트: mandatory 업데이트 시뮬레이션
+  // wm.setMandatoryUpdateLock(true);
+  // setupUpdater(sidebar);
+
   pollingLoop.start();
   bossNotifier.start();
 

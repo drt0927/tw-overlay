@@ -22,7 +22,6 @@ app.setAppUserModelId('com.filbertlab.twoverlay');
 
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
-app.commandLine.appendSwitch('disable-features', 'WebRtcAllowWgcDesktopCapturer');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 
 appState.isQuitting = false;

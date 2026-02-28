@@ -42,9 +42,7 @@ export const GetProcessId = kernel32.func('__stdcall', 'GetProcessId', 'uint32',
 export const QueryFullProcessImageNameW = kernel32.func('__stdcall', 'QueryFullProcessImageNameW', 'bool', ['intptr', 'uint32', koffi.out(koffi.pointer('char16')), koffi.out(koffi.pointer('uint32'))]);
 
 // --- Constants ---
-export const SRCCOPY = 0x00CC0020;
-export const DIB_RGB_COLORS = 0;
-export const BI_RGB = 0;
+// GDI 관련 미사용 상수 제거됨 (SRCCOPY, DIB_RGB_COLORS, BI_RGB)
 
 // --- WinEventHook API ---
 export const WINEVENTPROC = koffi.proto('__stdcall', 'void', ['intptr', 'uint32', 'intptr', 'int32', 'int32', 'uint32', 'uint32']);

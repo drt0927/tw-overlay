@@ -43,7 +43,7 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 ### 4. 독립 창 시스템 (Registry Architecture)
 - **WindowManager Registry:** 모든 독립 창 정보를 `windowRegistry` 객체로 통합 관리하여 코드 중복(DRY)을 제거하고 확장성을 확보했습니다.
 - **Lifecycle Hooks:** 창의 생성(`onOpen`) 및 소멸(`onClose`) 시점에 연동 로직을 실행할 수 있는 유연한 구조를 제공합니다.
-- **오버레이 창 (Overlay Window)**: 항상 열려 있는 것이 아니며, 사용자의 필요에 따라 동적으로 생성/파괴(Destroy)됩니다.
+- **오버레이 창 (Overlay Window)**: 사용자의 필요에 따라 동적으로 생성/파괴(Destroy)되며, 이제 게임 창 밖으로도 자유롭게 이동이 가능합니다.
 - **지능형 Z-Order 관리**: 게임 창 활성화 여부에 따라 오버레이의 레이어 순위를 동적으로 조정하여 게임 위 고정과 일반 작업 방해 금지를 동시에 실현합니다.
 
 ### 5. 필드 보스 알림 시스템 (Field Boss Notifier)
@@ -71,3 +71,4 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 ---
 최종 수정일: 2026-02-28
 작성자: Gemini CLI Agent
+버전: v1.6.1

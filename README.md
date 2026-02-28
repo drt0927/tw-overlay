@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.6.0-violet.svg)
+![Version](https://img.shields.io/badge/version-1.6.1-violet.svg)
 
 ## 📸 스크린샷
 
@@ -22,17 +22,16 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.6.0.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.6.1.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.6.0)
-- **최적화: UI 사용성 통일** (거래/갤러리 모니터 헤더 및 배너 통합).
-- **기능제거: 장판/버프 감지 기능 중단** (게임 보안 정책에 맞춰 제거).
-- **편의성: 매직위버 거래게시판 감시 모듈 추가** (항시 모니터링).
+## 📝 최신 업데이트 내역 (v1.6.1)
+- **기능개선: 오버레이 창 이동 제한 해제** (게임 창 밖으로도 자유롭게 스티커처럼 배치 가능).
+- **로직고도화: 동적 위치 동기화 개선** (창 밖에서도 게임 창과 함께 안정적으로 이동).
 
 ## 📄 라이선스
 이 프로젝트는 ISC 라이선스를 따릅니다.

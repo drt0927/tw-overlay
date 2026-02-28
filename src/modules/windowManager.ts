@@ -185,18 +185,8 @@ function createOverlayWindow(targetUrl?: string): void {
     if (consumeProgrammaticMove('overlay') || isApplyingSize || !overlayWindow) return;
     const b = overlayWindow.getBounds();
     if (isTracking && gameRect) {
-      const clampedX = Math.max(gameRect.x, Math.min(b.x, gameRect.x + gameRect.width - b.width));
-      const clampedY = Math.max(gameRect.y, Math.min(b.y, gameRect.y + gameRect.height - b.height));
-      if (Math.round(b.x) !== Math.round(clampedX) || Math.round(b.y) !== Math.round(clampedY)) {
-        setProgrammaticMove('overlay');
-        overlayWindow.setPosition(Math.round(clampedX), Math.round(clampedY));
-        const finalB = overlayWindow.getBounds();
-        overlayPos.offsetX = finalB.x - gameRect.x;
-        overlayPos.offsetY = finalB.y - gameRect.y;
-      } else {
-        overlayPos.offsetX = b.x - gameRect.x;
-        overlayPos.offsetY = b.y - gameRect.y;
-      }
+      overlayPos.offsetX = b.x - gameRect.x;
+      overlayPos.offsetY = b.y - gameRect.y;
       savePosition('overlay', overlayPos);
     }
   });
@@ -322,11 +312,8 @@ export function syncOverlay(currentRect: GameRect): void {
     if (overlayWindow && isOverlayVisible) {
       const b = overlayWindow.getBounds();
       let newW = b.width, newH = b.height;
-      if (b.width > gW) newW = Math.max(MIN_W, gW);
-      if (b.height > gH) newH = Math.max(MIN_H, gH);
       if (!isTracking) isTracking = true;
-      const targetX = Math.round(gX + overlayPos.offsetX), targetY = Math.round(gY + overlayPos.offsetY);
-      const finalX = Math.max(gX, Math.min(targetX, gX + gW - newW)), finalY = Math.max(gY, Math.min(targetY, gY + gH - newH));
+      const finalX = Math.round(gX + overlayPos.offsetX), finalY = Math.round(gY + overlayPos.offsetY);
       if (Math.abs(b.x - finalX) > POSITION_THRESHOLD || Math.abs(b.y - finalY) > POSITION_THRESHOLD || Math.abs(b.width - newW) > POSITION_THRESHOLD || Math.abs(b.height - newH) > POSITION_THRESHOLD) {
         setProgrammaticMove('overlay'); overlayWindow.setBounds({ x: finalX, y: finalY, width: newW, height: newH });
       }

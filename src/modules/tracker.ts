@@ -124,6 +124,10 @@ function isHwndValid(hwnd: bigint): boolean {
 
 // --- 외부 API ---
 
+export function getGameHwnd(): string | undefined {
+    return cachedHwnd ? cachedHwnd.toString() : undefined;
+}
+
 export function start(): void {
     log('[TRACKER] Native tracker initialized.');
 }
@@ -230,6 +234,20 @@ export async function boostGameProcess(): Promise<string | undefined> {
         return 'BOOST_FAIL';
     } finally {
         if (hProcess !== 0n) win32.CloseHandle(hProcess);
+    }
+}
+
+/** 게임 창을 지정된 창 바로 아래 Z-Order에 배치 (포커스 변경 없음) */
+export function placeGameBelowWindow(insertAfterHwndStr: string): void {
+    if (!cachedHwnd || !isHwndValid(cachedHwnd)) return;
+    try {
+        const insertAfterHwnd = BigInt(insertAfterHwndStr);
+        const flags = win32.SWP_NOMOVE | win32.SWP_NOSIZE | win32.SWP_NOACTIVATE |
+            win32.SWP_NOOWNERZORDER | win32.SWP_NOSENDCHANGING;
+        win32.SetWindowPos(cachedHwnd, insertAfterHwnd, 0, 0, 0, 0, flags);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log(`[TRACKER] placeGameBelowWindow failed: ${msg}`);
     }
 }
 

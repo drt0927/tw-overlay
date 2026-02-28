@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleTrade: () => ipcRenderer.send('toggle-trade'),
   setIgnoreMouseEvents: (ignore: boolean, options: { forward?: boolean }) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),
+  toolbarMouseEnter: () => ipcRenderer.send('toolbar-mouse-enter'),
+  toolbarMouseLeave: () => ipcRenderer.send('toolbar-mouse-leave'),
 
   // 내비게이션
   navigate: (url: string) => ipcRenderer.send('navigate', url),
@@ -123,5 +125,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOpenSettingsTab: (callback: (tabId: string) => void) => {
     ipcRenderer.removeAllListeners('open-settings-tab');
     ipcRenderer.on('open-settings-tab', (_event, tabId) => callback(tabId));
+  },
+  onToolbarHover: (callback: (isHover: boolean) => void) => {
+    ipcRenderer.removeAllListeners('toolbar-hover');
+    ipcRenderer.on('toolbar-hover', (_event, isHover) => callback(isHover));
   },
 });

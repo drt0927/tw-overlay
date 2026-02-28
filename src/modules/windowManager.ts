@@ -9,6 +9,7 @@ import { log } from './logger';
 import * as bossNotifier from './bossNotifier';
 import * as gallery from './galleryMonitor';
 import * as trade from './tradeMonitor';
+import * as tracker from './tracker';
 
 // --- 상태 관리 ---
 let activeWindowsStack: BrowserWindow[] = [];
@@ -39,10 +40,31 @@ function removeFromStack(win: BrowserWindow | null): void {
 }
 
 function attachStackListeners(win: BrowserWindow): void {
-  win.on('focus', () => pushToStack(win));
+  win.on('focus', () => {
+    pushToStack(win);
+    // TW-Overlay 창 포커스 시 게임 창도 Z-Order 상단으로 끌어올림
+    bringGameAndOverlaysToTop();
+  });
   win.on('show', () => pushToStack(win));
   win.on('closed', () => removeFromStack(win));
   pushToStack(win);
+}
+
+/** TW-Overlay 포커스 시: 게임 창을 우리 창 바로 아래에 배치하여 브라우저 위로 올림 */
+function bringGameAndOverlaysToTop(): void {
+  if (!gameRect) return;
+  const gameHwndStr = tracker.getGameHwnd();
+  if (!gameHwndStr) return;
+  const focusedWin = BrowserWindow.getFocusedWindow();
+  if (!focusedWin || focusedWin.isDestroyed()) return;
+  // 포커스된 우리 창의 HWND를 기준점으로 게임을 바로 아래에 배치 (포커스 유지)
+  const focusedHwnd = focusedWin.getNativeWindowHandle().readBigUInt64LE().toString();
+  tracker.placeGameBelowWindow(focusedHwnd);
+  // 나머지 오버레이도 게임 위로 재배치
+  const hwnds = getAllWindowHwnds();
+  if (hwnds.length > 0) {
+    tracker.promoteWindows(gameHwndStr, hwnds);
+  }
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -89,6 +111,7 @@ let isTracking = false;
 const isProgrammaticMoveMap: Record<string, boolean> = {};
 let isClickThrough = false;
 let isApplyingSize = false;
+let isToolbarShown = true;
 let isSidebarCollapsed = false;
 let isOverlayVisible = false;
 let onOverlayReady: (() => void) | null = null;
@@ -168,7 +191,7 @@ function createOverlayWindow(targetUrl?: string): void {
   overlayWindow = new BrowserWindow(getStandardOptions(cfg.width, cfg.height, { minWidth: MIN_W, minHeight: MIN_H, skipTaskbar: true }));
   overlayWindow.setOpacity(cfg.opacity);
   overlayWindow.loadFile(path.join(__dirname, '..', 'overlay.html'));
-  view = new WebContentsView({ webPreferences: { backgroundThrottling: false } });
+  view = new WebContentsView({ webPreferences: { backgroundThrottling: false, preload: path.join(__dirname, '..', 'overlay-view-preload.js') } });
   overlayWindow.contentView.addChildView(view);
   view.webContents.setWindowOpenHandler(({ url }) => { if (view) view.webContents.loadURL(url); return { action: 'deny' }; });
   view.webContents.loadURL(targetUrl || cfg.url || cfg.homeUrl);
@@ -190,6 +213,37 @@ function createOverlayWindow(targetUrl?: string): void {
       savePosition('overlay', overlayPos);
     }
   });
+
+  // 헤더 자동 숨김: 이벤트 기반 (mouseenter/mouseleave IPC)
+  let mouseInToolbar = false;
+  let mouseInWcv = false;
+  let toolbarHideTimeout: NodeJS.Timeout | null = null;
+  isToolbarShown = false;
+
+  const showToolbar = () => {
+    if (toolbarHideTimeout) { clearTimeout(toolbarHideTimeout); toolbarHideTimeout = null; }
+    if (!isToolbarShown && !isClickThrough) { isToolbarShown = true; updateViewBounds(); }
+  };
+  const scheduleHide = () => {
+    if (toolbarHideTimeout) clearTimeout(toolbarHideTimeout);
+    toolbarHideTimeout = setTimeout(() => {
+      if (!overlayWindow || overlayWindow.isDestroyed() || mouseInToolbar || mouseInWcv) return;
+      // bounds 변경으로 인한 허위 leave 이벤트 방어: 실제 커서 위치 1회 검증
+      const cursor = screen.getCursorScreenPoint();
+      const b = overlayWindow.getBounds();
+      if (cursor.x >= b.x && cursor.x < b.x + b.width && cursor.y >= b.y && cursor.y < b.y + b.height) return;
+      isToolbarShown = false; updateViewBounds();
+    }, 300);
+  };
+
+  // WCV 영역 마우스 이벤트 (overlay-view-preload에서 전송)
+  view.webContents.ipc.on('overlay-wcv-mouse-enter', () => { mouseInWcv = true; showToolbar(); });
+  view.webContents.ipc.on('overlay-wcv-mouse-leave', () => { mouseInWcv = false; if (!mouseInToolbar) scheduleHide(); });
+
+  // 툴바 영역 마우스 이벤트 (overlay.html에서 전송)
+  overlayWindow.webContents.ipc.on('toolbar-mouse-enter', () => { mouseInToolbar = true; showToolbar(); });
+  overlayWindow.webContents.ipc.on('toolbar-mouse-leave', () => { mouseInToolbar = false; if (!mouseInWcv) scheduleHide(); });
+
   overlayWindow.once('ready-to-show', () => {
     updateViewBounds();
     if (isOverlayVisible) {
@@ -201,6 +255,7 @@ function createOverlayWindow(targetUrl?: string): void {
     if (onOverlayReady) onOverlayReady();
   });
   overlayWindow.on('closed', () => {
+    if (toolbarHideTimeout) { clearTimeout(toolbarHideTimeout); toolbarHideTimeout = null; }
     if (view) { try { view.webContents.close(); } catch (e) { } view = null; }
     overlayWindow = null; isTracking = false; isClickThrough = false;
   });
@@ -280,12 +335,23 @@ export function toggleTradeWindow(): void {
 
 export function setAllAlwaysOnTop(_enabled: boolean): void { }
 export function getAllWindowHwnds(): string[] {
-  return activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible()).map(win => win!.getNativeWindowHandle().readBigUint64LE().toString());
+  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
+  // 사이드바(mainWindow)를 항상 첫 번째로 → promoteWindows에서 최하단 Z-Order 유지
+  windows.sort((a, b) => {
+    if (a === mainWindow) return -1;
+    if (b === mainWindow) return 1;
+    return 0;
+  });
+  return windows.map(win => win!.getNativeWindowHandle().readBigUint64LE().toString());
 }
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
   const b = overlayWindow.getBounds();
-  view.setBounds({ x: 0, y: OVERLAY_TOOLBAR_HEIGHT, width: b.width, height: b.height - OVERLAY_TOOLBAR_HEIGHT });
+  if (isToolbarShown) {
+    view.setBounds({ x: 0, y: OVERLAY_TOOLBAR_HEIGHT, width: b.width, height: b.height - OVERLAY_TOOLBAR_HEIGHT });
+  } else {
+    view.setBounds({ x: 0, y: 0, width: b.width, height: b.height });
+  }
 }
 export function setOverlayVisible(visible: boolean, targetUrl?: string): boolean {
   if (isOverlayVisible === visible && (visible ? !!overlayWindow : !overlayWindow)) { if (visible && targetUrl && view) view.webContents.loadURL(targetUrl); return isOverlayVisible; }
@@ -361,6 +427,7 @@ export function toggleClickThrough(): boolean {
   if (!overlayWindow) return false;
   isClickThrough = !isClickThrough;
   overlayWindow.setIgnoreMouseEvents(isClickThrough);
+  if (isClickThrough && isToolbarShown) { isToolbarShown = false; updateViewBounds(); }
   overlayWindow.webContents.send('click-through-status', isClickThrough);
   if (mainWindow) mainWindow.webContents.send('click-through-status', isClickThrough);
   return isClickThrough;

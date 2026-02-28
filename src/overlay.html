@@ -115,6 +115,8 @@
     });
     window.onload = refreshIcons;
     document.addEventListener('DOMContentLoaded', refreshIcons);
+    document.addEventListener('mouseenter', () => window.electronAPI.toolbarMouseEnter());
+    document.addEventListener('mouseleave', () => window.electronAPI.toolbarMouseLeave());
   </script>
 </body>
 

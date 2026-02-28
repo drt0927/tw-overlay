@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.6.1-violet.svg)
+![Version](https://img.shields.io/badge/version-1.6.2-violet.svg)
 
 ## 📸 스크린샷
 
@@ -22,14 +22,18 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.6.1.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.6.2.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.6.1)
+## 📝 최신 업데이트 내역 (v1.6.2)
+- **사용성 개선:** 마우스 호버 여부에 따라 오버레이 상단 툴바가 자동으로 숨겨지도록 기능을 고도화했습니다. (이벤트 기반 방식)
+- **최적화:** 오버레이 클릭 시 테일즈위버 게임 클라이언트가 다른 앱 뒤로 숨지 않도록 Z-Order 샌드위치 로직을 극대화했습니다.
+
+## 📝 이전 업데이트 내역 (v1.6.1)
 - **기능개선: 오버레이 창 이동 제한 해제** (게임 창 밖으로도 자유롭게 스티커처럼 배치 가능).
 - **로직고도화: 동적 위치 동기화 개선** (창 밖에서도 게임 창과 함께 안정적으로 이동).
 

@@ -1,8 +1,17 @@
 import koffi from 'koffi';
 
-const user32 = koffi.load('user32.dll');
-const dwmapi = koffi.load('dwmapi.dll');
-const kernel32 = koffi.load('kernel32.dll');
+let user32: any, dwmapi: any, kernel32: any;
+try {
+    user32 = koffi.load('user32.dll');
+    dwmapi = koffi.load('dwmapi.dll');
+    kernel32 = koffi.load('kernel32.dll');
+} catch (e) {
+    console.error('[WIN32] Failed to load native DLLs:', e);
+    const mockDll = { func: () => () => 0 };
+    user32 = mockDll;
+    dwmapi = mockDll;
+    kernel32 = mockDll;
+}
 
 // --- Structs ---
 export const RECT = koffi.struct('RECT', {

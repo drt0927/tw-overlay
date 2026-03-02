@@ -1,0 +1,235 @@
+{
+  "세검": [
+    { "name": "改-세크리드 레이피어", "series": "改-세크리드", "stab": 610, "hack": 280, "def": 41, "mag_def": 37, "hit": 38, "eva": 32, "agi": 33, "cri": 33, "delay": "75%" },
+    { "name": "세크리드 레이피어", "series": "세크리드", "stab": 525, "hack": 220, "def": 41, "mag_def": 37, "hit": 38, "eva": 32, "agi": 33, "cri": 33, "delay": "75%" },
+    { "name": "이클립스 레이피어", "series": "이클립스", "stab": 430, "hack": 160, "def": 36, "mag_atk": 56, "mag_def": 38, "hit": 40, "eva": 32, "agi": 32, "cri": 33, "delay": "75%" },
+    { "name": "어비스 레이피어", "series": "어비스", "stab": 330, "hack": 130, "def": 36, "mag_atk": 56, "mag_def": 38, "hit": 40, "eva": 32, "agi": 32, "cri": 33, "delay": "75%" },
+    { "name": "페어리 피타 레이피어", "series": "페어리피타", "stab": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "75%" },
+    { "name": "아퀼루스 레이피어", "series": "아퀼루스", "stab": 242, "hack": 119, "def": 36, "mag_atk": 56, "mag_def": 38, "hit": 40, "eva": 32, "agi": 32, "cri": 33, "delay": "75%" },
+    { "name": "인퍼널 레이피어", "series": "인퍼널", "stab": 198, "hack": 113, "def": 32, "mag_atk": 52, "mag_def": 34, "hit": 36, "eva": 28, "agi": 28, "cri": 29, "delay": "75%" }
+  ],
+  "장검": [
+    { "name": "改-세크리드 소드", "series": "改-세크리드", "stab": 530, "hack": 530, "def": 0, "mag_def": 0, "hit": 0, "eva": 0, "agi": 0, "cri": 0, "delay": "95%" },
+    { "name": "세크리드 소드", "series": "세크리드", "stab": 450, "hack": 450, "def": 43, "mag_def": 38, "hit": 38, "eva": 34, "agi": 34, "cri": 36, "delay": "95%" },
+    { "name": "이클립스 소드", "series": "이클립스", "stab": 370, "hack": 370, "def": 40, "mag_atk": 50, "mag_def": 35, "hit": 37, "eva": 33, "agi": 33, "cri": 32, "delay": "95%" },
+    { "name": "어비스 소드", "series": "어비스", "stab": 235, "hack": 235, "def": 40, "mag_atk": 50, "mag_def": 35, "hit": 37, "eva": 33, "agi": 33, "cri": 32, "delay": "95%" },
+    { "name": "페어리 피타 소드", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "95%" },
+    { "name": "아퀼루스 소드", "series": "아퀼루스", "stab": 177, "hack": 180, "def": 40, "mag_atk": 50, "mag_def": 35, "hit": 37, "eva": 33, "agi": 33, "cri": 32, "delay": "95%" },
+    { "name": "인퍼널 소드", "series": "인퍼널", "stab": 155, "hack": 158, "def": 36, "mag_atk": 46, "mag_def": 31, "hit": 33, "eva": 29, "agi": 29, "cri": 28, "delay": "95%" }
+  ],
+  "평도": [
+    { "name": "改-세크리드 시미터", "series": "改-세크리드", "stab": 280, "hack": 610, "def": 41, "mag_def": 37, "hit": 38, "eva": 32, "agi": 33, "cri": 33, "delay": "85%" },
+    { "name": "세크리드 시미터", "series": "세크리드", "stab": 220, "hack": 525, "def": 41, "mag_def": 37, "hit": 38, "eva": 32, "agi": 33, "cri": 33, "delay": "85%" },
+    { "name": "이클립스 시미터", "series": "이클립스", "stab": 160, "hack": 430, "def": 39, "mag_atk": 45, "mag_def": 35, "hit": 36, "eva": 31, "agi": 31, "cri": 30, "delay": "85%" },
+    { "name": "어비스 시미터", "series": "어비스", "stab": 130, "hack": 330, "def": 39, "mag_atk": 45, "mag_def": 35, "hit": 36, "eva": 31, "agi": 31, "cri": 30, "delay": "85%" },
+    { "name": "페어리 피타 시미터", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "85%" },
+    { "name": "아퀼루스 시미터", "series": "아퀼루스", "stab": 105, "hack": 243, "def": 39, "mag_atk": 45, "mag_def": 35, "hit": 36, "eva": 31, "agi": 31, "cri": 30, "delay": "85%" },
+    { "name": "인퍼널 시미터", "series": "인퍼널", "stab": 99, "hack": 199, "def": 35, "mag_atk": 41, "mag_def": 31, "hit": 32, "eva": 27, "agi": 27, "cri": 26, "delay": "85%" }
+  ],
+  "대검": [
+    { "name": "改-세크리드 블레이드", "series": "改-세크리드", "stab": 120, "hack": 530, "mag_atk": 530, "delay": "100%" },
+    { "name": "세크리드 블레이드", "series": "세크리드", "stab": 120, "hack": 450, "def": 40, "mag_atk": 450, "mag_def": 42, "hit": 40, "eva": 32, "agi": 30, "cri": 34, "delay": "100%" },
+    { "name": "이클립스 블레이드", "series": "이클립스", "stab": 105, "hack": 370, "def": 38, "mag_atk": 370, "mag_def": 40, "hit": 38, "eva": 30, "agi": 28, "cri": 32, "delay": "100%" },
+    { "name": "어비스 블레이드", "series": "어비스", "stab": 89, "hack": 250, "def": 38, "mag_atk": 250, "mag_def": 40, "hit": 38, "eva": 30, "agi": 28, "cri": 32, "delay": "100%" },
+    { "name": "페어리 피타 블레이드", "series": "페어리피타", "stab": 225, "hack": 225, "mag_atk": 225, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "100%" },
+    { "name": "아퀼루스 블레이드", "series": "아퀼루스", "stab": 85, "hack": 194, "def": 38, "mag_atk": 171, "mag_def": 40, "hit": 38, "eva": 30, "agi": 28, "cri": 32, "delay": "100%" },
+    { "name": "인퍼널 블레이드", "series": "인퍼널", "stab": 81, "hack": 172, "def": 34, "mag_atk": 149, "mag_def": 36, "hit": 34, "eva": 26, "agi": 24, "cri": 28, "delay": "100%" }
+  ],
+  "태도": [
+    { "name": "改-세크리드 페이크소드", "series": "改-세크리드", "stab": 530, "hack": 530, "delay": "100%" },
+    { "name": "세크리드 페이크소드", "series": "세크리드", "stab": 450, "hack": 450, "def": 43, "mag_def": 38, "hit": 38, "eva": 34, "agi": 34, "cri": 36, "delay": "100%" },
+    { "name": "이클립스 페이크소드", "series": "이클립스", "stab": 370, "hack": 370, "def": 41, "mag_atk": 47, "mag_def": 36, "hit": 36, "eva": 32, "agi": 34, "cri": 32, "delay": "105%" },
+    { "name": "어비스 페이크소드", "series": "어비스", "stab": 235, "hack": 235, "def": 41, "mag_atk": 47, "mag_def": 36, "hit": 36, "eva": 32, "agi": 34, "cri": 32, "delay": "105%" },
+    { "name": "페어리 피타 페이크소드", "series": "페어리피타", "hack": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "100%" },
+    { "name": "아퀼루스 페이크소드", "series": "아퀼루스", "stab": 177, "hack": 180, "def": 41, "mag_atk": 47, "mag_def": 36, "hit": 36, "eva": 32, "agi": 34, "cri": 32, "delay": "105%" },
+    { "name": "인퍼널 페이크소드", "series": "인퍼널", "stab": 155, "hack": 158, "def": 37, "mag_atk": 43, "mag_def": 32, "hit": 32, "eva": 28, "agi": 30, "cri": 28, "delay": "105%" }
+  ],
+  "스태프": [
+    { "name": "改-세크리드 스태프", "series": "改-세크리드", "mag_atk": 610, "def": 40, "mag_def": 280, "hit": 40, "eva": 32, "agi": 31, "cri": 30, "delay": "100%" },
+    { "name": "세크리드 스태프", "series": "세크리드", "mag_atk": 535, "def": 40, "mag_def": 220, "hit": 40, "eva": 32, "agi": 31, "cri": 30, "delay": "100%" },
+    { "name": "이클립스 스태프", "series": "이클립스", "mag_atk": 440, "def": 40, "mag_def": 160, "hit": 40, "eva": 32, "agi": 31, "cri": 30, "delay": "100%" },
+    { "name": "어비스 스태프", "series": "어비스", "mag_atk": 340, "def": 40, "mag_def": 130, "hit": 40, "eva": 32, "agi": 31, "cri": 30, "delay": "100%" },
+    { "name": "페어리 피타 스태프", "series": "페어리피타", "mag_atk": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "100%" },
+    { "name": "아퀼루스 스태프", "series": "아퀼루스", "mag_atk": 234, "def": 40, "mag_def": 90, "hit": 40, "eva": 32, "agi": 31, "cri": 30, "delay": "100%" },
+    { "name": "인퍼널 스태프", "series": "인퍼널", "mag_atk": 190, "def": 35, "mag_def": 84, "hit": 36, "eva": 28, "agi": 27, "cri": 26, "delay": "100%" }
+  ],
+  "로드": [
+    { "name": "이클립스 로드", "series": "이클립스", "mag_atk": 160, "mag_def": 410, "def": 40, "hit": 37, "eva": 36, "agi": 31, "cri": 30, "delay": "90%" },
+    { "name": "어비스 로드", "series": "어비스", "mag_atk": 130, "mag_def": 310, "def": 39, "hit": 37, "eva": 36, "agi": 31, "cri": 30, "delay": "90%" },
+    { "name": "페어리 피타 로드", "series": "페어리피타", "mag_def": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "90%" },
+    { "name": "아퀼루스 로드", "series": "아퀼루스", "mag_atk": 95, "mag_def": 226, "def": 39, "hit": 37, "eva": 36, "agi": 31, "cri": 30, "delay": "90%" },
+    { "name": "인퍼널 로드", "series": "인퍼널", "mag_atk": 89, "mag_def": 182, "def": 35, "hit": 33, "eva": 32, "agi": 27, "cri": 26, "delay": "90%" }
+  ],
+  "메이스": [
+    { "name": "이클립스 메이스", "series": "이클립스", "stab": 370, "hack": 370, "def": 42, "mag_def": 100, "hit": 38, "eva": 33, "agi": 30, "cri": 33, "delay": "95%" },
+    { "name": "어비스 메이스", "series": "어비스", "stab": 220, "hack": 200, "def": 42, "mag_def": 100, "hit": 38, "eva": 33, "agi": 33, "cri": 32, "delay": "95%" },
+    { "name": "페어리 피타 메이스", "series": "페어리피타", "mag_def": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "95%" },
+    { "name": "아퀼루스 메이스", "series": "아퀼루스", "stab": 171, "hack": 186, "def": 42, "mag_atk": 103, "mag_def": 100, "hit": 38, "eva": 33, "agi": 30, "cri": 33, "delay": "95%" },
+    { "name": "인퍼널 메이스", "series": "인퍼널", "stab": 149, "hack": 164, "def": 38, "mag_atk": 99, "mag_def": 96, "hit": 34, "eva": 29, "agi": 26, "cri": 29, "delay": "95%" }
+  ],
+  "단검": [
+    { "name": "이클립스 대거", "series": "이클립스", "stab": 430, "hack": 160, "def": 38, "mag_def": 40, "hit": 39, "eva": 33, "agi": 32, "cri": 33, "delay": "55%" },
+    { "name": "어비스 대거", "series": "어비스", "stab": 330, "hack": 130, "def": 38, "mag_def": 40, "hit": 39, "eva": 33, "agi": 32, "cri": 33, "delay": "55%" },
+    { "name": "페어리 피타 대거", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "55%" },
+    { "name": "아퀼루스 대거", "series": "아퀼루스", "stab": 241, "hack": 120, "def": 38, "mag_atk": 53, "mag_def": 40, "hit": 39, "eva": 33, "agi": 32, "cri": 33, "delay": "55%" },
+    { "name": "인퍼널 대거", "series": "인퍼널", "stab": 197, "hack": 114, "def": 34, "mag_atk": 49, "mag_def": 36, "hit": 35, "eva": 29, "agi": 28, "cri": 29, "delay": "55%" }
+  ],
+  "단도": [
+    { "name": "이클립스 나이프", "series": "이클립스", "stab": 370, "hack": 370, "def": 35, "mag_def": 34, "hit": 38, "eva": 34, "agi": 33, "cri": 30, "delay": "55%" },
+    { "name": "어비스 나이프", "series": "어비스", "stab": 235, "hack": 235, "def": 35, "mag_def": 34, "hit": 38, "eva": 34, "agi": 33, "cri": 32, "delay": "55%" },
+    { "name": "페어리 피타 나이프", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "55%" },
+    { "name": "아퀼루스 나이프", "series": "아퀼루스", "stab": 177, "hack": 180, "def": 35, "mag_atk": 48, "mag_def": 34, "hit": 38, "eva": 34, "agi": 33, "cri": 32, "delay": "55%" },
+    { "name": "인퍼널 나이프", "series": "인퍼널", "stab": 158, "hack": 155, "def": 31, "mag_atk": 44, "mag_def": 30, "hit": 34, "eva": 30, "agi": 29, "cri": 26, "delay": "55%" }
+  ],
+  "도끼": [
+    { "name": "이클립스 액스", "series": "이클립스", "stab": 160, "hack": 430, "def": 38, "mag_def": 31, "hit": 35, "eva": 32, "agi": 30, "cri": 29, "delay": "65%" },
+    { "name": "어비스 액스", "series": "어비스", "stab": 130, "hack": 330, "def": 38, "mag_def": 31, "hit": 35, "eva": 32, "agi": 30, "cri": 29, "delay": "65%" },
+    { "name": "페어리 피타 액스", "series": "페어리피타", "hack": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "65%" },
+    { "name": "아퀼루스 액스", "series": "아퀼루스", "stab": 105, "hack": 248, "def": 38, "mag_atk": 49, "mag_def": 31, "hit": 35, "eva": 32, "agi": 30, "cri": 29, "delay": "65%" },
+    { "name": "인퍼널 액스", "series": "인퍼널", "stab": 99, "hack": 204, "def": 34, "mag_atk": 45, "mag_def": 27, "hit": 31, "eva": 28, "agi": 26, "cri": 25, "delay": "65%" }
+  ],
+  "창": [
+    { "name": "이클립스 스피어", "series": "이클립스", "stab": 430, "hack": 160, "def": 44, "mag_def": 33, "hit": 34, "eva": 30, "agi": 30, "cri": 30, "delay": "105%" },
+    { "name": "어비스 스피어", "series": "어비스", "stab": 330, "hack": 130, "def": 44, "mag_def": 33, "hit": 34, "eva": 30, "agi": 30, "cri": 30, "delay": "105%" },
+    { "name": "페어리 피타 스피어", "series": "페어리피타", "stab": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "105%" },
+    { "name": "아퀼루스 스피어", "series": "아퀼루스", "stab": 245, "hack": 100, "def": 44, "mag_def": 33, "hit": 34, "eva": 30, "agi": 30, "cri": 30, "delay": "105%" },
+    { "name": "인퍼널 스피어", "series": "인퍼널", "stab": 201, "hack": 94, "def": 40, "mag_def": 29, "hit": 30, "eva": 26, "agi": 26, "cri": 26, "delay": "105%" }
+  ],
+  "봉": [
+    { "name": "이클립스 스틱", "series": "이클립스", "stab": 370, "hack": 370, "def": 35, "mag_def": 33, "hit": 35, "eva": 30, "agi": 30, "cri": 30, "delay": "95%" },
+    { "name": "어비스 스틱", "series": "어비스", "stab": 235, "hack": 235, "def": 35, "mag_def": 33, "hit": 35, "eva": 30, "agi": 30, "cri": 30, "delay": "95%" },
+    { "name": "페어리 피타 스틱", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "95%" },
+    { "name": "아퀼루스 스틱", "series": "아퀼루스", "stab": 177, "hack": 180, "def": 35, "mag_def": 33, "hit": 35, "eva": 30, "agi": 30, "cri": 30, "delay": "95%" },
+    { "name": "인퍼널 스틱", "series": "인퍼널", "stab": 158, "hack": 155, "def": 31, "mag_def": 29, "hit": 31, "eva": 26, "agi": 26, "cri": 26, "delay": "95%" }
+  ],
+  "채찍": [
+    { "name": "이클립스 휩", "series": "이클립스", "stab": 160, "hack": 430, "def": 38, "mag_def": 34, "hit": 37, "eva": 33, "agi": 28, "cri": 29, "delay": "75%" },
+    { "name": "어비스 휩", "series": "어비스", "stab": 130, "hack": 330, "def": 38, "mag_def": 34, "hit": 37, "eva": 33, "agi": 28, "cri": 29, "delay": "75%" },
+    { "name": "페어리 피타 휩", "series": "페어리피타", "hack": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "75%" },
+    { "name": "아퀼루스 휩", "series": "아퀼루스", "stab": 113, "hack": 242, "def": 34, "mag_def": 34, "hit": 37, "eva": 33, "agi": 28, "cri": 29, "delay": "75%" },
+    { "name": "인퍼널 휩", "series": "인퍼널", "stab": 107, "hack": 198, "def": 30, "mag_def": 30, "hit": 33, "eva": 29, "agi": 24, "cri": 25, "delay": "75%" }
+  ],
+  "플레일": [
+    { "name": "이클립스 플레일", "series": "이클립스", "stab": 370, "hack": 370, "def": 36, "mag_def": 33, "hit": 38, "eva": 38, "agi": 31, "cri": 32, "delay": "100%" },
+    { "name": "어비스 플레일", "series": "어비스", "stab": 235, "hack": 235, "def": 36, "mag_def": 33, "hit": 38, "eva": 38, "agi": 31, "cri": 32, "delay": "100%" },
+    { "name": "페어리 피타 플레일", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "100%" },
+    { "name": "아퀼루스 플레일", "series": "아퀼루스", "stab": 177, "hack": 180, "def": 36, "mag_def": 33, "hit": 38, "eva": 38, "agi": 31, "cri": 32, "delay": "100%" },
+    { "name": "인퍼널 플레일", "series": "인퍼널", "stab": 155, "hack": 158, "def": 32, "mag_def": 29, "hit": 34, "eva": 34, "agi": 27, "cri": 28, "delay": "100%" }
+  ],
+  "스몰소드": [
+    { "name": "이클립스 스몰소드", "series": "이클립스", "stab": 430, "hack": 160, "def": 44, "mag_def": 40, "hit": 34, "eva": 37, "agi": 33, "cri": 30, "delay": "80%" },
+    { "name": "어비스 스몰소드", "series": "어비스", "stab": 330, "hack": 130, "def": 44, "mag_def": 40, "hit": 34, "eva": 37, "agi": 33, "cri": 30, "delay": "80%" },
+    { "name": "페어리 피타 스몰소드", "series": "페어리피타", "stab": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "80%" },
+    { "name": "아퀼루스 스몰소드", "series": "아퀼루스", "stab": 236, "hack": 119, "def": 44, "mag_atk": 131, "mag_def": 40, "hit": 34, "eva": 37, "agi": 33, "cri": 30, "delay": "80%" },
+    { "name": "인퍼널 스몰소드", "series": "인퍼널", "stab": 192, "hack": 134, "def": 40, "mag_atk": 127, "mag_def": 36, "hit": 30, "eva": 33, "agi": 29, "cri": 26, "delay": "80%" }
+  ],
+  "완드": [
+    { "name": "이클립스 완드", "series": "이클립스", "mag_atk": 440, "def": 41, "mag_def": 160, "hit": 31, "eva": 31, "agi": 29, "cri": 29, "delay": "85%" },
+    { "name": "어비스 완드", "series": "어비스", "mag_atk": 340, "def": 41, "mag_def": 130, "hit": 31, "eva": 31, "agi": 29, "cri": 29, "delay": "85%" },
+    { "name": "페어리 피타 완드", "series": "페어리피타", "mag_atk": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "85%" },
+    { "name": "아퀼루스 완드", "series": "아퀼루스", "stab": 105, "mag_atk": 214, "def": 41, "mag_def": 163, "hit": 31, "eva": 31, "agi": 29, "cri": 29, "delay": "85%" },
+    { "name": "인퍼널 완드", "series": "인퍼널", "stab": 101, "mag_atk": 170, "def": 37, "mag_def": 157, "hit": 27, "eva": 27, "agi": 25, "cri": 25, "delay": "85%" }
+  ],
+  "물리총": [
+    { "name": "이클립스 피스톨", "series": "이클립스", "stab": 430, "hack": 160, "def": 41, "mag_def": 34, "hit": 36, "eva": 33, "agi": 31, "cri": 29, "delay": "75%" },
+    { "name": "어비스 피스톨", "series": "어비스", "stab": 330, "hack": 130, "def": 41, "mag_def": 34, "hit": 36, "eva": 33, "agi": 31, "cri": 29, "delay": "75%" },
+    { "name": "페어리 피타 피스톨", "series": "페어리피타", "stab": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "75%" },
+    { "name": "아퀼루스 피스톨", "series": "아퀼루스", "stab": 251, "hack": 85, "def": 41, "mag_atk": 125, "mag_def": 34, "hit": 36, "eva": 33, "agi": 31, "cri": 29, "delay": "75%" },
+    { "name": "인퍼널 피스톨", "series": "인퍼널", "stab": 207, "hack": 79, "def": 37, "mag_atk": 121, "mag_def": 30, "hit": 32, "eva": 29, "agi": 27, "cri": 25, "delay": "75%" }
+  ],
+  "마법총": [
+    { "name": "이클립스 마나피스톨", "series": "이클립스", "mag_atk": 440, "def": 41, "mag_def": 160, "hit": 36, "eva": 34, "agi": 33, "cri": 30, "delay": "80%" },
+    { "name": "어비스 마나피스톨", "series": "어비스", "mag_atk": 340, "def": 41, "mag_def": 130, "hit": 36, "eva": 34, "agi": 33, "cri": 30, "delay": "80%" },
+    { "name": "페어리 피타 마나피스톨", "series": "페어리피타", "mag_atk": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "80%" },
+    { "name": "아퀼루스 마나피스톨", "series": "아퀼루스", "mag_atk": 238, "def": 41, "mag_def": 88, "hit": 36, "eva": 34, "agi": 33, "cri": 30, "delay": "80%" },
+    { "name": "인퍼널 마나피스톨", "series": "인퍼널", "stab": 123, "mag_atk": 194, "def": 37, "mag_def": 82, "hit": 32, "eva": 30, "agi": 29, "cri": 26, "delay": "80%" }
+  ],
+  "클로": [
+    { "name": "이클립스 클로", "series": "이클립스", "stab": 430, "hack": 160, "def": 35, "mag_def": 35, "hit": 29, "eva": 37, "agi": 32, "cri": 32, "delay": "80%" },
+    { "name": "어비스 클로", "series": "어비스", "stab": 330, "hack": 130, "def": 44, "mag_def": 35, "hit": 29, "eva": 37, "agi": 32, "cri": 32, "delay": "80%" },
+    { "name": "페어리 피타 클로", "series": "페어리피타", "stab": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "80%" },
+    { "name": "아퀼루스 클로", "series": "아퀼루스", "stab": 242, "hack": 119, "def": 44, "mag_def": 35, "hit": 29, "eva": 37, "agi": 32, "cri": 32, "delay": "80%" },
+    { "name": "인퍼널 클로", "series": "인퍼널", "stab": 200, "hack": 101, "def": 31, "mag_def": 31, "hit": 25, "eva": 33, "agi": 28, "cri": 28, "delay": "80%" }
+  ],
+  "카라": [
+    { "name": "이클립스 카라", "series": "이클립스", "stab": 160, "hack": 430, "def": 38, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "어비스 카라", "series": "어비스", "stab": 130, "hack": 330, "def": 38, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "페어리 피타 카라", "series": "페어리피타", "hack": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "90%" },
+    { "name": "아퀼루스 카라", "series": "아퀼루스", "stab": 107, "hack": 244, "def": 38, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "인퍼널 카라", "series": "인퍼널", "stab": 101, "hack": 200, "def": 34, "mag_def": 30, "hit": 33, "eva": 26, "agi": 27, "cri": 27, "delay": "90%" }
+  ],
+  "셉터": [
+    { "name": "이클립스 셉터", "series": "이클립스", "mag_atk": 440, "def": 43, "mag_def": 160, "hit": 37, "eva": 31, "agi": 31, "cri": 32, "delay": "105%" },
+    { "name": "어비스 셉터", "series": "어비스", "mag_atk": 340, "def": 43, "mag_def": 130, "hit": 37, "eva": 31, "agi": 31, "cri": 32, "delay": "105%" },
+    { "name": "페어리 피타 셉터", "series": "페어리피타", "mag_atk": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "105%" },
+    { "name": "아퀼루스 셉터", "series": "아퀼루스", "stab": 91, "hack": 100, "mag_atk": 234, "def": 43, "mag_def": 110, "hit": 37, "eva": 31, "agi": 31, "cri": 32, "delay": "105%" },
+    { "name": "인퍼널 셉터", "series": "인퍼널", "stab": 87, "hack": 96, "mag_atk": 190, "def": 39, "mag_def": 104, "hit": 33, "eva": 27, "agi": 27, "cri": 28, "delay": "105%" }
+  ],
+  "핸드벨": [
+    { "name": "이클립스 핸드벨", "series": "이클립스", "mag_atk": 160, "mag_def": 410, "def": 47, "hit": 34, "eva": 34, "agi": 29, "cri": 27, "delay": "95%" },
+    { "name": "어비스 핸드벨", "series": "어비스", "mag_atk": 130, "mag_def": 310, "def": 47, "hit": 34, "eva": 34, "agi": 29, "cri": 27, "delay": "95%" },
+    { "name": "페어리 피타 핸드벨", "series": "페어리피타", "mag_def": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "95%" },
+    { "name": "아퀼루스 핸드벨", "series": "아퀼루스", "stab": 105, "hack": 102, "mag_atk": 95, "mag_def": 226, "def": 47, "hit": 34, "eva": 34, "agi": 29, "cri": 27, "delay": "95%" },
+    { "name": "인퍼널 핸드벨", "series": "인퍼널", "stab": 101, "hack": 98, "mag_atk": 89, "mag_def": 182, "def": 43, "hit": 30, "eva": 30, "agi": 25, "cri": 23, "delay": "95%" }
+  ],
+  "물리검": [
+    { "name": "세크리드 글라디우스", "series": "세크리드", "stab": 220, "hack": 440, "def": 24, "mag_def": 48, "hit": 30, "eva": 22, "agi": 25, "cri": 26, "delay": "75%" },
+    { "name": "이클립스 글라디우스", "series": "이클립스", "stab": 160, "hack": 340, "def": 22, "mag_def": 46, "hit": 28, "eva": 20, "agi": 23, "cri": 24, "delay": "75%" },
+    { "name": "어비스 글라디우스", "series": "어비스", "stab": 140, "hack": 240, "def": 22, "mag_def": 46, "hit": 28, "eva": 20, "agi": 23, "cri": 24, "delay": "75%" },
+    { "name": "페어리 피타 글라디우스", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "75%" },
+    { "name": "아퀼루스 글라디우스", "series": "아퀼루스", "stab": 99, "hack": 168, "def": 22, "mag_def": 46, "hit": 28, "eva": 20, "agi": 23, "cri": 24, "delay": "75%" },
+    { "name": "인퍼널 글라디우스", "series": "인퍼널", "stab": 89, "hack": 135, "def": 20, "mag_def": 42, "hit": 26, "eva": 18, "agi": 21, "cri": 22, "delay": "75%" }
+  ],
+  "마법검": [
+    { "name": "세크리드 크리스", "series": "세크리드", "mag_atk": 220, "def": 23, "mag_def": 435, "hit": 34, "eva": 23, "agi": 19, "cri": 19, "delay": "75%" },
+    { "name": "이클립스 크리스", "series": "이클립스", "mag_atk": 160, "def": 21, "mag_def": 325, "hit": 32, "eva": 21, "agi": 17, "cri": 17, "delay": "75%" },
+    { "name": "어비스 크리스", "series": "어비스", "mag_atk": 130, "def": 21, "mag_def": 310, "hit": 32, "eva": 21, "agi": 17, "cri": 17, "delay": "75%" },
+    { "name": "페어리 피타 크리스", "series": "페어리피타", "mag_atk": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "75%" },
+    { "name": "아퀼루스 크리스", "series": "아퀼루스", "mag_atk": 99, "def": 21, "mag_def": 166, "hit": 32, "eva": 21, "agi": 17, "cri": 17, "delay": "75%" },
+    { "name": "인퍼널 크리스", "series": "인퍼널", "hack": 44, "mag_atk": 89, "def": 19, "mag_def": 133, "hit": 30, "eva": 19, "agi": 15, "cri": 15, "delay": "75%" }
+  ],
+  "사이드": [
+    { "name": "이클립스 사이드", "series": "이클립스", "stab": 160, "hack": 430, "def": 39, "mag_def": 43, "hit": 36, "eva": 30, "agi": 31, "cri": 30, "delay": "95%" },
+    { "name": "어비스 사이드", "series": "어비스", "stab": 130, "hack": 330, "def": 39, "mag_def": 43, "hit": 36, "eva": 30, "agi": 31, "cri": 30, "delay": "95%" },
+    { "name": "페어리 피타 사이드", "series": "페어리피타", "hack": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "95%" },
+    { "name": "아퀼루스 사이드", "series": "아퀼루스", "stab": 129, "hack": 247, "def": 39, "mag_def": 43, "hit": 36, "eva": 30, "agi": 31, "cri": 30, "delay": "95%" },
+    { "name": "인퍼널 사이드", "series": "인퍼널", "stab": 123, "hack": 203, "def": 35, "mag_def": 39, "hit": 32, "eva": 27, "agi": 27, "cri": 26, "delay": "95%" }
+  ],
+  "해머": [
+    { "name": "이클립스 해머", "series": "이클립스", "def": 90, "mag_def": 410, "hit": 36, "agi": 35, "cri": 35, "delay": "105%" },
+    { "name": "어비스 해머", "series": "어비스", "def": 90, "mag_def": 310, "hit": 36, "agi": 35, "cri": 35, "delay": "105%" },
+    { "name": "페어리 피타 해머", "series": "페어리피타", "hack": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "105%" },
+    { "name": "아퀼루스 해머", "series": "아퀼루스", "hack": 64, "def": 90, "mag_def": 236, "hit": 36, "agi": 35, "cri": 35, "delay": "105%" },
+    { "name": "인퍼널 해머", "series": "인퍼널", "hack": 60, "def": 86, "mag_def": 192, "hit": 32, "agi": 31, "cri": 31, "delay": "105%" }
+  ],
+  "토템": [
+    { "name": "이클립스 토템", "series": "이클립스", "mag_atk": 440, "def": 40, "mag_def": 160, "hit": 39, "eva": 39, "agi": 31, "cri": 30, "delay": "85%" },
+    { "name": "어비스 토템", "series": "어비스", "mag_atk": 340, "def": 40, "mag_def": 130, "hit": 39, "eva": 39, "agi": 31, "cri": 30, "delay": "85%" },
+    { "name": "페어리 피타 토템", "series": "페어리피타", "mag_atk": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "85%" },
+    { "name": "아퀼루스 토템", "series": "아퀼루스", "mag_atk": 234, "def": 40, "mag_def": 112, "hit": 39, "eva": 39, "agi": 31, "cri": 30, "delay": "85%" },
+    { "name": "인퍼널 토템", "series": "인퍼널", "mag_atk": 190, "def": 36, "mag_def": 106, "hit": 35, "eva": 35, "agi": 27, "cri": 26, "delay": "85%" }
+  ],
+  "핸드런처": [
+    { "name": "이클립스 핸드런처", "series": "이클립스", "stab": 450, "def": 38, "mag_def": 43, "hit": 36, "eva": 31, "agi": 31, "cri": 30, "delay": "90%" },
+    { "name": "어비스 핸드런처", "series": "어비스", "stab": 350, "def": 38, "mag_def": 43, "hit": 36, "eva": 31, "agi": 31, "cri": 30, "delay": "90%" },
+    { "name": "페어리 피타 핸드런처", "series": "페어리피타", "stab": 280, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "90%" },
+    { "name": "아퀼루스 핸드런처", "series": "아퀼루스", "stab": 262, "def": 38, "mag_def": 43, "hit": 36, "eva": 31, "agi": 31, "cri": 30, "delay": "90%" },
+    { "name": "인퍼널 핸드런처", "series": "인퍼널", "stab": 218, "def": 37, "mag_def": 39, "hit": 32, "eva": 27, "agi": 27, "cri": 26, "delay": "90%" }
+  ],
+  "아밍소드": [
+    { "name": "改-세크리드 아밍소드", "series": "改-세크리드", "stab": 280, "hack": 610, "def": 40, "mag_def": 36, "hit": 39, "eva": 33, "agi": 32, "cri": 33, "delay": "90%" },
+    { "name": "세크리드 아밍소드", "series": "세크리드", "stab": 220, "hack": 525, "def": 40, "mag_def": 36, "hit": 39, "eva": 33, "agi": 32, "cri": 33, "delay": "90%" },
+    { "name": "이클립스 아밍소드", "series": "이클립스", "stab": 160, "hack": 430, "def": 38, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "어비스 아밍소드", "series": "어비스", "stab": 130, "hack": 330, "def": 38, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "페어리 피타 아밍소드", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "90%" },
+    { "name": "아퀼루스 아밍소드", "series": "아퀼루스", "stab": 107, "hack": 244, "def": 38, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "인퍼널 아밍소드", "series": "인퍼널", "stab": 101, "hack": 200, "def": 34, "mag_def": 30, "hit": 33, "eva": 26, "agi": 27, "cri": 27, "delay": "90%" }
+  ],
+  "소드셰이프": [
+    { "name": "이클립스 소드셰이프", "series": "이클립스", "stab": 160, "hack": 430, "def": 39, "mag_def": 35, "hit": 37, "eva": 31, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "어비스 소드셰이프", "series": "어비스", "stab": 130, "hack": 330, "def": 39, "mag_def": 34, "hit": 37, "eva": 30, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "페어리 피타 소드셰이프", "series": "페어리피타", "stab": 210, "hack": 210, "hit": 25, "eva": 20, "agi": 20, "cri": 35, "delay": "90%" },
+    { "name": "아퀼루스 소드셰이프", "series": "아퀼루스", "stab": 107, "hack": 244, "def": 39, "mag_def": 35, "hit": 37, "eva": 31, "agi": 31, "cri": 31, "delay": "90%" },
+    { "name": "인퍼널 소드셰이프", "series": "인퍼널", "stab": 101, "hack": 200, "def": 35, "mag_def": 31, "hit": 33, "eva": 27, "agi": 27, "cri": 27, "delay": "90%" }
+  ]
+}

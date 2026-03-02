@@ -114,6 +114,14 @@
       background: rgba(255, 255, 255, 0.2);
     }
   </style>
+
+    <script>
+        window.addEventListener('beforeunload', () => { 
+            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+                window.electronAPI.cleanupAllListeners(); 
+            }
+        });
+    </script>
 </head>
 
 <body class="panel-glass text-slate-200">

@@ -1,4 +1,4 @@
-import { app, globalShortcut, Notification, ipcMain } from 'electron';
+import { app, globalShortcut } from 'electron';
 import {
   FOCUS_DELAY_MS,
   appState
@@ -104,6 +104,8 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   appState.isQuitting = true;
   if (config.hasPending()) config.saveImmediate();
+  pollingLoop.stop();
+  bossNotifier.stop();
   gallery.stop();
   trade.stop();
   tray.destroyTray();

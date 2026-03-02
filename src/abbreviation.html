@@ -38,6 +38,14 @@
     }
     .no-drag { -webkit-app-region: no-drag; }
   </style>
+
+    <script>
+        window.addEventListener('beforeunload', () => { 
+            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+                window.electronAPI.cleanupAllListeners(); 
+            }
+        });
+    </script>
 </head>
 <body class="panel-glass p-0 h-screen flex flex-col">
   <!-- Header -->

@@ -16,7 +16,6 @@ let lastProcessId: number | null = null;
 let hEventHook: bigint | null = null;
 let onWindowEventCallback: (() => void) | null = null;
 let onForegroundChangeCallback: ((isGameFocused: boolean, focusedHwnd: string) => void) | null = null;
-let lastIsGameOrAppFocused: boolean = false;
 
 // --- 메모리 최적화를 위한 재사용 버퍼 ---
 const titleBuffer = Buffer.alloc(TITLE_BUFFER_LENGTH * 2);
@@ -71,7 +70,7 @@ const enumCallback = koffi.register((hwnd: bigint, _lParam: bigint) => {
 const WinEventProcProto = koffi.proto('__stdcall', 'void', ['intptr', 'uint32', 'intptr', 'int32', 'int32', 'uint32', 'uint32']);
 const WinEventProcPtr = koffi.pointer(WinEventProcProto);
 
-const winEventProcInstance = koffi.register((hWinEventHook: bigint, event: number, hwnd: bigint, idObject: number, idChild: number, dwEventThread: number, dwmsEventTime: number) => {
+const winEventProcInstance = koffi.register((_hWinEventHook: bigint, event: number, hwnd: bigint, _idObject: number, _idChild: number, _dwEventThread: number, _dwmsEventTime: number) => {
     if (cachedHwnd && hwnd === cachedHwnd) {
         if (onWindowEventCallback) onWindowEventCallback();
     }
@@ -213,8 +212,6 @@ export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: s
                 }
             }
         }
-
-        lastIsGameOrAppFocused = isFocused;
 
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);

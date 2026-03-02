@@ -1,5 +1,5 @@
 import { net } from 'electron';
-import type { EtaRankingEntry, EtaRankingResult, EtaRankingParams } from '../shared/types';
+import type { EtaRankingResult, EtaRankingParams } from '../shared/types';
 
 export async function fetchEtaRanking({
     sc = 16,     // 16: 네냐플, 7: 하이아칸

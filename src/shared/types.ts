@@ -75,6 +75,7 @@ export interface AppConfig {
         bossSettings?: WindowPosition;
         etaRanking?: WindowPosition;
         trade?: WindowPosition;
+        coefficientCalculator?: WindowPosition;
     };
     tradeServer?: string;
     tradeKeywords?: string[];

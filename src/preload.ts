@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPost, UpdateStatusInfo, EtaRankingParams, EtaRankingResult, TradePost, TradeActivity } from './shared/types';
+import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPost, UpdateStatusInfo, EtaRankingParams, TradePost, TradeActivity } from './shared/types';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // 창 제어
@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleBossSettings: () => ipcRenderer.send('toggle-boss-settings'),
   toggleEtaRanking: () => ipcRenderer.send('toggle-eta-ranking'),
   toggleTrade: () => ipcRenderer.send('toggle-trade'),
+  toggleCoefficientCalculator: () => ipcRenderer.send('toggle-coefficient-calculator'),
   setIgnoreMouseEvents: (ignore: boolean, options: { forward?: boolean }) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),
   toolbarMouseEnter: () => ipcRenderer.send('toolbar-mouse-enter'),
@@ -130,4 +131,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('toolbar-hover');
     ipcRenderer.on('toolbar-hover', (_event, isHover) => callback(isHover));
   },
+  cleanupAllListeners: () => {
+    const events = [
+      'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
+      'url-change', 'load-status', 'gallery-posts', 'gallery-new-activity',
+      'gallery-watched-update', 'gallery-connection-status', 'update-status',
+      'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
+      'trade-connection-status', 'open-settings-tab', 'toolbar-hover'
+    ];
+    events.forEach(event => ipcRenderer.removeAllListeners(event));
+  }
 });

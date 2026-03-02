@@ -1,0 +1,50 @@
+{
+  "찌르기": [
+    { "name": "이클립스의 자력", "stab": 170, "def": 30, "mag_def": 30, "hit": 30, "eva": 30, "agi": 30, "cri": 30 },
+    { "name": "이클립스의 자력 - 디펜시오", "stab": 190, "def": 35, "mag_def": 35, "hit": 35, "eva": 35, "agi": 35, "cri": 35 },
+    { "name": "아크론의 자력", "stab": 120, "def": 21, "mag_def": 21, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "아크론의 자력 - 디펜시오", "stab": 130, "def": 25, "mag_def": 25, "hit": 14, "eva": 25, "agi": 14, "cri": 17 },
+    { "name": "프시키의 자력", "stab": 66, "def": 17, "mag_def": 17, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "프시키의 자력 - 디펜시오", "stab": 72, "def": 23, "mag_def": 23, "hit": 17, "eva": 28, "agi": 17, "cri": 18 }
+  ],
+  "베기": [
+    { "name": "이클립스의 참력", "hack": 170, "def": 30, "mag_def": 30, "hit": 30, "eva": 30, "agi": 30, "cri": 30 },
+    { "name": "이클립스의 참력 - 디펜시오", "hack": 190, "def": 35, "mag_def": 35, "hit": 35, "eva": 35, "agi": 35, "cri": 35 },
+    { "name": "아크론의 참력", "hack": 120, "def": 21, "mag_def": 21, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "아크론의 참력 - 디펜시오", "hack": 130, "def": 25, "mag_def": 25, "hit": 14, "eva": 25, "agi": 14, "cri": 17 },
+    { "name": "프시키의 참력", "hack": 66, "def": 17, "mag_def": 17, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "프시키의 참력 - 디펜시오", "hack": 72, "def": 23, "mag_def": 23, "hit": 17, "eva": 28, "agi": 17, "cri": 18 }
+  ],
+  "마법공격": [
+    { "name": "이클립스의 마력", "mag_atk": 170, "def": 30, "mag_def": 30, "hit": 30, "eva": 30, "agi": 30, "cri": 30 },
+    { "name": "이클립스의 마력 - 디펜시오", "mag_atk": 190, "def": 35, "mag_def": 35, "hit": 35, "eva": 35, "agi": 35, "cri": 35 },
+    { "name": "아크론의 마력", "mag_atk": 120, "def": 21, "mag_def": 21, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "아크론의 마력 - 디펜시오", "mag_atk": 130, "def": 25, "mag_def": 25, "hit": 14, "eva": 25, "agi": 14, "cri": 17 },
+    { "name": "프시키의 마력", "mag_atk": 66, "def": 17, "mag_def": 17, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "프시키의 마력 - 디펜시오", "mag_atk": 72, "def": 23, "mag_def": 23, "hit": 17, "eva": 28, "agi": 17, "cri": 18 }
+  ],
+  "마법방어": [
+    { "name": "이클립스의 신성", "mag_def": 170, "def": 30, "mag_atk": 30, "hit": 30, "eva": 30, "agi": 30, "cri": 30 },
+    { "name": "이클립스의 신성 - 디펜시오", "mag_def": 190, "def": 35, "mag_atk": 35, "hit": 35, "eva": 35, "agi": 35, "cri": 35 },
+    { "name": "아크론의 신성", "mag_def": 120, "def": 21, "mag_atk": 21, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "아크론의 신성 - 디펜시오", "mag_def": 130, "def": 25, "mag_atk": 25, "hit": 14, "eva": 25, "agi": 14, "cri": 17 },
+    { "name": "프시키의 신성", "mag_def": 66, "def": 17, "mag_atk": 22, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "프시키의 신성 - 디펜시오", "mag_def": 72, "def": 23, "mag_atk": 28, "hit": 17, "eva": 28, "agi": 17, "cri": 18 }
+  ],
+  "물리복합": [
+    { "name": "이클립스의 물리력", "stab": 150, "hack": 150, "def": 30, "mag_def": 30, "hit": 30, "eva": 30, "agi": 30, "cri": 30 },
+    { "name": "이클립스의 물리력 - 디펜시오", "stab": 170, "hack": 170, "def": 35, "mag_def": 35, "hit": 35, "eva": 35, "agi": 35, "cri": 35 },
+    { "name": "아크론의 물리력", "stab": 90, "hack": 90, "def": 21, "mag_def": 21, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "아크론의 물리력 - 디펜시오", "stab": 100, "hack": 100, "def": 25, "mag_def": 25, "hit": 14, "eva": 25, "agi": 14, "cri": 17 },
+    { "name": "프시키의 물리력", "stab": 45, "hack": 45, "def": 17, "mag_def": 17, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "프시키의 물리력 - 디펜시오", "stab": 50, "hack": 50, "def": 23, "mag_def": 23, "hit": 17, "eva": 28, "agi": 17, "cri": 18 }
+  ],
+  "마법베기": [
+    { "name": "이클립스의 마검", "hack": 150, "mag_atk": 150, "def": 30, "mag_def": 30, "hit": 30, "eva": 30, "agi": 30, "cri": 30 },
+    { "name": "이클립스의 마검 - 디펜시오", "hack": 170, "mag_atk": 170, "def": 35, "mag_def": 35, "hit": 35, "eva": 35, "agi": 35, "cri": 35 },
+    { "name": "아크론의 마검", "hack": 90, "mag_atk": 90, "def": 21, "mag_def": 21, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "아크론의 마검 - 디펜시오", "hack": 100, "mag_atk": 100, "def": 25, "mag_def": 25, "hit": 14, "eva": 25, "agi": 14, "cri": 17 },
+    { "name": "프시키의 마검", "hack": 45, "mag_atk": 45, "def": 17, "mag_def": 17, "hit": 14, "eva": 25, "agi": 14, "cri": 15 },
+    { "name": "프시키의 마검 - 디펜시오", "hack": 50, "mag_atk": 50, "def": 23, "mag_def": 23, "hit": 17, "eva": 28, "agi": 17, "cri": 18 }
+  ]
+}

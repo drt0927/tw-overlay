@@ -1,0 +1,56 @@
+{
+  "아머": [
+    { "name": "이클립스 아머", "series": "이클립스", "def": 380, "mag_def": 360, "eva": 130 },
+    { "name": "어비스 아머", "series": "어비스", "def": 280, "mag_def": 260, "eva": 120 },
+    { "name": "아퀼루스 아머", "series": "아퀼루스", "def": 207, "mag_def": 191, "eva": 112 },
+    { "name": "인퍼널 아머", "series": "인퍼널", "def": 179, "mag_def": 163, "eva": 106 },
+    { "name": "매서운 아노마라드 왕국의 아머", "series": "왕국", "stab": 50, "hack": 0, "def": 230, "mag_atk": 0, "mag_def": 212, "eva": 116 },
+    { "name": "예리한 아노마라드 왕국의 아머", "series": "왕국", "stab": 0, "hack": 50, "def": 230, "mag_atk": 0, "mag_def": 212, "eva": 116 },
+    { "name": "총명한 아노마라드 왕국의 아머", "series": "왕국", "stab": 0, "hack": 0, "def": 230, "mag_atk": 50, "mag_def": 212, "eva": 116 },
+    { "name": "매서운 아노마라드 공화국의 아머", "series": "공화국", "stab": 50, "hack": 0, "def": 197, "mag_atk": 0, "mag_def": 181, "eva": 108 },
+    { "name": "예리한 아노마라드 공화국의 아머", "series": "공화국", "stab": 0, "hack": 100, "def": 197, "mag_atk": 0, "mag_def": 181, "eva": 108 },
+    { "name": "총명한 아노마라드 공화국의 아머", "series": "공화국", "stab": 0, "hack": 0, "def": 197, "mag_atk": 50, "mag_def": 181, "eva": 108 }
+  ],
+  "메일": [
+    { "name": "이클립스 메일", "series": "이클립스", "def": 460, "mag_def": 380, "hit": 85, "cri": 75 },
+    { "name": "어비스 메일", "series": "어비스", "def": 360, "mag_def": 280, "hit": 80, "cri": 70 },
+    { "name": "아퀼루스 메일", "series": "아퀼루스", "def": 244, "mag_def": 199, "hit": 77, "cri": 59 },
+    { "name": "인퍼널 메일", "series": "인퍼널", "def": 216, "mag_def": 171, "hit": 71, "cri": 53 },
+    { "name": "매서운 아노마라드 왕국의 메일", "series": "왕국", "stab": 50, "hack": 0, "def": 280, "mag_atk": 0, "mag_def": 225, "hit": 80, "cri": 65 },
+    { "name": "예리한 아노마라드 왕국의 메일", "series": "왕국", "stab": 0, "hack": 50, "def": 280, "mag_atk": 0, "mag_def": 225, "hit": 80, "cri": 65 },
+    { "name": "총명한 아노마라드 왕국의 메일", "series": "왕국", "stab": 0, "hack": 0, "def": 280, "mag_atk": 50, "mag_def": 225, "hit": 80, "cri": 65 },
+    { "name": "매서운 아노마라드 공화국의 메일", "series": "공화국", "stab": 50, "hack": 0, "def": 234, "mag_atk": 0, "mag_def": 185, "hit": 73, "cri": 56 },
+    { "name": "예리한 아노마라드 공화국의 메일", "series": "공화국", "stab": 0, "hack": 100, "def": 234, "mag_atk": 0, "mag_def": 185, "hit": 73, "cri": 56 },
+    { "name": "총명한 아노마라드 공화국의 메일", "series": "공화국", "stab": 0, "hack": 0, "def": 234, "mag_atk": 50, "mag_def": 185, "hit": 73, "cri": 56 }
+  ],
+  "리플렉트 아머": [
+    { "name": "이클립스 리플렉트 아머", "series": "이클립스", "stab": 122, "def": 360, "mag_atk": 129, "mag_def": 310, "hit": 105 },
+    { "name": "어비스 리플렉트 아머", "series": "어비스", "stab": 117, "def": 260, "mag_atk": 124, "mag_def": 210, "hit": 100 },
+    { "name": "아퀼루스 리플렉트 아머", "series": "아퀼루스", "stab": 111, "def": 212, "mag_atk": 118, "mag_def": 189, "hit": 94 },
+    { "name": "인퍼널 리플렉트 아머", "series": "인퍼널", "stab": 95, "def": 184, "mag_atk": 102, "mag_def": 161, "hit": 88 }
+  ],
+  "슈츠": [
+    { "name": "이클립스 슈츠", "series": "이클립스", "def": 360, "eva": 320, "agi": 105 },
+    { "name": "어비스 슈츠", "series": "어비스", "def": 260, "eva": 220, "agi": 100 },
+    { "name": "아퀼루스 슈츠", "series": "아퀼루스", "def": 199, "eva": 198, "agi": 74 },
+    { "name": "인퍼널 슈츠", "series": "인퍼널", "def": 171, "eva": 170, "agi": 56 },
+    { "name": "매서운 아노마라드 왕국의 슈츠", "series": "왕국", "stab": 50, "hack": 0, "def": 220, "mag_atk": 0, "eva": 210, "agi": 82 },
+    { "name": "예리한 아노마라드 왕국의 슈츠", "series": "왕국", "stab": 0, "hack": 50, "def": 220, "mag_atk": 0, "eva": 210, "agi": 82 },
+    { "name": "총명한 아노마라드 왕국의 슈츠", "series": "왕국", "stab": 0, "hack": 0, "def": 220, "mag_atk": 50, "eva": 210, "agi": 82 },
+    { "name": "매서운 아노마라드 공화국의 슈츠", "series": "공화국", "stab": 50, "hack": 0, "def": 189, "mag_atk": 0, "eva": 190, "agi": 70 },
+    { "name": "예리한 아노마라드 공화국의 슈츠", "series": "공화국", "stab": 0, "hack": 100, "def": 189, "mag_atk": 0, "eva": 190, "agi": 70 },
+    { "name": "총명한 아노마라드 공화국의 슈츠", "series": "공화국", "stab": 0, "hack": 0, "def": 189, "mag_atk": 50, "eva": 190, "agi": 70 }
+  ],
+  "로브": [
+    { "name": "이클립스 로브", "series": "이클립스", "def": 380, "mag_def": 390, "hit": 110, "eva": 105 },
+    { "name": "어비스 로브", "series": "어비스", "def": 280, "mag_def": 290, "hit": 100, "eva": 100 },
+    { "name": "아퀼루스 로브", "series": "아퀼루스", "def": 196, "mag_def": 211, "hit": 88, "eva": 91 },
+    { "name": "인퍼널 로브", "series": "인퍼널", "def": 168, "mag_def": 183, "hit": 82, "eva": 85 },
+    { "name": "매서운 아노마라드 왕국의 로브", "series": "왕국", "stab": 50, "hack": 0, "def": 220, "mag_atk": 0, "mag_def": 235, "hit": 95, "eva": 95 },
+    { "name": "예리한 아노마라드 왕국의 로브", "series": "왕국", "stab": 0, "hack": 50, "def": 220, "mag_atk": 0, "mag_def": 235, "hit": 95, "eva": 95 },
+    { "name": "총명한 아노마라드 왕국의 로브", "series": "왕국", "stab": 0, "hack": 0, "def": 220, "mag_atk": 50, "mag_def": 235, "hit": 95, "eva": 95 },
+    { "name": "매서운 아노마라드 공화국의 로브", "series": "공화국", "stab": 50, "hack": 0, "def": 186, "mag_atk": 0, "mag_def": 192, "hit": 84, "eva": 87 },
+    { "name": "예리한 아노마라드 공화국의 로브", "series": "공화국", "stab": 0, "hack": 50, "def": 186, "mag_atk": 0, "mag_def": 192, "hit": 84, "eva": 87 },
+    { "name": "총명한 아노마라드 공화국의 로브", "series": "공화국", "stab": 0, "hack": 0, "def": 186, "mag_atk": 50, "mag_def": 192, "hit": 84, "eva": 87 }
+  ]
+}

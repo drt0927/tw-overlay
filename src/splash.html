@@ -107,6 +107,14 @@
       transition: width 0.3s ease;
     }
   </style>
+
+    <script>
+        window.addEventListener('beforeunload', () => { 
+            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+                window.electronAPI.cleanupAllListeners(); 
+            }
+        });
+    </script>
 </head>
 
 <body class="flex items-center justify-center h-screen w-screen select-none">

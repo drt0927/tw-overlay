@@ -77,7 +77,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     buffs: { offsetX: -1000, offsetY: 40 },
     bossSettings: { offsetX: -320, offsetY: 40 },
     etaRanking: { offsetX: -380, offsetY: 40 },
-    trade: { offsetX: -380, offsetY: 40 }
+    trade: { offsetX: -380, offsetY: 40 },
+    coefficientCalculator: { offsetX: -850, offsetY: 40 }
   },
   tradeServer: 'RyXp',
   tradeKeywords: [],

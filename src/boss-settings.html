@@ -61,6 +61,14 @@
       border: 1px solid rgba(59, 130, 246, 0.2);
     }
   </style>
+
+    <script>
+        window.addEventListener('beforeunload', () => { 
+            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+                window.electronAPI.cleanupAllListeners(); 
+            }
+        });
+    </script>
 </head>
 <body class="panel-glass p-0 h-screen flex flex-col">
   <!-- Header -->

@@ -18,7 +18,6 @@ import {
 import { log } from './logger';
 import * as tracker from './tracker';
 import * as wm from './windowManager';
-import * as path from 'path';
 
 let pollingTimer: NodeJS.Timeout | null = null;
 let gameWasEverFound = false;
@@ -110,4 +109,11 @@ export function start(): void {
         pollingTimer = setTimeout(poll, nextDelay);
     }
     poll();
+}
+
+export function stop(): void {
+    if (pollingTimer) {
+        clearTimeout(pollingTimer);
+        pollingTimer = null;
+    }
 }

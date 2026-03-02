@@ -64,8 +64,6 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
 
   if (!app.isPackaged) {
     log('Development mode: skipping update check');
-    // DEV 테스트: 아래 주석을 해제하면 mandatory 업데이트 UI 흐름을 시뮬레이션합니다
-    // simulateMandatoryUpdate();
     return;
   }
 
@@ -195,47 +193,4 @@ export function startDownload() {
 /** 재시작 및 설치 */
 export function quitAndInstall() {
   autoUpdater.quitAndInstall();
-}
-
-/**
- * [DEV ONLY] 필수 업데이트 UI 흐름 시뮬레이션
- * setupUpdater()의 dev 모드 분기에서 주석 해제하여 사용:
- *   simulateMandatoryUpdate();
- */
-function simulateMandatoryUpdate() {
-  log('[DEV] Simulating mandatory update flow...');
-
-  // 즉시 스플래시 잠금 (다른 로직에 의해 닫히지 않도록)
-  import('./windowManager').then(wm => wm.setMandatoryUpdateLock(true));
-
-  // 1단계: mandatory 감지 알림
-  setTimeout(() => {
-    broadcastStatus({ state: 'mandatory', version: '99.0.0', isMandatory: true });
-    log('[DEV] → state: mandatory');
-  }, 2000);
-
-  // 2단계: 다운로드 진행 시뮬레이션 (0% → 100%)
-  const steps = 20;
-  for (let i = 1; i <= steps; i++) {
-    setTimeout(() => {
-      const percent = Math.round((i / steps) * 100);
-      broadcastStatus({ state: 'downloading', percent, isMandatory: true });
-      if (i % 5 === 0) log(`[DEV] → downloading: ${percent}%`);
-    }, 2000 + i * 200);
-  }
-
-  // 3단계: 다운로드 완료
-  setTimeout(() => {
-    broadcastStatus({ state: 'ready', version: '99.0.0', isMandatory: true });
-    log('[DEV] → state: ready (would quitAndInstall in production)');
-  }, 2000 + (steps + 1) * 200);
-
-  // 4단계: 실제 quitAndInstall 대신 잠금 해제 + 스플래시 닫기
-  setTimeout(() => {
-    import('./windowManager').then(wm => {
-      wm.setMandatoryUpdateLock(false);
-      wm.closeSplashWindow();
-    });
-    log('[DEV] Simulation complete — splash unlocked and closed.');
-  }, 2000 + (steps + 3) * 200);
 }

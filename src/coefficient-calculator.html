@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>계수 및 명중 계산기</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <style>
+    body {
+      font-family: 'Pretendard', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .stat-input {
+      background-color: rgba(30, 41, 59, 1);
+      border: 1px solid rgba(51, 65, 85, 1);
+      border-radius: 8px;
+      padding: 6px 10px;
+      text-align: right;
+      color: #60a5fa;
+      width: 75px;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .mini-input {
+      border-radius: 8px;
+      padding: 6px 10px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 800;
+      outline: none;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .upg-style {
+      background-color: rgba(16, 185, 129, 0.08);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    .upg-style::placeholder {
+      color: rgba(52, 211, 153, 0.4);
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .abil-style {
+      background-color: rgba(168, 85, 247, 0.08);
+      color: #a855f7;
+      border-color: rgba(168, 85, 247, 0.15);
+    }
+
+    .abil-style::placeholder {
+      color: rgba(168, 85, 247, 0.4);
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .gear-select {
+      flex: 1;
+      background-color: rgba(15, 23, 42, 1);
+      border: 1px solid rgba(51, 65, 85, 1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #f1f5f9;
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .tab-btn {
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #64748b;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: #60a5fa;
+      border-bottom-color: #3b82f6;
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    .drag {
+      -webkit-app-region: drag;
+    }
+
+    .no-drag {
+      -webkit-app-region: no-drag;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+  </style>
+
+    <script>
+        window.addEventListener('beforeunload', () => { 
+            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+                window.electronAPI.cleanupAllListeners(); 
+            }
+        });
+    </script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 select-none h-screen flex flex-col border border-slate-800">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 drag">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-blue-500/20 rounded-xl text-blue-400"><i data-lucide="calculator" class="w-6 h-6"></i></div>
+        <h1 class="font-black text-xl tracking-tight text-white">계수 및 명중 계산기</h1>
+      </div>
+
+      <!-- Profile Management -->
+      <div class="flex items-center gap-2 no-drag ml-4 bg-slate-800/50 p-1.5 rounded-xl border border-slate-700">
+        <select id="profile-select"
+          class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 text-xs font-bold text-slate-200 outline-none focus:border-blue-500 w-40">
+          <option value="default">기본 프로필</option>
+        </select>
+        <button id="btn-add-profile" class="p-1.5 hover:bg-blue-500/20 rounded-lg transition-colors text-blue-400"
+          title="새 프로필 추가">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+        <button id="btn-rename-profile"
+          class="p-1.5 hover:bg-yellow-500/20 rounded-lg transition-colors text-yellow-400" title="이름 변경">
+          <i data-lucide="edit-3" class="w-4 h-4"></i>
+        </button>
+        <button id="btn-delete-profile" class="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors text-red-400"
+          title="프로필 삭제">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+    <div class="no-drag">
+      <button onclick="window.close()"
+        class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-slate-400 hover:text-red-400"><i
+          data-lucide="x" class="w-6 h-6"></i></button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex bg-slate-900 px-4 no-drag border-b border-slate-800 shadow-lg relative z-20">
+    <button class="tab-btn active" data-type="stab">찌르기</button>
+    <button class="tab-btn" data-type="hack">베기</button>
+    <button class="tab-btn" data-type="phycomp">물리복합</button>
+    <button class="tab-btn" data-type="magatk">마법공격</button>
+    <button class="tab-btn" data-type="maghack">마법베기</button>
+    <button class="tab-btn" data-type="magdef">마법방어</button>
+  </div>
+
+  <!-- Center Content -->
+  <div class="flex-1 overflow-y-auto custom-scroll p-6 no-drag bg-slate-950">
+    <div class="flex gap-6 max-w-[1400px] mx-auto items-start">
+      <!-- Left Sidebar -->
+      <div class="w-72 space-y-6 flex-shrink-0">
+        <div class="bg-slate-900/40 p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4 text-purple-400"></i>도핑 프리셋
+            </h2>
+          </div>
+          <div class="space-y-2">
+            <select id="buff-preset-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-bold text-purple-400 outline-none focus:border-purple-500">
+              <option value="none">도핑 없음</option>
+              <option value="standard">기본 도핑 세트</option>
+            </select>
+            <div id="active-buff-info" class="text-[10px] font-bold text-slate-500 leading-relaxed pl-1">
+              프리셋을 선택하면 스탯에 반영됩니다.
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/40 p-5 rounded-2xl border border-slate-800 space-y-4">
+          <h2
+            class="text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2 flex items-center gap-2">
+            <i data-lucide="user" class="w-4 h-4"></i>기본 스탯
+          </h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between"><label
+                class="text-xs font-bold text-slate-500 uppercase">STAB</label><input type="number" id="stat-stab"
+                class="stat-input" value="850"></div>
+            <div class="flex items-center justify-between"><label
+                class="text-xs font-bold text-slate-500 uppercase">HACK</label><input type="number" id="stat-hack"
+                class="stat-input" value="550"></div>
+            <div class="flex items-center justify-between"><label
+                class="text-xs font-bold text-slate-500 uppercase">INT</label><input type="number" id="stat-int"
+                class="stat-input" value="0"></div>
+            <div class="flex items-center justify-between"><label
+                class="text-xs font-bold text-slate-500 uppercase">MR</label><input type="number" id="stat-mr"
+                class="stat-input" value="0"></div>
+            <div class="flex items-center justify-between"><label
+                class="text-xs font-black text-yellow-600 uppercase">DEX</label><input type="number" id="stat-dex"
+                class="stat-input !text-yellow-400 !border-yellow-500/20" value="700"></div>
+          </div>
+        </div>
+        <div class="bg-slate-900/40 p-5 rounded-2xl border border-slate-800 space-y-4">
+          <h2
+            class="text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>추가 보너스
+          </h2>
+          <div class="space-y-4">
+            <div class="flex text-[9px] font-black text-slate-600 px-1 uppercase mb-1">
+              <div class="flex-1 text-left">항목</div>
+              <div class="w-14 text-center bonus-label-main">STAB</div>
+              <div class="w-14 text-center bonus-label-sub">HACK</div>
+              <div class="w-14 text-center text-yellow-600">DEX</div>
+            </div>
+            <div class="flex items-center gap-1.5"><span class="text-[11px] text-slate-400 flex-1">아바타</span><input
+                type="number" id="bonus-avatar-main" class="stat-input !w-14 !text-xs" value="50"><input type="number"
+                id="bonus-avatar-sub" class="stat-input !w-14 !text-xs !text-slate-500" value="15"><input type="number"
+                id="bonus-avatar-hit" class="stat-input !w-14 !text-xs !text-yellow-500/70" value="15"></div>
+            <div class="flex items-center gap-1.5"><span class="text-[11px] text-slate-400 flex-1">커프</span><input
+                type="number" id="bonus-cuff-main" class="stat-input !w-14 !text-xs" value="140"><input type="number"
+                id="bonus-cuff-sub" class="stat-input !w-14 !text-xs !text-slate-500" value="140"><input type="number"
+                id="bonus-cuff-hit" class="stat-input !w-14 !text-xs !text-yellow-500/70" value="0"></div>
+            <div class="flex items-center gap-1.5"><span class="text-[11px] text-slate-400 flex-1">효과</span><input
+                type="number" id="bonus-effect-main" class="stat-input !w-14 !text-xs" value="235"><input type="number"
+                id="bonus-effect-sub" class="stat-input !w-14 !text-xs !text-slate-500" value="20"><input type="number"
+                id="bonus-effect-hit" class="stat-input !w-14 !text-xs !text-yellow-500/70" value="0"></div>
+            <div class="flex items-center gap-1.5"><span class="text-[11px] text-slate-400 flex-1">렐릭</span><input
+                type="number" id="bonus-relic-main" class="stat-input !w-14 !text-xs" value="50"><input type="number"
+                id="bonus-relic-sub" class="stat-input !w-14 !text-xs !text-slate-500" value="50"><input type="number"
+                id="bonus-relic-hit" class="stat-input !w-14 !text-xs !text-yellow-500/70" value="0"></div>
+            <div class="pt-3 border-t border-slate-800 space-y-2">
+              <div class="flex items-center justify-between"><span class="text-[11px] text-slate-400">칭호</span><input
+                  type="number" id="bonus-title" class="stat-input !w-28" value="80"></div>
+              <div class="flex items-center justify-between"><span
+                  class="text-[11px] text-pink-500 font-black">코어</span><input type="number" id="bonus-core"
+                  class="stat-input !w-28 !text-pink-400 !border-pink-500/20" value="210"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Right Grid -->
+      <div class="flex-1 space-y-4">
+        <!-- <div class="flex items-center border-b-2 border-slate-800 pb-3">
+          <h2 class="text-sm font-black uppercase tracking-widest text-slate-200 flex items-center gap-2"><i
+              data-lucide="shield" class="w-5 h-5"></i>장비 부위별 세팅</h2>
+        </div> -->
+        <div id="equipment-rows" class="grid grid-cols-2 gap-4">
+          <script>
+            const parts = [
+              { id: 'helm', name: '투구' }, { id: 'armor', name: '갑옷' }, { id: 'weapon', name: '무기' },
+              { id: 'wrist', name: '손목' }, { id: 'amulet', name: '머리' }, { id: 'wing', name: '몸' },
+              { id: 'gauntlet', name: '손' }, { id: 'boots', name: '다리' }, { id: 'artifact', name: '아티팩트' }
+            ];
+            parts.forEach(p => {
+              const border = p.id === 'weapon' ? 'border-blue-500/40 bg-blue-500/5' : 'border-slate-800 bg-slate-900/40';
+              document.write(`
+                <div class="p-4 rounded-2xl border ${border} space-y-3 shadow-sm hover:border-slate-700 transition-colors">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-black text-slate-300">${p.name}</span>
+                    <span id="preview-${p.id}" class="text-[10px] font-bold text-slate-500 tracking-tighter"></span>
+                  </div>
+                  <select id="gear-${p.id}" class="gear-select w-full"></select>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-emerald-500 w-8 shrink-0">강화</span>
+                    <div class="flex-1 flex gap-2">
+                      <input type="number" id="upg-${p.id}-main" class="mini-input upg-style" placeholder="MAIN">
+                      <input type="number" id="upg-${p.id}-sub" class="mini-input upg-style" placeholder="SUB">
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-purple-500 w-8 shrink-0">어빌</span>
+                    <div class="flex-1 flex gap-2">
+                      <input type="number" id="abil-${p.id}-stat" class="mini-input abil-style" placeholder="STAT">
+                      <input type="number" id="abil-${p.id}-hit" class="mini-input abil-style" placeholder="DEX">
+                    </div>
+                  </div>
+                </div>
+              `);
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Area (Fixed 350px) -->
+  <div class="h-[350px] flex-shrink-0 bg-slate-900 border-t-2 border-slate-800 no-drag shadow-2xl p-5 relative z-30">
+    <div class="flex gap-8 max-w-[1400px] mx-auto h-full items-stretch">
+      <!-- Bottom Left: Stats Summary (Expands) -->
+      <div class="flex-1 flex flex-col gap-4 overflow-hidden">
+        <div class="bg-black/30 p-4 rounded-2xl border border-white/5 shadow-inner">
+          <table class="w-full font-bold border-separate border-spacing-x-4">
+            <thead>
+              <tr class="text-[10px] text-slate-600 uppercase tracking-widest">
+                <th class="text-left font-black pb-1">구분</th>
+                <th class="text-right font-black pb-1">기본 스탯</th>
+                <th class="text-right font-black pb-1">장비/어빌 합</th>
+                <th class="text-right font-black pb-1 text-emerald-500/80">강화 합계</th>
+                <th class="text-right font-black pb-1 text-white/80">최종 합계</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <tr>
+                <td class="text-blue-400 text-sm" id="sum-label-main">STAB</td>
+                <td class="text-right text-sm text-slate-400" id="sum-main-char">0</td>
+                <td class="text-right text-sm text-slate-400" id="sum-main-gear">0</td>
+                <td class="text-right text-sm text-emerald-400" id="sum-main-upg">0</td>
+                <td class="text-right text-xl text-white font-black" id="sum-main-total">0</td>
+              </tr>
+              <tr>
+                <td class="text-slate-300 text-sm" id="sum-label-sub">HACK</td>
+                <td class="text-right text-sm text-slate-400" id="sum-sub-char">0</td>
+                <td class="text-right text-sm text-slate-400" id="sum-sub-gear">0</td>
+                <td class="text-right text-sm text-slate-500" id="sum-sub-upg">0</td>
+                <td class="text-right text-xl text-slate-200 font-black" id="sum-sub-total">0</td>
+              </tr>
+              <tr class="border-t border-white/5">
+                <td class="text-yellow-500 text-sm">DEX</td>
+                <td class="text-right text-sm text-slate-400" id="sum-hit-char">0</td>
+                <td class="text-right text-sm text-slate-400" id="sum-hit-gear">0</td>
+                <td class="text-right text-sm text-slate-600">-</td>
+                <td class="text-right text-xl text-yellow-400 font-black" id="sum-hit-total">0</td>
+              </tr>
+              <tr>
+                <td class="text-slate-500 text-[11px] font-black uppercase tracking-widest">계수 계산식</td>
+                <td colspan="4" id="sum-formula" class="text-left w-1 text-[11px] text-blue-400/70 font-bold italic">-
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-cols-2 gap-4 flex-1">
+          <div class="bg-black/40 p-4 rounded-2xl border border-blue-500/20 flex flex-col justify-center">
+            <div class="flex items-center gap-2 mb-1">
+              <span id="current-series-name"
+                class="text-[10px] font-black text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded tracking-widest uppercase">찌르기</span>
+              <span class="text-[10px] font-bold text-slate-500">총합 계수</span>
+            </div>
+            <div id="total-coefficient" class="text-4xl font-black text-white tracking-tighter">0.00</div>
+          </div>
+          <div class="bg-black/40 p-4 rounded-2xl border border-yellow-500/20 flex flex-col justify-center">
+            <div class="flex items-center gap-2 mb-1"><i data-lucide="target"
+                class="w-3.5 h-3.5 text-yellow-500"></i><span class="text-[10px] font-bold text-slate-500">최종
+                명중(DEX)</span></div>
+            <div id="total-hit-display" class="text-4xl font-black text-yellow-400 tracking-tight">0</div>
+          </div>
+        </div>
+      </div>
+      <!-- Bottom Right: Content Guide (Width 20rem) -->
+      <div
+        class="w-80 bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col h-full overflow-hidden">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+          <h3 class="text-xs font-black text-slate-400 flex items-center gap-2"><i data-lucide="award"
+              class="w-4 h-4 text-purple-500"></i> 콘텐츠 가이드</h3>
+        </div>
+        <div id="content-guide" class="space-y-2 overflow-y-auto custom-scroll flex-1 pr-1"></div>
+      </div>
+    </div>
+  </div>
+  <script src="coefficient-calculator-renderer.js"></script>
+
+  <!-- Custom Modal -->
+  <div id="modal-overlay"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden no-drag">
+    <div class="bg-slate-900 border border-slate-700 w-[400px] rounded-2xl shadow-2xl p-6 space-y-4">
+      <h3 id="modal-title" class="text-lg font-black text-white">알림</h3>
+      <div id="modal-content" class="space-y-4">
+        <p id="modal-message" class="text-sm text-slate-400 font-bold"></p>
+        <input type="text" id="modal-input"
+          class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-blue-400 outline-none focus:border-blue-500 hidden"
+          placeholder="내용을 입력하세요">
+      </div>
+      <div class="flex gap-2 justify-end pt-2">
+        <button id="modal-cancel"
+          class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold text-slate-300 transition-colors">취소</button>
+        <button id="modal-confirm"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-black text-white transition-colors">확인</button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

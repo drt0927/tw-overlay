@@ -1,0 +1,70 @@
+{
+  "방패": [
+    { "name": "이클립스 실드", "series": "이클립스", "def": 320, "mag_def": 320 },
+    { "name": "어비스 실드", "series": "어비스", "def": 220, "mag_def": 220 },
+    { "name": "아퀼루스 실드", "series": "아퀼루스", "def": 187, "mag_def": 182 },
+    { "name": "인퍼널 실드", "series": "인퍼널", "def": 159, "mag_def": 154 }
+  ],
+  "리스트": [
+    { "name": "세크리드 리스트", "series": "세크리드", "stab": 350, "hack": 350, "hit": 75, "cri": 75 },
+    { "name": "이클립스 리스트", "series": "이클립스", "stab": 250, "hack": 250, "hit": 70, "cri": 70 },
+    { "name": "어비스 리스트", "series": "어비스", "stab": 150, "hack": 150, "hit": 65, "cri": 65 },
+    { "name": "아퀼루스 리스트", "series": "아퀼루스", "stab": 126, "hack": 118, "hit": 52, "cri": 53 },
+    { "name": "인퍼널 리스트", "series": "인퍼널", "stab": 98, "hack": 90, "hit": 46, "cri": 47 }
+  ],
+  "밴드": [
+    { "name": "이클립스 밴드", "series": "이클립스", "eva": 260, "agi": 260 },
+    { "name": "어비스 밴드", "series": "어비스", "eva": 160, "agi": 160 },
+    { "name": "아퀼루스 밴드", "series": "아퀼루스", "eva": 144, "agi": 144 },
+    { "name": "인퍼널 밴드", "series": "인퍼널", "eva": 116, "agi": 116 }
+  ],
+  "암릿": [
+    { "name": "이클립스 암릿", "series": "이클립스", "mag_atk": 255, "mag_def": 250, "hit": 90 },
+    { "name": "어비스 암릿", "series": "어비스", "mag_atk": 155, "mag_def": 150, "hit": 85 },
+    { "name": "아퀼루스 암릿", "series": "아퀼루스", "mag_atk": 130, "mag_def": 119, "hit": 71 },
+    { "name": "인퍼널 암릿", "series": "인퍼널", "mag_atk": 102, "mag_def": 91, "hit": 65 }
+  ],
+  "수정구": [
+    { "name": "이클립스 수정구", "series": "이클립스", "mag_def": 270, "hit": 90 },
+    { "name": "어비스 수정구", "series": "어비스", "mag_def": 170, "hit": 85 },
+    { "name": "아퀼루스 수정구", "series": "아퀼루스", "mag_def": 148, "hit": 74 },
+    { "name": "인퍼널 수정구", "series": "인퍼널", "mag_def": 110, "hit": 68 }
+  ],
+  "스펠북": [
+    { "name": "이클립스 스펠북", "series": "이클립스", "mag_atk": 255, "eva": 70, "agi": 70 },
+    { "name": "어비스 스펠북", "series": "어비스", "mag_atk": 155, "eva": 65, "agi": 65 },
+    { "name": "아퀼루스 스펠북", "series": "아퀼루스", "mag_atk": 144, "eva": 51, "agi": 52 },
+    { "name": "인퍼널 스펠북", "series": "인퍼널", "mag_atk": 106, "eva": 45, "agi": 46 }
+  ],
+  "물리탄창": [
+    { "name": "이클립스 탄창", "series": "이클립스", "stab": 275, "def": 105, "cri": 70 },
+    { "name": "어비스 탄창", "series": "어비스", "stab": 175, "def": 100, "cri": 65 },
+    { "name": "아퀼루스 탄창", "series": "아퀼루스", "stab": 133, "def": 88, "cri": 52 },
+    { "name": "인퍼널 탄창", "series": "인퍼널", "stab": 95, "def": 70, "cri": 46 }
+  ],
+  "마법탄창": [
+    { "name": "이클립스 마법 탄창", "series": "이클립스", "mag_atk": 260, "mag_def": 250, "hit": 90 },
+    { "name": "어비스 마법 탄창", "series": "어비스", "mag_atk": 160, "mag_def": 150, "hit": 85 },
+    { "name": "아퀼루스 마법 탄창", "series": "아퀼루스", "mag_atk": 141, "mag_def": 119, "hit": 71 },
+    { "name": "인퍼널 마법 탄창", "series": "인퍼널", "mag_atk": 103, "mag_def": 91, "hit": 65 }
+  ],
+  "물리검(sub)": [
+    { "name": "이클립스 글라디우스(sub)", "series": "이클립스", "stab": 160, "hack": 340, "def": 22, "mag_def": 46, "hit": 28, "eva": 20, "agi": 23, "cri": 24 },
+    { "name": "어비스 글라디우스(sub)", "series": "어비스", "stab": 140, "hack": 240, "def": 22, "mag_def": 46, "hit": 28, "eva": 20, "agi": 23, "cri": 24 },
+    { "name": "아퀼루스 글라디우스(sub)", "series": "아퀼루스", "stab": 99, "hack": 168, "def": 22, "mag_def": 46, "hit": 28, "eva": 20, "agi": 23, "cri": 24 },
+    { "name": "인퍼널 글라디우스(sub)", "series": "인퍼널", "stab": 89, "hack": 135, "def": 20, "mag_def": 42, "hit": 26, "eva": 18, "agi": 21, "cri": 22 }
+  ],
+  "마법검(sub)": [
+    { "name": "이클립스 크리스(sub)", "series": "이클립스", "hack": 160, "def": 21, "mag_atk": 160, "mag_def": 325, "hit": 32, "eva": 21, "agi": 17, "cri": 17 },
+    { "name": "어비스 크리스(sub)", "series": "어비스", "hack": 130, "def": 21, "mag_atk": 130, "mag_def": 310, "hit": 32, "eva": 21, "agi": 17, "cri": 17 },
+    { "name": "아퀼루스 크리스(sub)", "series": "아퀼루스", "hack": 119, "def": 21, "mag_atk": 99, "mag_def": 166, "hit": 32, "eva": 21, "agi": 17, "cri": 17 },
+    { "name": "인퍼널 크리스(sub)", "series": "인퍼널", "hack": 113, "def": 19, "mag_atk": 89, "mag_def": 133, "hit": 30, "eva": 19, "agi": 15, "cri": 15 }
+  ],
+  "펜듈럼": [
+    { "name": "세크리드 펜듈럼", "series": "세크리드", "stab": 350, "hack": 350, "hit": 75, "cri": 75 },
+    { "name": "이클립스 펜듈럼", "series": "이클립스", "stab": 250, "hack": 250, "hit": 70, "cri": 70 },
+    { "name": "어비스 펜듈럼", "series": "어비스", "stab": 150, "hack": 150, "hit": 65, "cri": 65 },
+    { "name": "아퀼루스 펜듈럼", "series": "아퀼루스", "stab": 118, "hack": 126, "hit": 53, "cri": 53 },
+    { "name": "인퍼널 펜듈럼", "series": "인퍼널", "stab": 90, "hack": 98, "hit": 47, "cri": 47 }
+  ]
+}

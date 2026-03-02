@@ -32,8 +32,14 @@ export function register(): void {
   ipcMain.on('navigate', (_e, url: string) => {
     let t = url.trim();
     if (!t.startsWith('http://') && !t.startsWith('https://')) t = 'https://' + t;
-    if (!t.startsWith('http://') && !t.startsWith('https://')) return;
-    wm.setOverlayVisible(true, t);
+    try {
+      const parsedUrl = new URL(t);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        wm.setOverlayVisible(true, parsedUrl.href);
+      }
+    } catch (e) {
+      console.warn('[IPC] Invalid URL in navigate:', url);
+    }
   });
 
   ipcMain.on('go-home', () => {
@@ -62,6 +68,7 @@ export function register(): void {
     'toggle-overlay': wm.toggleOverlay,
     'toggle-click-through': wm.toggleClickThrough,
     'toggle-trade': wm.toggleTradeWindow,
+    'toggle-coefficient-calculator': wm.toggleCoefficientCalculatorWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -94,8 +101,13 @@ export function register(): void {
   ipcMain.handle('get-app-version', () => app.getVersion());
 
   ipcMain.on('open-external', (_e, url: string) => {
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      shell.openExternal(url);
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        shell.openExternal(parsedUrl.href);
+      }
+    } catch (e) {
+      console.warn('[IPC] Invalid URL in open-external:', url);
     }
   });
 
@@ -131,8 +143,13 @@ export function register(): void {
   ipcMain.handle('trade-get-notify', () => { return trade.getNotifyEnabled(); });
   ipcMain.on('trade-set-notify', (_e, enabled: boolean) => { trade.setNotifyEnabled(enabled); });
   ipcMain.on('trade-open-post', (_e, url: string) => {
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      shell.openExternal(url);
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        shell.openExternal(parsedUrl.href);
+      }
+    } catch (e) {
+      console.warn('[IPC] Invalid URL in trade-open-post:', url);
     }
   });
   ipcMain.on('trade-set-server', (_e, serverId: string) => { trade.setServer(serverId); });

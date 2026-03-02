@@ -1,0 +1,47 @@
+{
+  "투구": [
+    { "name": "改-세크리드 헬름", "series": "改-세크리드", "stab": 132, "hack": 132, "def": 320, "mag_atk": 132, "mag_def": 335, "hit": 132, "eva": 132, "agi": 132, "cri": 132 },
+    { "name": "세크리드 헬름", "series": "세크리드", "stab": 122, "hack": 122, "def": 320, "mag_atk": 122, "mag_def": 320, "hit": 122, "eva": 122, "agi": 122, "cri": 122 },
+    { "name": "이클립스 헬름", "series": "이클립스", "stab": 112, "hack": 112, "def": 220, "mag_atk": 112, "mag_def": 230, "hit": 102, "eva": 102, "agi": 102, "cri": 102 },
+    { "name": "어비스 헬름", "series": "어비스", "stab": 102, "hack": 102, "def": 124, "mag_atk": 102, "mag_def": 134, "hit": 92, "eva": 92, "agi": 92, "cri": 92 },
+    { "name": "아퀼루스 헬름", "series": "아퀼루스", "stab": 83, "hack": 85, "def": 81, "mag_atk": 85, "mag_def": 81, "hit": 57, "eva": 57, "agi": 57, "cri": 51 },
+    { "name": "인퍼널 헬름", "series": "인퍼널", "stab": 55, "hack": 57, "def": 63, "mag_atk": 57, "mag_def": 63, "hit": 51, "eva": 51, "agi": 51, "cri": 45 },
+    { "name": "데모닉 혼", "series": "데모닉", "stab": 77, "hack": 77, "def": 0, "mag_atk": 77, "mag_def": 77, "hit": 30, "eva": 30, "agi": 30, "cri": 25 }
+  ],
+  "머리": [
+    { "name": "改-세크리드 아뮬렛", "series": "改-세크리드", "stab": 132, "hack": 132, "def": 132, "mag_atk": 132, "mag_def": 132, "hit": 132, "eva": 132, "agi": 132, "cri": 335 },
+    { "name": "세크리드 아뮬렛", "series": "세크리드", "stab": 122, "hack": 122, "def": 122, "mag_atk": 122, "mag_def": 122, "hit": 122, "eva": 122, "agi": 122, "cri": 320 },
+    { "name": "이클립스 아뮬렛", "series": "이클립스", "stab": 112, "hack": 112, "def": 102, "mag_atk": 112, "mag_def": 112, "hit": 102, "eva": 102, "agi": 102, "cri": 220 },
+    { "name": "어비스 아뮬렛", "series": "어비스", "stab": 102, "hack": 102, "def": 92, "mag_atk": 102, "mag_def": 102, "hit": 92, "eva": 92, "agi": 92, "cri": 124 },
+    { "name": "아퀼루스 아뮬렛", "series": "아퀼루스", "stab": 83, "hack": 85, "def": 78, "mag_atk": 83, "mag_def": 94, "hit": 55, "eva": 55, "agi": 55, "cri": 49 },
+    { "name": "인퍼널 아뮬렛", "series": "인퍼널", "stab": 55, "hack": 57, "def": 60, "mag_atk": 55, "mag_def": 66, "hit": 49, "eva": 49, "agi": 49, "cri": 43 },
+    { "name": "데모닉 마스크", "series": "데모닉", "stab": 77, "hack": 77, "def": 0, "mag_atk": 77, "mag_def": 77, "hit": 30, "eva": 30, "agi": 30, "cri": 25 }
+  ],
+  "몸": [
+    { "name": "改-세크리드 망토", "series": "改-세크리드", "stab": 335, "hack": 335, "def": 132, "mag_atk": 335, "mag_def": 122, "hit": 132, "eva": 132, "agi": 132, "cri": 122 },
+    { "name": "세크리드 망토", "series": "세크리드", "stab": 320, "hack": 320, "def": 122, "mag_atk": 320, "mag_def": 112, "hit": 122, "eva": 122, "agi": 122, "cri": 112 },
+    { "name": "이클립스 윙", "series": "이클립스", "stab": 220, "hack": 220, "def": 102, "mag_atk": 220, "mag_def": 92, "hit": 102, "eva": 102, "agi": 102, "cri": 92 },
+    { "name": "어비스 윙", "series": "어비스", "stab": 124, "hack": 124, "def": 92, "mag_atk": 124, "mag_def": 82, "hit": 92, "eva": 92, "agi": 92, "cri": 82 },
+    { "name": "아퀼루스 윙", "series": "아퀼루스", "stab": 86, "hack": 86, "def": 72, "mag_atk": 86, "mag_def": 88, "hit": 58, "eva": 58, "agi": 58, "cri": 52 },
+    { "name": "인퍼널 윙", "series": "인퍼널", "stab": 58, "hack": 58, "def": 54, "mag_atk": 58, "mag_def": 60, "hit": 52, "eva": 52, "agi": 52, "cri": 46 },
+    { "name": "데모닉 윙", "series": "데모닉", "stab": 77, "hack": 77, "def": 0, "mag_atk": 77, "mag_def": 77, "hit": 30, "eva": 30, "agi": 30, "cri": 25 }
+  ],
+  "손": [
+    { "name": "改-세크리드 건틀렛", "series": "改-세크리드", "stab": 132, "hack": 132, "def": 132, "mag_atk": 132, "mag_def": 132, "hit": 335, "eva": 132, "agi": 132, "cri": 132 },
+    { "name": "세크리드 건틀렛", "series": "세크리드", "stab": 122, "hack": 122, "def": 122, "mag_atk": 122, "mag_def": 122, "hit": 320, "eva": 122, "agi": 122, "cri": 122 },
+    { "name": "이클립스 건틀렛", "series": "이클립스", "stab": 112, "hack": 112, "def": 102, "mag_atk": 112, "mag_def": 112, "hit": 220, "eva": 102, "agi": 102, "cri": 102 },
+    { "name": "어비스 건틀렛", "series": "어비스", "stab": 102, "hack": 102, "def": 92, "mag_atk": 102, "mag_def": 102, "hit": 180, "eva": 92, "agi": 92, "cri": 92 },
+    { "name": "아퀼루스 건틀렛", "series": "아퀼루스", "stab": 82, "hack": 82, "def": 66, "mag_atk": 82, "mag_def": 82, "hit": 110, "eva": 54, "agi": 54, "cri": 54 },
+    { "name": "인퍼널 건틀렛", "series": "인퍼널", "stab": 54, "hack": 54, "def": 48, "mag_atk": 54, "mag_def": 54, "hit": 48, "eva": 48, "agi": 48, "cri": 48 },
+    { "name": "데모닉 건틀렛", "series": "데모닉", "stab": 77, "hack": 77, "def": 0, "mag_atk": 77, "mag_def": 77, "hit": 30, "eva": 30, "agi": 30, "cri": 25 }
+  ],
+  "다리": [
+    { "name": "改-세크리드 부츠", "series": "改-세크리드", "stab": 132, "hack": 132, "def": 132, "mag_atk": 132, "mag_def": 132, "hit": 132, "eva": 335, "agi": 132, "cri": 132 },
+    { "name": "세크리드 부츠", "series": "세크리드", "stab": 122, "hack": 122, "def": 122, "mag_atk": 122, "mag_def": 122, "hit": 122, "eva": 320, "agi": 122, "cri": 122 },
+    { "name": "이클립스 부츠", "series": "이클립스", "stab": 112, "hack": 112, "def": 102, "mag_atk": 112, "mag_def": 112, "hit": 102, "eva": 310, "agi": 102, "cri": 102 },
+    { "name": "어비스 부츠", "series": "어비스", "stab": 102, "hack": 102, "def": 92, "mag_atk": 102, "mag_def": 102, "hit": 92, "eva": 180, "agi": 92, "cri": 92 },
+    { "name": "아퀼루스 부츠", "series": "아퀼루스", "stab": 82, "hack": 82, "def": 66, "mag_atk": 82, "mag_def": 82, "hit": 54, "eva": 110, "agi": 54, "cri": 54 },
+    { "name": "인퍼널 부츠", "series": "인퍼널", "stab": 54, "hack": 54, "def": 48, "mag_atk": 54, "mag_def": 54, "hit": 48, "eva": 48, "agi": 48, "cri": 48 },
+    { "name": "데모닉 부츠", "series": "데모닉", "stab": 77, "hack": 77, "def": 0, "mag_atk": 77, "mag_def": 77, "hit": 30, "eva": 30, "agi": 30, "cri": 25 }
+  ]
+}

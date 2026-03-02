@@ -57,7 +57,6 @@ let galleryKeywords: string[] = []; // 알림 키워드 목록
 let checkTimer: NodeJS.Timeout | null = null;
 let isRunning = false;
 let notifyEnabled = true;      // 알림 on/off
-let mainWindowRef: BrowserWindow | null = null;
 let sidebarWindowRef: BrowserWindow | null = null;
 let galleryWindowRef: BrowserWindow | null = null;
 
@@ -361,8 +360,7 @@ async function doCheck(): Promise<void> {
 
 // ─── 공개 API ───
 
-export function start(overlayWin: BrowserWindow | null, sidebarWin: BrowserWindow): void {
-  mainWindowRef = overlayWin;
+export function start(_overlayWin: BrowserWindow | null, sidebarWin: BrowserWindow): void {
   sidebarWindowRef = sidebarWin;
 
   const cfg = config.load();
@@ -380,8 +378,7 @@ export function stop(): void {
   if (checkTimer) { clearTimeout(checkTimer); checkTimer = null; }
 }
 
-export function updateWindows(overlayWin: BrowserWindow | null, sidebarWin: BrowserWindow | null, galleryWin: BrowserWindow | null = null): void {
-  if (overlayWin) mainWindowRef = overlayWin;
+export function updateWindows(_overlayWin: BrowserWindow | null, sidebarWin: BrowserWindow | null, galleryWin: BrowserWindow | null = null): void {
   if (sidebarWin) sidebarWindowRef = sidebarWin;
   if (galleryWin) galleryWindowRef = galleryWin;
 

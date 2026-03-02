@@ -160,6 +160,14 @@
       letter-spacing: 0.5px;
     }
   </style>
+
+    <script>
+        window.addEventListener('beforeunload', () => { 
+            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+                window.electronAPI.cleanupAllListeners(); 
+            }
+        });
+    </script>
 </head>
 
 <body class="panel-glass overflow-hidden">
@@ -259,6 +267,10 @@
                 <label class="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" value="buffs-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">버프 백과 & 계산기</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="coefficient-calculator-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">계수 및 명중 계산기</span>
                 </label>
                 <label class="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" value="boss-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
@@ -599,7 +611,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.6.2</span></p>
+                        class="text-purple-400">1.6.3</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -789,7 +801,7 @@
       document.getElementById('auto-update-input').checked = config.autoUpdateEnabled !== false;
 
       // 모든 메뉴 목록 (신규 추가 시 이 배열만 업데이트하면 됨)
-      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
       let hiddenMenuIds = config.hiddenMenuIds;
 
       // 구버전(visibleMenuIds 방식) 마이그레이션 처리

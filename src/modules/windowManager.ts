@@ -1,11 +1,10 @@
 /**
  * 창 관리 모듈 - WebContentsView + 동적 Z-Order 스택 버전
  */
-import { BrowserWindow, WebContentsView, screen, Rectangle } from 'electron';
+import { BrowserWindow, WebContentsView, screen } from 'electron';
 import * as path from 'path';
 import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig } from './constants';
 import * as config from './config';
-import { log } from './logger';
 import * as bossNotifier from './bossNotifier';
 import * as gallery from './galleryMonitor';
 import * as trade from './tradeMonitor';
@@ -39,11 +38,15 @@ function removeFromStack(win: BrowserWindow | null): void {
   activeWindowsStack = activeWindowsStack.filter(w => w !== win);
 }
 
+let focusDebounceTimer: NodeJS.Timeout | null = null;
+
 function attachStackListeners(win: BrowserWindow): void {
   win.on('focus', () => {
     pushToStack(win);
-    // TW-Overlay 창 포커스 시 게임 창도 Z-Order 상단으로 끌어올림
-    bringGameAndOverlaysToTop();
+    if (focusDebounceTimer) clearTimeout(focusDebounceTimer);
+    focusDebounceTimer = setTimeout(() => {
+        bringGameAndOverlaysToTop();
+    }, 50);
   });
   win.on('show', () => pushToStack(win));
   win.on('closed', () => removeFromStack(win));
@@ -103,6 +106,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   bossSettings: { ref: null, pos: { offsetX: -320, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 320, height: 600 },
   etaRanking: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 380, height: 600 },
   trade: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 380, height: 600 },
+  coefficientCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 850, height: 1150 },
 };
 
 let gameRect: GameRect | null = null;
@@ -152,6 +156,7 @@ export const getBuffsWindow = () => windowRegistry.buffs.ref;
 export const getBossSettingsWindow = () => windowRegistry.bossSettings.ref;
 export const getEtaRankingWindow = () => windowRegistry.etaRanking.ref;
 export const getTradeWindow = () => windowRegistry.trade.ref;
+export const getCoefficientCalculatorWindow = () => windowRegistry.coefficientCalculator.ref;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
@@ -355,6 +360,7 @@ export function toggleTradeWindow(): void {
     onReady: (win) => { trade.updateWindows(null, win); }
   });
 }
+export function toggleCoefficientCalculatorWindow(): void { createToggleableWindow('coefficientCalculator'); }
 
 export function setAllAlwaysOnTop(_enabled: boolean): void { }
 export function getAllWindowHwnds(): string[] {
@@ -398,7 +404,8 @@ export function syncOverlay(currentRect: GameRect): void {
   if (currentRect && currentRect.x > -10000) {
     if (!mainWindow.isVisible()) mainWindow.show();
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
-    const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
+    const display = screen.getDisplayNearestPoint({ x: currentRect.x, y: currentRect.y });
+    const scaleFactor = display.scaleFactor || 1;
     const gX = Math.round(currentRect.x / scaleFactor), gY = Math.round(currentRect.y / scaleFactor), gW = Math.round(currentRect.width / scaleFactor), gH = Math.round(currentRect.height / scaleFactor);
     if (overlayWindow && isOverlayVisible) {
       const b = overlayWindow.getBounds();

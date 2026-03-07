@@ -81,6 +81,8 @@ export interface AppConfig {
     tradeKeywords?: string[];
     tradeNotify?: boolean;
     tradeLastSeen?: number;
+    gameExitReminderEnabled?: boolean;
+    gameExitReminderMessage?: string;
 }
 
 export interface GalleryPost {

@@ -82,7 +82,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   tradeServer: 'RyXp',
   tradeKeywords: [],
-  tradeNotify: true
+  tradeNotify: true,
+  gameExitReminderEnabled: false,
+  gameExitReminderMessage: ''
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

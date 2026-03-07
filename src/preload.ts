@@ -131,13 +131,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('toolbar-hover');
     ipcRenderer.on('toolbar-hover', (_event, isHover) => callback(isHover));
   },
+  onReminderMessage: (callback: (message: string) => void) => {
+    ipcRenderer.removeAllListeners('reminder-message');
+    ipcRenderer.on('reminder-message', (_event, message) => callback(message));
+  },
   cleanupAllListeners: () => {
     const events = [
       'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
       'url-change', 'load-status', 'gallery-posts', 'gallery-new-activity',
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
-      'trade-connection-status', 'open-settings-tab', 'toolbar-hover'
+      'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.6.4-violet.svg)
+![Version](https://img.shields.io/badge/version-1.6.5-violet.svg)
 
 ## 📸 스크린샷
 
@@ -23,19 +23,18 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.6.4.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.6.5.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.6.4)
-- **계수 계산기 출처 링크 반영:** 계수/명중 시뮬레이터에 참고한 원본 출처(구글 시트, 갤러리 글 등) 3개 링크를 화면 우측 하단에 명시적으로 노출했습니다.
-- **최적화:** 앱 종료 시 폴링 루프 및 이벤트 리스너 메모리 누수 완벽 차단 로직(cleanupAllListeners) 적용.
-- **버그 수정:** 다중 모니터 환경의 스케일링 오차 및 마우스 포커스 씹힘(Debounce) 문제 해결.
+## 📝 최신 업데이트 내역 (v1.6.5)
+- **게임 종료 리마인더:** 게임 종료 시 사용자가 설정해둔 메시지를 커스텀 팝업 창으로 표시하는 기능 추가. (일일퀘스트 등 까먹고 종료하는 것 방지)
+- **게임 종료 시 프로그램 유지:** 게임이 종료되어도 TW-Overlay가 함께 종료되지 않도록 변경. 게임 재시작 시 자동 재추적.
 
-## 📝 이전 업데이트 내역 (v1.6.2)
+## 📝 이전 업데이트 내역 (v1.6.4)
 - **사용성 개선:** 마우스 호버 여부에 따라 오버레이 상단 툴바가 자동으로 숨겨지도록 기능을 고도화했습니다.
 - **최적화:** 오버레이 클릭 시 테일즈위버 게임 클라이언트가 다른 앱 뒤로 숨지 않도록 Z-Order 샌드위치 로직을 극대화했습니다.
 

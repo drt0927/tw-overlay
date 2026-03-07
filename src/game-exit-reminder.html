@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .reminder-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 32px;
+      border-radius: 16px;
+      background: rgba(15, 18, 30, 0.96);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      box-shadow:
+        0 0 60px rgba(168, 85, 247, 0.15),
+        0 25px 50px rgba(0, 0, 0, 0.5);
+      -webkit-app-region: drag;
+    }
+
+    .reminder-icon-wrapper {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.1));
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.1);
+    }
+
+    .reminder-icon-wrapper svg {
+      width: 36px;
+      height: 36px;
+      color: #a855f7;
+      filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
+    }
+
+    .reminder-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .reminder-subtitle {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(148, 163, 184, 0.6);
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .reminder-message-box {
+      width: 100%;
+      padding: 20px 24px;
+      background: rgba(168, 85, 247, 0.06);
+      border: 1px solid rgba(168, 85, 247, 0.15);
+      border-radius: 14px;
+      margin-bottom: 28px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .reminder-message-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(226, 232, 240, 0.95);
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .reminder-btn {
+      -webkit-app-region: no-drag;
+      width: 100%;
+      padding: 14px 0;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow:
+        0 4px 15px rgba(168, 85, 247, 0.3),
+        0 1px 3px rgba(0, 0, 0, 0.2);
+      letter-spacing: 0.5px;
+    }
+
+    .reminder-btn:hover {
+      background: linear-gradient(135deg, #9333ea, #6d28d9);
+      box-shadow:
+        0 6px 20px rgba(168, 85, 247, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .reminder-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    /* 메시지 박스 스크롤바 */
+    .reminder-message-box::-webkit-scrollbar { width: 4px; }
+    .reminder-message-box::-webkit-scrollbar-track { background: transparent; }
+    .reminder-message-box::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 4px; }
+
+    /* 등장 애니메이션 */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .reminder-container {
+      animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* 아이콘 펄스 애니메이션 */
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.1); }
+      50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.25); }
+    }
+
+    .reminder-icon-wrapper {
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="reminder-container">
+    <div class="reminder-icon-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </div>
+
+    <div class="reminder-title">게임이 종료되었습니다</div>
+    <div class="reminder-subtitle">Game Exit Reminder</div>
+
+    <div class="reminder-message-box">
+      <div id="reminder-message" class="reminder-message-text">메시지를 불러오는 중...</div>
+    </div>
+
+    <button class="reminder-btn" onclick="window.close()">확인</button>
+  </div>
+
+  <script>
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        window.close();
+      }
+    });
+
+    // 메인 프로세스에서 메시지 수신
+    if (window.electronAPI && window.electronAPI.onReminderMessage) {
+      window.electronAPI.onReminderMessage((msg) => {
+        document.getElementById('reminder-message').textContent = msg;
+      });
+    }
+  </script>
+</body>
+
+</html>

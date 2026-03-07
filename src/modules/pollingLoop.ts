@@ -2,7 +2,6 @@
  * 게임 창 추적 폴링 루프
  * main.ts에서 분리된 모듈 — 게임 창 위치/상태를 주기적으로 확인하고 오버레이를 동기화합니다.
  */
-import { app } from 'electron';
 import {
     POLLING_FAST_MS,
     POLLING_STABLE_MS,
@@ -62,7 +61,15 @@ export function start(): void {
         }
 
         if (currentRect && 'notRunning' in currentRect) {
-            if (gameWasEverFound) { app.quit(); return; }
+            if (gameWasEverFound) {
+                gameWasEverFound = false;
+                wm.hideAll();
+                stableCount = 0;
+                isBoosted = false;
+                wm.showGameExitReminder();
+                pollingTimer = setTimeout(poll, POLLING_IDLE_MS);
+                return;
+            }
             wm.hideAll();
             stableCount = 0;
             isBoosted = false;

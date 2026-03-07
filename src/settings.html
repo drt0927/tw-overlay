@@ -161,13 +161,13 @@
     }
   </style>
 
-    <script>
-        window.addEventListener('beforeunload', () => { 
-            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-                window.electronAPI.cleanupAllListeners(); 
-            }
-        });
-    </script>
+  <script>
+    window.addEventListener('beforeunload', () => {
+      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+        window.electronAPI.cleanupAllListeners();
+      }
+    });
+  </script>
 </head>
 
 <body class="panel-glass overflow-hidden">
@@ -253,6 +253,27 @@
 
             <div class="pt-6 border-t border-white/5 space-y-4">
               <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="message-square-warning" class="w-4 h-4 text-purple-400"></i> 게임 종료 리마인더
+              </label>
+              <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" id="game-exit-reminder-input" class="w-5 h-5 accent-purple-600">
+                  <div>
+                    <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">게임 종료 시 리마인더
+                      표시</span>
+                    <p class="text-[10px] text-slate-500 mt-0.5">게임 종료 시 아래 메시지를 알림창으로 보여줍니다.</p>
+                  </div>
+                </label>
+                <textarea id="game-exit-reminder-message"
+                  class="input-field w-full text-sm py-3 px-4 bg-black/40 resize-none" rows="3"
+                  placeholder="예: 일일퀘스트 했나요? 거래게시판 확인했나요?"></textarea>
+                <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 게임 종료 시 위 메시지가 팝업으로 표시됩니다. 프로그램은 종료되지
+                  않습니다.</p>
+              </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2 mb-4">
                 <i data-lucide="list-checks" class="w-4 h-4 text-purple-400"></i> 사이드바 메뉴 관리
               </label>
               <div class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
@@ -269,7 +290,8 @@
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">버프 백과 & 계산기</span>
                 </label>
                 <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="coefficient-calculator-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <input type="checkbox" value="coefficient-calculator-btn"
+                    class="menu-visible-check w-4 h-4 accent-purple-600">
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">계수 및 명중 계산기</span>
                 </label>
                 <label class="flex items-center gap-3 cursor-pointer group">
@@ -611,7 +633,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.6.4</span></p>
+                        class="text-purple-400">1.6.5</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -799,6 +821,9 @@
       document.getElementById('height-input').value = config.height || 600;
       document.getElementById('auto-launch-input').checked = !!config.autoLaunch;
       document.getElementById('auto-update-input').checked = config.autoUpdateEnabled !== false;
+
+      document.getElementById('game-exit-reminder-input').checked = !!config.gameExitReminderEnabled;
+      document.getElementById('game-exit-reminder-message').value = config.gameExitReminderMessage || '';
 
       // 모든 메뉴 목록 (신규 추가 시 이 배열만 업데이트하면 됨)
       const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
@@ -1183,7 +1208,11 @@
           quickSlots: validSlots,
           galleryKeywords: currentKeywords,
           tradeKeywords: tradeKeywordsList,
-          tradeServer: tradeServerValue
+          tradeServer: tradeServerValue,
+
+          // 게임 종료 리마인더
+          gameExitReminderEnabled: document.getElementById('game-exit-reminder-input').checked,
+          gameExitReminderMessage: document.getElementById('game-exit-reminder-message').value.trim()
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);

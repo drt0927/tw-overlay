@@ -45,7 +45,7 @@ function attachStackListeners(win: BrowserWindow): void {
     pushToStack(win);
     if (focusDebounceTimer) clearTimeout(focusDebounceTimer);
     focusDebounceTimer = setTimeout(() => {
-        bringGameAndOverlaysToTop();
+      bringGameAndOverlaysToTop();
     }, 50);
   });
   win.on('show', () => pushToStack(win));
@@ -469,5 +469,27 @@ export function hideAll(): void {
   [overlayWindow, mainWindow].forEach(win => { if (win && win.isVisible()) win.hide(); });
   Object.values(windowRegistry).forEach(winCfg => { if (winCfg.ref && winCfg.ref.isVisible()) winCfg.ref.hide(); });
   isTracking = false; closeSplashWindow();
+}
+
+export function showGameExitReminder(): void {
+  const cfg = config.load();
+  if (!cfg.gameExitReminderEnabled || !cfg.gameExitReminderMessage?.trim()) return;
+
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const winWidth = 420, winHeight = 440;
+
+  const reminderWin = new BrowserWindow(getStandardOptions(winWidth, winHeight, {
+    center: true, resizable: false, skipTaskbar: false, alwaysOnTop: true,
+    transparent: false, backgroundColor: '#0f121e',
+    x: Math.round((screenWidth - winWidth) / 2),
+    y: Math.round((screenHeight - winHeight) / 2),
+  }));
+
+  reminderWin.loadFile(path.join(__dirname, '..', 'game-exit-reminder.html'));
+  reminderWin.once('ready-to-show', () => {
+    reminderWin.webContents.send('reminder-message', cfg.gameExitReminderMessage);
+    reminderWin.show();
+    reminderWin.focus();
+  });
 }
 

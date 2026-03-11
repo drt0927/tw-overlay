@@ -82,7 +82,25 @@
   },
   {
     "id": "daily-eclipse-all",
-    "name": "이클립스 (6보스/보급품/별동대)",
+    "name": "이클립스 6보스",
+    "category": "재화",
+    "isCompleted": false,
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 }
+  },
+  {
+    "id": "daily-eclipse-all",
+    "name": "이클립스 보급품 탈환",
+    "category": "재화",
+    "isCompleted": false,
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 }
+  },
+  {
+    "id": "daily-eclipse-all",
+    "name": "이클립스 별동대 토벌",
     "category": "재화",
     "isCompleted": false,
     "isVisible": true,

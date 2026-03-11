@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.7.1-violet.svg)
+![Version](https://img.shields.io/badge/version-1.7.2-violet.svg)
 
 ## 📸 스크린샷
 
@@ -22,14 +22,17 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.7.1.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.7.2.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.7.1)
+## 📝 최신 업데이트 내역 (v1.7.2)
+- **Contents Checker:** 이클립스 관련 숙제 항목들의 중복 ID 오류를 수정하여 각각의 상태가 정상적으로 저장되도록 개선했습니다.
+
+## 📝 이전 업데이트 내역 (v1.7.1)
 - **컨텐츠 데이터 수정:** 숙제 체크 리스트 및 일부 내부 컨텐츠 데이터의 오류를 수정했습니다.
 
 ## 📝 이전 업데이트 내역 (v1.7.0)

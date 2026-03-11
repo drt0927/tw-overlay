@@ -3,6 +3,7 @@
  */
 import * as config from './config';
 import * as wm from './windowManager';
+import * as contents from './contentsChecker';
 import { log } from './logger';
 
 interface BossTime {
@@ -67,6 +68,13 @@ export function stop(): void {
 }
 
 function checkBossTime(): void {
+  // 컨텐츠 체크 리스트 초기화 여부 확인 (백그라운드)
+  const isReset = contents.checkReset();
+  if (isReset) {
+    // 초기화된 경우 모든 창에 업데이트된 데이터 전송
+    wm.applySettings({}); 
+  }
+
   const cfg = config.load();
   if (!cfg.fieldBossNotifyEnabled) return;
 

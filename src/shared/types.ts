@@ -48,6 +48,23 @@ export interface BossSetting {
     soundFile: string;
 }
 
+export interface ResetRule {
+    type: 'daily' | 'weekly';
+    dayOfWeek?: number;
+    hour?: number;
+}
+
+export interface ContentsCheckerItem {
+    id: string;
+    name: string;
+    isCompleted: boolean;
+    isVisible: boolean;
+    isCustom: boolean;
+    category: string;
+    resetRule: ResetRule;
+    lastCompletedAt?: number;
+}
+
 export interface AppConfig {
     width: number;
     height: number;
@@ -76,6 +93,7 @@ export interface AppConfig {
         etaRanking?: WindowPosition;
         trade?: WindowPosition;
         coefficientCalculator?: WindowPosition;
+        contentsChecker?: WindowPosition;
     };
     tradeServer?: string;
     tradeKeywords?: string[];
@@ -83,6 +101,8 @@ export interface AppConfig {
     tradeLastSeen?: number;
     gameExitReminderEnabled?: boolean;
     gameExitReminderMessage?: string;
+    contentsCheckerItems?: ContentsCheckerItem[];
+    lastContentsResetCheck?: number;
 }
 
 export interface GalleryPost {

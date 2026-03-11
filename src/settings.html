@@ -306,6 +306,10 @@
                   <input type="checkbox" value="trade-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">거래 게시판</span>
                 </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="contents-checker-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">숙제 체크 리스트</span>
+                </label>
 
                 <label class="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" value="home-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
@@ -633,7 +637,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.6.5</span></p>
+                        class="text-purple-400">1.7.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -826,7 +830,7 @@
       document.getElementById('game-exit-reminder-message').value = config.gameExitReminderMessage || '';
 
       // 모든 메뉴 목록 (신규 추가 시 이 배열만 업데이트하면 됨)
-      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
       let hiddenMenuIds = config.hiddenMenuIds;
 
       // 구버전(visibleMenuIds 방식) 마이그레이션 처리

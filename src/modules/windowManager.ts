@@ -107,6 +107,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   etaRanking: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 380, height: 600 },
   trade: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 380, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 850, height: 1150 },
+  contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
 };
 
 let gameRect: GameRect | null = null;
@@ -361,6 +362,18 @@ export function toggleTradeWindow(): void {
   });
 }
 export function toggleCoefficientCalculatorWindow(): void { createToggleableWindow('coefficientCalculator'); }
+export function toggleContentsCheckerWindow(): void {
+  createToggleableWindow('contentsChecker', {
+    onReady: (win) => {
+      // 1. 데이터 초기화 수행
+      import('./contentsChecker').then(mod => {
+        mod.init();
+        // 2. 초기화 완료 후 명시적으로 최신 데이터 전송
+        win.webContents.send('config-data', config.load());
+      });
+    }
+  });
+}
 
 export function setAllAlwaysOnTop(_enabled: boolean): void { }
 export function getAllWindowHwnds(): string[] {
@@ -475,8 +488,16 @@ export function showGameExitReminder(): void {
   const cfg = config.load();
   if (!cfg.gameExitReminderEnabled || !cfg.gameExitReminderMessage?.trim()) return;
 
+  const incompleteItems = (cfg.contentsCheckerItems || [])
+    .filter(item => item.isVisible && !item.isCompleted)
+    .map(item => ({ 
+      name: item.name, 
+      category: item.category, 
+      type: item.resetRule.type 
+    }));
+
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const winWidth = 420, winHeight = 440;
+  const winWidth = 500, winHeight = 560; // 공간 확보를 위해 크기 확장
 
   const reminderWin = new BrowserWindow(getStandardOptions(winWidth, winHeight, {
     center: true, resizable: false, skipTaskbar: false, alwaysOnTop: true,
@@ -488,6 +509,7 @@ export function showGameExitReminder(): void {
   reminderWin.loadFile(path.join(__dirname, '..', 'game-exit-reminder.html'));
   reminderWin.once('ready-to-show', () => {
     reminderWin.webContents.send('reminder-message', cfg.gameExitReminderMessage);
+    reminderWin.webContents.send('incomplete-contents', incompleteItems);
     reminderWin.show();
     reminderWin.focus();
   });

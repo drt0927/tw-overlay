@@ -69,10 +69,31 @@ export function register(): void {
     'toggle-click-through': wm.toggleClickThrough,
     'toggle-trade': wm.toggleTradeWindow,
     'toggle-coefficient-calculator': wm.toggleCoefficientCalculatorWindow,
+    'toggle-contents-checker': wm.toggleContentsCheckerWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
     ipcMain.on(event, () => handler());
+  });
+
+  // 컨텐츠 체크 리스트 조작 핸들러
+  ipcMain.on('contents-toggle-item', (_e, id: string) => {
+    import('./contentsChecker').then(mod => mod.toggleItem(id));
+  });
+  ipcMain.on('contents-toggle-visibility', (_e, id: string) => {
+    import('./contentsChecker').then(mod => mod.toggleVisibility(id));
+  });
+  ipcMain.on('contents-update-category', (_e, id: string, newCategory: string) => {
+    import('./contentsChecker').then(mod => mod.updateCategory(id, newCategory));
+  });
+  ipcMain.on('contents-add-custom', (_e, name: string, category: string, rule: any) => {
+    import('./contentsChecker').then(mod => mod.addCustomItem(name, category, rule));
+  });
+  ipcMain.on('contents-remove-item', (_e, id: string) => {
+    import('./contentsChecker').then(mod => mod.removeItem(id));
+  });
+  ipcMain.on('contents-manual-reset', () => {
+    import('./contentsChecker').then(mod => mod.checkReset());
   });
 
   // 특별 인수가 필요한 토글 핸들러 개별 등록

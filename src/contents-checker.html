@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TW-Overlay - Contents Checker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="assets/tailwind.min.js"></script>
+    <script src="assets/lucide.min.js"></script>
+    <style>
+        body {
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .drag-handle {
+            padding: 16px 20px;
+            cursor: move;
+            -webkit-app-region: drag;
+            background: linear-gradient(to bottom, rgba(168, 85, 247, 0.15), transparent);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .no-drag { -webkit-app-region: no-drag; }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .item-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateY(-1px);
+        }
+
+        /* 일일 숙제 특화 색상 (Blue) */
+        .item-card.daily:hover { border-color: rgba(59, 130, 246, 0.4); }
+        .item-card.daily .category-badge { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
+        
+        /* 주간 숙제 특화 색상 (Purple) */
+        .item-card.weekly:hover { border-color: rgba(168, 85, 247, 0.4); }
+        .item-card.weekly .category-badge { background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.2); }
+
+        /* 조회모드 전용 완료 스타일 */
+        body:not(.edit-mode) .item-card.completed {
+            opacity: 0.45;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        body:not(.edit-mode) .item-card.completed .check-box {
+            background: #22c55e;
+            border-color: #22c55e;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+        }
+
+        /* 편집모드 전용 스타일: 딤드 해제 및 체크박스 숨김 */
+        .edit-mode .item-card {
+            opacity: 1 !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-color: rgba(245, 158, 11, 0.2);
+            cursor: default;
+        }
+        .edit-mode .check-box { display: none; }
+
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .category-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .edit-mode .category-badge {
+            background: rgba(245, 158, 11, 0.1) !important;
+            color: #fbbf24 !important;
+            border-color: rgba(245, 158, 11, 0.2) !important;
+        }
+
+        .edit-mode .item-card.hidden-item {
+            opacity: 0.4 !important;
+            border-style: dashed;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.01) 20px);
+        }
+
+        .hidden-item:not(.edit-mode *) {
+            display: none;
+        }
+
+        .manage-tag {
+            background: #f59e0b;
+            color: white;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 24px 4px 12px 4px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .progress-container {
+            padding: 0 20px;
+            margin-top: 10px;
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 컨트롤 버튼 스타일 */
+        .control-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .control-btn.active {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .add-form-container {
+            background: rgba(15, 18, 30, 0.98);
+            border-top: 1px solid rgba(168, 85, 247, 0.2);
+            padding: 20px;
+            display: none; /* 기본적으로 숨김 */
+            z-index: 50;
+        }
+
+        .add-form-container.show {
+            display: block;
+            animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+
+        input, select {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            color: white !important;
+            font-weight: 600 !important;
+            outline: none !important;
+        }
+
+        input:focus, select:focus {
+            border-color: #a855f7 !important;
+        }
+
+        /* 검색 영역 스타일 */
+        .search-container {
+            padding: 0 16px;
+            margin-top: 12px;
+        }
+        .search-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            transition: all 0.2s;
+        }
+        .search-box:focus-within {
+            border-color: rgba(168, 85, 247, 0.4);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .search-input {
+            background: transparent !important;
+            border: none !important;
+            font-size: 12px !important;
+            padding: 8px 4px !important;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="panel-glass p-0 flex flex-col">
+    <!-- Header -->
+    <div class="drag-handle flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div id="header-icon-box" class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/30 transition-colors">
+                <i id="header-icon" data-lucide="check-square" class="w-5 h-5 text-purple-400"></i>
+            </div>
+            <div class="flex flex-col">
+                <div class="flex items-center">
+                    <span class="text-xs font-black text-white tracking-tight">숙제 체크 리스트</span>
+                    <span id="mode-badge" class="manage-tag hidden">관리 모드</span>
+                </div>
+                <span id="progress-percent-text" class="text-[9px] text-slate-500 font-bold tracking-wider uppercase">불러오는 중...</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-1 no-drag">
+            <button id="btn-reset" class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors" title="상태 동기화">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i>
+            </button>
+            <button id="btn-edit" class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors" title="관리 모드 토글">
+                <i id="edit-icon" data-lucide="settings-2" class="w-4 h-4 text-slate-400"></i>
+            </button>
+            <button onclick="window.electronAPI.toggleContentsChecker()" class="w-8 h-8 flex items-center justify-center hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors">
+                <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-container no-drag">
+        <div class="search-box">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500"></i>
+            <input id="search-input" type="text" placeholder="숙제 이름이나 카테고리 검색..." class="search-input" oninput="render()">
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar-bg">
+            <div id="progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Content List -->
+    <div id="content-list" class="flex-1 overflow-y-auto custom-scroll p-4 pt-0 no-drag">
+        <!-- Rendered items -->
+    </div>
+
+    <!-- Add Form (Edit Mode Only) -->
+    <div id="add-form" class="add-form-container no-drag shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">새로운 숙제 추가</span>
+            <button onclick="toggleEditMode()" class="text-[10px] text-slate-500 hover:text-white font-bold">닫기</button>
+        </div>
+        <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+                <input id="new-item-name" type="text" placeholder="숙제 이름" class="w-full text-xs px-3 py-2.5">
+                <input id="new-item-category" type="text" placeholder="카테고리" class="w-full text-xs px-3 py-2.5">
+            </div>
+            <div class="flex gap-2">
+                <select id="new-item-type" class="flex-1 text-xs px-3 py-2.5" onchange="updateFormVisibility()">
+                    <option value="daily">매일 초기화</option>
+                    <option value="weekly">매주 초기화</option>
+                </select>
+                <select id="new-item-hour" class="w-24 text-xs px-3 py-2.5"></select>
+            </div>
+            <div id="weekly-only-fields" class="hidden">
+                <select id="new-item-day" class="w-full text-xs px-3 py-2.5">
+                    <option value="1">월요일 (기본)</option>
+                    <option value="2">화요일</option>
+                    <option value="3">수요일</option>
+                    <option value="4">목요일 (청소)</option>
+                    <option value="5">금요일</option>
+                    <option value="6">토요일</option>
+                    <option value="0">일요일</option>
+                </select>
+            </div>
+            <button id="btn-add-item" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-black py-3 rounded-xl shadow-lg shadow-purple-900/30 transition-all active:scale-[0.98]">
+                목록에 추가하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isEditMode = false;
+        let configData = null;
+        const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+        // 시간 셀렉트박스 초기화
+        const hourSelect = document.getElementById('new-item-hour');
+        for (let i = 0; i < 24; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${String(i).padStart(2, '0')}:00`;
+            hourSelect.appendChild(opt);
+        }
+
+        function updateFormVisibility() {
+            const type = document.getElementById('new-item-type').value;
+            document.getElementById('weekly-only-fields').classList.toggle('hidden', type === 'daily');
+        }
+
+        function render() {
+            if (!configData || !configData.contentsCheckerItems) return;
+
+            const container = document.getElementById('content-list');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            container.innerHTML = '';
+
+            const items = configData.contentsCheckerItems;
+            
+            // 검색 필터링
+            const filteredItems = items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchQuery) || 
+                                    item.category.toLowerCase().includes(searchQuery);
+                return matchesSearch;
+            });
+
+            // 진척도 계산 (전체 아이템 기준)
+            const activeItems = items.filter(i => i.isVisible);
+            const completedCount = activeItems.filter(i => i.isCompleted).length;
+            const totalCount = activeItems.length;
+            const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-percent-text').textContent = `PROGRESS: ${percent}% (${completedCount}/${totalCount})`;
+
+            const dailyItems = filteredItems.filter(i => i.resetRule.type === 'daily');
+            const weeklyItems = filteredItems.filter(i => i.resetRule.type === 'weekly');
+
+            if (dailyItems.some(i => i.isVisible || isEditMode)) {
+                renderSection(container, '일일 숙제', 'sun', dailyItems);
+            }
+            if (weeklyItems.some(i => i.isVisible || isEditMode)) {
+                renderSection(container, '주간 숙제', 'calendar', weeklyItems);
+            }
+
+            lucide.createIcons();
+        }
+
+        function renderSection(container, title, icon, items) {
+            const isWeekly = items.length > 0 && items[0].resetRule.type === 'weekly';
+            const accentColorClass = isWeekly ? 'text-purple-400' : 'text-blue-400';
+
+            const header = document.createElement('div');
+            header.className = 'section-header';
+            header.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5 ${accentColorClass}"></i><span class="${accentColorClass}">${title}</span>`;
+            container.appendChild(header);
+
+            const sortedItems = [...items].sort((a, b) => {
+                const catCompare = a.category.localeCompare(b.category);
+                if (catCompare !== 0) return catCompare;
+                return a.name.localeCompare(b.name);
+            });
+
+            const listDiv = document.createElement('div');
+            listDiv.className = 'space-y-2';
+
+            sortedItems.forEach(item => {
+                if (!item.isVisible && !isEditMode) return;
+
+                const card = document.createElement('div');
+                const typeClass = item.resetRule.type; // 'daily' 또는 'weekly'
+                card.className = `item-card ${typeClass} ${item.isCompleted ? 'completed' : ''} ${!item.isVisible ? 'hidden-item' : ''}`;
+                card.onclick = () => {
+                    if (!isEditMode) window.electronAPI.contentsToggleItem(item.id);
+                };
+                
+                const timeStr = String(item.resetRule.hour || 0).padStart(2, '0') + ':00';
+                const resetInfo = item.resetRule.type === 'daily' ? `매일 ${timeStr}` : `${DAYS[item.resetRule.dayOfWeek || 1]} ${timeStr}`;
+
+                card.innerHTML = `
+                    <div class="check-box ${item.isCompleted ? 'checked' : ''}">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <span class="category-badge" onclick="event.stopPropagation(); editCategory('${item.id}', '${item.category}')">${item.category}</span>
+                            <span class="text-sm font-bold truncate">${item.name}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                            <i data-lucide="clock" class="w-2.5 h-2.5"></i>
+                            초기화: ${resetInfo}
+                            ${isEditMode && !item.isVisible ? '<span class="ml-2 text-red-400 text-[9px] border border-red-400/30 px-1 rounded-sm">숨김 상태</span>' : ''}
+                        </div>
+                    </div>
+                    ${isEditMode ? `
+                        <div class="flex items-center gap-1 no-drag" onclick="event.stopPropagation()">
+                            <button class="control-btn ${item.isVisible ? 'active' : ''}" onclick="window.electronAPI.contentsToggleVisibility('${item.id}')" title="보이기/숨기기">
+                                <i data-lucide="${item.isVisible ? 'eye' : 'eye-off'}" class="w-4 h-4"></i>
+                            </button>
+                            ${item.isCustom ? `
+                                <button class="control-btn hover:text-red-400" onclick="removeItem('${item.id}')" title="삭제">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                `;
+                listDiv.appendChild(card);
+            });
+            container.appendChild(listDiv);
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const body = document.body;
+            const headerBox = document.getElementById('header-icon-box');
+            const headerIcon = document.getElementById('header-icon');
+            const editIcon = document.getElementById('edit-icon');
+            const modeBadge = document.getElementById('mode-badge');
+            const addForm = document.getElementById('add-form');
+
+            if (isEditMode) {
+                body.classList.add('edit-mode');
+                headerBox.classList.replace('bg-purple-500/20', 'bg-amber-500/20');
+                headerBox.classList.replace('border-purple-500/30', 'border-amber-500/30');
+                headerIcon.classList.replace('text-purple-400', 'text-amber-400');
+                headerIcon.setAttribute('data-lucide', 'sliders-horizontal');
+                editIcon.setAttribute('data-lucide', 'check');
+                editIcon.classList.replace('text-slate-400', 'text-green-400');
+                modeBadge.classList.remove('hidden');
+                addForm.classList.add('show');
+            } else {
+                body.classList.remove('edit-mode');
+                headerBox.classList.replace('bg-amber-500/20', 'bg-purple-500/20');
+                headerBox.classList.replace('border-amber-500/30', 'border-purple-500/30');
+                headerIcon.classList.replace('text-amber-400', 'text-purple-400');
+                headerIcon.setAttribute('data-lucide', 'check-square');
+                editIcon.setAttribute('data-lucide', 'settings-2');
+                editIcon.classList.replace('text-green-400', 'text-slate-400');
+                modeBadge.classList.add('hidden');
+                addForm.classList.remove('show');
+            }
+            lucide.createIcons();
+            render();
+        }
+
+        function editCategory(id, current) {
+            const next = prompt('카테고리 변경:', current);
+            if (next !== null && next.trim() !== '') {
+                window.electronAPI.contentsUpdateCategory(id, next.trim());
+            }
+        }
+
+        function removeItem(id) {
+            if (confirm('이 숙제를 삭제할까요?')) {
+                window.electronAPI.contentsRemoveItem(id);
+            }
+        }
+
+        // 이벤트 리스너 등록
+        document.getElementById('btn-edit').onclick = toggleEditMode;
+        document.getElementById('btn-reset').onclick = () => {
+            if (confirm('모든 숙제의 초기화 시간을 다시 체크할까요?')) {
+                window.electronAPI.contentsManualReset();
+            }
+        };
+
+        document.getElementById('btn-add-item').onclick = () => {
+            const name = document.getElementById('new-item-name').value.trim();
+            const category = document.getElementById('new-item-category').value.trim() || '기타';
+            const type = document.getElementById('new-item-type').value;
+            const hour = parseInt(document.getElementById('new-item-hour').value);
+            const dayOfWeek = parseInt(document.getElementById('new-item-day').value);
+
+            if (!name) return alert('숙제 이름을 입력하세요.');
+            const rule = { type, hour };
+            if (type === 'weekly') rule.dayOfWeek = dayOfWeek;
+
+            window.electronAPI.contentsAddCustom(name, category, rule);
+            document.getElementById('new-item-name').value = '';
+        };
+
+        if (window.electronAPI && window.electronAPI.onConfigData) {
+            window.electronAPI.onConfigData((data) => {
+                configData = data;
+                render();
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

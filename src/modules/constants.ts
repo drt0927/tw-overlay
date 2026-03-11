@@ -38,6 +38,7 @@ export const TITLE_BUFFER_LENGTH = 256;
 
 export const get_CONFIG_PATH = () => path.join(app.getPath('userData'), 'config.json');
 export const get_LOG_PATH = () => path.join(app.getPath('userData'), 'debug.log');
+export const CONTENTS_DATA_PATH = path.join(__dirname, '..', 'assets', 'data', 'contents.json');
 
 /** 리소스 경로 유틸리티 (dist 폴더 기준) */
 export const get_RESOURCE_PATH = (...paths: string[]) => {
@@ -78,13 +79,16 @@ export const DEFAULT_CONFIG: AppConfig = {
     bossSettings: { offsetX: -320, offsetY: 40 },
     etaRanking: { offsetX: -380, offsetY: 40 },
     trade: { offsetX: -380, offsetY: 40 },
-    coefficientCalculator: { offsetX: -850, offsetY: 40 }
+    coefficientCalculator: { offsetX: -850, offsetY: 40 },
+    contentsChecker: { offsetX: -320, offsetY: 40 }
   },
   tradeServer: 'RyXp',
   tradeKeywords: [],
   tradeNotify: true,
   gameExitReminderEnabled: false,
-  gameExitReminderMessage: ''
+  gameExitReminderMessage: '',
+  contentsCheckerItems: [],
+  lastContentsResetCheck: 0
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

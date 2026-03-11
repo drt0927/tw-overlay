@@ -14,6 +14,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleEtaRanking: () => ipcRenderer.send('toggle-eta-ranking'),
   toggleTrade: () => ipcRenderer.send('toggle-trade'),
   toggleCoefficientCalculator: () => ipcRenderer.send('toggle-coefficient-calculator'),
+  toggleContentsChecker: () => ipcRenderer.send('toggle-contents-checker'),
+  contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
+  contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
+  contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
+  contentsAddCustom: (name: string, category: string, rule: any) => ipcRenderer.send('contents-add-custom', name, category, rule),
+  contentsRemoveItem: (id: string) => ipcRenderer.send('contents-remove-item', id),
+  contentsManualReset: () => ipcRenderer.send('contents-manual-reset'),
   setIgnoreMouseEvents: (ignore: boolean, options: { forward?: boolean }) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),
   toolbarMouseEnter: () => ipcRenderer.send('toolbar-mouse-enter'),
@@ -135,13 +142,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('reminder-message');
     ipcRenderer.on('reminder-message', (_event, message) => callback(message));
   },
+  onIncompleteContents: (callback: (items: any[]) => void) => {
+    ipcRenderer.removeAllListeners('incomplete-contents');
+    ipcRenderer.on('incomplete-contents', (_event, items) => callback(items));
+  },
   cleanupAllListeners: () => {
     const events = [
       'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
       'url-change', 'load-status', 'gallery-posts', 'gallery-new-activity',
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
-      'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message'
+      'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
+      'incomplete-contents'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

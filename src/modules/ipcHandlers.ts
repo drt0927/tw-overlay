@@ -11,6 +11,7 @@ import * as optimizer from './optimizer';
 import { fetchEtaRanking } from './etaRanking';
 import type { EtaRankingParams } from '../shared/types';
 import { setupAutoStart } from './autoStart';
+import * as sm from './shortcutManager';
 
 let _registered = false;
 
@@ -51,6 +52,9 @@ export function register(): void {
     wm.applySettings(newSettings);
     if (newSettings.autoLaunch !== undefined) {
       setupAutoStart(newSettings.autoLaunch!);
+    }
+    if (newSettings.shortcuts) {
+      sm.reloadShortcuts();
     }
     // 설정 변경 후 모니터러 상태 갱신 (윈도우 참조 없이 설정 재로드만)
     gallery.updateWindows(null, null, null);

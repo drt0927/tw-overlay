@@ -48,6 +48,11 @@ export interface BossSetting {
     soundFile: string;
 }
 
+export interface ShortcutsConfig {
+    /** 창 투과(Click-through) 토글 */
+    toggleClickThrough: string;
+}
+
 export interface ResetRule {
     type: 'daily' | 'weekly';
     dayOfWeek?: number;
@@ -104,6 +109,7 @@ export interface AppConfig {
     gameExitReminderMessage?: string;
     contentsCheckerItems?: ContentsCheckerItem[];
     lastContentsResetCheck?: number;
+    shortcuts?: ShortcutsConfig;
 }
 
 export interface GalleryPost {

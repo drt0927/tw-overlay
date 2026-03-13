@@ -15,6 +15,7 @@ import { setupUpdater } from './modules/updater';
 import * as pollingLoop from './modules/pollingLoop';
 import { setupAutoStart } from './modules/autoStart';
 import * as trade from './modules/tradeMonitor';
+import * as sm from './modules/shortcutManager';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
@@ -40,22 +41,6 @@ if (!gotTheLock) {
   });
 }
 
-function registerClickThroughShortcut(): void {
-  globalShortcut.unregister('CommandOrControl+Shift+T');
-  globalShortcut.register('CommandOrControl+Shift+T', () => {
-    const isClickThrough = wm.toggleClickThrough();
-    if (isClickThrough) {
-      setTimeout(() => {
-        tracker.focusGameWindow();
-      }, FOCUS_DELAY_MS);
-    }
-  });
-}
-
-function unregisterClickThroughShortcut(): void {
-  globalShortcut.unregister('CommandOrControl+Shift+T');
-}
-
 app.whenReady().then(() => {
   wm.createSplashWindow();
 
@@ -67,11 +52,7 @@ app.whenReady().then(() => {
   tracker.setForegroundChangeListener((isGameFocused, focusedHwndStr) => {
     const electronHwnds = wm.getAllWindowHwnds();
     const isAppFocused = electronHwnds.includes(focusedHwndStr);
-    if (isGameFocused || isAppFocused) {
-      registerClickThroughShortcut();
-    } else {
-      unregisterClickThroughShortcut();
-    }
+    sm.updateFocusState(isGameFocused || isAppFocused);
   });
 
   // DEV 테스트: mandatory 업데이트 시뮬레이션

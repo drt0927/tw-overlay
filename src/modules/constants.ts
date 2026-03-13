@@ -88,7 +88,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   gameExitReminderEnabled: false,
   gameExitReminderMessage: '',
   contentsCheckerItems: [],
-  lastContentsResetCheck: 0
+  lastContentsResetCheck: 0,
+  shortcuts: {
+    toggleClickThrough: 'CommandOrControl+Shift+T'
+  }
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

@@ -232,6 +232,40 @@
             padding: 8px 4px !important;
             width: 100%;
         }
+
+        /* 드래그 앤 드롭 스타일 */
+        .item-card.dragging {
+            opacity: 0.2;
+            transform: scale(0.98);
+        }
+
+        .drag-placeholder {
+            background: rgba(168, 85, 247, 0.1);
+            border: 2px dashed #a855f7;
+            border-radius: 14px;
+            height: 54px; /* item-card와 비슷한 높이 */
+            margin: 0;
+            transition: all 0.1s ease;
+        }
+
+        .item-card .drag-handle-icon {
+            display: none;
+            color: rgba(255, 255, 255, 0.3);
+            cursor: grab;
+            padding: 4px;
+            margin-left: -8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .item-card .drag-handle-icon:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .edit-mode .item-card .drag-handle-icon {
+            display: block;
+        }
     </style>
 </head>
 
@@ -321,6 +355,9 @@
     <script>
         let isEditMode = false;
         let configData = null;
+        let dragSrcId = null;
+        let autoScrollTimer = null;
+        let placeholder = null; // 플레이스홀더 엘리먼트
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // 시간 셀렉트박스 초기화
@@ -362,22 +399,43 @@
             document.getElementById('progress-fill').style.width = percent + '%';
             document.getElementById('progress-percent-text').textContent = `PROGRESS: ${percent}% (${completedCount}/${totalCount})`;
 
-            const dailyItems = filteredItems.filter(i => i.resetRule.type === 'daily');
-            const weeklyItems = filteredItems.filter(i => i.resetRule.type === 'weekly');
+            // 편집(관리) 모드와 조회 모드의 섹션 구성 분리
+            if (isEditMode) {
+                const dailyItems = filteredItems.filter(i => i.resetRule.type === 'daily');
+                const weeklyItems = filteredItems.filter(i => i.resetRule.type === 'weekly');
 
-            if (dailyItems.some(i => i.isVisible || isEditMode)) {
-                renderSection(container, '일일 숙제', 'sun', dailyItems);
-            }
-            if (weeklyItems.some(i => i.isVisible || isEditMode)) {
-                renderSection(container, '주간 숙제', 'calendar', weeklyItems);
+                if (dailyItems.length > 0) {
+                    renderSection(container, '일일 숙제 (전체)', 'sun', dailyItems, 'daily');
+                }
+                if (weeklyItems.length > 0) {
+                    renderSection(container, '주간 숙제 (전체)', 'calendar', weeklyItems, 'weekly');
+                }
+            } else {
+                const incompleteDaily = filteredItems.filter(i => !i.isCompleted && i.resetRule.type === 'daily');
+                const incompleteWeekly = filteredItems.filter(i => !i.isCompleted && i.resetRule.type === 'weekly');
+                const completedItems = filteredItems.filter(i => i.isCompleted);
+
+                if (incompleteDaily.some(i => i.isVisible)) {
+                    renderSection(container, '일일 숙제', 'sun', incompleteDaily, 'daily');
+                }
+                if (incompleteWeekly.some(i => i.isVisible)) {
+                    renderSection(container, '주간 숙제', 'calendar', incompleteWeekly, 'weekly');
+                }
+                if (completedItems.some(i => i.isVisible)) {
+                    renderSection(container, '완료됨', 'check-circle-2', completedItems, 'completed');
+                }
             }
 
             lucide.createIcons();
         }
 
-        function renderSection(container, title, icon, items) {
-            const isWeekly = items.length > 0 && items[0].resetRule.type === 'weekly';
-            const accentColorClass = isWeekly ? 'text-purple-400' : 'text-blue-400';
+        function renderSection(container, title, icon, items, sectionType) {
+            const isWeeklySection = sectionType === 'weekly';
+            const isCompletedSection = sectionType === 'completed';
+            
+            let accentColorClass = 'text-blue-400';
+            if (isWeeklySection) accentColorClass = 'text-purple-400';
+            if (isCompletedSection) accentColorClass = 'text-green-400';
 
             const header = document.createElement('div');
             header.className = 'section-header';
@@ -385,28 +443,47 @@
             container.appendChild(header);
 
             const sortedItems = [...items].sort((a, b) => {
-                const catCompare = a.category.localeCompare(b.category);
-                if (catCompare !== 0) return catCompare;
+                if (isCompletedSection) {
+                    if (a.resetRule.type !== b.resetRule.type) {
+                        return a.resetRule.type === 'daily' ? -1 : 1;
+                    }
+                }
+                const aOrder = a.sortOrder ?? 0;
+                const bOrder = b.sortOrder ?? 0;
+                if (aOrder !== bOrder) return aOrder - bOrder;
                 return a.name.localeCompare(b.name);
             });
 
             const listDiv = document.createElement('div');
-            listDiv.className = 'space-y-2';
+            listDiv.className = 'space-y-2 item-group-container';
+            listDiv.dataset.type = sectionType;
 
-            sortedItems.forEach(item => {
+            sortedItems.forEach((item) => {
                 if (!item.isVisible && !isEditMode) return;
 
                 const card = document.createElement('div');
-                const typeClass = item.resetRule.type; // 'daily' 또는 'weekly'
-                card.className = `item-card ${typeClass} ${item.isCompleted ? 'completed' : ''} ${!item.isVisible ? 'hidden-item' : ''}`;
-                card.onclick = () => {
-                    if (!isEditMode) window.electronAPI.contentsToggleItem(item.id);
-                };
+                const itemType = item.resetRule.type;
+                card.className = `item-card ${itemType} ${item.isCompleted ? 'completed' : ''} ${!item.isVisible ? 'hidden-item' : ''}`;
+                card.dataset.id = item.id;
+                
+                if (isEditMode) {
+                    card.draggable = true;
+                    card.ondragstart = handleDragStart;
+                    card.ondragover = handleDragOver;
+                    card.ondragend = handleDragEnd;
+                } else {
+                    card.onclick = () => window.electronAPI.contentsToggleItem(item.id);
+                }
                 
                 const timeStr = String(item.resetRule.hour || 0).padStart(2, '0') + ':00';
                 const resetInfo = item.resetRule.type === 'daily' ? `매일 ${timeStr}` : `${DAYS[item.resetRule.dayOfWeek || 1]} ${timeStr}`;
 
+                const periodBadge = isCompletedSection 
+                    ? `<span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${itemType === 'daily' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}">${itemType === 'daily' ? 'DAILY' : 'WEEKLY'}</span>`
+                    : '';
+
                 card.innerHTML = `
+                    <i data-lucide="grip-vertical" class="drag-handle-icon w-4 h-4 mr-1"></i>
                     <div class="check-box ${item.isCompleted ? 'checked' : ''}">
                         <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
                     </div>
@@ -414,6 +491,7 @@
                         <div class="flex items-center gap-2 mb-0.5">
                             <span class="category-badge" onclick="event.stopPropagation(); editCategory('${item.id}', '${item.category}')">${item.category}</span>
                             <span class="text-sm font-bold truncate">${item.name}</span>
+                            ${periodBadge}
                         </div>
                         <div class="text-[10px] text-slate-500 font-bold flex items-center gap-1">
                             <i data-lucide="clock" class="w-2.5 h-2.5"></i>
@@ -437,6 +515,92 @@
                 listDiv.appendChild(card);
             });
             container.appendChild(listDiv);
+        }
+
+        // 드래그 앤 드롭 핸들러 (플레이스홀더 방식)
+        function handleDragStart(e) {
+            dragSrcId = this.dataset.id;
+            this.classList.add('dragging');
+            
+            // 플레이스홀더 생성
+            placeholder = document.createElement('div');
+            placeholder.className = 'drag-placeholder';
+            
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', dragSrcId);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetCard = e.target.closest('.item-card');
+            const container = document.getElementById('content-list');
+            
+            // 자동 스크롤
+            const rect = container.getBoundingClientRect();
+            if (e.clientY < rect.top + 50) startAutoScroll('up');
+            else if (e.clientY > rect.bottom - 50) startAutoScroll('down');
+            else stopAutoScroll();
+
+            if (targetCard && targetCard.dataset.id !== dragSrcId) {
+                const targetRect = targetCard.getBoundingClientRect();
+                const next = (e.clientY - targetRect.top) / (targetRect.bottom - targetRect.top) > 0.5;
+                const parent = targetCard.parentNode;
+                
+                // 플레이스홀더 위치 이동
+                parent.insertBefore(placeholder, next ? targetCard.nextSibling : targetCard);
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            stopAutoScroll();
+            
+            if (placeholder && placeholder.parentNode) {
+                // 드롭 직후 리스트 순서 파악
+                const allCards = document.querySelectorAll('.item-card:not(.dragging)');
+                const newIds = [];
+                
+                // DOM 순서대로 ID 추출 (플레이스홀더가 들어있는 위치 기준)
+                const currentList = placeholder.parentNode;
+                const items = Array.from(currentList.children);
+                
+                // 모든 섹션의 아이템 순서를 다시 취합해야 함
+                // 하지만 드래그는 같은 섹션 내에서만 일어난다고 가정하면 (isEditMode에서는 섹션이 고정됨)
+                const allItemIds = [];
+                document.querySelectorAll('.item-card').forEach(card => {
+                    if (card === this) {
+                        // 드래그 중인 카드는 플레이스홀더 위치에 들어갈 예정
+                    }
+                });
+
+                // 더 확실한 방법: 플레이스홀더 자리에 실제 카드를 넣고 전체 ID 순서 추출
+                placeholder.parentNode.replaceChild(this, placeholder);
+                
+                const finalOrder = Array.from(document.querySelectorAll('.item-card')).map(c => c.dataset.id);
+                window.electronAPI.contentsReorderList(finalOrder);
+            }
+            
+            placeholder = null;
+        }
+
+        function startAutoScroll(direction) {
+            if (autoScrollTimer) return;
+            const container = document.getElementById('content-list');
+            const speed = 10; 
+            autoScrollTimer = setInterval(() => {
+                container.scrollTop += (direction === 'up' ? -speed : speed);
+            }, 16);
+        }
+
+        function stopAutoScroll() {
+            if (autoScrollTimer) {
+                clearInterval(autoScrollTimer);
+                autoScrollTimer = null;
+            }
         }
 
         function toggleEditMode() {

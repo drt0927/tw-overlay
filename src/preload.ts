@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
   contentsAddCustom: (name: string, category: string, rule: any) => ipcRenderer.send('contents-add-custom', name, category, rule),
   contentsRemoveItem: (id: string) => ipcRenderer.send('contents-remove-item', id),
+  contentsReorderItem: (id: string, direction: 'up' | 'down') => ipcRenderer.send('contents-reorder-item', id, direction),
+  contentsReorderList: (ids: string[]) => ipcRenderer.send('contents-reorder-list', ids),
   contentsManualReset: () => ipcRenderer.send('contents-manual-reset'),
   setIgnoreMouseEvents: (ignore: boolean, options: { forward?: boolean }) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),

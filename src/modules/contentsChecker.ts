@@ -41,7 +41,8 @@ export function init(): void {
       currentItems.push({ 
         ...def, 
         isCompleted: false, 
-        lastCompletedAt: undefined 
+        lastCompletedAt: undefined,
+        sortOrder: currentItems.length 
       });
       changed = true;
     } else {
@@ -51,6 +52,14 @@ export function init(): void {
         exists.resetRule = def.resetRule;
         changed = true;
       }
+    }
+  });
+
+  // sortOrder가 없는 기존 항목들에 대해 순서 부여
+  currentItems.forEach((item, idx) => {
+    if (item.sortOrder === undefined) {
+      item.sortOrder = idx;
+      changed = true;
     }
   });
 
@@ -67,6 +76,58 @@ export function init(): void {
   }
   
   checkReset();
+}
+
+/** 순서 변경 */
+export function reorderItem(id: string, direction: 'up' | 'down'): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const idx = items.findIndex(i => i.id === id);
+  if (idx === -1) return;
+
+  // 같은 유형(daily/weekly) 내환에서의 순서 변경이 직관적임
+  const targetType = items[idx].resetRule.type;
+  const sameTypeItems = items
+    .filter(i => i.resetRule.type === targetType)
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  
+  const internalIdx = sameTypeItems.findIndex(i => i.id === id);
+  if (direction === 'up' && internalIdx > 0) {
+    // 이전 항목과 sortOrder 교체
+    const prev = sameTypeItems[internalIdx - 1];
+    const curr = sameTypeItems[internalIdx];
+    const tmp = prev.sortOrder;
+    prev.sortOrder = curr.sortOrder;
+    curr.sortOrder = tmp;
+    config.saveImmediate({ contentsCheckerItems: items });
+    refreshUI();
+  } else if (direction === 'down' && internalIdx < sameTypeItems.length - 1) {
+    // 다음 항목과 sortOrder 교체
+    const next = sameTypeItems[internalIdx + 1];
+    const curr = sameTypeItems[internalIdx];
+    const tmp = next.sortOrder;
+    next.sortOrder = curr.sortOrder;
+    curr.sortOrder = tmp;
+    config.saveImmediate({ contentsCheckerItems: items });
+    refreshUI();
+  }
+}
+
+/** 전체 목록 순서 갱신 (드래그 앤 드롭용) */
+export function reorderList(ids: string[]): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  
+  // 전달받은 ID 배열 순서대로 sortOrder 재할당
+  items.forEach(item => {
+    const newIdx = ids.indexOf(item.id);
+    if (newIdx !== -1) {
+      item.sortOrder = newIdx;
+    }
+  });
+
+  config.saveImmediate({ contentsCheckerItems: items });
+  refreshUI();
 }
 
 /** 초기화 로직 (정기적으로 또는 수동 호출) */
@@ -190,7 +251,8 @@ export function addCustomItem(name: string, category: string, rule: ResetRule): 
     isCompleted: false,
     isVisible: true,
     isCustom: true,
-    resetRule: rule
+    resetRule: rule,
+    sortOrder: items.length
   };
   items.push(newItem);
   config.saveImmediate({ contentsCheckerItems: items });

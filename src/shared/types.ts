@@ -63,6 +63,7 @@ export interface ContentsCheckerItem {
     category: string;
     resetRule: ResetRule;
     lastCompletedAt?: number;
+    sortOrder?: number;
 }
 
 export interface AppConfig {

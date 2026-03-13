@@ -92,6 +92,12 @@ export function register(): void {
   ipcMain.on('contents-remove-item', (_e, id: string) => {
     import('./contentsChecker').then(mod => mod.removeItem(id));
   });
+  ipcMain.on('contents-reorder-item', (_e, id: string, direction: 'up' | 'down') => {
+    import('./contentsChecker').then(mod => mod.reorderItem(id, direction));
+  });
+  ipcMain.on('contents-reorder-list', (_e, ids: string[]) => {
+    import('./contentsChecker').then(mod => mod.reorderList(ids));
+  });
   ipcMain.on('contents-manual-reset', () => {
     import('./contentsChecker').then(mod => mod.checkReset());
   });

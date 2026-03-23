@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.7.3-violet.svg)
+![Version](https://img.shields.io/badge/version-1.7.4-violet.svg)
 
 ## 📸 스크린샷
 
@@ -22,14 +22,19 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.7.3.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.7.4.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.7.3)
+## 📝 최신 업데이트 내역 (v1.7.4)
+- **Field Boss Notification 개선:**
+    - 필드 보스 알림 UI를 간소화하고 위치를 오버레이 버튼 옆으로 최적화.
+    - 환경설정에서 알림음 미리보기 시 선택된 보스 이름이 실시간으로 표시되도록 개선.
+
+## 📝 이전 업데이트 내역 (v1.7.3)
 - **Contents Checker 개선:**
     - 숙제 순서를 마우스 드래그 앤 드롭으로 자유롭게 변경하는 기능 추가.
     - 드래그 중 리스트 자동 스크롤 지원.
@@ -45,10 +50,6 @@
 - **일일/주간 숙제 체크 리스트:** 테일즈위버 맞춤형 숙제 관리 도구 추가. (00:00 자정, 월요일 06:00 등 실제 게임 규칙 반영)
 - **리마인더 연동:** 게임 종료 시 미완료 숙제 목록을 팝업창으로 자동 추출하여 표시합니다.
 - **UI 디자인 고도화:** 모든 창의 디자인 시스템(Purple & Glass 테마)을 통합하고 가독성을 대폭 개선했습니다.
-
-## 📝 이전 업데이트 내역 (v1.6.5)
-- **게임 종료 리마인더:** 게임 종료 시 사용자가 설정해둔 메시지를 커스텀 팝업 창으로 표시하는 기능 추가.
-- **게임 종료 시 프로그램 유지:** 게임이 종료되어도 TW-Overlay가 함께 종료되지 않고 백그라운드에서 대기합니다.
 
 ## 📄 라이선스
 이 프로젝트는 ISC 라이선스를 따릅니다.

@@ -210,3 +210,36 @@ input[type="range"]:hover::-webkit-slider-thumb {
   transition: background 0.2s;
 }
 .btn-primary:hover { background: var(--primary-hover); }
+
+/* --- 보스 알림 토스트 --- */
+.boss-toast {
+  position: fixed;
+  left: 48px; /* 사이드바에 좀 더 가깝게 */
+  top: 50%;
+  transform: translateY(-50%) translateX(-10px);
+  background: rgba(15, 18, 30, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.boss-toast.show {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.boss-toast-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+

@@ -138,9 +138,9 @@ export function register(): void {
     }
   });
 
-  ipcMain.on('preview-boss-sound', (_e, soundFile: string, volume: number | null) => {
+  ipcMain.on('preview-boss-sound', (_e, soundFile: string, volume: number | null, bossName: string = '미리보기') => {
     const sidebar = wm.getMainWindow();
-    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName: '미리보기', soundFile, volume });
+    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName, soundFile, volume });
   });
 
   ipcMain.on('save-quick-slots', (_e, slots: QuickSlotItem[]) => {

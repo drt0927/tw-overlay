@@ -3,14 +3,14 @@
  */
 
 // 아이콘 새로고침
-window.refreshIcons = function() {
+window.refreshIcons = function () {
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
   }
 };
 
 // Escape 키로 창 닫기 바인딩
-window.bindEscapeClose = function() {
+window.bindEscapeClose = function () {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       // 닫기 전 추가 로직이 필요한 경우를 위해 이벤트를 전파하지 않음
@@ -20,7 +20,7 @@ window.bindEscapeClose = function() {
 };
 
 // 사운드 목록 로드 (공통)
-window.loadSoundList = async function() {
+window.loadSoundList = async function () {
   try {
     const response = await fetch('assets/data/sounds.json');
     return await response.json();
@@ -31,7 +31,7 @@ window.loadSoundList = async function() {
 };
 
 // 슬라이더 값 퍼센트 표시 업데이트
-window.updateRangeValue = function(inputEl, targetId) {
+window.updateRangeValue = function (inputEl, targetId) {
   const target = document.getElementById(targetId);
   if (target) {
     target.innerText = inputEl.value + '%';
@@ -39,8 +39,8 @@ window.updateRangeValue = function(inputEl, targetId) {
 };
 
 // 사운드 미리보기
-window.playPreview = function(soundFile, volume = null) {
+window.playPreview = function (soundFile, volume = null, bossName = '미리보기') {
   if (window.electronAPI && window.electronAPI.previewBossSound) {
-    window.electronAPI.previewBossSound(soundFile, volume);
+    window.electronAPI.previewBossSound(soundFile, volume, bossName);
   }
 };

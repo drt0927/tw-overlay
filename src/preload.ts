@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
   saveQuickSlots: (slots: QuickSlotItem[]) => ipcRenderer.send('save-quick-slots', slots),
   applySettings: (settings: Partial<AppConfig>) => ipcRenderer.send('apply-settings', settings),
-  previewBossSound: (soundFile: string, volume: number | null = null) => ipcRenderer.send('preview-boss-sound', soundFile, volume),
+  previewBossSound: (soundFile: string, volume: number | null = null, bossName: string = '미리보기') => ipcRenderer.send('preview-boss-sound', soundFile, volume, bossName),
   checkForUpdates: () => ipcRenderer.send('check-for-updates'),
   startUpdateDownload: () => ipcRenderer.send('start-update-download'),
   quitAndInstall: () => ipcRenderer.send('quit-and-install'),

@@ -7,13 +7,13 @@
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
 
-    <script>
-        window.addEventListener('beforeunload', () => { 
-            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-                window.electronAPI.cleanupAllListeners(); 
-            }
-        });
-    </script>
+  <script>
+    window.addEventListener('beforeunload', () => {
+      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
+        window.electronAPI.cleanupAllListeners();
+      }
+    });
+  </script>
 </head>
 
 <body>
@@ -123,6 +123,13 @@
 
   <!-- 툴팁 -->
   <div id="tooltip" class="tw-tooltip"></div>
+
+  <!-- 보스 알림 토스트 -->
+  <div id="boss-toast" class="boss-toast">
+    <i data-lucide="skull" class="w-4 h-4 text-[#a855f7]"></i>
+    <span id="boss-toast-name" class="boss-toast-name">보스 이름</span>
+  </div>
+
   <!-- 오디오 재생기 -->
   <audio id="boss-audio" class="hidden"></audio>
 
@@ -130,7 +137,10 @@
     function refreshIcons() { lucide.createIcons(); }
     const tooltip = document.getElementById('tooltip');
     const bossAudio = document.getElementById('boss-audio');
+    const bossToast = document.getElementById('boss-toast');
+    const bossToastName = document.getElementById('boss-toast-name');
     let bossNotifyVolume = 0.5;
+    let toastTimer = null;
 
     function showTooltip(text, el) {
       const rect = el.getBoundingClientRect();
@@ -145,12 +155,30 @@
 
     window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume }) => {
       if (!soundFile) return;
+
+      // 사운드 재생
       bossAudio.src = `assets/sound/${soundFile}`;
       bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
       bossAudio.play().catch(e => console.error('Audio play failed:', e));
+
+      // 사이드바 버튼 애니메이션 및 토스트 위치 동기화
       const btn = document.getElementById('boss-btn');
       btn.classList.add('animate-bounce', 'text-blue-400');
       setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
+
+      const btnRect = btn.getBoundingClientRect();
+      bossToast.style.top = `${btnRect.top + (btnRect.height / 2)}px`;
+
+      // 보스 알림 토스트 표시
+      bossToastName.innerText = bossName;
+      bossToast.classList.add('show');
+      refreshIcons();
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        bossToast.classList.remove('show');
+        toastTimer = null;
+      }, 5000); // 5초간 표시
     });
 
     function updateOverlayIcon(isVisible) {

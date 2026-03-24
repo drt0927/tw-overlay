@@ -47,9 +47,10 @@ app.whenReady().then(() => {
 
   const sidebar = wm.createMainWindow();
   tray.createTray();
-  
+
   analytics.trackEvent('app_open');
-  
+  analytics.startHeartbeat(); // 기본 1시간 간격 생존신고(ping) 시작
+
   ipcHandlers.register();
 
   tracker.start();
@@ -95,6 +96,7 @@ app.on('before-quit', () => {
   trade.stop();
   tray.destroyTray();
   tracker.stop();
+  analytics.stopHeartbeat();
 });
 
 app.on('window-all-closed', () => app.quit());

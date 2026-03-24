@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // ========== GA4 SETTINGS ==========
-let MEASUREMENT_ID = ''; 
+let MEASUREMENT_ID = '';
 let API_SECRET = '';
 
 try {
@@ -26,6 +26,7 @@ const store = new Store();
 export class Analytics {
   private clientId: string;
   private sessionId: string;
+  private heartbeatTimer: NodeJS.Timeout | null = null;
 
   constructor() {
     let savedId = (store as any).get('ga_client_id') as string | undefined;
@@ -40,6 +41,11 @@ export class Analytics {
   public trackEvent(eventName: string, params: Record<string, any> = {}): void {
     if (!MEASUREMENT_ID || !API_SECRET || MEASUREMENT_ID === 'G-XXXXXXXXXX' || API_SECRET === 'XXXXXXXXXXXXXXXXXXX') {
       console.warn('[Analytics] GA4 키가 설정되지 않아 이벤트 전송을 건너뜁니다.');
+      return;
+    }
+
+    if (!net.isOnline()) {
+      console.warn(`[Analytics] 네트워크가 오프라인 상태입니다. '${eventName}' 전송을 건너뜁니다.`);
       return;
     }
 
@@ -81,6 +87,22 @@ export class Analytics {
       request.end();
     } catch (error) {
       console.error('[Analytics] Error sending event:', error);
+    }
+  }
+
+  public startHeartbeat(intervalMs: number = 3600000): void {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = setInterval(() => {
+      this.trackEvent('app_running_ping');
+    }, intervalMs);
+    console.log(`[Analytics] Heartbeat timer started (${intervalMs}ms)`);
+  }
+
+  public stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+      console.log('[Analytics] Heartbeat timer stopped');
     }
   }
 }

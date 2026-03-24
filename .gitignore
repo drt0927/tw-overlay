@@ -56,7 +56,7 @@ spec/fixtures/logo.png
 .yarn/install-state.gz
 
 .gemini/debug/*
-# .gemini/planning/*
+.gemini/planning/*
 
 error/*
 src/env.json

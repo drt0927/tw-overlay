@@ -19,8 +19,13 @@
       margin: 0;
     }
 
-    .drag { -webkit-app-region: drag; }
-    .no-drag { -webkit-app-region: no-drag; }
+    .drag {
+      -webkit-app-region: drag;
+    }
+
+    .no-drag {
+      -webkit-app-region: no-drag;
+    }
 
     .tab-btn {
       padding: 10px 16px;
@@ -31,14 +36,16 @@
       transition: all 0.2s;
       white-space: nowrap;
     }
+
     .tab-btn.active {
       color: #f97316;
       border-bottom-color: #f97316;
       background-color: rgba(249, 115, 22, 0.05);
     }
+
     .tab-btn:hover:not(.active) {
       color: #94a3b8;
-      background-color: rgba(255,255,255,0.03);
+      background-color: rgba(255, 255, 255, 0.03);
     }
 
     .part-btn {
@@ -46,25 +53,27 @@
       font-size: 11px;
       font-weight: 700;
       border-radius: 8px;
-      border: 1px solid rgba(51,65,85,1);
+      border: 1px solid rgba(51, 65, 85, 1);
       color: #64748b;
-      background: rgba(15,23,42,1);
+      background: rgba(15, 23, 42, 1);
       cursor: pointer;
       transition: all 0.15s;
     }
+
     .part-btn.active {
       color: #f97316;
-      border-color: rgba(249,115,22,0.5);
-      background: rgba(249,115,22,0.08);
+      border-color: rgba(249, 115, 22, 0.5);
+      background: rgba(249, 115, 22, 0.08);
     }
+
     .part-btn:hover:not(.active) {
       color: #94a3b8;
-      border-color: rgba(100,116,139,0.5);
+      border-color: rgba(100, 116, 139, 0.5);
     }
 
     .step-select {
-      background: rgba(15,23,42,1);
-      border: 1px solid rgba(51,65,85,1);
+      background: rgba(15, 23, 42, 1);
+      border: 1px solid rgba(51, 65, 85, 1);
       border-radius: 8px;
       padding: 6px 10px;
       color: #f1f5f9;
@@ -73,13 +82,14 @@
       outline: none;
       flex: 1;
     }
+
     .step-select:focus {
-      border-color: rgba(249,115,22,0.5);
+      border-color: rgba(249, 115, 22, 0.5);
     }
 
     .price-input {
-      background: rgba(30,41,59,1);
-      border: 1px solid rgba(51,65,85,1);
+      background: rgba(30, 41, 59, 1);
+      border: 1px solid rgba(51, 65, 85, 1);
       border-radius: 6px;
       padding: 4px 8px;
       color: #f97316;
@@ -90,16 +100,24 @@
       outline: none;
       transition: border-color 0.15s;
     }
+
     .price-input:focus {
-      border-color: rgba(249,115,22,0.5);
+      border-color: rgba(249, 115, 22, 0.5);
     }
+
     .price-input::placeholder {
-      color: rgba(249,115,22,0.3);
+      color: rgba(249, 115, 22, 0.3);
       font-size: 10px;
     }
 
-    .custom-scroll::-webkit-scrollbar { width: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+    }
 
     .material-row {
       display: flex;
@@ -107,12 +125,13 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 10px;
-      background: rgba(15,23,42,0.6);
-      border: 1px solid rgba(51,65,85,0.6);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(51, 65, 85, 0.6);
       transition: border-color 0.15s;
     }
+
     .material-row:hover {
-      border-color: rgba(100,116,139,0.5);
+      border-color: rgba(100, 116, 139, 0.5);
     }
 
     .step-badge {
@@ -169,10 +188,11 @@
       <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest mr-1">부위</span>
       <button class="part-btn active" data-part="helm" onclick="selectPart('helm')">투구</button>
       <button class="part-btn" data-part="armor" onclick="selectPart('armor')">갑옷</button>
-      <button class="part-btn" data-part="gloves" onclick="selectPart('gloves')">장갑</button>
-      <button class="part-btn" data-part="boots" onclick="selectPart('boots')">신발</button>
-      <button class="part-btn" data-part="wings" onclick="selectPart('wings')">날개</button>
-      <button class="part-btn" data-part="amulet" onclick="selectPart('amulet')">아뮬렛</button>
+      <button class="part-btn" data-part="gloves" onclick="selectPart('gloves')">손</button>
+      <button class="part-btn" data-part="boots" onclick="selectPart('boots')">다리</button>
+      <button class="part-btn" data-part="wings" onclick="selectPart('wings')">몸</button>
+      <button class="part-btn" data-part="amulet" onclick="selectPart('amulet')">머리</button>
+      <button class="part-btn" data-part="shield" onclick="selectPart('shield')">손목</button>
     </div>
   </div>
 
@@ -229,10 +249,10 @@
     const STEP_COLORS = {
       'EnkiriaToShinEnkiria': { bg: 'bg-slate-700/40', text: 'text-slate-300', label: '엔키라→칼라그' },
       'ShinEnkiriaToInfernal': { bg: 'bg-purple-900/30', text: 'text-purple-300', label: '칼라그→인퍼널' },
-      'AcadToInfernal':        { bg: 'bg-purple-900/30', text: 'text-purple-300', label: '아카드→인퍼널' },
-      'InfernalToAquilus':     { bg: 'bg-blue-900/30',   text: 'text-blue-300',   label: '인퍼널→아퀼루스' },
-      'AquilusToAbyss':        { bg: 'bg-red-900/30',    text: 'text-red-300',    label: '아퀼루스→어비스' },
-      'AbyssToEclipse':        { bg: 'bg-yellow-900/30', text: 'text-yellow-300', label: '어비스→이클립스' },
+      'AcadToInfernal': { bg: 'bg-purple-900/30', text: 'text-purple-300', label: '아카드→인퍼널' },
+      'InfernalToAquilus': { bg: 'bg-blue-900/30', text: 'text-blue-300', label: '인퍼널→아퀼루스' },
+      'AquilusToAbyss': { bg: 'bg-red-900/30', text: 'text-red-300', label: '아퀼루스→어비스' },
+      'AbyssToEclipse': { bg: 'bg-yellow-900/30', text: 'text-yellow-300', label: '어비스→이클립스' },
     };
 
     const STEP_ORDER_EQUIPMENT = [
@@ -398,10 +418,10 @@
         const price = parseFloat(input.value.replace(/,/g, '')) || 0;
 
         if (input.dataset.name === '태청금액신단' && loadElsoOption()) {
-           // 시드 단가 입력 무시, 엘소로 합산
-           totalElso += qty * 23000;
+          // 시드 단가 입력 무시, 엘소로 합산
+          totalElso += qty * 23000;
         } else {
-           if (price > 0) totalSeed += qty * price;
+          if (price > 0) totalSeed += qty * price;
         }
       });
       document.getElementById('total-cost').textContent = formatNumber(totalSeed);
@@ -491,9 +511,9 @@
             ` : ''}
             <div class="flex gap-1 mt-1 flex-wrap">
               ${data.steps.map(s => {
-                const c = STEP_COLORS[s] || { bg: 'bg-slate-700/40', text: 'text-slate-400', label: s };
-                return `<span class="step-badge ${c.bg} ${c.text}">${c.label}</span>`;
-              }).join('')}
+          const c = STEP_COLORS[s] || { bg: 'bg-slate-700/40', text: 'text-slate-400', label: s };
+          return `<span class="step-badge ${c.bg} ${c.text}">${c.label}</span>`;
+        }).join('')}
             </div>
           </div>
           <div class="w-12 text-right shrink-0">

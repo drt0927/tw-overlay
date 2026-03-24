@@ -12,6 +12,7 @@ import { fetchEtaRanking } from './etaRanking';
 import type { EtaRankingParams } from '../shared/types';
 import { setupAutoStart } from './autoStart';
 import * as sm from './shortcutManager';
+import { analytics } from './analytics';
 
 let _registered = false;
 
@@ -74,10 +75,14 @@ export function register(): void {
     'toggle-trade': wm.toggleTradeWindow,
     'toggle-coefficient-calculator': wm.toggleCoefficientCalculatorWindow,
     'toggle-contents-checker': wm.toggleContentsCheckerWindow,
+    'toggle-evolution-calculator': wm.toggleEvolutionCalculatorWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
-    ipcMain.on(event, () => handler());
+    ipcMain.on(event, () => {
+      analytics.trackEvent('feature_used', { feature: event });
+      handler();
+    });
   });
 
   // 컨텐츠 체크 리스트 조작 핸들러
@@ -108,6 +113,7 @@ export function register(): void {
 
   // 특별 인수가 필요한 토글 핸들러 개별 등록
   ipcMain.on('toggle-settings', (_event, tabId?: string) => {
+    analytics.trackEvent('feature_used', { feature: 'toggle-settings', tabId });
     wm.toggleSettingsWindow(tabId);
   });
 
@@ -116,6 +122,7 @@ export function register(): void {
     return await optimizer.getOptimizationStatus();
   });
   ipcMain.handle('set-optimization', async (_e, enable: boolean) => {
+    analytics.trackEvent('feature_used', { feature: 'set-optimization', enable });
     return await optimizer.setOptimization(enable);
   });
 

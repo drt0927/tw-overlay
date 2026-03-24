@@ -24,9 +24,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build TS and Copy Resources
+        run: npm run build
+
+      - name: Inject Analytics Secrets
+        env:
+          GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+          GA_API_SECRET: ${{ secrets.GA_API_SECRET }}
+        shell: bash
+        run: |
+          echo "{\"MEASUREMENT_ID\": \"$GA_MEASUREMENT_ID\", \"API_SECRET\": \"$GA_API_SECRET\"}" > dist/env.json
+
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
+          skip_build: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release: true
           max_attempts: 3

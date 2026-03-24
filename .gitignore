@@ -59,3 +59,4 @@ spec/fixtures/logo.png
 # .gemini/planning/*
 
 error/*
+src/env.json

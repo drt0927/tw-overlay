@@ -16,6 +16,7 @@ import * as pollingLoop from './modules/pollingLoop';
 import { setupAutoStart } from './modules/autoStart';
 import * as trade from './modules/tradeMonitor';
 import * as sm from './modules/shortcutManager';
+import { analytics } from './modules/analytics';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
@@ -46,6 +47,9 @@ app.whenReady().then(() => {
 
   const sidebar = wm.createMainWindow();
   tray.createTray();
+  
+  analytics.trackEvent('app_open');
+  
   ipcHandlers.register();
 
   tracker.start();

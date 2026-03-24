@@ -108,6 +108,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   trade: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 380, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 850, height: 1150 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
+  evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
 };
 
 let gameRect: GameRect | null = null;
@@ -158,6 +159,7 @@ export const getBossSettingsWindow = () => windowRegistry.bossSettings.ref;
 export const getEtaRankingWindow = () => windowRegistry.etaRanking.ref;
 export const getTradeWindow = () => windowRegistry.trade.ref;
 export const getCoefficientCalculatorWindow = () => windowRegistry.coefficientCalculator.ref;
+export const getEvolutionCalculatorWindow = () => windowRegistry.evolutionCalculator.ref;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
@@ -362,6 +364,7 @@ export function toggleTradeWindow(): void {
   });
 }
 export function toggleCoefficientCalculatorWindow(): void { createToggleableWindow('coefficientCalculator'); }
+export function toggleEvolutionCalculatorWindow(): void { createToggleableWindow('evolutionCalculator'); }
 export function toggleContentsCheckerWindow(): void {
   createToggleableWindow('contentsChecker', {
     onReady: (win) => {

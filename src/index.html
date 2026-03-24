@@ -79,6 +79,13 @@
       <i data-lucide="check-square" class="w-4 h-4"></i>
     </div>
 
+    <!-- 진화 재료 비용 계산기 버튼 -->
+    <div id="evolution-calculator-btn" class="p-2 cursor-pointer text-slate-400 hover:text-orange-400 relative"
+      onclick="window.electronAPI.toggleEvolutionCalculator()" onmouseenter="showTooltip('진화 재료 비용 계산기', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="flask-conical" class="w-4 h-4"></i>
+    </div>
+
     <!-- 퀵슬롯 컨테이너 -->
     <div id="slot-container" class="slot-container flex flex-col gap-2 mt-2"></div>
 
@@ -180,7 +187,7 @@
 
     window.electronAPI.onConfigData((config) => {
       bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
-      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'evolution-calculator-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
       let hiddenMenuIds = config.hiddenMenuIds || [];
       if (!config.hiddenMenuIds && config.visibleMenuIds) {
         const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];

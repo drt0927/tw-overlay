@@ -683,6 +683,14 @@
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
         });
+
+        // ESC 키 닫기 지원 (편집 모드 시 편집 모드만 해제)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (isEditMode) toggleEditMode();
+                else window.close();
+            }
+        });
     </script>
 </body>
 

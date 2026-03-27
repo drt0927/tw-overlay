@@ -1,11 +1,11 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.9.0)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.9.1)
 
-이 문서는 v1.9.0 버전을 기준으로 작성되었습니다.
+이 문서는 v1.9.1 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 게임 동기화 위젯.
 - **최종 빌드:** **TypeScript**, Electron, **Native Win32 API(Koffi)** 기반.
-- **주요 개선:** 커스텀 알림 시스템 도입 및 GA4 분석 시스템 표준화.
+- **주요 개선:** 데이터 데이터 및 오타 수정 (Data Maintenance).
 
 ## 2. 주요 기능 명세
 - **Evolution Material Cost Calculator (New):** 장비 및 무기 진화에 필요한 소모 재료의 단가를 입력하여 총 시드 및 엘소 비용을 한 눈에 시뮬레이션 할 수 있는 전용 계산 창 추가.
@@ -36,6 +36,9 @@
 1. **빌드:** `npm run build` (Node 기반 리소스 통합).
 2. **배포:** `npm run dist` (GitHub 배포 설정 및 설치본 생성).
 3. **워크플로우:** [release_workflow.md](./release_workflow.md) 참고.
+
+- **업데이트 히스토리 (v1.9.1 핵심)**
+- **데이터 유지보수:** `evolution_data.json` 내 오타 수정 및 명칭 표준화.
 
 - **업데이트 히스토리 (v1.9.0 핵심)**
 - **신규 기능: 커스텀 알림 (Custom Alerts)** 기능 추가 및 편집 기능 구현.

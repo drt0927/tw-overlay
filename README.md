@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.9.0-violet.svg)
+![Version](https://img.shields.io/badge/version-1.9.1-violet.svg)
 
 ## 📸 스크린샷
 
@@ -23,14 +23,19 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.9.0.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.9.1.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.9.0)
+## 📝 최신 업데이트 내역 (v1.9.1)
+- **데이터 오류 및 오타 수정 (Data Maintenance):**
+    - `evolution_data.json` 내 진화 재료 명칭 오타 수정 (예: 가짜 달여왕 군단의 건틀릿 파편 등).
+    - 기타 내부 데이터 파일의 텍스트 오타 제거 및 일관성 개선.
+
+## 📝 이전 업데이트 내역 (v1.9.0)
 - **신규 기능: 커스텀 알림 (Custom Alerts):**
     - 매일 특정 시각/매시 특정 분 반복 알림 기능 및 전용 관리 창(`custom-alert.html`) 추가.
     - 등록된 알림을 즉시 수정할 수 있는 **편집(Edit)** 기능 포함.

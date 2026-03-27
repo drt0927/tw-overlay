@@ -1,6 +1,6 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.9.0)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.9.1)
 
-이 문서는 v1.9.0 버전을 기준으로 작성되었습니다.
+이 문서는 v1.9.1 버전을 기준으로 작성되었습니다.
  상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요. UI 일관성을 위한 디자인 가이드는 [DESIGN_TOKENS.md](./DESIGN_TOKENS.md)에서 확인하실 수 있습니다.
 
 ## 📌 프로젝트 소개
@@ -34,6 +34,9 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 ### 2. 성능 최적화 (Native & Memory)
 - **Native Window Tracking:** `koffi`를 통해 `GetForegroundWindow`, `GetWindowRect` 등 Win32 API를 직접 호출하여 추적 반응성을 극대화했습니다.
 - **성능 최적화 (Zero-copy):** `SharedArrayBuffer`를 도입하여 메인 스레드와 워커 스레드 간의 픽셀 데이터 복사 오버헤드를 완전히 제거하고 GC 부하를 최소화했습니다.
+- **업데이트 히스토리 (v1.9.1 핵심)**
+- **데이터 유지보수:** `evolution_data.json` 등 주요 데이터 파일의 오타를 수정하고 명칭 일관성을 확보했습니다. (예: 건틀렛 -> 건틀릿, 중복 조사 제거 등)
+
 - **업데이트 히스토리 (v1.9.0 핵심)**
 - **신규 기능: 커스텀 알림 (Custom Alerts)** 시스템이 도입되었습니다. 매일 특정 시각 또는 매시 특정 분에 울리는 반복 알림을 설정할 수 있으며, 기존 알림을 바로 편집하는 기능도 포함되어 있습니다.
 - **분석 시스템 개편:** GA4 이벤트를 1-depth 구조로 평탄화하여 분석 가독성을 높였습니다. 또한 표준 세션 파라미터(`ga_session_id`, `ga_session_number`)를 도입하여 정확한 방문 통계를 집계합니다.
@@ -90,4 +93,4 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 ---
 최종 수정일: 2026-03-27
 작성자: Gemini CLI Agent
-버전: v1.9.0
+버전: v1.9.1

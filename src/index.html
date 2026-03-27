@@ -65,6 +65,13 @@
       <i data-lucide="alarm-clock" class="w-4 h-4"></i>
     </div>
 
+    <!-- 커스텀 알림 버튼 -->
+    <div id="custom-alert-btn" class="p-2 cursor-pointer text-slate-400 hover:text-amber-400 relative"
+      onclick="window.electronAPI.toggleCustomAlert()" onmouseenter="showTooltip('커스텀 알림', this)"
+      onmouseleave="hideTooltip()">
+      <i data-lucide="clock" class="w-4 h-4"></i>
+    </div>
+
     <!-- 에타 랭킹 버튼 -->
     <div id="eta-ranking-btn" class="p-2 cursor-pointer text-slate-400 hover:text-pink-400 relative"
       onclick="window.electronAPI.toggleEtaRanking()" onmouseenter="showTooltip('에타 랭킹 조회', this)"
@@ -215,7 +222,7 @@
 
     window.electronAPI.onConfigData((config) => {
       bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
-      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'evolution-calculator-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'custom-alert-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'evolution-calculator-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
       let hiddenMenuIds = config.hiddenMenuIds || [];
       if (!config.hiddenMenuIds && config.visibleMenuIds) {
         const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];

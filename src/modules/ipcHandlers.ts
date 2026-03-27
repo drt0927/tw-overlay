@@ -76,6 +76,7 @@ export function register(): void {
     'toggle-coefficient-calculator': wm.toggleCoefficientCalculatorWindow,
     'toggle-contents-checker': wm.toggleContentsCheckerWindow,
     'toggle-evolution-calculator': wm.toggleEvolutionCalculatorWindow,
+    'toggle-custom-alert': wm.toggleCustomAlertWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {

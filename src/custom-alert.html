@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>커스텀 알림</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+  <style>
+    body { background: transparent; color: white; overflow: hidden; }
+    .alert-card {
+      background: rgba(30, 35, 60, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .alert-card:hover { background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.3); }
+    .alert-card.disabled { opacity: 0.5; filter: grayscale(0.5); }
+    select { color-scheme: dark; }
+    select option { background: #1a1b2e; color: white; }
+    .drag-handle {
+      padding: 18px 20px; cursor: move; -webkit-app-region: drag;
+      background: linear-gradient(to bottom, rgba(251, 191, 36, 0.12), transparent);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .no-drag { -webkit-app-region: no-drag; }
+    .offset-checkbox { accent-color: #f59e0b; }
+    input[type="time"], input[type="number"] {
+      color-scheme: dark; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 13px;
+    }
+    .type-tab { transition: all 0.2s; }
+    .type-tab.active { background: rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.5); color: #fbbf24; }
+    .type-tab.inactive { background: transparent; border-color: rgba(255,255,255,0.08); color: #64748b; }
+    .type-tab.inactive:hover { border-color: rgba(255,255,255,0.15); color: #94a3b8; }
+  </style>
+  <script>
+    window.addEventListener('beforeunload', () => {
+      if (window.electronAPI && window.electronAPI.cleanupAllListeners)
+        window.electronAPI.cleanupAllListeners();
+    });
+  </script>
+</head>
+
+<body class="panel-glass p-0 h-screen flex flex-col">
+  <!-- Header -->
+  <div class="drag-handle flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center border border-amber-500/30">
+        <i data-lucide="clock" class="w-5 h-5 text-amber-400"></i>
+      </div>
+      <div class="flex flex-col">
+        <span class="text-xs font-black text-white tracking-tight">커스텀 알림</span>
+        <span class="text-[9px] text-slate-500 font-bold">시간 기반 반복 알림 설정</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 no-drag">
+      <button id="add-btn" onclick="openAddForm()"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-lg text-amber-400 hover:bg-amber-500/30 transition-all text-[11px] font-black">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> 알림 추가
+      </button>
+      <button onclick="window.close()"
+        class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-full transition-colors">
+        <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-hidden flex flex-col no-drag">
+    <!-- Add Form -->
+    <div id="add-form" class="hidden p-3 border-b border-white/5 bg-black/20">
+      <div class="space-y-3">
+
+        <!-- 타입 선택 탭 -->
+        <div class="flex gap-2">
+          <button id="tab-daily" onclick="setFormType('daily')"
+            class="type-tab active flex-1 border rounded-lg py-2 text-[11px] font-black flex items-center justify-center gap-1.5">
+            <i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i> 매일 특정 시각
+          </button>
+          <button id="tab-hourly" onclick="setFormType('hourly')"
+            class="type-tab inactive flex-1 border rounded-lg py-2 text-[11px] font-black flex items-center justify-center gap-1.5">
+            <i data-lucide="repeat" class="w-3.5 h-3.5"></i> 매시 특정 분
+          </button>
+        </div>
+
+        <!-- 시각 입력 (daily) -->
+        <div id="input-daily" class="flex gap-3 items-center">
+          <div class="flex flex-col gap-1 flex-1">
+            <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">목표 시각</label>
+            <div class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 hover:border-amber-500/30 transition-colors">
+              <input type="time" id="form-time" value="09:00" class="w-full">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1 flex-1">
+            <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 메시지</label>
+            <input type="text" id="form-message-daily" placeholder="예: 일일퀘스트 시작!" maxlength="30"
+              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/40 transition-colors w-full">
+          </div>
+        </div>
+
+        <!-- 분 입력 (hourly) -->
+        <div id="input-hourly" class="hidden flex gap-3 items-center">
+          <div class="flex flex-col gap-1">
+            <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">매시 몇 분</label>
+            <div class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 hover:border-amber-500/30 transition-colors flex items-center gap-2">
+              <input type="number" id="form-minute" value="0" min="0" max="59"
+                class="w-14 text-center text-amber-300">
+              <span class="text-[11px] text-slate-500 font-bold">분</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1 flex-1">
+            <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 메시지</label>
+            <input type="text" id="form-message-hourly" placeholder="예: 필드보스 리젠 확인!" maxlength="30"
+              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/40 transition-colors w-full">
+          </div>
+        </div>
+
+        <!-- 알림 시점 -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 시점</label>
+          <div class="flex justify-between items-center bg-black/40 border border-white/10 rounded-lg px-4 py-2.5">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" value="10" class="form-offset offset-checkbox w-3.5 h-3.5">
+              <span class="text-[11px] font-bold text-slate-400">10분 전</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" value="5" class="form-offset offset-checkbox w-3.5 h-3.5">
+              <span class="text-[11px] font-bold text-slate-400">5분 전</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" value="2" class="form-offset offset-checkbox w-3.5 h-3.5">
+              <span class="text-[11px] font-bold text-slate-400">2분 전</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" value="1" class="form-offset offset-checkbox w-3.5 h-3.5">
+              <span class="text-[11px] font-bold text-slate-400">1분 전</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" value="0" class="form-offset offset-checkbox w-3.5 h-3.5" checked>
+              <span class="text-[11px] font-bold text-slate-400">정각</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 사운드 + 저장/취소 -->
+        <div class="flex gap-2 items-end">
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 사운드</label>
+            <div class="flex gap-2 items-center bg-black/40 border border-white/10 rounded-lg px-3 hover:border-amber-500/30 transition-colors">
+              <select id="form-sound" class="bg-transparent flex-1 py-2 text-[11px] font-black text-slate-300 focus:outline-none"></select>
+              <button onclick="previewFormSound()"
+                class="w-7 h-7 flex items-center justify-center text-amber-400 hover:text-amber-300 transition-colors shrink-0">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+              </button>
+            </div>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="cancelAddForm()"
+              class="px-4 py-2 text-[11px] font-black text-slate-500 hover:text-white transition-colors rounded-lg">취소</button>
+            <button onclick="saveNewAlert()"
+              class="px-4 py-2 text-[11px] font-black bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 rounded-lg transition-all">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert List -->
+    <div id="alert-list" class="flex-1 overflow-y-auto px-3 py-3 space-y-3 custom-scroll">
+      <div class="flex flex-col items-center justify-center py-20 text-slate-600 gap-3">
+        <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+        <span class="text-xs font-bold">불러오는 중...</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let config = null;
+    let soundFiles = [];
+    let currentFormType = 'daily';
+
+    window.onload = async () => {
+      soundFiles = await window.loadSoundList();
+      const sel = document.getElementById('form-sound');
+      soundFiles.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.file; opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+      window.bindEscapeClose();
+      window.refreshIcons();
+    };
+
+    window.electronAPI.onConfigData((data) => { config = data; render(); });
+
+    // --- 타입 탭 전환 ---
+    function setFormType(type) {
+      currentFormType = type;
+      document.getElementById('input-daily').classList.toggle('hidden', type !== 'daily');
+      document.getElementById('input-hourly').classList.toggle('hidden', type !== 'hourly');
+      document.getElementById('tab-daily').className = `type-tab ${type === 'daily' ? 'active' : 'inactive'} flex-1 border rounded-lg py-2 text-[11px] font-black flex items-center justify-center gap-1.5`;
+      document.getElementById('tab-hourly').className = `type-tab ${type === 'hourly' ? 'active' : 'inactive'} flex-1 border rounded-lg py-2 text-[11px] font-black flex items-center justify-center gap-1.5`;
+    }
+
+    // --- 렌더링 ---
+    function render() {
+      if (!config) return;
+      const list = document.getElementById('alert-list');
+      const alerts = config.customAlerts || [];
+
+      if (alerts.length === 0) {
+        list.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-20 text-slate-600 gap-3">
+            <i data-lucide="clock" class="w-10 h-10"></i>
+            <span class="text-xs font-bold">등록된 알림이 없습니다</span>
+            <span class="text-[10px] text-slate-700">[알림 추가] 버튼으로 새 알림을 만드세요</span>
+          </div>`;
+        window.refreshIcons();
+        return;
+      }
+
+      list.innerHTML = '';
+      alerts.forEach(alert => {
+        const offsetLabels = (alert.offsets || [0]).map(o => o === 0 ? '정각' : `${o}분 전`).join(', ');
+        const isHourly = alert.type === 'hourly';
+        const timeDisplay = isHourly
+          ? `매시 <span class="text-amber-300">${String(alert.minute ?? 0).padStart(2, '0')}분</span>`
+          : `<span class="text-amber-300">${alert.time || '--:--'}</span>`;
+        const typeBadge = isHourly
+          ? `<span class="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">매시반복</span>`
+          : `<span class="text-[9px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">매일</span>`;
+
+        const div = document.createElement('div');
+        div.className = `alert-card p-4 rounded-2xl flex flex-col gap-3 shadow-sm ${!alert.enabled ? 'disabled' : ''}`;
+        div.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center gap-2">
+                <i data-lucide="${isHourly ? 'repeat' : 'calendar-clock'}" class="w-3.5 h-3.5 ${isHourly ? 'text-purple-400' : 'text-blue-400'}"></i>
+                <span class="font-mono text-base font-black text-white">${timeDisplay}</span>
+                ${typeBadge}
+              </div>
+              <div class="flex items-center gap-2 pl-5">
+                <span class="text-xs font-bold text-slate-300">${escapeHtml(alert.message) || '<span class="text-slate-600 italic">메시지 없음</span>'}</span>
+                <span class="text-[9px] text-slate-600 bg-white/3 px-1.5 py-0.5 rounded-full">${offsetLabels}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="relative inline-flex items-center cursor-pointer no-drag">
+                <input type="checkbox" class="sr-only peer" ${alert.enabled ? 'checked' : ''} onchange="toggleAlert('${alert.id}', this.checked)">
+                <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-[16px] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-300 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 peer-checked:after:bg-white"></div>
+              </label>
+              <button onclick="removeAlert('${alert.id}')"
+                class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+          <div class="flex gap-2 items-center pt-2 border-t border-white/5">
+            <div class="flex-1 bg-black/40 rounded-xl px-3 border border-white/5 hover:border-amber-500/30 transition-colors">
+              <select class="w-full bg-transparent py-2.5 text-[11px] font-black text-slate-300 focus:outline-none"
+                      onchange="changeAlertSound('${alert.id}', this.value)">
+                ${soundFiles.map(s => `<option value="${s.file}" ${alert.soundFile === s.file ? 'selected' : ''}>${s.name}</option>`).join('')}
+              </select>
+            </div>
+            <button onclick="window.playPreview('${alert.soundFile}', null, '${escapeHtml(alert.message)}')"
+              class="w-10 h-10 flex items-center justify-center bg-amber-600/20 border border-amber-500/40 rounded-xl text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-lg active:scale-90">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            </button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+      window.refreshIcons();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // --- Add Form ---
+    function openAddForm() {
+      document.getElementById('add-form').classList.remove('hidden');
+      document.getElementById('add-btn').classList.add('hidden');
+    }
+
+    function cancelAddForm() {
+      document.getElementById('add-form').classList.add('hidden');
+      document.getElementById('add-btn').classList.remove('hidden');
+      resetForm();
+    }
+
+    function resetForm() {
+      setFormType('daily');
+      document.getElementById('form-time').value = '09:00';
+      document.getElementById('form-message-daily').value = '';
+      document.getElementById('form-message-hourly').value = '';
+      document.getElementById('form-minute').value = '0';
+      document.querySelectorAll('.form-offset').forEach(cb => { cb.checked = cb.value === '0'; });
+    }
+
+    function saveNewAlert() {
+      const offsets = [...document.querySelectorAll('.form-offset:checked')].map(cb => parseInt(cb.value));
+      const soundFile = document.getElementById('form-sound').value || 'orb.mp3';
+
+      if (offsets.length === 0) { alert('알림 시점을 하나 이상 선택해주세요.'); return; }
+
+      let newAlert;
+      if (currentFormType === 'hourly') {
+        const minute = parseInt(document.getElementById('form-minute').value);
+        const message = document.getElementById('form-message-hourly').value.trim();
+        if (isNaN(minute) || minute < 0 || minute > 59) { alert('0~59 사이의 분을 입력해주세요.'); return; }
+        if (!message) { alert('알림 메시지를 입력해주세요.'); return; }
+        newAlert = { id: String(Date.now()), enabled: true, type: 'hourly', minute, offsets, message, soundFile };
+      } else {
+        const time = document.getElementById('form-time').value;
+        const message = document.getElementById('form-message-daily').value.trim();
+        if (!time) { alert('시각을 입력해주세요.'); return; }
+        if (!message) { alert('알림 메시지를 입력해주세요.'); return; }
+        newAlert = { id: String(Date.now()), enabled: true, type: 'daily', time, offsets, message, soundFile };
+      }
+
+      const alerts = [...(config.customAlerts || []), newAlert];
+      window.electronAPI.applySettings({ customAlerts: alerts });
+      cancelAddForm();
+    }
+
+    function previewFormSound() {
+      const sound = document.getElementById('form-sound').value;
+      const msg = (currentFormType === 'hourly'
+        ? document.getElementById('form-message-hourly').value
+        : document.getElementById('form-message-daily').value) || '미리보기';
+      window.playPreview(sound, null, msg);
+    }
+
+    // --- Alert Actions ---
+    function toggleAlert(id, enabled) {
+      const alerts = (config.customAlerts || []).map(a => a.id === id ? { ...a, enabled } : a);
+      window.electronAPI.applySettings({ customAlerts: alerts });
+    }
+
+    function removeAlert(id) {
+      const alerts = (config.customAlerts || []).filter(a => a.id !== id);
+      window.electronAPI.applySettings({ customAlerts: alerts });
+    }
+
+    function changeAlertSound(id, soundFile) {
+      const alerts = (config.customAlerts || []).map(a => a.id === id ? { ...a, soundFile } : a);
+      window.electronAPI.applySettings({ customAlerts: alerts });
+    }
+  </script>
+</body>
+
+</html>

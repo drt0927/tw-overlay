@@ -11,6 +11,7 @@ import * as ipcHandlers from './modules/ipcHandlers';
 import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
 import * as bossNotifier from './modules/bossNotifier';
+import * as customNotifier from './modules/customNotifier';
 import { setupUpdater } from './modules/updater';
 import * as pollingLoop from './modules/pollingLoop';
 import { setupAutoStart } from './modules/autoStart';
@@ -66,6 +67,7 @@ app.whenReady().then(() => {
 
   pollingLoop.start();
   bossNotifier.start();
+  customNotifier.start();
 
   setTimeout(() => {
     setupUpdater(sidebar);
@@ -92,6 +94,7 @@ app.on('before-quit', () => {
   if (config.hasPending()) config.saveImmediate();
   pollingLoop.stop();
   bossNotifier.stop();
+  customNotifier.stop();
   gallery.stop();
   trade.stop();
   tray.destroyTray();

@@ -48,6 +48,17 @@ export interface BossSetting {
     soundFile: string;
 }
 
+export interface CustomAlert {
+    id: string;
+    enabled: boolean;
+    type: 'daily' | 'hourly';  // daily: 매일 HH:mm, hourly: 매시 ?분
+    time?: string;      // 'daily' 전용: "HH:mm"
+    minute?: number;    // 'hourly' 전용: 0~59
+    offsets: number[];  // e.g. [10, 5, 0]
+    message: string;
+    soundFile: string;
+}
+
 export interface ShortcutsConfig {
     /** 창 투과(Click-through) 토글 */
     toggleClickThrough: string;
@@ -110,6 +121,7 @@ export interface AppConfig {
     contentsCheckerItems?: ContentsCheckerItem[];
     lastContentsResetCheck?: number;
     shortcuts?: ShortcutsConfig;
+    customAlerts?: CustomAlert[];
 }
 
 export interface GalleryPost {

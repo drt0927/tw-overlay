@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleCoefficientCalculator: () => ipcRenderer.send('toggle-coefficient-calculator'),
   toggleContentsChecker: () => ipcRenderer.send('toggle-contents-checker'),
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
+  toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
   contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),

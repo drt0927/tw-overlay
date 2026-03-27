@@ -11,6 +11,7 @@ import * as ipcHandlers from './modules/ipcHandlers';
 import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
 import * as bossNotifier from './modules/bossNotifier';
+import * as customNotifier from './modules/customNotifier';
 import { setupUpdater } from './modules/updater';
 import * as pollingLoop from './modules/pollingLoop';
 import { setupAutoStart } from './modules/autoStart';
@@ -49,10 +50,7 @@ app.whenReady().then(() => {
   tray.createTray();
 
   analytics.trackEvent('app_open');
-  analytics.startHeartbeat(); // 기본 1시간 간격 생존신고(ping) 시작
-
   ipcHandlers.register();
-
   tracker.start();
   tracker.setForegroundChangeListener((isGameFocused, focusedHwndStr) => {
     const electronHwnds = wm.getAllWindowHwnds();
@@ -66,6 +64,7 @@ app.whenReady().then(() => {
 
   pollingLoop.start();
   bossNotifier.start();
+  customNotifier.start();
 
   setTimeout(() => {
     setupUpdater(sidebar);
@@ -92,11 +91,11 @@ app.on('before-quit', () => {
   if (config.hasPending()) config.saveImmediate();
   pollingLoop.stop();
   bossNotifier.stop();
+  customNotifier.stop();
   gallery.stop();
   trade.stop();
   tray.destroyTray();
   tracker.stop();
-  analytics.stopHeartbeat();
 });
 
 app.on('window-all-closed', () => app.quit());

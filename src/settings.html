@@ -199,9 +199,7 @@
         <div class="nav-item" onclick="showSection('trade', this)">
           <i data-lucide="store" class="w-4 h-4"></i> 거래 게시판
         </div>
-        <div class="nav-item" onclick="showSection('boss', this)">
-          <i data-lucide="alarm-clock" class="w-4 h-4"></i> 필드보스 알림
-        </div>
+
         <div class="nav-item" onclick="showSection('slots', this)">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
         </div>
@@ -300,6 +298,11 @@
                 <label class="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" value="boss-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">필드보스 알림</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" value="custom-alert-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
+                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">커스텀 알림</span>
                 </label>
                 <label class="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" value="eta-ranking-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
@@ -411,105 +414,7 @@
         </div>
       </div>
 
-      <!-- 3. 필드보스 알림 설정 (신설) -->
-      <div id="section-boss" class="settings-section space-y-8 hidden">
-        <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="alarm-clock"
-              class="w-5 h-5 text-purple-500"></i> 필드보스 알림 설정</h2>
 
-          <!-- 강조 안내 문구 -->
-          <div
-            class="p-4 mb-6 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-start gap-3 shadow-lg shadow-blue-900/10">
-            <i data-lucide="alarm-clock" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
-            <div>
-              <p class="text-sm font-black text-blue-300">알림음 설정 안내</p>
-              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                각 보스별 개별 알림음은 <span class="text-white font-bold bg-blue-500/20 px-1 rounded">사이드바의 [필드보스 알림 설정]</span>
-                메뉴에서 직접 변경할 수 있습니다.
-              </p>
-            </div>
-          </div>
-
-          <div class="space-y-6">
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input type="checkbox" id="boss-notify-enabled-input" class="w-5 h-5 accent-purple-600">
-                <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">필드보스 알림
-                    활성화</span>
-                  <p class="text-[11px] text-slate-500 mt-0.5">보스 출현 시간에 맞춰 알림을 보냅니다.</p>
-                </div>
-              </label>
-            </div>
-
-            <div class="p-4 bg-white/5 rounded-xl border border-white/5">
-              <label class="section-label block mb-3">알림 시점 선택</label>
-              <div class="flex justify-between items-center px-2">
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" value="10" class="boss-offset-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">10분 전</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" value="5" class="boss-offset-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">5분 전</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" value="2" class="boss-offset-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">2분 전</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" value="1" class="boss-offset-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">1분 전</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" value="0" class="boss-offset-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white transition-colors">정각</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
-              <div>
-                <label class="section-label flex justify-between mb-4">
-                  <span class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-purple-400"></i>
-                    공통 알림 음량</span>
-                  <span id="boss-volume-val" class="text-purple-400 font-mono text-base">50%</span>
-                </label>
-                <div class="flex gap-4 items-center px-1">
-                  <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
-                    class="flex-1 h-1.5 accent-purple-600 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    oninput="window.updateRangeValue(this, 'boss-volume-val')">
-                </div>
-              </div>
-
-              <div class="pt-4 border-t border-white/5">
-                <label class="section-label mb-3 block text-xs text-slate-400 uppercase tracking-wider">알림 음량
-                  테스트</label>
-                <div class="flex gap-3 items-center bg-black/40 p-3 rounded-xl border border-white/5">
-                  <div class="flex-1">
-                    <select id="boss-preview-sound-input"
-                      class="bg-transparent w-full text-xs py-2 focus:outline-none text-slate-200">
-                      <!-- JS에서 렌더링 -->
-                    </select>
-                  </div>
-                  <button onclick="previewBossVolume()"
-                    class="w-12 h-10 flex items-center justify-center bg-purple-600/20 border border-purple-500/40 rounded-lg text-purple-400 hover:bg-purple-600 hover:text-white transition-all shadow-lg active:scale-95"
-                    title="소리 재생">
-                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
-                  </button>
-                </div>
-                <div class="mt-4 flex items-start gap-2 px-1">
-                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i>
-                  <p class="text-[11px] text-slate-500 leading-relaxed">
-                    <span class="text-purple-400/80 font-bold italic">위 사운드 선택은 음량 확인을 위한 테스트 전용입니다.</span><br>
-                    실제 보스별 알림음은 사이드바 메뉴에서 개별적으로 지정하셔야 합니다.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- 4. 거래 게시판 설정 (신설) -->
       <div id="section-trade" class="settings-section space-y-8 hidden">
@@ -993,21 +898,7 @@
         check.checked = !hiddenMenuIds.includes(check.value);
       });
 
-      // 필드보스 설정 로드
-      document.getElementById('boss-notify-enabled-input').checked = config.fieldBossNotifyEnabled !== false;
-      const currentOffsets = config.fieldBossNotifyOffsets || [0];
-      document.querySelectorAll('.boss-offset-check').forEach(check => {
-        check.checked = currentOffsets.includes(parseInt(check.value));
-      });
-
-      if (soundFiles.length > 0) {
-        const bossPreviewSelect = document.getElementById('boss-preview-sound-input');
-        bossPreviewSelect.innerHTML = soundFiles.map(s => `<option value="${s.file}" ${s.file === 'orb.mp3' ? 'selected' : ''}>${s.name}</option>`).join('');
-      }
-
-      const bossVolume = config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50;
-      document.getElementById('boss-volume-input').value = bossVolume;
-      document.getElementById('boss-volume-val').innerText = bossVolume + '%';
+      // 필드보스 설정은 boss-settings.html로 이전됨
 
       currentSlots = JSON.parse(JSON.stringify(config.quickSlots || []));
       currentKeywords = JSON.parse(JSON.stringify(config.galleryKeywords || []));
@@ -1342,11 +1233,7 @@
           hiddenMenuIds.push(check.value);
         });
 
-        // 보스 알림 오프셋 취합
-        const bossOffsets = [];
-        document.querySelectorAll('.boss-offset-check:checked').forEach(check => {
-          bossOffsets.push(parseInt(check.value));
-        });
+        // 보스 알림 설정은 boss-settings.html에서 저장됨
 
         const tradeServerParams = document.querySelector('input[name="trade-server"]:checked');
         const tradeServerValue = tradeServerParams ? tradeServerParams.value : 'RyXp';
@@ -1359,11 +1246,6 @@
           autoLaunch: document.getElementById('auto-launch-input').checked,
           autoUpdateEnabled: document.getElementById('auto-update-input').checked,
           hiddenMenuIds, // 앞으로는 숨긴 목록 값을 우선으로 기준 삼음
-
-          // 필드보스 설정
-          fieldBossNotifyEnabled: document.getElementById('boss-notify-enabled-input').checked,
-          fieldBossNotifyOffsets: bossOffsets,
-          fieldBossNotifyVolume: parseInt(document.getElementById('boss-volume-input').value) || 50,
 
           quickSlots: validSlots,
           galleryKeywords: currentKeywords,
@@ -1383,11 +1265,6 @@
       } catch (e) { console.error(e); }
     }
 
-    function previewBossVolume() {
-      const soundFile = document.getElementById('boss-preview-sound-input').value;
-      const volume = parseInt(document.getElementById('boss-volume-input').value);
-      window.playPreview(soundFile, volume);
-    }
 
     window.addEventListener('keydown', (e) => {
       if (recordingShortcutKey) {

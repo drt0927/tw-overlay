@@ -607,7 +607,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.8.1</span></p>
+                        class="text-purple-400">1.9.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -630,6 +630,9 @@
                     style="width: 0%"></div>
                 </div>
                 <p id="update-status-desc" class="text-[11px] text-slate-500 font-bold"></p>
+                <!-- 릴리즈 노트 영역 추가 -->
+                <div id="update-release-notes" class="hidden mt-3 p-4 bg-black/40 rounded-xl border border-white/5 max-h-48 overflow-y-auto custom-scroll text-[11px] leading-relaxed text-slate-400 whitespace-pre-wrap font-medium">
+                </div>
               </div>
             </div>
 
@@ -951,6 +954,7 @@
     const updatePercent = document.getElementById('update-percent');
     const updateProgressContainer = document.getElementById('update-progress-container');
     const updateProgressBar = document.getElementById('update-progress-bar');
+    const updateReleaseNotes = document.getElementById('update-release-notes');
 
     function checkUpdates() {
       window.electronAPI.checkForUpdates();
@@ -981,10 +985,18 @@
 
     // 메인 프로세스로부터 업데이트 상태 수신
     window.electronAPI.onUpdateStatus((data) => {
-      const { state, version, percent, message } = data;
+      const { state, version, percent, message, releaseNotes } = data;
       updateMessageArea.classList.remove('hidden');
       updateProgressContainer.classList.add('hidden');
       updatePercent.innerText = '';
+
+      // 릴리즈 노트 처리
+      if (releaseNotes && (state === 'available' || state === 'ready' || state === 'mandatory')) {
+        updateReleaseNotes.innerText = releaseNotes;
+        updateReleaseNotes.classList.remove('hidden');
+      } else {
+        updateReleaseNotes.classList.add('hidden');
+      }
 
       switch (state) {
         case 'checking':
@@ -999,7 +1011,7 @@
           break;
         case 'latest':
           updateStatusTitle.innerText = '최신 버전 사용 중';
-          updateStatusDesc.innerText = '현재 최신 버전을 사용하고 있습니다. (v' + document.getElementById('app-version').innerText + ')';
+          updateStatusDesc.innerText = '현재 최신 버전을 사용하고 있습니다. (v' + (document.getElementById('app-version')?.innerText || '') + ')';
           updateActionContainer.innerHTML = '<button onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트 확인</button>';
           break;
         case 'downloading':
@@ -1023,6 +1035,11 @@
         case 'dev-mode':
           updateStatusDesc.innerText = '업데이트 확인은 빌드된 패키지 환경에서만 작동합니다.';
           updateActionContainer.innerHTML = '<button onclick="checkUpdates()" class="btn-primary px-6 py-2.5">업데이트 확인</button>';
+          break;
+        case 'mandatory':
+          updateStatusTitle.innerText = '필수 업데이트 발견! (v' + version + ')';
+          updateStatusDesc.innerText = '이 버전은 반드시 설치해야 합니다. 자동으로 다운로드를 시작합니다.';
+          updateActionContainer.innerHTML = '<button disabled class="btn-primary px-6 py-2.5 opacity-50 cursor-not-allowed">필수 업데이트 진행 중</button>';
           break;
       }
       window.refreshIcons();

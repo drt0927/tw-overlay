@@ -82,7 +82,12 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
 
     if (isMandatory) {
       log(`[MANDATORY] Mandatory update detected: v${info.version}`);
-      broadcastStatus({ state: 'mandatory', version: info.version, isMandatory: true });
+      broadcastStatus({
+        state: 'mandatory',
+        version: info.version,
+        isMandatory: true,
+        releaseNotes: info.releaseNotes?.toString()
+      });
 
       // 필수 업데이트: 스플래시 잠금 후 즉시 다운로드
       import('./windowManager').then(wm => wm.setMandatoryUpdateLock(true));
@@ -96,7 +101,11 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
       return;
     }
 
-    broadcastStatus({ state: 'available', version: info.version });
+    broadcastStatus({
+      state: 'available',
+      version: info.version,
+      releaseNotes: info.releaseNotes?.toString()
+    });
 
     // 네이티브 알림 표시
     try {
@@ -143,7 +152,12 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   });
 
   autoUpdater.on('update-downloaded', (info) => {
-    broadcastStatus({ state: 'ready', version: info.version, isMandatory });
+    broadcastStatus({
+      state: 'ready',
+      version: info.version,
+      isMandatory,
+      releaseNotes: info.releaseNotes?.toString()
+    });
     import('./windowManager').then(wm => {
       wm.getMainWindow()?.setProgressBar(-1);
     });

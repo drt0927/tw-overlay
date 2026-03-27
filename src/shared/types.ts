@@ -144,6 +144,7 @@ export interface UpdateStatusInfo {
     version?: string;
     percent?: number;
     message?: string;
+    releaseNotes?: string;
 }
 
 export interface EtaRankingEntry {

@@ -199,9 +199,7 @@
         <div class="nav-item" onclick="showSection('trade', this)">
           <i data-lucide="store" class="w-4 h-4"></i> 거래 게시판
         </div>
-        <div class="nav-item" onclick="showSection('boss', this)">
-          <i data-lucide="alarm-clock" class="w-4 h-4"></i> 필드보스 알림
-        </div>
+
         <div class="nav-item" onclick="showSection('slots', this)">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
         </div>
@@ -301,6 +299,7 @@
                   <input type="checkbox" value="boss-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">필드보스 알림</span>
                 </label>
+
                 <label class="flex items-center gap-3 cursor-pointer group">
                   <input type="checkbox" value="custom-alert-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
                   <span class="text-xs font-bold text-slate-400 group-hover:text-white">커스텀 알림</span>
@@ -415,23 +414,7 @@
         </div>
       </div>
 
-      <!-- 3. 필드보스 알림 설정 → boss-settings.html로 이전됨 -->
-      <div id="section-boss" class="settings-section space-y-8 hidden">
-        <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="alarm-clock"
-              class="w-5 h-5 text-purple-500"></i> 필드보스 알림 설정</h2>
-          <div class="p-6 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-start gap-4">
-            <i data-lucide="info" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
-            <div>
-              <p class="text-sm font-black text-blue-300">설정 위치가 이동되었습니다</p>
-              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                필드보스 알림 설정(활성화, 알림 시점, 음량)은<br>
-                사이드바의 <span class="text-white font-bold bg-blue-500/20 px-1 rounded">[필드보스 알림 설정]</span> 창에서 직접 변경하세요.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <!-- 4. 거래 게시판 설정 (신설) -->
       <div id="section-trade" class="settings-section space-y-8 hidden">

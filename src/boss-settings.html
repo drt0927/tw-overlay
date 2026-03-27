@@ -150,7 +150,7 @@
         </label>
       </div>
 
-      <!-- 음량 + 미리듣기 -->
+      <!-- 음량 -->
       <div class="flex items-center gap-3">
         <i data-lucide="volume-2" class="w-3.5 h-3.5 text-purple-400 shrink-0"></i>
         <input type="range" id="boss-volume-input" min="0" max="100" step="5" value="50"
@@ -158,14 +158,6 @@
           oninput="document.getElementById('boss-volume-val').textContent=this.value+'%'"
           onchange="saveBossGlobal()">
         <span id="boss-volume-val" class="text-purple-400 font-mono text-xs w-10 text-right">50%</span>
-        <div class="flex gap-1 items-center bg-black/40 border border-white/5 rounded-lg px-2">
-          <select id="boss-preview-sound-input"
-            class="bg-transparent py-1.5 text-[10px] font-black text-slate-300 focus:outline-none max-w-[90px]"></select>
-          <button onclick="previewBossVolume()"
-            class="w-6 h-6 flex items-center justify-center text-purple-400 hover:text-purple-300 transition-colors shrink-0">
-            <i data-lucide="play" class="w-3 h-3 fill-current"></i>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -186,13 +178,6 @@
 
     window.onload = async () => {
       soundFiles = await window.loadSoundList();
-      // 미리듣기 셀렉트 채우기
-      const previewSel = document.getElementById('boss-preview-sound-input');
-      soundFiles.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.file; opt.textContent = s.name;
-        previewSel.appendChild(opt);
-      });
       window.bindEscapeClose();
       render();
     };
@@ -292,11 +277,7 @@
       });
     }
 
-    function previewBossVolume() {
-      const soundFile = document.getElementById('boss-preview-sound-input').value;
-      const volume = parseInt(document.getElementById('boss-volume-input').value);
-      window.playPreview(soundFile, volume);
-    }
+
   </script>
 </body>
 

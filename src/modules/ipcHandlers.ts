@@ -81,7 +81,7 @@ export function register(): void {
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
     ipcMain.on(event, () => {
-      analytics.trackEvent('feature_used', { feature: event });
+      analytics.trackEvent(event.replace(/-/g, '_'));
       handler();
     });
   });
@@ -114,7 +114,8 @@ export function register(): void {
 
   // 특별 인수가 필요한 토글 핸들러 개별 등록
   ipcMain.on('toggle-settings', (_event, tabId?: string) => {
-    analytics.trackEvent('feature_used', { feature: 'toggle-settings', tabId });
+    const eventName = tabId ? `toggle_settings_${tabId}` : 'toggle_settings';
+    analytics.trackEvent(eventName, { tabId });
     wm.toggleSettingsWindow(tabId);
   });
 
@@ -123,7 +124,8 @@ export function register(): void {
     return await optimizer.getOptimizationStatus();
   });
   ipcMain.handle('set-optimization', async (_e, enable: boolean) => {
-    analytics.trackEvent('feature_used', { feature: 'set-optimization', enable });
+    const eventName = `set_optimization_${enable ? 'on' : 'off'}`;
+    analytics.trackEvent(eventName, { enable });
     return await optimizer.setOptimization(enable);
   });
 

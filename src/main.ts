@@ -50,10 +50,7 @@ app.whenReady().then(() => {
   tray.createTray();
 
   analytics.trackEvent('app_open');
-  analytics.startHeartbeat(); // 기본 1시간 간격 생존신고(ping) 시작
-
   ipcHandlers.register();
-
   tracker.start();
   tracker.setForegroundChangeListener((isGameFocused, focusedHwndStr) => {
     const electronHwnds = wm.getAllWindowHwnds();
@@ -99,7 +96,6 @@ app.on('before-quit', () => {
   trade.stop();
   tray.destroyTray();
   tracker.stop();
-  analytics.stopHeartbeat();
 });
 
 app.on('window-all-closed', () => app.quit());

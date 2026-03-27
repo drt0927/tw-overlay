@@ -64,6 +64,7 @@ export function start(): void {
         if (currentRect && 'notRunning' in currentRect) {
             if (IS_DEV) {
                 // DEV 모드: 게임 없어도 창 유지
+                wm.closeSplashWindow();
                 pollingTimer = setTimeout(poll, POLLING_IDLE_MS);
                 return;
             }
@@ -86,6 +87,7 @@ export function start(): void {
         if (!currentRect || (currentRect && 'x' in currentRect && currentRect.x <= WINDOW_MINIMIZED_THRESHOLD)) {
             if (IS_DEV) {
                 // DEV 모드: 최소화 상태도 창 유지
+                wm.closeSplashWindow();
                 pollingTimer = setTimeout(poll, POLLING_MINIMIZED_MS);
                 return;
             }

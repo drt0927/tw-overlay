@@ -5,6 +5,7 @@ import * as config from './config';
 import * as wm from './windowManager';
 import * as contents from './contentsChecker';
 import { log } from './logger';
+import { analytics } from './analytics';
 
 interface BossTime {
   time: string; // HH:mm
@@ -75,10 +76,17 @@ function checkBossTime(): void {
     wm.applySettings({}); 
   }
 
+  const now = new Date();
+  const HHmmNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const scheduledBoss = BOSS_SCHEDULE.find(b => b.time === HHmmNow);
+  if (scheduledBoss) {
+    const eventName = 'boss_time_' + scheduledBoss.name.replace(/\s+/g, '_');
+    analytics.trackEvent(eventName);
+  }
+
   const cfg = config.load();
   if (!cfg.fieldBossNotifyEnabled) return;
 
-  const now = new Date();
   const currentTimeKey = `${now.getHours()}:${now.getMinutes()}`;
   if (_lastNotifiedTime === currentTimeKey) return;
 

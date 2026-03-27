@@ -25,17 +25,31 @@ const store = new Store();
 
 export class Analytics {
   private clientId: string;
-  private sessionId: string;
-  private heartbeatTimer: NodeJS.Timeout | null = null;
+  private sessionId: number = 0;
+  private sessionNumber: number = 1;
+
 
   constructor() {
-    let savedId = (store as any).get('ga_client_id') as string | undefined;
-    if (!savedId) {
-      savedId = crypto.randomUUID();
-      (store as any).set('ga_client_id', savedId);
+    // 1. Client ID persistence
+    let savedClientId = (store as any).get('ga_client_id') as string | undefined;
+    if (!savedClientId) {
+      savedClientId = crypto.randomUUID();
+      (store as any).set('ga_client_id', savedClientId);
     }
-    this.clientId = savedId;
-    this.sessionId = Date.now().toString();
+    this.clientId = savedClientId;
+
+    // 2. Session ID & Number (Start new session on every restart)
+    const now = Date.now();
+    let savedSessionNumber = (store as any).get('ga_session_number') as number | undefined;
+
+    this.sessionId = Math.floor(now / 1000);
+    this.sessionNumber = (savedSessionNumber || 0) + 1;
+      
+    (store as any).set('ga_session_id', this.sessionId);
+    (store as any).set('ga_session_number', this.sessionNumber);
+    (store as any).set('ga_last_active_time', now);
+
+    console.log(`[Analytics] ClientID: ${this.clientId}, SessionID: ${this.sessionId}, Session#: ${this.sessionNumber}`);
   }
 
   public trackEvent(eventName: string, params: Record<string, any> = {}): void {
@@ -44,10 +58,7 @@ export class Analytics {
       return;
     }
 
-    if (!net.isOnline()) {
-      console.warn(`[Analytics] 네트워크가 오프라인 상태입니다. '${eventName}' 전송을 건너뜁니다.`);
-      return;
-    }
+    if (!net.isOnline()) return;
 
     const payload = {
       client_id: this.clientId,
@@ -56,7 +67,8 @@ export class Analytics {
           name: eventName,
           params: {
             app_version: app.getVersion(),
-            session_id: this.sessionId,
+            ga_session_id: this.sessionId,
+            ga_session_number: this.sessionNumber,
             engagement_time_msec: 1,
             ...params,
           },
@@ -70,13 +82,7 @@ export class Analytics {
         url: `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
       });
 
-      request.on('response', (response) => {
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          console.log(`[Analytics] Event '${eventName}' sent successfully.`);
-        } else {
-          console.error(`[Analytics] Failed to send event '${eventName}': Status ${response.statusCode}`);
-        }
-      });
+
 
       request.on('error', (err) => {
         console.error(`[Analytics] Request error:`, err);
@@ -87,22 +93,6 @@ export class Analytics {
       request.end();
     } catch (error) {
       console.error('[Analytics] Error sending event:', error);
-    }
-  }
-
-  public startHeartbeat(intervalMs: number = 3600000): void {
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.heartbeatTimer = setInterval(() => {
-      this.trackEvent('app_running_ping');
-    }, intervalMs);
-    console.log(`[Analytics] Heartbeat timer started (${intervalMs}ms)`);
-  }
-
-  public stopHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-      console.log('[Analytics] Heartbeat timer stopped');
     }
   }
 }

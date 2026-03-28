@@ -23,97 +23,14 @@
       <i id="toggle-icon" data-lucide="chevron-left"></i>
     </div>
 
-    <!-- 갤러리 모니터 버튼 -->
-    <div id="gallery-btn" class="gallery-btn p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
-      onclick="openGallery()" onmouseenter="showTooltip('갤러리 모니터', this)" onmouseleave="hideTooltip()">
-      <i data-lucide="bell" class="w-4 h-4"></i>
-      <span id="noti-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-    </div>
-
-    <!-- 거래 게시판 버튼 -->
-    <div id="trade-btn" class="p-2 cursor-pointer text-slate-400 hover:text-emerald-400 relative"
-      onclick="window.electronAPI.toggleTrade()" onmouseenter="showTooltip('거래 게시판', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="store" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 약어 사전 버튼 -->
-    <div id="abbreviation-btn" class="p-2 cursor-pointer text-slate-400 hover:text-purple-400 relative"
-      onclick="window.electronAPI.toggleAbbreviation()" onmouseenter="showTooltip('약어 사전', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="book-open" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 버프 백과 버튼 -->
-    <div id="buffs-btn" class="p-2 cursor-pointer text-slate-400 hover:text-yellow-400 relative"
-      onclick="window.electronAPI.toggleBuffs()" onmouseenter="showTooltip('버프 백과 & 계산기', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="zap" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 계수 계산기 버튼 -->
-    <div id="coefficient-calculator-btn" class="p-2 cursor-pointer text-slate-400 hover:text-blue-400 relative"
-      onclick="window.electronAPI.toggleCoefficientCalculator()" onmouseenter="showTooltip('계수 및 명중 계산기', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="calculator" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 필드보스 알림 설정 버튼 -->
-    <div id="boss-btn" class="p-2 cursor-pointer text-slate-400 hover:text-blue-400 relative"
-      onclick="window.electronAPI.toggleBossSettings()" onmouseenter="showTooltip('필드보스 알림 설정', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="alarm-clock" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 커스텀 알림 버튼 -->
-    <div id="custom-alert-btn" class="p-2 cursor-pointer text-slate-400 hover:text-amber-400 relative"
-      onclick="window.electronAPI.toggleCustomAlert()" onmouseenter="showTooltip('커스텀 알림', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="clock" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 에타 랭킹 버튼 -->
-    <div id="eta-ranking-btn" class="p-2 cursor-pointer text-slate-400 hover:text-pink-400 relative"
-      onclick="window.electronAPI.toggleEtaRanking()" onmouseenter="showTooltip('에타 랭킹 조회', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="trophy" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 컨텐츠 체크 리스트 버튼 -->
-    <div id="contents-checker-btn" class="p-2 cursor-pointer text-slate-400 hover:text-blue-400 relative"
-      onclick="window.electronAPI.toggleContentsChecker()" onmouseenter="showTooltip('일일/주간 숙제 체크', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="check-square" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 진화 재료 비용 계산기 버튼 -->
-    <div id="evolution-calculator-btn" class="p-2 cursor-pointer text-slate-400 hover:text-orange-400 relative"
-      onclick="window.electronAPI.toggleEvolutionCalculator()" onmouseenter="showTooltip('진화 재료 비용 계산기', this)"
-      onmouseleave="hideTooltip()">
-      <i data-lucide="flask-conical" class="w-4 h-4"></i>
-    </div>
+    <!-- 동적 메뉴 영역 -->
+    <div id="dynamic-menus" class="flex flex-col gap-0.5"></div>
 
     <!-- 퀵슬롯 컨테이너 -->
     <div id="slot-container" class="slot-container flex flex-col gap-2 mt-2"></div>
 
-    <!-- 홈 버튼 -->
-    <div id="home-btn" class="mt-auto p-2 cursor-pointer text-slate-400 hover:text-purple-400"
-      onclick="window.electronAPI.goHome()" onmouseenter="showTooltip('홈 페이지', this)" onmouseleave="hideTooltip()">
-      <i data-lucide="home" class="w-4 h-4"></i>
-    </div>
-
-    <!-- 하단 유틸리티 버튼 -->
-    <div id="overlay-toggle-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
-      onclick="window.electronAPI.toggleOverlay()" onmouseenter="showTooltip('오버레이 토글', this)"
-      onmouseleave="hideTooltip()">
-      <i id="overlay-icon" data-lucide="layout" class="w-4 h-4"></i>
-    </div>
-
-    <div id="click-through-btn" class="p-2 cursor-pointer text-slate-400 hover:text-white"
-      onclick="window.electronAPI.toggleClickThrough()" onmouseenter="showTooltip('마우스 투과 토글 (Ctrl+Shift+T)', this)"
-      onmouseleave="hideTooltip()">
-      <i id="click-through-icon" data-lucide="mouse-pointer-2" class="w-4 h-4"></i>
-    </div>
+    <!-- 시스템 하단 버튼 영역 -->
+    <div id="system-menus" class="mt-auto flex flex-col gap-0.5"></div>
 
     <!-- 커피 후원 버튼 -->
     <div class="p-2 cursor-pointer text-[#FFDD00]/90 hover:text-[#FFDD00] hover:scale-110 transition-transform relative"
@@ -138,23 +55,24 @@
   <!-- 툴팁 -->
   <div id="tooltip" class="tw-tooltip"></div>
 
-  <!-- 보스 알림 토스트 -->
-  <div id="boss-toast" class="boss-toast">
-    <i data-lucide="skull" class="w-4 h-4 text-[#a855f7]"></i>
-    <span id="boss-toast-name" class="boss-toast-name">보스 이름</span>
-  </div>
+  <!-- 알림 토스트 컨테이너 (스택형) -->
+  <div id="toast-container" class="toast-container"></div>
 
   <!-- 오디오 재생기 -->
   <audio id="boss-audio" class="hidden"></audio>
 
   <script>
-    function refreshIcons() { lucide.createIcons(); }
+    // 전역 변수 선언
     const tooltip = document.getElementById('tooltip');
     const bossAudio = document.getElementById('boss-audio');
-    const bossToast = document.getElementById('boss-toast');
-    const bossToastName = document.getElementById('boss-toast-name');
+    const toastContainer = document.getElementById('toast-container');
+    const wrapper = document.getElementById('wrapper');
+    const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
+    
     let bossNotifyVolume = 0.5;
-    let toastTimer = null;
+    let currentHiddenMenuIds = [];
+
+    function refreshIcons() { if (window.lucide) lucide.createIcons(); }
 
     function showTooltip(text, el) {
       const rect = el.getBoundingClientRect();
@@ -167,33 +85,154 @@
       tooltip.style.display = 'none';
     }
 
-    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume }) => {
-      if (!soundFile) return;
+    // --- 동적 메뉴 로딩 ---
+    async function initDynamicMenus() {
+      try {
+        const response = await fetch('assets/data/sidebar_menus.json');
+        const menus = await response.json();
+        
+        const dynamicContainer = document.getElementById('dynamic-menus');
+        const systemContainer = document.getElementById('system-menus');
+        dynamicContainer.innerHTML = '';
+        systemContainer.innerHTML = '';
 
-      // 사운드 재생
-      bossAudio.src = `assets/sound/${soundFile}`;
-      bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
-      bossAudio.play().catch(e => console.error('Audio play failed:', e));
+        menus.forEach(menu => {
+          const btn = document.createElement('div');
+          btn.id = menu.id;
+          btn.className = `p-2 cursor-pointer text-slate-400 hover:text-${menu.color} relative`;
+          // 오버레이 토글 아이콘 등은 동적으로 변할 수 있으므로 초기값만 설정
+          btn.innerHTML = `<i data-lucide="${menu.icon}" class="${menu.id.includes('icon') ? '' : 'w-4 h-4'}"></i>`;
+          if (menu.id === 'overlay-toggle-btn') btn.querySelector('i').id = 'overlay-icon';
+          if (menu.id === 'click-through-btn') btn.querySelector('i').id = 'click-through-icon';
+          
+          if (menu.id === 'gallery-btn') {
+            btn.innerHTML += `<span id="noti-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>`;
+          }
 
-      // 사이드바 버튼 애니메이션 및 토스트 위치 동기화
-      const btn = document.getElementById('boss-btn');
-      btn.classList.add('animate-bounce', 'text-blue-400');
-      setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
+          btn.onclick = () => {
+            if (menu.action === 'openGallery') openGallery();
+            else if (menu.api && window.electronAPI[menu.api]) window.electronAPI[menu.api]();
+          };
 
-      const btnRect = btn.getBoundingClientRect();
-      bossToast.style.top = `${btnRect.top + (btnRect.height / 2)}px`;
+          btn.onmouseenter = () => showTooltip(menu.tooltip, btn);
+          btn.onmouseleave = () => hideTooltip();
 
-      // 보스 알림 토스트 표시
-      bossToastName.innerText = bossName;
-      bossToast.classList.add('show');
+          if (menu.isSystem) systemContainer.appendChild(btn);
+          else dynamicContainer.appendChild(btn);
+        });
+
+        refreshIcons();
+        applyMenuVisibility();
+      } catch (e) { console.error('Failed to load dynamic menus:', e); }
+    }
+
+    function applyMenuVisibility() {
+      const containers = [document.getElementById('dynamic-menus'), document.getElementById('system-menus')];
+      containers.forEach(container => {
+        if (!container) return;
+        Array.from(container.children).forEach(el => {
+          if (el.id) {
+            el.style.display = currentHiddenMenuIds.includes(el.id) ? 'none' : 'flex';
+          }
+        });
+      });
+    }
+
+    // 마우스 투과 제어 통합 함수
+    function updateIgnoreMouseEvents(ignore) {
+      if (window.electronAPI && window.electronAPI.setIgnoreMouseEvents) {
+        window.electronAPI.setIgnoreMouseEvents(ignore, ignore ? { forward: true } : undefined);
+      }
+    }
+
+    function createToast(bossName, isCustomFromApi, spawnTime, offset) {
+      const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
+      const toastId = 'toast-' + Date.now();
+      
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = 'boss-toast show';
+      
+      const iconName = isRealBoss ? 'skull' : 'bell-ring';
+      const iconColor = isRealBoss ? 'text-[#a855f7]' : 'text-amber-400';
+      
+      let displayName = bossName;
+      const validSpawnTime = (spawnTime && spawnTime !== 'undefined' && spawnTime !== 'null') ? spawnTime : null;
+
+      if (isRealBoss && validSpawnTime) {
+        displayName = `[${validSpawnTime}] ${bossName}`;
+        if (offset > 0) displayName += ` <span class="text-[10px] text-slate-500 font-medium ml-1">${offset}분 전</span>`;
+      }
+
+      toast.innerHTML = `
+        <div class="flex items-start justify-between w-full gap-3">
+          <div class="flex items-start gap-2.5 pt-0.5">
+            <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor} mt-0.5 shrink-0"></i>
+            <span class="boss-toast-name flex-1 leading-snug break-keep">${displayName}</span>
+          </div>
+          <button onclick="removeToast('${toastId}', event)" class="p-1 text-slate-400 hover:text-white bg-white/5 hover:bg-red-500/80 rounded-md transition-colors shrink-0">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        ${isRealBoss ? `
+        <div class="mt-3 flex justify-end w-full border-t border-slate-700/50 pt-2">
+          <button onclick="recordKillAndRemove('${toastId}', '${bossName}', '${validSpawnTime || ''}', event)" class="px-3 py-1.5 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500 hover:text-white transition-all text-[11px] font-bold">
+            <i data-lucide="sword" class="w-3.5 h-3.5"></i>
+            일지 기록
+          </button>
+        </div>` : ''}
+      `;
+      
+      toastContainer.appendChild(toast);
       refreshIcons();
+      updateIgnoreMouseEvents(false);
 
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        bossToast.classList.remove('show');
-        toastTimer = null;
-      }, 5000); // 5초간 표시
-    });
+      // 자동 삭제 타이머
+      let duration = 5000; // 커스텀 알림 기본 5초
+      if (isRealBoss) {
+        duration = (offset === 0) ? 60000 : 30000; // 정각 알림은 1분, N분 전 알림은 30초
+      }
+      setTimeout(() => { removeToast(toastId); }, duration);
+    }
+
+    function removeToast(id, event) {
+      if (event) event.stopPropagation();
+      const toast = document.getElementById(id);
+      if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (toast.parentElement) toast.remove();
+          if (toastContainer.children.length === 0) {
+            updateIgnoreMouseEvents(true);
+          }
+        }, 300);
+      }
+    }
+
+    function recordKillAndRemove(toastId, bossName, spawnTime, event) {
+      if (event) event.stopPropagation();
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const dateStr = String(now.getDate()).padStart(2, '0');
+      const date = `${year}-${month}-${dateStr}`;
+      const recordTime = (spawnTime && spawnTime !== 'null' && spawnTime !== '') ? (spawnTime + ':00') : (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0'));
+      const content = `[${bossName}] ${spawnTime || recordTime.substring(0, 5)} 스폰 처치 완료`;
+      
+      try {
+        window.electronAPI.diaryAddActivity(date, recordTime, 'boss', content);
+        const toast = document.getElementById(toastId);
+        if (toast) {
+          const btn = toast.querySelector('button[onclick^="recordKillAndRemove"]');
+          if (btn) {
+            btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> 기록 완료!`;
+            btn.className = "px-3 py-1.5 flex items-center gap-1.5 bg-emerald-500 text-white rounded-lg transition-all text-[11px] font-bold";
+            refreshIcons();
+          }
+          setTimeout(() => { removeToast(toastId); }, 1000);
+        }
+      } catch (err) { console.error('Failed to record boss kill:', err); }
+    }
 
     function updateOverlayIcon(isVisible) {
       const iconContainer = document.getElementById('overlay-toggle-btn');
@@ -203,8 +242,22 @@
       }
     }
 
+    function openGallery() { document.getElementById('noti-badge').classList.add('hidden'); window.electronAPI.toggleGallery(); }
+
+    // IPC 리스너 등록
+    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume, isCustom, spawnTime, offset }) => {
+      if (!soundFile) return;
+      bossAudio.src = `assets/sound/${soundFile}`;
+      bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
+      bossAudio.play().catch(e => console.error('Audio play failed:', e));
+      const btn = document.getElementById('boss-btn');
+      btn.classList.add('animate-bounce', 'text-blue-400');
+      setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
+      createToast(bossName, isCustom, spawnTime, offset);
+    });
+
     window.electronAPI.onSidebarStatus((isCollapsed) => {
-      document.getElementById('wrapper').className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';
+      wrapper.className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';
       document.getElementById('toggle-icon').setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
       tooltip.style.display = 'none';
       refreshIcons();
@@ -222,13 +275,10 @@
 
     window.electronAPI.onConfigData((config) => {
       bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
-      const menuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'custom-alert-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'evolution-calculator-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
-      let hiddenMenuIds = config.hiddenMenuIds || [];
-      if (!config.hiddenMenuIds && config.visibleMenuIds) {
-        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
-        hiddenMenuIds = oldKnownMenuIds.filter(id => !config.visibleMenuIds.includes(id));
-      }
-      menuIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = hiddenMenuIds.includes(id) ? 'none' : 'flex'; });
+      
+      currentHiddenMenuIds = config.hiddenMenuIds || [];
+      applyMenuVisibility();
+
       updateOverlayIcon(config.overlayVisible !== false);
       const container = document.getElementById('slot-container');
       container.innerHTML = '';
@@ -246,32 +296,32 @@
       if (!window._sidebarInitialized) { window.electronAPI.sidebarReady(); window._sidebarInitialized = true; }
     });
 
+    initDynamicMenus();
     window.electronAPI.onGalleryNewActivity(() => { document.getElementById('noti-badge').classList.remove('hidden'); });
     window.electronAPI.onUpdateStatus((data) => {
       const badge = document.getElementById('update-badge');
-      if (data.state === 'available' || data.state === 'ready') badge.classList.remove('hidden');
-      else badge.classList.add('hidden');
+      if (badge) {
+        if (data.state === 'available' || data.state === 'ready') badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+      }
     });
 
-    function openGallery() { document.getElementById('noti-badge').classList.add('hidden'); window.electronAPI.toggleGallery(); }
-
-    const wrapper = document.getElementById('wrapper');
-    // 초기 상태: 투과 활성화
-    window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
-
-    wrapper.addEventListener('mouseenter', () => {
-      window.electronAPI.setIgnoreMouseEvents(false);
-    });
-
-    // [보강] 복구 직후 마우스가 이미 위에 있을 때를 위해 mousemove 추가
-    wrapper.addEventListener('mousemove', () => {
-      window.electronAPI.setIgnoreMouseEvents(false);
-    });
-
-    wrapper.addEventListener('mouseleave', () => {
-      window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+    // 마우스 이벤트 초기화
+    updateIgnoreMouseEvents(true);
+    wrapper.addEventListener('mouseenter', () => updateIgnoreMouseEvents(false));
+    wrapper.addEventListener('mousemove', () => updateIgnoreMouseEvents(false));
+    wrapper.addEventListener('mouseleave', (e) => {
+      if (!e.relatedTarget || !toastContainer.contains(e.relatedTarget)) {
+        if (toastContainer.querySelectorAll('.boss-toast').length === 0) updateIgnoreMouseEvents(true);
+      }
       tooltip.style.display = 'none';
     });
+    toastContainer.addEventListener('mouseenter', () => updateIgnoreMouseEvents(false));
+    toastContainer.addEventListener('mousemove', () => updateIgnoreMouseEvents(false));
+    toastContainer.addEventListener('mouseleave', (e) => {
+      if (!e.relatedTarget || !wrapper.contains(e.relatedTarget)) updateIgnoreMouseEvents(true);
+    });
+
     refreshIcons();
   </script>
 </body>

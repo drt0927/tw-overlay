@@ -179,3 +179,39 @@ export interface TradeActivity {
     type: string;
     count: number;
 }
+
+// --- Diary (Adventure Log) System Types ---
+
+export interface DiaryEntry {
+    date: string;         // YYYY-MM-DD
+    total_score: number;
+    monster_id: string;
+    daily_done: number;
+    daily_total: number;
+    weekly_done: number;
+    weekly_total: number;
+}
+
+export interface HomeworkLog {
+    id?: number;
+    date: string;         // YYYY-MM-DD
+    content_id: string;
+    content_name: string;
+    category: string;
+    type: 'daily' | 'weekly';
+    completed_at: number; // Timestamp
+}
+
+export interface ActivityLog {
+    id?: number;
+    date: string;         // YYYY-MM-DD
+    type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework';
+    content: string;
+    time: string;         // HH:mm:ss
+}
+
+export interface DiaryData {
+    diary: DiaryEntry | null;
+    homeworkLogs: HomeworkLog[];
+    activityLogs: ActivityLog[];
+}

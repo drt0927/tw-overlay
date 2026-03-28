@@ -103,17 +103,23 @@ function checkBossTime(): void {
       if (bossSetting && bossSetting.enabled) {
         const message = offset === 0 ? boss.name : `${boss.name} ${offset}분 전`;
         log(`[BOSS] 알림 조건 충족: ${message} (사운드: ${bossSetting.soundFile})`);
-        notify(message, bossSetting.soundFile);
+        notify(boss.name, bossSetting.soundFile, boss.time, offset);
         _lastNotifiedTime = currentTimeKey;
       }
     }
   });
 }
 
-function notify(bossName: string, soundFile: string): void {
-  log(`[BOSS] 필드보스 출현 알림: ${bossName}`);
+function notify(bossName: string, soundFile: string, spawnTime: string, offset: number): void {
+  log(`[BOSS] 필드보스 출현 알림: ${bossName} (스폰: ${spawnTime}, 오프셋: ${offset})`);
   const sidebar = wm.getMainWindow();
   if (sidebar) {
-    sidebar.webContents.send('play-boss-sound', { bossName, soundFile });
+    sidebar.webContents.send('play-boss-sound', { 
+      bossName, 
+      soundFile, 
+      spawnTime, 
+      offset,
+      isCustom: false 
+    });
   }
 }

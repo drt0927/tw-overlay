@@ -103,13 +103,15 @@ const windowRegistry: Record<string, ManagedWindow> = {
   gallery: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'gallery', html: 'gallery.html', width: 380, height: 600 },
   abbreviation: { ref: null, pos: { offsetX: -320, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 320, height: 500 },
   buffs: { ref: null, pos: { offsetX: -1000, offsetY: 40 }, key: 'buffs', html: 'buffs.html', width: 1000, height: 700 },
-  bossSettings: { ref: null, pos: { offsetX: -320, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 320, height: 600 },
+  bossSettings: { ref: null, pos: { offsetX: -370, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 370, height: 600 },
   etaRanking: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 380, height: 600 },
   trade: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 380, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 850, height: 1150 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
+  magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
   customAlert: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 420, height: 640 },
+  diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 850, height: 850 },
 };
 
 let gameRect: GameRect | null = null;
@@ -368,7 +370,9 @@ export function toggleTradeWindow(): void {
 }
 export function toggleCoefficientCalculatorWindow(): void { createToggleableWindow('coefficientCalculator'); }
 export function toggleEvolutionCalculatorWindow(): void { createToggleableWindow('evolutionCalculator'); }
+export function toggleMagicStoneCalculatorWindow(): void { createToggleableWindow('magicStoneCalculator'); }
 export function toggleCustomAlertWindow(): void { createToggleableWindow('customAlert'); }
+export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
 export function toggleContentsCheckerWindow(): void {
   createToggleableWindow('contentsChecker', {
     onReady: (win) => {
@@ -391,7 +395,18 @@ export function getAllWindowHwnds(): string[] {
     if (b === mainWindow) return 1;
     return 0;
   });
-  return windows.map(win => win!.getNativeWindowHandle().readBigUint64LE().toString());
+
+  const results: string[] = [];
+  for (const win of windows) {
+    if (win && !win.isDestroyed()) {
+      try {
+        results.push(win.getNativeWindowHandle().readBigUint64LE().toString());
+      } catch (e) {
+        // 무시: 수집 중 파괴된 경우
+      }
+    }
+  }
+  return results;
 }
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
@@ -437,9 +452,14 @@ export function syncOverlay(currentRect: GameRect): void {
       }
     } else if (isOverlayVisible && !overlayWindow) createOverlayWindow();
     const currentSidebarB = mainWindow.getBounds();
-    const newSidebarX = gX + gW, newSidebarY = gY + 40;
-    if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD || Math.abs(currentSidebarB.y - newSidebarY) > POSITION_THRESHOLD) {
-      setProgrammaticMove('main'); mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: SIDEBAR_HEIGHT });
+    const newSidebarX = gX + gW, newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
+    const newSidebarH = gH - 30; // 제목 표시줄 두께만큼 높이 축소
+
+    if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD ||
+      Math.abs(currentSidebarB.y - newSidebarY) > POSITION_THRESHOLD ||
+      Math.abs(currentSidebarB.height - newSidebarH) > POSITION_THRESHOLD) {
+      setProgrammaticMove('main');
+      mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: newSidebarH });
     }
     Object.keys(windowRegistry).forEach(key => {
       const winCfg = windowRegistry[key];
@@ -497,10 +517,10 @@ export function showGameExitReminder(): void {
 
   const incompleteItems = (cfg.contentsCheckerItems || [])
     .filter(item => item.isVisible && !item.isCompleted)
-    .map(item => ({ 
-      name: item.name, 
-      category: item.category, 
-      type: item.resetRule.type 
+    .map(item => ({
+      name: item.name,
+      category: item.category,
+      type: item.resetRule.type
     }));
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;

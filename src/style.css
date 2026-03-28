@@ -211,30 +211,39 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 .btn-primary:hover { background: var(--primary-hover); }
 
-/* --- 보스 알림 토스트 --- */
-.boss-toast {
+/* --- 알림 토스트 컨테이너 --- */
+.toast-container {
   position: fixed;
-  left: 48px; /* 사이드바에 좀 더 가깝게 */
+  left: 48px;
   top: 50%;
-  transform: translateY(-50%) translateX(-10px);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.boss-toast {
   background: rgba(15, 18, 30, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(168, 85, 247, 0.3);
-  padding: 8px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 10000;
-  pointer-events: none;
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
   opacity: 0;
-  transition: all 0.3s ease;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  min-w: 240px;
+  max-w: 320px;
 }
 
 .boss-toast.show {
   opacity: 1;
-  transform: translateY(-50%) translateX(0);
+  transform: translateX(0);
 }
 
 .boss-toast-name {
@@ -243,3 +252,88 @@ input[type="range"]:hover::-webkit-slider-thumb {
   color: #e2e8f0;
 }
 
+
+/* --- Unified Window Header --- */
+.win-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: rgba(15, 18, 30, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.win-title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.win-icon-box {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.3s;
+}
+
+.win-title-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.win-title-main {
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+}
+
+.win-title-sub {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.win-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.win-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #94a3b8;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.win-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.win-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #f87171 !important;
+}

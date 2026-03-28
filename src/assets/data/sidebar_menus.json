@@ -1,0 +1,125 @@
+[
+  {
+    "id": "gallery-btn",
+    "label": "갤러리 모니터",
+    "icon": "bell",
+    "tooltip": "갤러리 모니터링",
+    "color": "purple-400",
+    "action": "openGallery"
+  },
+  {
+    "id": "trade-btn",
+    "label": "거래 게시판",
+    "icon": "store",
+    "tooltip": "매직위버 거래 게시판 모니터링",
+    "color": "emerald-400",
+    "api": "toggleTrade"
+  },
+  {
+    "id": "abbreviation-btn",
+    "label": "약어 사전",
+    "icon": "book-open",
+    "tooltip": "테일즈위버 용어/약어 사전",
+    "color": "blue-400",
+    "api": "toggleAbbreviation"
+  },
+  {
+    "id": "buffs-btn",
+    "label": "버프 백과 & 계산기",
+    "icon": "zap",
+    "tooltip": "각종 버프 정보 및 효율 계산",
+    "color": "amber-400",
+    "api": "toggleBuffs"
+  },
+  {
+    "id": "coefficient-calculator-btn",
+    "label": "계수 및 명중 계산기",
+    "icon": "calculator",
+    "tooltip": "계수 및 명중 계산기",
+    "color": "indigo-400",
+    "api": "toggleCoefficientCalculator"
+  },
+  {
+    "id": "boss-btn",
+    "label": "필드보스 알림 설정",
+    "icon": "alarm-clock",
+    "tooltip": "필드보스 알림 설정",
+    "color": "red-400",
+    "api": "toggleBossSettings"
+  },
+  {
+    "id": "custom-alert-btn",
+    "label": "커스텀 알림",
+    "icon": "megaphone",
+    "tooltip": "커스텀 알림",
+    "color": "pink-400",
+    "api": "toggleCustomAlert"
+  },
+  {
+    "id": "eta-ranking-btn",
+    "label": "에타 랭킹 조회",
+    "icon": "trophy",
+    "tooltip": "에타 랭킹 조회",
+    "color": "yellow-400",
+    "api": "toggleEtaRanking"
+  },
+  {
+    "id": "contents-checker-btn",
+    "label": "숙제 체크 리스트",
+    "icon": "check-square",
+    "tooltip": "숙제 체크 리스트",
+    "color": "cyan-400",
+    "api": "toggleContentsChecker"
+  },
+  {
+    "id": "evolution-calculator-btn",
+    "label": "진화 재료 비용 계산기",
+    "icon": "trending-up",
+    "tooltip": "진화 재료 비용 계산기",
+    "color": "lime-400",
+    "api": "toggleEvolutionCalculator"
+  },
+  {
+    "id": "magic-stone-calculator-btn",
+    "label": "마정석 계산기",
+    "icon": "gem",
+    "tooltip": "마정석 계산기",
+    "color": "orange-400",
+    "api": "toggleMagicStoneCalculator"
+  },
+  {
+    "id": "diary-btn",
+    "label": "모험 일지",
+    "icon": "book-heart",
+    "tooltip": "플레이 기록 및 성장 일지",
+    "color": "teal-400",
+    "api": "toggleDiary"
+  },
+  {
+    "id": "home-btn",
+    "label": "홈 페이지",
+    "icon": "home",
+    "tooltip": "설정된 홈 URL로 이동",
+    "color": "slate-400",
+    "api": "goHome",
+    "isSystem": true
+  },
+  {
+    "id": "overlay-toggle-btn",
+    "label": "오버레이 토글",
+    "icon": "layout",
+    "tooltip": "오버레이 브라우저 보이기/숨기기",
+    "color": "slate-400",
+    "api": "toggleOverlay",
+    "isSystem": true
+  },
+  {
+    "id": "click-through-btn",
+    "label": "마우스 투과 토글",
+    "icon": "mouse-pointer-2",
+    "tooltip": "마우스 투과 토글 (Ctrl+Shift+T)",
+    "color": "slate-400",
+    "api": "toggleClickThrough",
+    "isSystem": true
+  }
+]

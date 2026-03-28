@@ -23,7 +23,7 @@
             padding: 16px 20px;
             cursor: move;
             -webkit-app-region: drag;
-            background: linear-gradient(to bottom, rgba(168, 85, 247, 0.15), transparent);
+            background: linear-gradient(to bottom, rgba(34, 211, 238, 0.15), transparent);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
@@ -51,9 +51,9 @@
         .item-card.daily:hover { border-color: rgba(59, 130, 246, 0.4); }
         .item-card.daily .category-badge { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
         
-        /* 주간 숙제 특화 색상 (Purple) */
-        .item-card.weekly:hover { border-color: rgba(168, 85, 247, 0.4); }
-        .item-card.weekly .category-badge { background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.2); }
+        /* 주간 숙제 특화 색상 (Cyan) */
+        .item-card.weekly:hover { border-color: rgba(34, 211, 238, 0.4); }
+        .item-card.weekly .category-badge { background: rgba(34, 211, 238, 0.15); color: #22d3ee; border-color: rgba(34, 211, 238, 0.2); }
 
         /* 조회모드 전용 완료 스타일 */
         body:not(.edit-mode) .item-card.completed {
@@ -149,7 +149,7 @@
 
         .progress-bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, #a855f7, #ec4899);
+            background: linear-gradient(90deg, #22d3ee, #06b6d4);
             transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -177,7 +177,7 @@
 
         .add-form-container {
             background: rgba(15, 18, 30, 0.98);
-            border-top: 1px solid rgba(168, 85, 247, 0.2);
+            border-top: 1px solid rgba(34, 211, 238, 0.2);
             padding: 20px;
             display: none; /* 기본적으로 숨김 */
             z-index: 50;
@@ -222,7 +222,7 @@
             transition: all 0.2s;
         }
         .search-box:focus-within {
-            border-color: rgba(168, 85, 247, 0.4);
+            border-color: rgba(34, 211, 238, 0.4);
             background: rgba(0, 0, 0, 0.3);
         }
         .search-input {
@@ -240,8 +240,8 @@
         }
 
         .drag-placeholder {
-            background: rgba(168, 85, 247, 0.1);
-            border: 2px dashed #a855f7;
+            background: rgba(34, 211, 238, 0.1);
+            border: 2px dashed #22d3ee;
             border-radius: 14px;
             height: 54px; /* item-card와 비슷한 높이 */
             margin: 0;
@@ -271,28 +271,28 @@
 
 <body class="panel-glass p-0 flex flex-col">
     <!-- Header -->
-    <div class="drag-handle flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div id="header-icon-box" class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/30 transition-colors">
-                <i id="header-icon" data-lucide="check-square" class="w-5 h-5 text-purple-400"></i>
+    <div class="win-header">
+        <div class="win-title-area">
+            <div id="header-icon-box" class="win-icon-box bg-cyan-500/10 border-cyan-500/20">
+                <i id="header-icon" data-lucide="check-square" class="w-5 h-5 text-cyan-400"></i>
             </div>
-            <div class="flex flex-col">
+            <div class="win-title-text">
                 <div class="flex items-center">
-                    <span class="text-xs font-black text-white tracking-tight">숙제 체크 리스트</span>
+                    <span class="win-title-main">숙제 체크리스트</span>
                     <span id="mode-badge" class="manage-tag hidden">관리 모드</span>
                 </div>
-                <span id="progress-percent-text" class="text-[9px] text-slate-500 font-bold tracking-wider uppercase">불러오는 중...</span>
+                <span id="progress-percent-text" class="win-title-sub">불러오는 중...</span>
             </div>
         </div>
-        <div class="flex items-center gap-1 no-drag">
-            <button id="btn-reset" class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors" title="상태 동기화">
-                <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i>
+        <div class="win-controls">
+            <button id="btn-reset" class="win-btn" title="상태 동기화">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             </button>
-            <button id="btn-edit" class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors" title="관리 모드 토글">
-                <i id="edit-icon" data-lucide="settings-2" class="w-4 h-4 text-slate-400"></i>
+            <button id="btn-edit" class="win-btn" title="관리 모드 토글">
+                <i id="edit-icon" data-lucide="settings-2" class="w-4 h-4"></i>
             </button>
-            <button onclick="window.electronAPI.toggleContentsChecker()" class="w-8 h-8 flex items-center justify-center hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors">
-                <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+            <button onclick="window.electronAPI.toggleContentsChecker()" class="win-btn win-close-btn" title="닫기">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
     </div>
@@ -320,7 +320,7 @@
     <!-- Add Form (Edit Mode Only) -->
     <div id="add-form" class="add-form-container no-drag shadow-2xl">
         <div class="flex items-center justify-between mb-4">
-            <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">새로운 숙제 추가</span>
+            <span class="text-[10px] font-black text-cyan-400 uppercase tracking-widest">새로운 숙제 추가</span>
             <button onclick="toggleEditMode()" class="text-[10px] text-slate-500 hover:text-white font-bold">닫기</button>
         </div>
         <div class="space-y-3">
@@ -346,7 +346,7 @@
                     <option value="0">일요일</option>
                 </select>
             </div>
-            <button id="btn-add-item" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-black py-3 rounded-xl shadow-lg shadow-purple-900/30 transition-all active:scale-[0.98]">
+            <button id="btn-add-item" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black py-3 rounded-xl shadow-lg shadow-cyan-900/30 transition-all active:scale-[0.98]">
                 목록에 추가하기
             </button>
         </div>

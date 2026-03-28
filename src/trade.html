@@ -94,36 +94,28 @@
     </div>
 
     <!-- Header -->
-    <div class="drag-handle flex justify-between items-center shadow-lg">
-        <div class="flex items-center gap-3">
-            <div
-                class="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center border border-emerald-500/30">
+    <div class="win-header">
+        <div class="win-title-area">
+            <div class="win-icon-box bg-emerald-500/10 border-emerald-500/20">
                 <i data-lucide="store" class="w-5 h-5 text-emerald-400"></i>
             </div>
-            <div class="flex flex-col">
+            <div class="win-title-text">
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-black text-white tracking-tight">거래 게시판 모니터</span>
-                    <span id="keyword-badge"
-                        class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-black border border-emerald-500/30">키워드
-                        부족</span>
+                    <span class="win-title-main">거래 게시판 모니터</span>
+                    <span id="keyword-badge" class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-black border border-emerald-500/30">키워드 부족</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span id="server-badge" class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">서버
-                        확인중</span>
-                    <span id="conn-status"
-                        class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Connected</span>
+                    <span id="server-badge" class="win-title-sub">서버 확인중</span>
+                    <span id="conn-status" class="win-title-sub">Connected</span>
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-1.5 no-drag">
-            <button onclick="refreshTrade()"
-                class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors"
-                title="새로고침">
-                <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i>
+        <div class="win-controls">
+            <button onclick="refreshTrade()" class="win-btn" title="새로고침">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             </button>
-            <button onclick="window.close()"
-                class="w-8 h-8 flex items-center justify-center hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors">
-                <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+            <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
     </div>

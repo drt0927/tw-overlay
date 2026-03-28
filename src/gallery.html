@@ -105,33 +105,28 @@
   </div>
 
   <!-- Header -->
-  <div class="drag-handle flex justify-between items-center shadow-lg">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/30">
+  <div class="win-header">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-purple-500/10 border-purple-500/20">
         <i data-lucide="bell" class="w-5 h-5 text-purple-400"></i>
       </div>
-      <div class="flex flex-col">
+      <div class="win-title-text">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-black text-white tracking-tight">갤러리 모니터</span>
-          <span id="keyword-badge"
-            class="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full font-black border border-purple-500/30">전체
-            알림</span>
+          <span class="win-title-main">갤러리 모니터</span>
+          <span id="keyword-badge" class="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full font-black border border-purple-500/30">전체 알림</span>
         </div>
-        <span id="conn-status" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Connected</span>
+        <span id="conn-status" class="win-title-sub">Connected</span>
       </div>
     </div>
-    <div class="flex items-center gap-1.5 no-drag">
-      <button id="notify-toggle" onclick="toggleNotify()"
-        class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors" title="알림 설정">
+    <div class="win-controls">
+      <button id="notify-toggle" onclick="toggleNotify()" class="win-btn" title="알림 설정">
         <i id="notify-toggle-icon" data-lucide="bell" class="w-4 h-4"></i>
       </button>
-      <button onclick="refreshGallery()"
-        class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors" title="새로고침">
-        <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i>
+      <button onclick="refreshGallery()" class="win-btn" title="새로고침">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
       </button>
-      <button onclick="window.close()"
-        class="w-8 h-8 flex items-center justify-center hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors">
-        <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+      <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
   </div>

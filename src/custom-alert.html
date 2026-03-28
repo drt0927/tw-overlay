@@ -9,31 +9,85 @@
   <script src="assets/lucide.min.js"></script>
   <script src="assets/ui-utils.js"></script>
   <style>
-    body { background: transparent; color: white; overflow: hidden; }
+    body {
+      background: transparent;
+      color: white;
+      overflow: hidden;
+    }
+
     .alert-card {
       background: rgba(30, 35, 60, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.05);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .alert-card:hover { background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.3); }
-    .alert-card.disabled { opacity: 0.5; filter: grayscale(0.5); }
-    select { color-scheme: dark; }
-    select option { background: #1a1b2e; color: white; }
+
+    .alert-card:hover {
+      background: rgba(236, 72, 153, 0.08);
+      border-color: rgba(236, 72, 153, 0.3);
+    }
+
+    .alert-card.disabled {
+      opacity: 0.5;
+      filter: grayscale(0.5);
+    }
+
+    select {
+      color-scheme: dark;
+    }
+
+    select option {
+      background: #1a1b2e;
+      color: white;
+    }
+
     .drag-handle {
-      padding: 18px 20px; cursor: move; -webkit-app-region: drag;
-      background: linear-gradient(to bottom, rgba(251, 191, 36, 0.12), transparent);
+      padding: 18px 20px;
+      cursor: move;
+      -webkit-app-region: drag;
+      background: linear-gradient(to bottom, rgba(236, 72, 153, 0.12), transparent);
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .no-drag { -webkit-app-region: no-drag; }
-    .offset-checkbox { accent-color: #f59e0b; }
-    input[type="time"], input[type="number"] {
-      color-scheme: dark; background: transparent; border: none; outline: none;
-      color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 13px;
+
+    .no-drag {
+      -webkit-app-region: no-drag;
     }
-    .type-tab { transition: all 0.2s; }
-    .type-tab.active { background: rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.5); color: #fbbf24; }
-    .type-tab.inactive { background: transparent; border-color: rgba(255,255,255,0.08); color: #64748b; }
-    .type-tab.inactive:hover { border-color: rgba(255,255,255,0.15); color: #94a3b8; }
+
+    .offset-checkbox {
+      accent-color: #ec4899;
+    }
+
+    input[type="time"],
+    input[type="number"] {
+      color-scheme: dark;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .type-tab {
+      transition: all 0.2s;
+    }
+
+    .type-tab.active {
+      background: rgba(236, 72, 153, 0.2);
+      border-color: rgba(236, 72, 153, 0.5);
+      color: #f472b6;
+    }
+
+    .type-tab.inactive {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #64748b;
+    }
+
+    .type-tab.inactive:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+    }
   </style>
   <script>
     window.addEventListener('beforeunload', () => {
@@ -45,35 +99,34 @@
 
 <body class="panel-glass p-0 h-screen flex flex-col">
   <!-- Header -->
-  <div class="drag-handle flex justify-between items-center shadow-lg">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center border border-amber-500/30">
-        <i data-lucide="clock" class="w-5 h-5 text-amber-400"></i>
+  <div class="win-header">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-pink-500/10 border-pink-500/20">
+        <i data-lucide="megaphone" class="w-5 h-5 text-pink-400"></i>
       </div>
-      <div class="flex flex-col">
-        <span class="text-xs font-black text-white tracking-tight">커스텀 알림</span>
-        <span class="text-[9px] text-slate-500 font-bold">시간 기반 반복 알림 설정</span>
+      <div class="win-title-text">
+        <span class="win-title-main">커스텀 알림</span>
+        <span class="win-title-sub">Custom Alert</span>
       </div>
     </div>
-    <div class="flex items-center gap-2 no-drag">
+    <div class="win-controls">
       <button id="add-btn" onclick="openAddForm()"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-lg text-amber-400 hover:bg-amber-500/30 transition-all text-[11px] font-black">
+        class="px-3 py-1.5 bg-pink-500/20 border border-pink-500/40 rounded-lg text-pink-400 hover:bg-pink-500/30 transition-all text-[11px] font-black flex items-center gap-1.5">
         <i data-lucide="plus" class="w-3.5 h-3.5"></i> 알림 추가
       </button>
-      <button onclick="window.close()"
-        class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-full transition-colors">
-        <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+      <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
   </div>
 
   <div class="flex-1 overflow-hidden flex flex-col no-drag">
     <!-- Add Form -->
-    <div id="add-form" class="hidden p-4 border-b border-amber-500/20 bg-black/40 shadow-inner mb-2">
+    <div id="add-form" class="hidden p-4 border-b border-pink-500/20 bg-black/40 shadow-inner mb-2">
       <input type="hidden" id="form-id">
       <div class="flex justify-between items-center mb-3">
-        <span id="form-title" class="text-[10px] font-black text-amber-500/70 uppercase tracking-widest">새 알림 설정</span>
-        <div class="h-px flex-1 bg-amber-500/10 ml-3"></div>
+        <span id="form-title" class="text-[10px] font-black text-pink-500/70 uppercase tracking-widest">새 알림 설정</span>
+        <div class="h-px flex-1 bg-pink-500/10 ml-3"></div>
       </div>
       <div class="space-y-3">
 
@@ -93,14 +146,15 @@
         <div id="input-daily" class="flex gap-3 items-center">
           <div class="flex flex-col gap-1 flex-1">
             <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">목표 시각</label>
-            <div class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 hover:border-amber-500/30 transition-colors">
+            <div
+              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 hover:border-pink-500/30 transition-colors">
               <input type="time" id="form-time" value="09:00" class="w-full">
             </div>
           </div>
           <div class="flex flex-col gap-1 flex-1">
             <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 메시지</label>
             <input type="text" id="form-message-daily" placeholder="예: 일일퀘스트 시작!" maxlength="30"
-              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/40 transition-colors w-full">
+              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 placeholder-slate-600 focus:outline-none focus:border-pink-500/40 transition-colors w-full">
           </div>
         </div>
 
@@ -108,16 +162,16 @@
         <div id="input-hourly" class="hidden flex gap-3 items-center">
           <div class="flex flex-col gap-1">
             <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">매시 몇 분</label>
-            <div class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 hover:border-amber-500/30 transition-colors flex items-center gap-2">
-              <input type="number" id="form-minute" value="0" min="0" max="59"
-                class="w-14 text-center text-amber-300">
+            <div
+              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 hover:border-pink-500/30 transition-colors flex items-center gap-2">
+              <input type="number" id="form-minute" value="0" min="0" max="59" class="w-14 text-center text-pink-300">
               <span class="text-[11px] text-slate-500 font-bold">분</span>
             </div>
           </div>
           <div class="flex flex-col gap-1 flex-1">
             <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 메시지</label>
             <input type="text" id="form-message-hourly" placeholder="예: 필드보스 리젠 확인!" maxlength="30"
-              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/40 transition-colors w-full">
+              class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-200 placeholder-slate-600 focus:outline-none focus:border-pink-500/40 transition-colors w-full">
           </div>
         </div>
 
@@ -152,10 +206,12 @@
         <div class="flex gap-2 items-end">
           <div class="flex-1 flex flex-col gap-1">
             <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">알림 사운드</label>
-            <div class="flex gap-2 items-center bg-black/40 border border-white/10 rounded-lg px-3 hover:border-amber-500/30 transition-colors">
-              <select id="form-sound" class="bg-transparent flex-1 py-2 text-[11px] font-black text-slate-300 focus:outline-none"></select>
+            <div
+              class="flex gap-2 items-center bg-black/40 border border-white/10 rounded-lg px-3 hover:border-pink-500/30 transition-colors">
+              <select id="form-sound"
+                class="bg-transparent flex-1 py-2 text-[11px] font-black text-slate-300 focus:outline-none"></select>
               <button onclick="previewFormSound()"
-                class="w-7 h-7 flex items-center justify-center text-amber-400 hover:text-amber-300 transition-colors shrink-0">
+                class="w-7 h-7 flex items-center justify-center text-pink-400 hover:text-pink-300 transition-colors shrink-0">
                 <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
               </button>
             </div>
@@ -164,7 +220,7 @@
             <button onclick="cancelAddForm()"
               class="px-4 py-2 text-[11px] font-black text-slate-500 hover:text-white transition-colors rounded-lg">취소</button>
             <button id="save-btn" onclick="saveNewAlert()"
-              class="px-4 py-2 text-[11px] font-black bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 rounded-lg transition-all">저장</button>
+              class="px-4 py-2 text-[11px] font-black bg-pink-500/20 border border-pink-500/40 text-pink-400 hover:bg-pink-500/30 rounded-lg transition-all">저장</button>
           </div>
         </div>
       </div>
@@ -229,8 +285,8 @@
         const offsetLabels = (alert.offsets || [0]).map(o => o === 0 ? '정각' : `${o}분 전`).join(', ');
         const isHourly = alert.type === 'hourly';
         const timeDisplay = isHourly
-          ? `매시 <span class="text-amber-300">${String(alert.minute ?? 0).padStart(2, '0')}분</span>`
-          : `<span class="text-amber-300">${alert.time || '--:--'}</span>`;
+          ? `매시 <span class="text-pink-300">${String(alert.minute ?? 0).padStart(2, '0')}분</span>`
+          : `<span class="text-pink-300">${alert.time || '--:--'}</span>`;
         const typeBadge = isHourly
           ? `<span class="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">매시반복</span>`
           : `<span class="text-[9px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">매일</span>`;
@@ -252,12 +308,12 @@
             </div>
             <div class="flex items-center gap-2">
               <button onclick="openEditForm('${alert.id}')"
-                class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-amber-400 transition-colors rounded-lg hover:bg-amber-500/10">
+                class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-pink-400 transition-colors rounded-lg hover:bg-pink-500/10">
                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
               </button>
               <label class="relative inline-flex items-center cursor-pointer no-drag">
                 <input type="checkbox" class="sr-only peer" ${alert.enabled ? 'checked' : ''} onchange="toggleAlert('${alert.id}', this.checked)">
-                <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-[16px] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-300 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 peer-checked:after:bg-white"></div>
+                <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-[16px] after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-300 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-pink-500 peer-checked:after:bg-white"></div>
               </label>
               <button onclick="removeAlert('${alert.id}')"
                 class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10">
@@ -266,14 +322,14 @@
             </div>
           </div>
           <div class="flex gap-2 items-center pt-2 border-t border-white/5">
-            <div class="flex-1 bg-black/40 rounded-xl px-3 border border-white/5 hover:border-amber-500/30 transition-colors">
+            <div class="flex-1 bg-black/40 rounded-xl px-3 border border-white/5 hover:border-pink-500/30 transition-colors">
               <select class="w-full bg-transparent py-2.5 text-[11px] font-black text-slate-300 focus:outline-none"
                       onchange="changeAlertSound('${alert.id}', this.value)">
                 ${soundFiles.map(s => `<option value="${s.file}" ${alert.soundFile === s.file ? 'selected' : ''}>${s.name}</option>`).join('')}
               </select>
             </div>
             <button onclick="window.playPreview('${alert.soundFile}', null, '${escapeHtml(alert.message)}')"
-              class="w-10 h-10 flex items-center justify-center bg-amber-600/20 border border-amber-500/40 rounded-xl text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-lg active:scale-90">
+              class="w-10 h-10 flex items-center justify-center bg-pink-600/20 border border-pink-500/40 rounded-xl text-pink-400 hover:bg-pink-500 hover:text-white transition-all shadow-lg active:scale-90">
               <i data-lucide="play" class="w-4 h-4 fill-current"></i>
             </button>
           </div>
@@ -285,7 +341,7 @@
 
     function escapeHtml(str) {
       if (!str) return '';
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     // --- Add/Edit Form ---
@@ -303,7 +359,7 @@
 
       document.getElementById('form-id').value = alert.id;
       setFormType(alert.type || 'daily');
-      
+
       if (alert.type === 'hourly') {
         document.getElementById('form-minute').value = alert.minute ?? 0;
         document.getElementById('form-message-hourly').value = alert.message || '';

@@ -18,6 +18,7 @@ import { setupAutoStart } from './modules/autoStart';
 import * as trade from './modules/tradeMonitor';
 import * as sm from './modules/shortcutManager';
 import { analytics } from './modules/analytics';
+import * as diaryDb from './modules/diaryDb';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
@@ -48,6 +49,8 @@ app.whenReady().then(() => {
 
   const sidebar = wm.createMainWindow();
   tray.createTray();
+
+  diaryDb.initDb();
 
   analytics.trackEvent('app_open');
   ipcHandlers.register();

@@ -16,7 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleCoefficientCalculator: () => ipcRenderer.send('toggle-coefficient-calculator'),
   toggleContentsChecker: () => ipcRenderer.send('toggle-contents-checker'),
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
+  toggleMagicStoneCalculator: () => ipcRenderer.send('toggle-magic-stone-calculator'),
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
+  toggleDiary: () => ipcRenderer.send('toggle-diary'),
   contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
@@ -69,6 +71,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   tradeGetServer: () => ipcRenderer.invoke('trade-get-server'),
   tradeGetServers: () => ipcRenderer.invoke('trade-get-servers'),
 
+  // 일지 (Adventure Log) 시스템
+  diaryGetByDate: (date: string) => ipcRenderer.invoke('diary-get-by-date', date),
+  diaryGetByMonth: (yearMonth: string) => ipcRenderer.invoke('diary-get-by-month', yearMonth),
+  diaryGetMonthlySummary: (yearMonth: string) => ipcRenderer.invoke('diary-get-monthly-summary', yearMonth),
+  diaryAddActivity: (date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string) => ipcRenderer.send('diary-add-activity', date, time, type, content),
+  diaryRemoveActivity: (date: string, type: string, content: string) => ipcRenderer.send('diary-remove-activity', date, type, content),
+  diaryUpdateMonster: (date: string, monsterId: string) => ipcRenderer.send('diary-update-monster', date, monsterId),
+
+  shortcutsUnregister: () => ipcRenderer.send('shortcuts-unregister'),
+  shortcutsRegister: () => ipcRenderer.send('shortcuts-register'),
+
+  // 백업 및 복구
+  backupExport: () => ipcRenderer.invoke('backup-export'),
+  backupImport: () => ipcRenderer.invoke('backup-import'),
+
   // 이벤트 리스너 (중복 등록 방지를 위해 기존 리스너 제거 후 재등록)
   onSidebarStatus: (callback: (isCollapsed: boolean) => void) => {
     ipcRenderer.removeAllListeners('sidebar-status');
@@ -118,7 +135,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('boss-times-data');
     ipcRenderer.on('boss-times-data', (_event, times) => callback(times));
   },
-  onPlayBossSound: (callback: (data: { bossName: string, soundFile: string }) => void) => {
+  onPlayBossSound: (callback: (data: { bossName: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean }) => void) => {
     ipcRenderer.removeAllListeners('play-boss-sound');
     ipcRenderer.on('play-boss-sound', (_event, data) => callback(data));
   },
@@ -150,6 +167,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('incomplete-contents');
     ipcRenderer.on('incomplete-contents', (_event, items) => callback(items));
   },
+  onDiaryUpdated: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('diary-updated');
+    ipcRenderer.on('diary-updated', () => callback());
+  },
+
   cleanupAllListeners: () => {
     const events = [
       'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
@@ -157,7 +179,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
-      'incomplete-contents'
+      'incomplete-contents', 'diary-updated'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

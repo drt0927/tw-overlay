@@ -7,6 +7,7 @@ import { app } from 'electron';
 import * as config from './config';
 import { ContentsCheckerItem, ResetRule } from '../shared/types';
 import { log } from './logger';
+import * as diaryDb from './diaryDb';
 
 /** 기본 컨텐츠 JSON 로드 */
 function loadDefaultItems(): ContentsCheckerItem[] {
@@ -198,6 +199,23 @@ function shouldReset(rule: ResetRule, lastCompleted: Date, now: Date): boolean {
   return false;
 }
 
+/** 일지(다이어리) 통계 동기화 */
+function syncDiaryStats(items: ContentsCheckerItem[]) {
+  const visibleItems = items.filter(i => i.isVisible);
+  const dailyTotal = visibleItems.filter(i => i.resetRule.type === 'daily').length;
+  const dailyDone = visibleItems.filter(i => i.resetRule.type === 'daily' && i.isCompleted).length;
+  const weeklyTotal = visibleItems.filter(i => i.resetRule.type === 'weekly').length;
+  const weeklyDone = visibleItems.filter(i => i.resetRule.type === 'weekly' && i.isCompleted).length;
+  
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const dateStr = String(now.getDate()).padStart(2, '0');
+  const date = `${year}-${month}-${dateStr}`;
+  
+  diaryDb.updateHomeworkStats(date, dailyDone, dailyTotal, weeklyDone, weeklyTotal);
+}
+
 /** 화면 갱신 알림 유틸리티 */
 function refreshUI() {
   import('./windowManager').then(wm => wm.applySettings({}));
@@ -212,6 +230,21 @@ export function toggleItem(id: string): void {
     item.isCompleted = !item.isCompleted;
     item.lastCompletedAt = item.isCompleted ? Date.now() : undefined;
     config.saveImmediate({ contentsCheckerItems: items });
+
+    // 일지 연동 로직
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const dateStr = String(now.getDate()).padStart(2, '0');
+    const date = `${year}-${month}-${dateStr}`;
+
+    if (item.isCompleted) {
+      diaryDb.addHomeworkLog(date, item.id, item.name, item.category, item.resetRule.type, Date.now());
+    } else {
+      diaryDb.removeHomeworkLog(date, item.id);
+    }
+    syncDiaryStats(items);
+
     refreshUI();
   }
 }

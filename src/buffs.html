@@ -26,15 +26,15 @@
     }
 
     .cat-chip:hover {
-      background: rgba(168, 85, 247, 0.1);
-      color: #c084fc;
+      background: rgba(245, 158, 11, 0.1);
+      color: #fbbf24;
     }
 
     .cat-chip.active {
-      background: #7c3aed;
-      border-color: #a855f7;
+      background: #d97706;
+      border-color: #f59e0b;
       color: white;
-      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
     }
 
     .buff-card {
@@ -50,20 +50,20 @@
     }
 
     .buff-card:hover {
-      background: rgba(168, 85, 247, 0.05);
-      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(245, 158, 11, 0.05);
+      border-color: rgba(245, 158, 11, 0.3);
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 
     .buff-card.selected {
-      background: rgba(168, 85, 247, 0.1);
-      border-color: #a855f7;
-      box-shadow: inset 0 0 30px rgba(168, 85, 247, 0.05);
+      background: rgba(245, 158, 11, 0.1);
+      border-color: #f59e0b;
+      box-shadow: inset 0 0 30px rgba(245, 158, 11, 0.05);
     }
 
     .buff-card.selected .buff-name {
-      color: #c084fc;
+      color: #fbbf24;
     }
 
     .buff-card.disabled {
@@ -126,27 +126,31 @@
 
 <body class="panel-glass text-slate-200">
   <div class="h-screen flex flex-col">
-    <!-- Header (드래그 영역을 여기로 한정) -->
-    <div
-      class="drag-handle shrink-0 py-4 px-6 flex justify-between items-center border-b border-white/10 bg-slate-900/50">
-      <div class="flex items-center gap-6">
-        <span class="settings-title text-base font-black flex items-center gap-2 text-purple-400">
-          <i data-lucide="zap" class="w-6 h-6"></i> 버프 백과 & 계산기
-        </span>
+    <!-- Header -->
+    <div class="win-header">
+      <div class="win-title-area">
+        <div class="win-icon-box bg-amber-500/10 border-amber-500/20">
+          <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+        </div>
+        <div class="win-title-text">
+          <span class="win-title-main">버프 백과 & 계산기</span>
+          <span class="win-title-sub">Buff Encyclopedia</span>
+        </div>
       </div>
-      <button onclick="window.close()"
-        class="no-drag text-slate-400 hover:text-red-500 transition-colors p-1.5 hover:bg-white/5 rounded-lg">
-        <i data-lucide="x" class="w-6 h-6"></i>
-      </button>
+      <div class="win-controls">
+        <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Source Info Bar (드래그 불가 영역) -->
-    <div class="no-drag px-5 py-2 bg-purple-500/5 border-b border-white/5 flex justify-between items-center shrink-0">
+    <div class="no-drag px-5 py-2 bg-amber-500/5 border-b border-white/5 flex justify-between items-center shrink-0">
       <div class="flex items-center gap-1.5">
         <span class="text-xs text-slate-500 font-medium">최종 업데이트: 2021.11.26</span>
       </div>
       <button onclick="window.electronAPI.openExternal('https://tales.nexon.com/News/Notice/131192')"
-        class="text-xs text-purple-500/70 hover:text-purple-400 transition-colors flex items-center gap-1.5">
+        class="text-xs text-amber-500/70 hover:text-amber-400 transition-colors flex items-center gap-1.5">
         출처: GM 가이드 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
       </button>
     </div>
@@ -161,9 +165,9 @@
 
           <!-- Standard Set -->
           <div id="standard-preset-card" onclick="selectPreset('standard')"
-            class="cursor-pointer bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 rounded-xl p-5 transition-all hover:bg-purple-600/30 active:scale-[0.98] group relative">
+            class="cursor-pointer bg-gradient-to-br from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-xl p-5 transition-all hover:bg-amber-600/30 active:scale-[0.98] group relative">
             <div class="flex justify-between items-center mb-3">
-              <span class="text-sm font-black text-purple-400">기본 도핑 세트</span>
+              <span class="text-sm font-black text-amber-400">기본 도핑 세트</span>
               <div id="standard-deselect" class="hidden text-yellow-600 hover:text-yellow-400 transition-colors"
                 onclick="event.stopPropagation(); deselectPreset()">
                 <i data-lucide="x-circle" class="w-5 h-5"></i>
@@ -178,10 +182,10 @@
               <span class="text-xs font-bold text-slate-400">나만의 프리셋</span>
               <div class="flex gap-1.5">
                 <input id="preset-name" onfocus="handleInputFocus()"
-                  class="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs w-36 focus:outline-none focus:border-purple-500 transition-colors text-white"
+                  class="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs w-36 focus:outline-none focus:border-amber-500 transition-colors text-white"
                   placeholder="이름 입력...">
                 <button onclick="saveCurrentPreset()"
-                  class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">저장</button>
+                  class="text-xs bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">저장</button>
               </div>
             </div>
             <div id="user-preset-list" class="space-y-3"></div>
@@ -195,9 +199,9 @@
           <div class="flex gap-4">
             <div class="relative group flex-1">
               <i data-lucide="search"
-                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-purple-400 transition-colors"></i>
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-amber-400 transition-colors"></i>
               <input id="search-input"
-                class="input-field w-full pl-12 pr-4 py-3 text-sm bg-black/40 border-white/10 focus:border-purple-500/50 rounded-xl text-white"
+                class="input-field w-full pl-12 pr-4 py-3 text-sm bg-black/40 border-white/10 focus:border-amber-500/50 rounded-xl text-white"
                 placeholder="버프 이름 또는 효과 검색..." oninput="handleSearch()">
             </div>
             <div id="category-container" class="flex gap-2 items-center overflow-x-auto custom-scroll shrink-0 pb-1">
@@ -267,13 +271,13 @@
       const presets = getPresets();
       const stdCard = document.getElementById('standard-preset-card');
       const stdDeselect = document.getElementById('standard-deselect');
-      if (activePresetId === 'standard') { stdCard.classList.add('ring-2', 'ring-purple-400', 'bg-purple-600/40'); stdDeselect.classList.remove('hidden'); }
-      else { stdCard.classList.remove('ring-2', 'ring-purple-400', 'bg-purple-600/40'); stdDeselect.classList.add('hidden'); }
+      if (activePresetId === 'standard') { stdCard.classList.add('ring-2', 'ring-amber-400', 'bg-amber-600/40'); stdDeselect.classList.remove('hidden'); }
+      else { stdCard.classList.remove('ring-2', 'ring-amber-400', 'bg-amber-600/40'); stdDeselect.classList.add('hidden'); }
       if (presets.length === 0) { container.innerHTML = '<div class="text-xs text-slate-600 py-2 px-1">저장된 프리셋이 없습니다.</div>'; return; }
       container.innerHTML = presets.map(p => {
         const isActive = activePresetId === p.id;
         const isModified = isActive && (JSON.stringify(p.buffIds.sort()) !== JSON.stringify(Array.from(selectedBuffIds).sort()));
-        return `<div onclick="selectPreset(${p.id})" class="group relative bg-slate-800/40 border ${isActive ? 'ring-2 ring-purple-500 border-purple-400 bg-purple-900/20' : 'border-white/10'} hover:bg-slate-800/60 rounded-xl p-4 cursor-pointer transition-all active:scale-[0.98]"><div class="flex justify-between items-start mb-1.5"><span class="text-xs font-black ${isActive ? 'text-purple-300' : 'text-slate-300'}">${p.name}</span><div class="flex gap-2">${isModified ? `<button onclick="event.stopPropagation(); updatePreset(${p.id})" class="text-green-400 hover:text-green-300 transition-colors"><i data-lucide="save" class="w-4 h-4"></i></button>` : ''}${isActive ? `<button onclick="event.stopPropagation(); deselectPreset()" class="text-purple-400 hover:text-white transition-colors"><i data-lucide="x-circle" class="w-4 h-4"></i></button>` : ''}<button onclick="deletePreset(event, ${p.id})" class="text-slate-600 hover:text-red-400 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-[11px] text-slate-500 font-medium">${isActive ? selectedBuffIds.size : p.buffIds.length}개의 버프 ${isModified ? '<span class="text-purple-400/70 ml-1">(수정됨)</span>' : ''}</p></div>`;
+        return `<div onclick="selectPreset(${p.id})" class="group relative bg-slate-800/40 border ${isActive ? 'ring-2 ring-amber-500 border-amber-400 bg-amber-900/20' : 'border-white/10'} hover:bg-slate-800/60 rounded-xl p-4 cursor-pointer transition-all active:scale-[0.98]"><div class="flex justify-between items-start mb-1.5"><span class="text-xs font-black ${isActive ? 'text-amber-300' : 'text-slate-300'}">${p.name}</span><div class="flex gap-2">${isModified ? `<button onclick="event.stopPropagation(); updatePreset(${p.id})" class="text-green-400 hover:text-green-300 transition-colors"><i data-lucide="save" class="w-4 h-4"></i></button>` : ''}${isActive ? `<button onclick="event.stopPropagation(); deselectPreset()" class="text-amber-400 hover:text-white transition-colors"><i data-lucide="x-circle" class="w-4 h-4"></i></button>` : ''}<button onclick="deletePreset(event, ${p.id})" class="text-slate-600 hover:text-red-400 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div><p class="text-[11px] text-slate-500 font-medium">${isActive ? selectedBuffIds.size : p.buffIds.length}개의 버프 ${isModified ? '<span class="text-amber-400/70 ml-1">(수정됨)</span>' : ''}</p></div>`;
       }).join('');
       lucide.createIcons();
     }

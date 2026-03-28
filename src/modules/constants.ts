@@ -21,7 +21,7 @@ export const POLLING_MINIMIZED_MS = 2000;
 export const POLLING_IDLE_MS = 3000;
 export const STABLE_THRESHOLD_COUNT = 10;
 export const SIDEBAR_HEIGHT = 800;
-export const SIDEBAR_WIDTH = 200;
+export const SIDEBAR_WIDTH = 400;
 export const OVERLAY_TOOLBAR_HEIGHT = 40;
 
 // --- 매직 넘버 상수화 ---

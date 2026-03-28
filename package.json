@@ -1,6 +1,6 @@
 {
   "name": "tw-overlay",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {
@@ -50,11 +50,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "adm-zip": "^0.5.16",
+    "better-sqlite3": "^12.8.0",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.3",
     "koffi": "^2.15.1"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.13.4",
     "electron": "^40.4.0",
     "electron-builder": "^26.7.0",

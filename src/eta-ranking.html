@@ -53,27 +53,22 @@
 
 <body class="panel-glass p-0 h-screen flex flex-col">
     <!-- Header -->
-    <div class="drag-handle flex justify-between items-center shadow-lg">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-pink-500/20 rounded-lg flex items-center justify-center border border-pink-500/30">
-                <i data-lucide="trophy" class="w-5 h-5 text-pink-400"></i>
+    <div class="win-header">
+        <div class="win-title-area">
+            <div class="win-icon-box bg-yellow-500/10 border-yellow-500/20">
+                <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i>
             </div>
-            <div class="flex flex-col">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-black text-white tracking-tight">에타 랭킹 조회</span>
-                </div>
-                <span id="last-update" class="text-[9px] text-slate-500 font-bold tracking-wider">Loading...</span>
+            <div class="win-title-text">
+                <span class="win-title-main">에타 랭킹 조회</span>
+                <span id="last-update" class="win-title-sub">Loading...</span>
             </div>
         </div>
-        <div class="flex items-center gap-1.5 no-drag">
-            <button onclick="fetchRanking()"
-                class="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors"
-                title="새로고침">
-                <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i>
+        <div class="win-controls">
+            <button onclick="fetchRanking()" class="win-btn" title="새로고침">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             </button>
-            <button onclick="window.close()"
-                class="w-8 h-8 flex items-center justify-center hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors">
-                <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+            <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
     </div>
@@ -84,23 +79,23 @@
             <div class="flex gap-3 bg-black/40 px-3 py-2 rounded-xl border border-white/5 items-center">
                 <span class="text-xs font-bold text-slate-500 mr-2">서버</span>
                 <label class="flex items-center gap-1.5 cursor-pointer group">
-                    <input type="radio" name="server" value="7" checked class="accent-pink-600 w-3.5 h-3.5"
+                    <input type="radio" name="server" value="7" checked class="accent-amber-600 w-3.5 h-3.5"
                         onchange="fetchRanking()">
                     <span class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">하이아칸</span>
                 </label>
                 <label class="flex items-center gap-1.5 cursor-pointer group">
-                    <input type="radio" name="server" value="16" class="accent-pink-600 w-3.5 h-3.5"
+                    <input type="radio" name="server" value="16" class="accent-amber-600 w-3.5 h-3.5"
                         onchange="fetchRanking()">
                     <span class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">네냐플</span>
                 </label>
             </div>
             <div
-                class="flex gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5 focus-within:border-pink-500/50 transition-colors">
+                class="flex gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5 focus-within:border-yellow-500/50 transition-colors">
                 <input id="search-input"
                     class="bg-transparent flex-1 px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-700 font-bold"
                     placeholder="캐릭터명 검색..." onkeypress="if(event.key==='Enter')fetchRanking(true)">
                 <button onclick="fetchRanking(true)"
-                    class="text-xs bg-pink-600 hover:bg-pink-500 text-white px-5 py-2 rounded-lg font-black transition-all active:scale-95 shadow-lg flex items-center justify-center w-16"
+                    class="text-xs bg-amber-600 hover:bg-yellow-500 text-white px-5 py-2 rounded-lg font-black transition-all active:scale-95 shadow-lg flex items-center justify-center w-16"
                     id="search-btn">검색</button>
             </div>
 
@@ -116,12 +111,12 @@
                 <div class="flex flex-col gap-1.5 mt-2">
                     <a href="#"
                         onclick="window.electronAPI.openExternal('https://tales.nexon.com/Community/Free/47290')"
-                        class="text-[11px] text-pink-400 hover:text-pink-300 hover:underline flex items-center gap-1.5 w-fit font-bold">
+                        class="text-[11px] text-yellow-400 hover:text-pink-300 hover:underline flex items-center gap-1.5 w-fit font-bold">
                         <i data-lucide="external-link" class="w-3 h-3"></i> [공홈게시판] 뉴비복귀 유저분들 반드시 꼭!!! 이 글 봐주세요 (햄찌)
                     </a>
                     <a href="#"
                         onclick="window.electronAPI.openExternal('https://gall.dcinside.com/mini/board/view/?id=talesweaver&no=191037')"
-                        class="text-[11px] text-pink-400 hover:text-pink-300 hover:underline flex items-center gap-1.5 w-fit font-bold">
+                        class="text-[11px] text-yellow-400 hover:text-pink-300 hover:underline flex items-center gap-1.5 w-fit font-bold">
                         <i data-lucide="external-link" class="w-3 h-3"></i> [텔즈미니갤] 사칭 사기 예방하는 방법. (윤삐삐)
                     </a>
                 </div>
@@ -174,7 +169,7 @@
             <span class="text-xs text-slate-500 font-bold">${e.character}</span>
           </div>
           <div class="flex flex-col items-end">
-            <div class="text-xs text-pink-400 font-black"><span class="text-[10px] text-slate-500 mr-1">Lv.</span>${e.level}</div>
+            <div class="text-xs text-yellow-400 font-black"><span class="text-[10px] text-slate-500 mr-1">Lv.</span>${e.level}</div>
             <div class="text-[10px] text-slate-500 font-bold mt-0.5">${e.point.toLocaleString()} 정수</div>
           </div>
         `;

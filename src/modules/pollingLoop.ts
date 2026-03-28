@@ -108,11 +108,12 @@ export function start(): void {
         }
 
         const mainWin = wm.getMainWindow();
-        const isVisible = mainWin && mainWin.isVisible();
+        const isVisible = mainWin && !mainWin.isDestroyed() && mainWin.isVisible();
 
         // Z-Order 관리: 위치 변경이든 안정 상태든 promoteWindows는 한 번만 호출
         if (currentRect && 'gameHwnd' in currentRect) {
-            const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, wm.getAllWindowHwnds());
+            const windowHwnds = wm.getAllWindowHwnds();
+            const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, windowHwnds);
             wm.setAllAlwaysOnTop(isGameOrAppFocused);
         }
 

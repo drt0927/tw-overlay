@@ -10,7 +10,7 @@ let _isFocused = false;
 /**
  * 모든 단축키 등록
  */
-function registerAll(): void {
+export function registerAll(): void {
   const cfg = config.load();
   const shortcuts = cfg.shortcuts;
   if (!shortcuts) return;
@@ -35,7 +35,7 @@ function registerAll(): void {
 /**
  * 모든 단축키 해제
  */
-function unregisterAll(): void {
+export function unregisterAll(): void {
   globalShortcut.unregisterAll();
   log('[SHORTCUT] All shortcuts unregistered');
 }

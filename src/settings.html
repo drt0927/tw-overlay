@@ -179,11 +179,16 @@
 
   <div class="settings-wrapper">
     <div class="settings-sidebar">
-      <div class="drag-handle">
-        <span class="text-xl font-black flex items-center gap-2 text-white">
-          <i data-lucide="sliders" class="w-6 h-6 text-purple-500"></i> 환경 설정
-        </span>
-        <p class="text-[10px] text-slate-500 mt-1 font-bold">드래그하여 이동</p>
+      <div class="win-header !h-24 !px-6 !bg-transparent !border-none flex-col !items-start !justify-center gap-1">
+        <div class="win-title-area">
+          <div class="win-icon-box bg-purple-500/10 border-purple-500/20">
+            <i data-lucide="sliders" class="w-5 h-5 text-purple-500"></i>
+          </div>
+          <div class="win-title-text">
+            <span class="win-title-main">환경 설정</span>
+            <span class="win-title-sub">Settings</span>
+          </div>
+        </div>
       </div>
 
       <div class="nav-container">
@@ -208,6 +213,9 @@
         </div>
         <div class="nav-item" onclick="showSection('shortcuts', this)">
           <i data-lucide="keyboard" class="w-4 h-4"></i> 단축키 설정
+        </div>
+        <div class="nav-item" onclick="showSection('data', this)">
+          <i data-lucide="database" class="w-4 h-4"></i> 데이터 관리
         </div>
         <div class="nav-item" onclick="showSection('about', this)">
           <i data-lucide="info" class="w-4 h-4"></i> 앱 정보
@@ -277,65 +285,8 @@
               <label class="section-label flex items-center gap-2 mb-4">
                 <i data-lucide="list-checks" class="w-4 h-4 text-purple-400"></i> 사이드바 메뉴 관리
               </label>
-              <div class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="gallery-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">갤러리 모니터</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="abbreviation-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">약어 사전</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="buffs-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">버프 백과 & 계산기</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="coefficient-calculator-btn"
-                    class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">계수 및 명중 계산기</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="boss-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">필드보스 알림</span>
-                </label>
-
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="custom-alert-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">커스텀 알림</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="eta-ranking-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">에타 랭킹 조회</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="trade-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">거래 게시판</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="contents-checker-btn"
-                    class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">숙제 체크 리스트</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="evolution-calculator-btn"
-                    class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">진화 재료 비용 계산기</span>
-                </label>
-
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="home-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">홈 페이지</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="overlay-toggle-btn"
-                    class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">오버레이 토글</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" value="click-through-btn" class="menu-visible-check w-4 h-4 accent-purple-600">
-                  <span class="text-xs font-bold text-slate-400 group-hover:text-white">마우스 투과 토글</span>
-                </label>
+              <div id="menu-management-grid" class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
+                <!-- 동적으로 생성됨 -->
               </div>
               <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 체크 해제 시 사이드바에서 해당 메뉴가 숨겨집니다.</p>
             </div>
@@ -590,6 +541,53 @@
         </div>
       </div>
 
+      <!-- 8. 데이터 관리 (백업/복구) -->
+      <div id="section-data" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
+            <i data-lucide="database" class="w-5 h-5 text-purple-500"></i> 데이터 백업 및 복구
+          </h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+            <div class="grid grid-cols-1 gap-4">
+              <!-- 백업 -->
+              <div class="p-5 bg-black/20 rounded-xl border border-white/5 flex items-center justify-between group">
+                <div class="flex flex-col gap-1">
+                  <span class="text-sm font-bold text-slate-200">전체 데이터 백업</span>
+                  <p class="text-[10px] text-slate-500">모든 설정과 일지 데이터를 하나의 압축 파일(.zip)로 저장합니다.</p>
+                </div>
+                <button onclick="handleBackup()" class="btn-primary px-6 py-2 flex items-center gap-2">
+                  <i data-lucide="download" class="w-4 h-4"></i> 백업하기
+                </button>
+              </div>
+
+              <!-- 복구 -->
+              <div class="p-5 bg-black/20 rounded-xl border border-white/5 flex items-center justify-between group">
+                <div class="flex flex-col gap-1">
+                  <span class="text-sm font-bold text-slate-200">데이터 불러오기 (복구)</span>
+                  <p class="text-[10px] text-slate-500">이전에 백업한 파일을 선택하여 모든 데이터를 복구합니다.</p>
+                </div>
+                <button onclick="handleRestore()"
+                  class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition-all flex items-center gap-2">
+                  <i data-lucide="upload" class="w-4 h-4"></i> 불러오기
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 bg-red-500/5 border border-red-500/10 rounded-xl flex items-start gap-3">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0 mt-0.5"></i>
+              <div>
+                <p class="text-[11px] text-red-300 font-bold">주의사항</p>
+                <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  데이터를 불러오면 <span class="text-red-400">현재의 모든 설정과 기록이 백업 파일의 내용으로 덮어씌워집니다.</span>
+                  복구가 완료되면 프로그램이 자동으로 재시작됩니다.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 8. 앱 정보 (기존 유지) -->
       <div id="section-about" class="settings-section space-y-8 hidden">
         <div class="settings-group">
@@ -607,7 +605,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.9.1</span></p>
+                        class="text-purple-400">1.10.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -695,6 +693,7 @@
     let ALL_ICONS = [];
     let dragSrcIndex = -1;
     let soundFiles = [];
+    let loadedMenus = []; // 동적으로 로드된 메뉴 데이터
 
     // --- 단축키 설정 관련 ---
     let recordingShortcutKey = null;
@@ -713,6 +712,12 @@
 
       stopRecording(); // 기존 녹화 중단
       recordingShortcutKey = key;
+
+      // 단축키 녹화 시작 시 모든 전역 단축키 해제
+      if (window.electronAPI && window.electronAPI.shortcutsUnregister) {
+        window.electronAPI.shortcutsUnregister();
+      }
+
       input.value = '키를 입력하세요...';
       input.classList.add('animate-pulse', '!border-purple-500', 'ring-2', 'ring-purple-500/20');
     }
@@ -721,10 +726,29 @@
       if (!recordingShortcutKey) return;
       const key = recordingShortcutKey;
       recordingShortcutKey = null;
+
+      // 단축키 녹화 종료 시 모든 전역 단축키 재등록
+      if (window.electronAPI && window.electronAPI.shortcutsRegister) {
+        window.electronAPI.shortcutsRegister();
+      }
+
       const input = document.getElementById(`shortcut-${key}`);
       if (input) {
         input.value = currentShortcuts[key] || '';
         input.classList.remove('animate-pulse', '!border-purple-500', 'ring-2', 'ring-purple-500/20');
+      }
+    }
+
+    async function handleBackup() {
+      const result = await window.electronAPI.backupExport();
+      if (result) {
+        alert('백업이 완료되었습니다.');
+      }
+    }
+
+    async function handleRestore() {
+      if (confirm('데이터를 불러오시겠습니까? 현재 기록이 모두 교체되며 앱이 재시작됩니다.')) {
+        await window.electronAPI.backupImport();
       }
     }
 
@@ -814,9 +838,26 @@
       soundFiles = await window.loadSoundList();
       window.bindEscapeClose();
       initIconList();
+      await initDynamicMenuManagement();
       await checkOptimizeStatus();
       _initReady = true;
       hideLoading();
+    }
+
+    async function initDynamicMenuManagement() {
+      try {
+        const response = await fetch('assets/data/sidebar_menus.json');
+        loadedMenus = await response.json();
+        const grid = document.getElementById('menu-management-grid');
+        grid.innerHTML = '';
+        loadedMenus.forEach(menu => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center gap-3 cursor-pointer group';
+          label.innerHTML = `<input type="checkbox" value="${menu.id}" class="menu-visible-check w-4 h-4 accent-purple-600"><i data-lucide="${menu.icon}" class="w-3.5 h-3.5 text-${menu.color}"></i><span class="text-xs font-bold text-slate-400 group-hover:text-white">${menu.label}</span>`;
+          grid.appendChild(label);
+        });
+        window.refreshIcons();
+      } catch (e) { console.error('Failed to load menu management:', e); }
     }
 
     // --- 최적화 (Fast Ping) 로직 ---
@@ -884,13 +925,13 @@
       document.getElementById('game-exit-reminder-input').checked = !!config.gameExitReminderEnabled;
       document.getElementById('game-exit-reminder-message').value = config.gameExitReminderMessage || '';
 
-      // 모든 메뉴 목록 (신규 추가 시 이 배열만 업데이트하면 됨)
-      const allMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'coefficient-calculator-btn', 'boss-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+      // 동적으로 로드된 메뉴 목록 사용
+      const allMenuIds = loadedMenus.map(m => m.id);
       let hiddenMenuIds = config.hiddenMenuIds;
 
       // 구버전(visibleMenuIds 방식) 마이그레이션 처리
       if (!hiddenMenuIds && config.visibleMenuIds) {
-        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'custom-alert-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
         hiddenMenuIds = oldKnownMenuIds.filter(id => !config.visibleMenuIds.includes(id));
       } else if (!hiddenMenuIds) {
         hiddenMenuIds = [];
@@ -992,7 +1033,7 @@
 
       // 릴리즈 노트 처리
       if (releaseNotes && (state === 'available' || state === 'ready' || state === 'mandatory')) {
-        updateReleaseNotes.innerText = releaseNotes;
+        updateReleaseNotes.innerHTML = releaseNotes;
         updateReleaseNotes.classList.remove('hidden');
       } else {
         updateReleaseNotes.classList.add('hidden');

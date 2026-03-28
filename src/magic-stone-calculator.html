@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>마정석 계산기</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <style>
+    body {
+      font-family: 'Pretendard', sans-serif;
+      letter-spacing: -0.02em;
+      overflow: hidden;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .drag {
+      -webkit-app-region: drag;
+    }
+
+    .no-drag {
+      -webkit-app-region: no-drag;
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .input-field {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(51, 65, 85, 1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #f1f5f9;
+      font-size: 14px;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+      width: 100px;
+      text-align: right;
+    }
+
+    .input-field:focus {
+      border-color: #f97316;
+      background: rgba(30, 41, 59, 0.8);
+      box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+    }
+
+    .stone-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 12px;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      margin-bottom: 8px;
+    }
+
+    .result-value {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-[#0f172a] text-slate-200 w-full h-screen border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl">
+  <!-- Header -->
+  <div class="win-header">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-orange-500/10 border-orange-500/20">
+        <i data-lucide="gem" class="w-5 h-5 text-orange-500"></i>
+      </div>
+      <div class="win-title-text">
+        <span class="win-title-main">마정석 계산기</span>
+        <span class="win-title-sub">Magic Stone Calc</span>
+      </div>
+    </div>
+    <div class="win-controls">
+      <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4 flex flex-col gap-4 h-[calc(100vh-56px)] overflow-y-auto no-drag">
+
+    <!-- Info -->
+    <div class="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl text-[11px] text-slate-400 leading-relaxed">
+      <div class="flex items-start gap-2">
+        <i data-lucide="info" class="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0"></i>
+        <div>
+          마정석을 금화 주머니로 교환했을 때의 가치를 계산합니다.<br />
+          <span class="text-blue-400/80 font-semibold">(1금화 주머니 = 50만 시드)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div id="stone-list" class="flex flex-col gap-1">
+      <!-- 금화 주머니 직접 입력 -->
+      <div class="stone-item !bg-orange-500/5 !border-orange-500/20">
+        <div class="flex items-center gap-3">
+          <img src="assets/items/금화주머니.png" class="w-10 h-10 object-contain drop-shadow-lg" alt="주머니">
+          <div>
+            <div class="text-xs font-black text-orange-400">금화 주머니</div>
+            <div class="text-[10px] text-slate-500">직접 입력</div>
+          </div>
+        </div>
+        <input type="number" id="direct-pouch-count" class="input-field !border-orange-500/30 focus:!border-orange-500" placeholder="0" min="0" oninput="calculate()">
+      </div>
+
+      <div class="h-2"></div>
+
+      <!-- 하급 -->
+      <div class="stone-item">
+        <div class="flex items-center gap-3">
+          <img src="assets/items/magic_stone/하급마정석.png" class="w-10 h-10 object-contain drop-shadow-lg" alt="하급">
+          <div>
+            <div class="text-xs font-bold text-slate-100">하급 마정석</div>
+            <div class="text-[10px] text-slate-500">1 금화 주머니</div>
+          </div>
+        </div>
+        <input type="number" id="lower-count" class="input-field" placeholder="0" min="0" oninput="calculate()">
+      </div>
+
+      <!-- 중급 -->
+      <div class="stone-item">
+        <div class="flex items-center gap-3">
+          <img src="assets/items/magic_stone/중급마정석.png" class="w-10 h-10 object-contain drop-shadow-lg" alt="중급">
+          <div>
+            <div class="text-xs font-bold text-slate-100">중급 마정석</div>
+            <div class="text-[10px] text-slate-500">10 금화 주머니</div>
+          </div>
+        </div>
+        <input type="number" id="middle-count" class="input-field" placeholder="0" min="0" oninput="calculate()">
+      </div>
+
+      <!-- 상급 -->
+      <div class="stone-item">
+        <div class="flex items-center gap-3">
+          <img src="assets/items/magic_stone/상급마정석.png" class="w-10 h-10 object-contain drop-shadow-lg" alt="상급">
+          <div>
+            <div class="text-xs font-bold text-slate-100">상급 마정석</div>
+            <div class="text-[10px] text-slate-500">100 금화 주머니</div>
+          </div>
+        </div>
+        <input type="number" id="upper-count" class="input-field" placeholder="0" min="0" oninput="calculate()">
+      </div>
+
+      <!-- 최상급 -->
+      <div class="stone-item">
+        <div class="flex items-center gap-3">
+          <img src="assets/items/magic_stone/최상급마정석.png" class="w-10 h-10 object-contain drop-shadow-lg" alt="최상급">
+          <div>
+            <div class="text-xs font-bold text-slate-100">최상급 마정석</div>
+            <div class="text-[10px] text-slate-500">1000 금화 주머니</div>
+          </div>
+        </div>
+        <input type="number" id="highest-count" class="input-field" placeholder="0" min="0" oninput="calculate()">
+      </div>
+    </div>
+
+    <!-- Total Result -->
+    <div
+      class="mt-auto p-5 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl shadow-xl">
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400">총 금화 주머니</span>
+          <div class="flex items-baseline gap-1">
+            <span id="total-pouches" class="result-value text-xl font-black text-slate-100">0</span>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">개</span>
+          </div>
+        </div>
+        <div class="h-px bg-slate-700/50"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-orange-400/80">최종 시드 합산</span>
+          <div class="flex flex-col items-end">
+            <div class="flex items-baseline gap-1">
+              <span id="total-seed" class="result-value text-2xl font-black text-orange-500">0</span>
+              <span class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Seed</span>
+            </div>
+            <span id="total-seed-formatted" class="text-[15px] font-medium text-slate-500 mt-0.5">0 시드</span>
+          </div>
+        </div>
+      </div>
+      <button id="save-diary-btn" onclick="saveToDiary()" class="w-full mt-4 py-2.5 bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white rounded-xl text-[13px] font-black transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2">
+        <i data-lucide="book-open-check" class="w-4 h-4"></i>
+        일지에 수익 기록
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const SEED_PER_POUCH = 500000;
+
+    function formatSeed(seed) {
+      if (seed === 0) return '0 시드';
+
+      const units = [
+        { label: '조', value: 1000000000000 },
+        { label: '억', value: 100000000 },
+        { label: '만', value: 10000 }
+      ];
+
+      let result = '';
+      let remaining = seed;
+
+      for (const unit of units) {
+        if (remaining >= unit.value) {
+          const count = Math.floor(remaining / unit.value);
+          result += count + unit.label + ' ';
+          remaining %= unit.value;
+        }
+      }
+
+      if (remaining > 0 || result === '') {
+        result += remaining;
+      }
+
+      return result.trim() + ' 시드';
+    }
+
+    function saveToDiary() {
+      const pouches = document.getElementById('total-pouches').innerText.replace(/,/g, '');
+      const seedFormatted = document.getElementById('total-seed-formatted').innerText;
+      
+      if (parseInt(pouches) === 0) return;
+
+      const now = new Date();
+      // YYYY-MM-DD 포맷 (로컬 타임 기준)
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const dateStr = String(now.getDate()).padStart(2, '0');
+      const date = `${year}-${month}-${dateStr}`;
+      
+      // HH:mm:ss 포맷
+      const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+      
+      const content = `💰 마정석 교환: ${parseInt(pouches).toLocaleString()}개 (${seedFormatted})`;
+      
+      // IPC 호출
+      window.electronAPI.diaryAddActivity(date, time, 'calc', content);
+      
+      // 시각적 피드백 제공
+      const btn = document.getElementById('save-diary-btn');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> 기록 완료!`;
+      btn.classList.replace('text-orange-400', 'text-emerald-400');
+      btn.classList.replace('bg-orange-500/20', 'bg-emerald-500/20');
+      btn.classList.replace('hover:bg-orange-500', 'hover:bg-emerald-500');
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        btn.innerHTML = originalHtml;
+        btn.classList.replace('text-emerald-400', 'text-orange-400');
+        btn.classList.replace('bg-emerald-500/20', 'bg-orange-500/20');
+        btn.classList.replace('hover:bg-emerald-500', 'hover:bg-orange-500');
+        lucide.createIcons();
+      }, 2000);
+    }
+
+    function calculate() {
+      const direct = parseInt(document.getElementById('direct-pouch-count').value) || 0;
+      const lower = parseInt(document.getElementById('lower-count').value) || 0;
+      const middle = parseInt(document.getElementById('middle-count').value) || 0;
+      const upper = parseInt(document.getElementById('upper-count').value) || 0;
+      const highest = parseInt(document.getElementById('highest-count').value) || 0;
+
+      const totalPouches = direct + (lower * 1) + (middle * 10) + (upper * 100) + (highest * 1000);
+      const totalSeed = totalPouches * SEED_PER_POUCH;
+
+      document.getElementById('total-pouches').innerText = totalPouches.toLocaleString();
+      document.getElementById('total-seed').innerText = totalSeed.toLocaleString();
+      document.getElementById('total-seed-formatted').innerText = formatSeed(totalSeed);
+    }
+
+    // 초기 계산
+    calculate();
+  </script>
+  <script src="assets/ui-utils.js"></script>
+  <script>
+    window.bindEscapeClose();
+  </script>
+</body>
+
+</html>

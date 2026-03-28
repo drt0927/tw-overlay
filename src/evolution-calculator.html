@@ -38,8 +38,8 @@
     }
 
     .tab-btn.active {
-      color: #f97316;
-      border-bottom-color: #f97316;
+      color: #84cc16;
+      border-bottom-color: #84cc16;
       background-color: rgba(249, 115, 22, 0.05);
     }
 
@@ -61,7 +61,7 @@
     }
 
     .part-btn.active {
-      color: #f97316;
+      color: #84cc16;
       border-color: rgba(249, 115, 22, 0.5);
       background: rgba(249, 115, 22, 0.08);
     }
@@ -92,7 +92,7 @@
       border: 1px solid rgba(51, 65, 85, 1);
       border-radius: 6px;
       padding: 4px 8px;
-      color: #f97316;
+      color: #84cc16;
       font-size: 11px;
       font-weight: 700;
       text-align: right;
@@ -156,20 +156,21 @@
 <body class="bg-slate-950 text-slate-100 select-none h-screen flex flex-col border border-slate-800">
 
   <!-- Header -->
-  <div class="flex items-center justify-between px-5 py-3.5 bg-slate-900 border-b border-slate-800 drag shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="p-2 bg-orange-500/20 rounded-xl text-orange-400">
-        <i data-lucide="flask-conical" class="w-5 h-5"></i>
+  <div class="win-header">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-lime-500/10 border-lime-500/20">
+        <i data-lucide="trending-up" class="w-5 h-5 text-lime-500"></i>
       </div>
-      <div>
-        <h1 class="font-black text-base tracking-tight text-white">진화 재료 비용 계산기</h1>
-        <p class="text-[10px] text-slate-500 font-medium">재료 단가 입력 → 총 비용 자동 계산</p>
+      <div class="win-title-text">
+        <span class="win-title-main">진화 재료 계산기</span>
+        <span class="win-title-sub">Evolution Cost Calc</span>
       </div>
     </div>
-    <button onclick="window.close()"
-      class="no-drag p-2 hover:bg-red-500/20 rounded-lg transition-colors text-slate-400 hover:text-red-400">
-      <i data-lucide="x" class="w-5 h-5"></i>
-    </button>
+    <div class="win-controls">
+      <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
   </div>
 
   <!-- Category Tabs -->
@@ -202,7 +203,7 @@
       <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">진화 범위</span>
       <div class="flex items-center gap-2 flex-1">
         <select id="step-from" class="step-select" onchange="updateMaterials()"></select>
-        <i data-lucide="arrow-right" class="w-4 h-4 text-orange-400 shrink-0"></i>
+        <i data-lucide="arrow-right" class="w-4 h-4 text-lime-400 shrink-0"></i>
         <select id="step-to" class="step-select" onchange="updateMaterials()"></select>
       </div>
     </div>
@@ -222,7 +223,7 @@
       </div>
       <div class="flex flex-col items-end gap-1">
         <div class="flex items-baseline gap-2">
-          <span id="total-cost" class="text-2xl font-black text-orange-400">0</span>
+          <span id="total-cost" class="text-2xl font-black text-lime-400">0</span>
           <span class="text-xs font-bold text-slate-500">시드</span>
         </div>
         <div class="flex items-baseline gap-1" id="total-elso-container" style="display: none;">
@@ -460,8 +461,8 @@
       const headerEl = document.createElement('div');
       headerEl.className = 'flex items-center gap-2 mb-1 px-1';
       headerEl.innerHTML = `
-        <i data-lucide="layers" class="w-3 h-3 text-orange-400"></i>
-        <span class="text-[10px] font-black text-orange-400 uppercase tracking-widest">${steps.length}단계 진화</span>
+        <i data-lucide="layers" class="w-3 h-3 text-lime-400"></i>
+        <span class="text-[10px] font-black text-lime-400 uppercase tracking-widest">${steps.length}단계 진화</span>
         <span class="text-[10px] text-slate-600 font-medium truncate">${stepsLabel}</span>
       `;
       list.appendChild(headerEl);
@@ -493,7 +494,7 @@
           subtotalColor = 'text-purple-400 flex flex-col text-right !text-xs leading-none mt-1';
         } else if (savedPrice) {
           subtotal = formatNumber(data.quantity * parseFloat(savedPrice));
-          subtotalColor = 'text-orange-400';
+          subtotalColor = 'text-lime-400';
         }
 
         row.innerHTML = `
@@ -556,7 +557,7 @@
             const subtotalEl = input.closest('.material-row').querySelector('.subtotal');
             if (price > 0) {
               subtotalEl.textContent = formatNumber(qty * price);
-              subtotalEl.className = 'subtotal text-sm font-black text-orange-400';
+              subtotalEl.className = 'subtotal text-sm font-black text-lime-400';
             } else {
               subtotalEl.textContent = '-';
               subtotalEl.className = 'subtotal text-sm font-black text-slate-700';

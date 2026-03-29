@@ -97,8 +97,11 @@ export function register(): void {
   ipcMain.on('contents-toggle-visibility', (_e, id: string) => {
     import('./contentsChecker').then(mod => mod.toggleVisibility(id));
   });
-  ipcMain.on('contents-update-category', (_e, id: string, newCategory: string) => {
-    import('./contentsChecker').then(mod => mod.updateCategory(id, newCategory));
+  ipcMain.on('contents-update-category', (_e, id: string, category: string) => {
+    import('./contentsChecker').then(mod => mod.updateCategory(id, category));
+  });
+  ipcMain.on('contents-update-name', (_e, id: string, name: string) => {
+    import('./contentsChecker').then(mod => mod.updateName(id, name));
   });
   ipcMain.on('contents-add-custom', (_e, name: string, category: string, rule: any) => {
     import('./contentsChecker').then(mod => mod.addCustomItem(name, category, rule));

@@ -273,6 +273,18 @@ export function updateCategory(id: string, newCategory: string): void {
   }
 }
 
+/** 이름 수정 */
+export function updateName(id: string, newName: string): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const item = items.find(i => i.id === id);
+  if (item) {
+    item.name = newName;
+    config.saveImmediate({ contentsCheckerItems: items });
+    refreshUI();
+  }
+}
+
 /** 커스텀 항목 추가 */
 export function addCustomItem(name: string, category: string, rule: ResetRule): void {
   const cfg = config.load();

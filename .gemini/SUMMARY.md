@@ -1,4 +1,4 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.10.1)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.10.2)
 
 이 문서는 v1.10.1 버전을 기준으로 작성되었습니다.
 

@@ -27,7 +27,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .no-drag { -webkit-app-region: no-drag; }
+        .no-drag { -webkit-app-region: no-drag !important; }
 
         .item-card {
             background: rgba(255, 255, 255, 0.03);
@@ -40,11 +40,19 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             position: relative;
+            -webkit-app-region: no-drag !important; /* 이 영역에서 창 드래그가 발생하지 않도록 함 */
         }
 
-        .item-card:hover {
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-1px);
+        .item-card.dragging {
+            opacity: 0.1; /* 드래그 중인 원본 요소는 거의 투명하게 */
+        }
+
+        .drag-placeholder {
+            background: rgba(34, 211, 238, 0.1);
+            border: 2px dashed rgba(34, 211, 238, 0.4);
+            border-radius: 14px;
+            margin: 4px 0;
+            pointer-events: none;
         }
 
         /* 일일 숙제 특화 색상 (Blue) */
@@ -234,37 +242,49 @@
         }
 
         /* 드래그 앤 드롭 스타일 */
+        .item-card {
+            -webkit-app-region: no-drag !important;
+            user-select: none !important; /* 텍스트 선택 방지 */
+        }
+
         .item-card.dragging {
             opacity: 0.2;
             transform: scale(0.98);
+            border: 1px dashed rgba(34, 211, 238, 0.5) !important;
         }
 
         .drag-placeholder {
-            background: rgba(34, 211, 238, 0.1);
-            border: 2px dashed #22d3ee;
+            background: rgba(34, 211, 238, 0.05);
+            border: 2px dashed rgba(34, 211, 238, 0.2);
             border-radius: 14px;
-            height: 54px; /* item-card와 비슷한 높이 */
-            margin: 0;
-            transition: all 0.1s ease;
+            margin: 4px 0;
+            pointer-events: none;
         }
 
-        .item-card .drag-handle-icon {
+        .drag-handle-icon {
             display: none;
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.2);
             cursor: grab;
-            padding: 4px;
-            margin-left: -8px;
-            border-radius: 4px;
+            padding: 8px;
+            margin: -8px;
+            margin-right: 4px;
+            border-radius: 6px;
             transition: all 0.2s;
+            -webkit-app-region: no-drag !important;
+            pointer-events: auto !important;
         }
 
-        .item-card .drag-handle-icon:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
+        .drag-handle-icon:hover {
+            color: #22d3ee;
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .edit-mode .item-card .drag-handle-icon {
+        .edit-mode .drag-handle-icon {
             display: block;
+        }
+
+        .edit-mode .item-card {
+            cursor: default !important;
         }
     </style>
 </head>
@@ -352,12 +372,26 @@
         </div>
     </div>
 
+    <!-- Custom Prompt Modal (Replacement for window.prompt) -->
+    <div id="custom-prompt" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden no-drag">
+        <div class="bg-slate-900 border border-cyan-500/30 p-6 rounded-2xl w-80 shadow-2xl">
+            <div id="prompt-title" class="text-[10px] font-black text-cyan-400 uppercase mb-4 tracking-widest">수정</div>
+            <input id="prompt-input" type="text" class="w-full text-xs px-3 py-2.5 mb-4 focus:border-cyan-500">
+            <div class="flex gap-2">
+                <button id="prompt-cancel" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">취소</button>
+                <button id="prompt-ok" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let isEditMode = false;
         let configData = null;
         let dragSrcId = null;
+        let isDragging = false; // 드래그 진행 여부 플래그
         let autoScrollTimer = null;
         let placeholder = null; // 플레이스홀더 엘리먼트
+        let promptCallback = null; // 커스텀 프롬프트 콜백
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // 시간 셀렉트박스 초기화
@@ -375,6 +409,8 @@
         }
 
         function render() {
+            // 드래그 중에는 화면을 다시 그리지 않음 (드래그 끊김 방지)
+            if (isDragging) return;
             if (!configData || !configData.contentsCheckerItems) return;
 
             const container = document.getElementById('content-list');
@@ -443,11 +479,6 @@
             container.appendChild(header);
 
             const sortedItems = [...items].sort((a, b) => {
-                if (isCompletedSection) {
-                    if (a.resetRule.type !== b.resetRule.type) {
-                        return a.resetRule.type === 'daily' ? -1 : 1;
-                    }
-                }
                 const aOrder = a.sortOrder ?? 0;
                 const bOrder = b.sortOrder ?? 0;
                 if (aOrder !== bOrder) return aOrder - bOrder;
@@ -466,15 +497,13 @@
                 card.className = `item-card ${itemType} ${item.isCompleted ? 'completed' : ''} ${!item.isVisible ? 'hidden-item' : ''}`;
                 card.dataset.id = item.id;
                 
-                if (isEditMode) {
+                // 관리 모드일 때만 드래그 가능 설정
+                if (isEditMode && !document.getElementById('search-input').value.trim()) {
                     card.draggable = true;
-                    card.ondragstart = handleDragStart;
-                    card.ondragover = handleDragOver;
-                    card.ondragend = handleDragEnd;
                 } else {
-                    card.onclick = () => window.electronAPI.contentsToggleItem(item.id);
+                    card.draggable = false;
                 }
-                
+
                 const timeStr = String(item.resetRule.hour || 0).padStart(2, '0') + ':00';
                 const resetInfo = item.resetRule.type === 'daily' ? `매일 ${timeStr}` : `${DAYS[item.resetRule.dayOfWeek || 1]} ${timeStr}`;
 
@@ -487,9 +516,9 @@
                     <div class="check-box ${item.isCompleted ? 'checked' : ''}">
                         <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 pointer-events-none">
                         <div class="flex items-center gap-2 mb-0.5">
-                            <span class="category-badge" onclick="event.stopPropagation(); editCategory('${item.id}', '${item.category}')">${item.category}</span>
+                            <span class="category-badge">${item.category}</span>
                             <span class="text-sm font-bold truncate">${item.name}</span>
                             ${periodBadge}
                         </div>
@@ -500,44 +529,69 @@
                         </div>
                     </div>
                     ${isEditMode ? `
-                        <div class="flex items-center gap-1 no-drag" onclick="event.stopPropagation()">
-                            <button class="control-btn ${item.isVisible ? 'active' : ''}" onclick="window.electronAPI.contentsToggleVisibility('${item.id}')" title="보이기/숨기기">
+                        <div class="flex items-center gap-1 no-drag relative z-10">
+                            <button class="control-btn btn-toggle-visibility ${item.isVisible ? 'active' : ''}" onclick="event.stopPropagation(); window.electronAPI.contentsToggleVisibility('${item.id}')">
                                 <i data-lucide="${item.isVisible ? 'eye' : 'eye-off'}" class="w-4 h-4"></i>
                             </button>
                             ${item.isCustom ? `
-                                <button class="control-btn hover:text-red-400" onclick="removeItem('${item.id}')" title="삭제">
+                                <button class="control-btn btn-edit-name hover:text-amber-400" onclick="event.stopPropagation(); editName('${item.id}', \`${item.name.replace(/'/g, "\\'")}\`)">
+                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                </button>
+                                <button class="control-btn btn-remove-item hover:text-red-400" onclick="event.stopPropagation(); removeItem('${item.id}')">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             ` : ''}
                         </div>
                     ` : ''}
                 `;
+
+                if (!isEditMode) {
+                    card.onclick = () => window.electronAPI.contentsToggleItem(item.id);
+                }
+
                 listDiv.appendChild(card);
             });
             container.appendChild(listDiv);
         }
 
-        // 드래그 앤 드롭 핸들러 (플레이스홀더 방식)
-        function handleDragStart(e) {
-            dragSrcId = this.dataset.id;
-            this.classList.add('dragging');
+        // 컨테이너에 드래그 이벤트 위임 등록
+        const contentList = document.getElementById('content-list');
+        
+        contentList.ondragstart = (e) => {
+            const card = e.target.closest('.item-card');
+            if (!card || !isEditMode) return;
+
+            console.log('[DRAG] Start:', card.dataset.id);
+            isDragging = true;
+            dragSrcId = card.dataset.id;
+            card.classList.add('dragging');
             
-            // 플레이스홀더 생성
             placeholder = document.createElement('div');
             placeholder.className = 'drag-placeholder';
+            placeholder.style.height = card.offsetHeight + 'px';
+            
+            // 드래그 시작 시 현재 위치에 플레이스홀더 즉시 삽입 (로그의 'not found' 에러 방지)
+            card.parentNode.insertBefore(placeholder, card.nextSibling);
             
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', dragSrcId);
-        }
+            
+            // 드래그 이미지 생성 후 원본 숨김
+            setTimeout(() => { 
+                if (isDragging) card.style.display = 'none'; 
+            }, 0);
+        };
 
-        function handleDragOver(e) {
-            if (e.preventDefault) e.preventDefault();
+        // window 수준에서 dragover를 잡아 이벤트가 끊기는 것을 방지
+        window.ondragover = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
 
             const targetCard = e.target.closest('.item-card');
             const container = document.getElementById('content-list');
             
-            // 자동 스크롤
+            // 자동 스크롤 로직
             const rect = container.getBoundingClientRect();
             if (e.clientY < rect.top + 50) startAutoScroll('up');
             else if (e.clientY > rect.bottom - 50) startAutoScroll('down');
@@ -545,47 +599,64 @@
 
             if (targetCard && targetCard.dataset.id !== dragSrcId) {
                 const targetRect = targetCard.getBoundingClientRect();
-                const next = (e.clientY - targetRect.top) / (targetRect.bottom - targetRect.top) > 0.5;
-                const parent = targetCard.parentNode;
-                
-                // 플레이스홀더 위치 이동
-                parent.insertBefore(placeholder, next ? targetCard.nextSibling : targetCard);
+                const midpoint = targetRect.top + targetRect.height / 2;
+                const isAfter = e.clientY > midpoint;
+                const nextSibling = isAfter ? targetCard.nextSibling : targetCard;
+
+                // 위치가 실제로 바뀔 때만 DOM 조작 (깜빡임 방지 핵심)
+                if (placeholder.nextSibling !== nextSibling || placeholder.parentNode !== targetCard.parentNode) {
+                    targetCard.parentNode.insertBefore(placeholder, nextSibling);
+                }
+            } else if (e.target === container || e.target.classList.contains('item-group-container')) {
+                const group = e.target.closest('.item-group-container') || e.target.querySelector('.item-group-container');
+                if (group && placeholder.parentNode !== group) {
+                    group.appendChild(placeholder);
+                }
             }
+        };
 
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
+        contentList.ondragend = (e) => {
+            console.log('[DRAG] End');
             stopAutoScroll();
             
-            if (placeholder && placeholder.parentNode) {
-                // 드롭 직후 리스트 순서 파악
-                const allCards = document.querySelectorAll('.item-card:not(.dragging)');
-                const newIds = [];
+            const card = Array.from(document.querySelectorAll('.item-card')).find(c => c.dataset.id === dragSrcId);
+            
+            if (card) {
+                card.classList.remove('dragging');
+                card.style.display = 'flex';
                 
-                // DOM 순서대로 ID 추출 (플레이스홀더가 들어있는 위치 기준)
-                const currentList = placeholder.parentNode;
-                const items = Array.from(currentList.children);
-                
-                // 모든 섹션의 아이템 순서를 다시 취합해야 함
-                // 하지만 드래그는 같은 섹션 내에서만 일어난다고 가정하면 (isEditMode에서는 섹션이 고정됨)
-                const allItemIds = [];
-                document.querySelectorAll('.item-card').forEach(card => {
-                    if (card === this) {
-                        // 드래그 중인 카드는 플레이스홀더 위치에 들어갈 예정
-                    }
-                });
-
-                // 더 확실한 방법: 플레이스홀더 자리에 실제 카드를 넣고 전체 ID 순서 추출
-                placeholder.parentNode.replaceChild(this, placeholder);
-                
-                const finalOrder = Array.from(document.querySelectorAll('.item-card')).map(c => c.dataset.id);
-                window.electronAPI.contentsReorderList(finalOrder);
+                if (placeholder && placeholder.parentNode) {
+                    placeholder.parentNode.replaceChild(card, placeholder);
+                    
+                    // 순서 저장
+                    const finalOrder = Array.from(document.querySelectorAll('.item-card')).map(c => c.dataset.id);
+                    window.electronAPI.contentsReorderList(finalOrder);
+                    console.log('[DRAG] Reorder saved');
+                }
             }
             
+            isDragging = false;
             placeholder = null;
-        }
+            dragSrcId = null;
+            render();
+        };
+
+        // 드래그가 캔슬되었을 때를 대비한 윈도우 수준의 정리
+        window.ondragend = () => {
+            if (isDragging) {
+                console.log('[DRAG] Global dragend fallback triggered');
+                const card = document.querySelector('.item-card.dragging');
+                if (card) {
+                    card.classList.remove('dragging');
+                    card.style.opacity = '';
+                }
+                if (placeholder && placeholder.parentNode) placeholder.remove();
+                isDragging = false;
+                dragSrcId = null;
+                placeholder = null;
+                render();
+            }
+        };
 
         function startAutoScroll(direction) {
             if (autoScrollTimer) return;
@@ -637,11 +708,44 @@
             render();
         }
 
+        function showCustomPrompt(title, defaultValue, callback) {
+            document.getElementById('prompt-title').textContent = title;
+            const input = document.getElementById('prompt-input');
+            input.value = defaultValue;
+            document.getElementById('custom-prompt').classList.remove('hidden');
+            input.focus();
+            input.select();
+            
+            promptCallback = callback;
+        }
+
+        document.getElementById('prompt-ok').onclick = () => {
+            const val = document.getElementById('prompt-input').value.trim();
+            if (promptCallback) promptCallback(val);
+            document.getElementById('custom-prompt').classList.add('hidden');
+            promptCallback = null;
+        };
+
+        document.getElementById('prompt-cancel').onclick = () => {
+            document.getElementById('custom-prompt').classList.add('hidden');
+            promptCallback = null;
+        };
+
+        document.getElementById('prompt-input').onkeydown = (e) => {
+            if (e.key === 'Enter') document.getElementById('prompt-ok').click();
+            if (e.key === 'Escape') document.getElementById('prompt-cancel').click();
+        };
+
         function editCategory(id, current) {
-            const next = prompt('카테고리 변경:', current);
-            if (next !== null && next.trim() !== '') {
-                window.electronAPI.contentsUpdateCategory(id, next.trim());
-            }
+            showCustomPrompt('카테고리 변경', current, (next) => {
+                if (next) window.electronAPI.contentsUpdateCategory(id, next);
+            });
+        }
+
+        function editName(id, current) {
+            showCustomPrompt('숙제 이름 변경', current, (next) => {
+                if (next) window.electronAPI.contentsUpdateName(id, next);
+            });
         }
 
         function removeItem(id) {

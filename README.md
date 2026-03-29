@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.10.1-violet.svg)
+![Version](https://img.shields.io/badge/version-1.10.2-violet.svg)
 
 ## 📸 스크린샷
 
@@ -23,7 +23,7 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.10.1.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.10.2.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.

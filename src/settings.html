@@ -605,7 +605,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.10.0</span></p>
+                        class="text-purple-400">1.10.1</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -694,6 +694,7 @@
     let dragSrcIndex = -1;
     let soundFiles = [];
     let loadedMenus = []; // 동적으로 로드된 메뉴 데이터
+    let lastConfig = null; // 마지막으로 수신된 설정 데이터
 
     // --- 단축키 설정 관련 ---
     let recordingShortcutKey = null;
@@ -857,6 +858,8 @@
           grid.appendChild(label);
         });
         window.refreshIcons();
+        // UI 생성 완료 후 보관된 설정이 있다면 즉시 적용
+        if (lastConfig) applyMenuCheckboxes(lastConfig);
       } catch (e) { console.error('Failed to load menu management:', e); }
     }
 
@@ -915,7 +918,23 @@
       window.refreshIcons();
     }
 
+    function applyMenuCheckboxes(config) {
+      if (!config || loadedMenus.length === 0) return;
+      let hiddenMenuIds = config.hiddenMenuIds;
+      // 구버전(visibleMenuIds 방식) 마이그레이션 처리
+      if (!hiddenMenuIds && config.visibleMenuIds) {
+        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'custom-alert-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+        hiddenMenuIds = oldKnownMenuIds.filter(id => !config.visibleMenuIds.includes(id));
+      } else if (!hiddenMenuIds) {
+        hiddenMenuIds = [];
+      }
+      document.querySelectorAll('.menu-visible-check').forEach(check => {
+        check.checked = !hiddenMenuIds.includes(check.value);
+      });
+    }
+
     window.electronAPI.onConfigData((config) => {
+      lastConfig = config;
       document.getElementById('home-url-input').value = config.homeUrl || '';
       document.getElementById('width-input').value = config.width || 800;
       document.getElementById('height-input').value = config.height || 600;
@@ -925,22 +944,8 @@
       document.getElementById('game-exit-reminder-input').checked = !!config.gameExitReminderEnabled;
       document.getElementById('game-exit-reminder-message').value = config.gameExitReminderMessage || '';
 
-      // 동적으로 로드된 메뉴 목록 사용
-      const allMenuIds = loadedMenus.map(m => m.id);
-      let hiddenMenuIds = config.hiddenMenuIds;
-
-      // 구버전(visibleMenuIds 방식) 마이그레이션 처리
-      if (!hiddenMenuIds && config.visibleMenuIds) {
-        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'custom-alert-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
-        hiddenMenuIds = oldKnownMenuIds.filter(id => !config.visibleMenuIds.includes(id));
-      } else if (!hiddenMenuIds) {
-        hiddenMenuIds = [];
-      }
-
-      document.querySelectorAll('.menu-visible-check').forEach(check => {
-        // 숨겨진 목록(hiddenMenuIds)에 없어야 보이므로 checked = true 가 됨
-        check.checked = !hiddenMenuIds.includes(check.value);
-      });
+      // 체크박스 상태 적용 시도
+      applyMenuCheckboxes(config);
 
       // 필드보스 설정은 boss-settings.html로 이전됨
 

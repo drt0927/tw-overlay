@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.10.0-violet.svg)
+![Version](https://img.shields.io/badge/version-1.10.1-violet.svg)
 
 ## 📸 스크린샷
 
@@ -23,28 +23,22 @@
 ## 🚀 설치 및 사용 방법
 
 ### 1. 설치하기
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.10.0.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.10.1.exe` 파일을 다운로드하여 설치하세요. 기존 사용자는 앱 내 업데이트 기능을 사용할 수 있습니다.
 
 ### 2. 실행하기
 1. 테일즈위버를 실행합니다.
 2. `twOverlay`를 실행하면 자동으로 게임 창 우측에 사이드바가 나타납니다.
 3. 사이드바의 각 아이콘을 클릭하여 기능을 조작할 수 있습니다.
 
-## 📝 최신 업데이트 내역 (v1.10.0)
-- **신규 기능: 모험 일지 (Adventure Log):**
-    - SQLite 기반 로컬 활동 기록 시스템 도입.
-    - 보스 처치, 숙제, 마정석 환전 시 자동 일지 기록.
-    - 활동 포인트 기반 **6단계 성장 아이콘** 시각화.
-- **신규 기능: 마정석 계산기 (Magic Stone Calculator):**
-    - 마정석 4종 및 금화 주머니 수량을 입력하여 즉시 시드로 변환.
-    - 계산된 수익을 한 번의 클릭으로 모험 일지에 자동 기록하는 기능 추가.
-- **신규 기능: 데이터 백업 및 복구:**
-    - 모든 설정과 DB를 ZIP으로 묶어 저장/복구 기능 추가 (환경 설정).
-- **UI/UX 대규모 개편:**
-    - 사이드바 메뉴 중앙 관리 시스템(`sidebar_menus.json`) 구축.
-    - 아이콘 색상에 맞춘 모든 서브 윈도우의 컬러 테마 통일.
-- **안정성 개선:**
-    - 이미 닫힌 창에 접근할 때 발생하는 크래시 오류 수정 및 이중 보호 로직 적용.
+## 📝 최신 업데이트 내역 (v1.10.1)
+- **버그 수정:** 환경 설정 내 '사이드바 메뉴 관리' 체크박스가 정상적으로 표시되지 않던 오류 수정.
+- **기능 개선:** 필드보스 알림 설정 화면의 UI 가독성 및 테마 컬러 적용 보완.
+
+## 📝 이전 업데이트 내역 (v1.10.0)
+- **신규 기능: 모험 일지 (Adventure Log):** SQLite 기반 로컬 활동 기록 시스템 및 성장 아이콘 시스템 도입.
+- **신규 기능: 마정석 계산기 (Magic Stone Calculator):** 수익 계산 및 일지 자동 연동 기능.
+- **신규 기능: 데이터 백업 및 복구:** 모든 설정과 DB를 ZIP으로 묶어 저장/복구 기능 추가.
+- **UI/UX 대규모 개편:** 사이드바 메뉴 중앙 관리 및 통합 테마 시스템 구축.
 
 ## 📄 라이선스
 이 프로젝트는 ISC 라이선스를 따릅니다.

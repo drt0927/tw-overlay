@@ -26,6 +26,7 @@ export function start(): void {
     let lastRect: GameQueryResult = null;
     let stableCount = 0;
     let isBoosted = false;
+    let lastStatus: 'running' | 'minimized' | 'not-running' | null = null;
 
     const rectEquals = (a: GameQueryResult, b: GameQueryResult): boolean => {
         if (!a || !b) return a === b;
@@ -61,42 +62,38 @@ export function start(): void {
             return;
         }
 
+        // 1. 게임 미실행 상태
         if (currentRect && 'notRunning' in currentRect) {
-            if (IS_DEV) {
-                // DEV 모드: 게임 없어도 창 유지
-                wm.closeSplashWindow();
-                pollingTimer = setTimeout(poll, POLLING_IDLE_MS);
-                return;
+            if (lastStatus !== 'not-running') {
+                if (gameWasEverFound) {
+                    gameWasEverFound = false;
+                    wm.hideAll(); // 종료 리마인더를 위해 한 번만 hideAll
+                    wm.showGameExitReminder();
+                } else {
+                    wm.hideOverlayWindows();
+                }
+                lastStatus = 'not-running';
+                lastRect = null;
             }
-            if (gameWasEverFound) {
-                gameWasEverFound = false;
-                wm.hideAll();
-                stableCount = 0;
-                isBoosted = false;
-                wm.showGameExitReminder();
-                pollingTimer = setTimeout(poll, POLLING_IDLE_MS);
-                return;
-            }
-            wm.hideAll();
             stableCount = 0;
             isBoosted = false;
             pollingTimer = setTimeout(poll, POLLING_IDLE_MS);
             return;
         }
 
+        // 2. 게임 최소화/숨김 상태
         if (!currentRect || (currentRect && 'x' in currentRect && currentRect.x <= WINDOW_MINIMIZED_THRESHOLD)) {
-            if (IS_DEV) {
-                // DEV 모드: 최소화 상태도 창 유지
-                wm.closeSplashWindow();
-                pollingTimer = setTimeout(poll, POLLING_MINIMIZED_MS);
-                return;
+            if (lastStatus !== 'minimized') {
+                wm.hideAll(); // 최소화되는 순간 모든 창 종료 (운명 공동체)
+                lastStatus = 'minimized';
+                lastRect = null;
             }
-            wm.hideAll();
             stableCount = 0;
             pollingTimer = setTimeout(poll, POLLING_MINIMIZED_MS);
             return;
         }
 
+        // 3. 게임 실행 중 (보이는 상태)
         gameWasEverFound = true;
         if (!isBoosted) {
             tracker.boostGameProcess().then(res => {
@@ -110,16 +107,16 @@ export function start(): void {
         const mainWin = wm.getMainWindow();
         const isVisible = mainWin && !mainWin.isDestroyed() && mainWin.isVisible();
 
-        // Z-Order 관리: 위치 변경이든 안정 상태든 promoteWindows는 한 번만 호출
+        // Z-Order 관리
         if (currentRect && 'gameHwnd' in currentRect) {
             const windowHwnds = wm.getAllWindowHwnds();
             const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, windowHwnds);
-            wm.setAllAlwaysOnTop(isGameOrAppFocused);
         }
 
-        if (!rectEquals(currentRect, lastRect) || !isVisible) {
+        if (lastStatus !== 'running' || !rectEquals(currentRect, lastRect) || !isVisible) {
             wm.syncOverlay(currentRect as GameRect);
             lastRect = currentRect;
+            lastStatus = 'running';
             stableCount = 0;
             nextDelay = POLLING_FAST_MS;
         } else {

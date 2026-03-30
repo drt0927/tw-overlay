@@ -9,6 +9,7 @@ import { get_LOG_PATH, LOG_MAX_SIZE, IS_DEV } from './constants';
 /** 로그 크기 체크 간격 (매번 체크하지 않고 N회마다) */
 const SIZE_CHECK_INTERVAL = 100;
 let writeCount = 0;
+let isRotating = false;
 
 export function log(message: string): void {
   const logMessage = `[${new Date().toISOString()}] ${message}\n`;
@@ -16,16 +17,21 @@ export function log(message: string): void {
   try {
     const logPath = get_LOG_PATH();
 
-    // 매 SIZE_CHECK_INTERVAL 회마다만 크기 체크 (동기 I/O 빈도 최소화)
-    if (writeCount % SIZE_CHECK_INTERVAL === 0) {
-      try {
-        const stats = fs.statSync(logPath);
-        if (stats.size > LOG_MAX_SIZE) {
+    // 매 SIZE_CHECK_INTERVAL 회마다만 크기 체크 (비동기로 통일)
+    if (writeCount % SIZE_CHECK_INTERVAL === 0 && !isRotating) {
+      isRotating = true;
+      fs.stat(logPath, (err, stats) => {
+        if (!err && stats.size > LOG_MAX_SIZE) {
           const backupPath = logPath.replace('.log', '.old.log');
-          try { fs.unlinkSync(backupPath); } catch { /* 백업 파일 없을 수 있음 */ }
-          fs.renameSync(logPath, backupPath);
+          fs.unlink(backupPath, () => {
+            fs.rename(logPath, backupPath, () => {
+              isRotating = false;
+            });
+          });
+        } else {
+          isRotating = false;
         }
-      } catch { /* 파일이 아직 없는 경우 무시 */ }
+      });
     }
     writeCount++;
 

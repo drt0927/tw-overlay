@@ -205,16 +205,36 @@ export function register(): void {
   ipcMain.handle('trade-get-servers', () => { return trade.getServers(); });
 
   // --- Diary (Adventure Log) System ---
-  ipcMain.handle('diary-get-by-date', (_e, date: string) => diaryDb.getDiaryByDate(date));
-  ipcMain.handle('diary-get-by-month', (_e, yearMonth: string) => diaryDb.getDiariesByMonth(yearMonth));
-  ipcMain.handle('diary-get-monthly-summary', (_e, yearMonth: string) => diaryDb.getMonthlySummary(yearMonth));
+  const isValidDate = (d: string) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+  const isValidYearMonth = (ym: string) => typeof ym === 'string' && /^\d{4}-\d{2}$/.test(ym);
+  const validActivityTypes = ['boss', 'calc', 'memo', 'loot', 'homework'];
+
+  ipcMain.handle('diary-get-by-date', (_e, date: string) => {
+    if (!isValidDate(date)) return { diary: null, homeworkLogs: [], activityLogs: [] };
+    return diaryDb.getDiaryByDate(date);
+  });
+  ipcMain.handle('diary-get-by-month', (_e, yearMonth: string) => {
+    if (!isValidYearMonth(yearMonth)) return [];
+    return diaryDb.getDiariesByMonth(yearMonth);
+  });
+  ipcMain.handle('diary-get-monthly-summary', (_e, yearMonth: string) => {
+    if (!isValidYearMonth(yearMonth)) return { totalLoots: 0, totalSeed: 0, lootList: [], seedList: [] };
+    return diaryDb.getMonthlySummary(yearMonth);
+  });
+  ipcMain.handle('diary-get-statistics', (_e, yearMonth: string) => {
+    if (!isValidYearMonth(yearMonth)) return null;
+    return diaryDb.getMonthlyStatistics(yearMonth);
+  });
   ipcMain.on('diary-add-activity', (_e, date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string) => {
+    if (!isValidDate(date) || typeof time !== 'string' || !validActivityTypes.includes(type) || typeof content !== 'string') return;
     diaryDb.addActivityLog(date, time, type, content);
   });
   ipcMain.on('diary-remove-activity', (_e, date: string, type: string, content: string) => {
+    if (!isValidDate(date) || typeof type !== 'string' || typeof content !== 'string') return;
     diaryDb.removeActivityLog(date, type, content);
   });
   ipcMain.on('diary-update-monster', (_e, date: string, monsterId: string) => {
+    if (!isValidDate(date) || typeof monsterId !== 'string') return;
     diaryDb.updateDiaryMonster(date, monsterId);
   });
 

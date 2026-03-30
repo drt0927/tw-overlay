@@ -21,7 +21,17 @@ try {
 }
 // ==================================
 
-const store = new Store();
+interface AnalyticsStoreSchema {
+  ga_client_id: string;
+  ga_session_id: number;
+  ga_session_number: number;
+  ga_last_active_time: number;
+}
+
+const store = new Store() as unknown as {
+  get<K extends keyof AnalyticsStoreSchema>(key: K): AnalyticsStoreSchema[K] | undefined;
+  set<K extends keyof AnalyticsStoreSchema>(key: K, value: AnalyticsStoreSchema[K]): void;
+};
 
 export class Analytics {
   private clientId: string;
@@ -31,23 +41,23 @@ export class Analytics {
 
   constructor() {
     // 1. Client ID persistence
-    let savedClientId = (store as any).get('ga_client_id') as string | undefined;
+    let savedClientId = store.get('ga_client_id');
     if (!savedClientId) {
       savedClientId = crypto.randomUUID();
-      (store as any).set('ga_client_id', savedClientId);
+      store.set('ga_client_id', savedClientId);
     }
     this.clientId = savedClientId;
 
     // 2. Session ID & Number (Start new session on every restart)
     const now = Date.now();
-    let savedSessionNumber = (store as any).get('ga_session_number') as number | undefined;
+    const savedSessionNumber = store.get('ga_session_number');
 
     this.sessionId = Math.floor(now / 1000);
     this.sessionNumber = (savedSessionNumber || 0) + 1;
-      
-    (store as any).set('ga_session_id', this.sessionId);
-    (store as any).set('ga_session_number', this.sessionNumber);
-    (store as any).set('ga_last_active_time', now);
+
+    store.set('ga_session_id', this.sessionId);
+    store.set('ga_session_number', this.sessionNumber);
+    store.set('ga_last_active_time', now);
 
     console.log(`[Analytics] ClientID: ${this.clientId}, SessionID: ${this.sessionId}, Session#: ${this.sessionNumber}`);
   }

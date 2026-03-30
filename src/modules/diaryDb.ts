@@ -133,13 +133,16 @@ export function addActivityLog(date: string, time: string, type: 'boss' | 'calc'
   if (!db) initDb();
   if (!db) return;
 
-  ensureDiaryExists(date);
-  const stmt = db.prepare('INSERT INTO activity_logs (date, type, content, time) VALUES (?, ?, ?, ?)');
-  stmt.run(date, type, content, time);
+  const transaction = db.transaction(() => {
+    ensureDiaryExists(date);
+    const stmt = db!.prepare('INSERT INTO activity_logs (date, type, content, time) VALUES (?, ?, ?, ?)');
+    stmt.run(date, type, content, time);
 
-  // 포인트 부여
-  if (type === 'boss') addScore(date, POINTS.BOSS_KILL);
-  if (type === 'calc') addScore(date, POINTS.CALC_RECORD);
+    // 포인트 부여
+    if (type === 'boss') addScore(date, POINTS.BOSS_KILL);
+    if (type === 'calc') addScore(date, POINTS.CALC_RECORD);
+  });
+  transaction();
   notifyUpdate();
 }
 
@@ -148,15 +151,20 @@ export function removeActivityLog(date: string, type: string, content: string): 
   if (!db) initDb();
   if (!db) return;
 
-  const stmt = db.prepare('DELETE FROM activity_logs WHERE date = ? AND type = ? AND content = ?');
-  const info = stmt.run(date, type, content);
+  let changed = false;
+  const transaction = db.transaction(() => {
+    const stmt = db!.prepare('DELETE FROM activity_logs WHERE date = ? AND type = ? AND content = ?');
+    const info = stmt.run(date, type, content);
 
-  // 삭제된 행이 있을 때만 포인트 차감
-  if (info.changes > 0) {
-    if (type === 'boss') subtractScore(date, POINTS.BOSS_KILL);
-    if (type === 'calc') subtractScore(date, POINTS.CALC_RECORD);
-    notifyUpdate();
-  }
+    // 삭제된 행이 있을 때만 포인트 차감
+    if (info.changes > 0) {
+      if (type === 'boss') subtractScore(date, POINTS.BOSS_KILL);
+      if (type === 'calc') subtractScore(date, POINTS.CALC_RECORD);
+      changed = true;
+    }
+  });
+  transaction();
+  if (changed) notifyUpdate();
 }
 
 /** 숙제 완료 기록을 추가합니다. */
@@ -164,19 +172,24 @@ export function addHomeworkLog(date: string, contentId: string, contentName: str
   if (!db) initDb();
   if (!db) return;
 
-  ensureDiaryExists(date);
+  let added = false;
+  const transaction = db.transaction(() => {
+    ensureDiaryExists(date);
 
-  // 이미 해당 숙제가 오늘/이번주 기록되어 있는지 확인
-  const existing = db.prepare('SELECT id FROM homework_logs WHERE date = ? AND content_id = ?').get(date, contentId);
-  if (existing) return;
+    // 이미 해당 숙제가 오늘/이번주 기록되어 있는지 확인
+    const existing = db!.prepare('SELECT id FROM homework_logs WHERE date = ? AND content_id = ?').get(date, contentId);
+    if (existing) return;
 
-  const stmt = db.prepare('INSERT INTO homework_logs (date, content_id, content_name, category, type, completed_at) VALUES (?, ?, ?, ?, ?, ?)');
-  stmt.run(date, contentId, contentName, category, type, completedAt);
+    const stmt = db!.prepare('INSERT INTO homework_logs (date, content_id, content_name, category, type, completed_at) VALUES (?, ?, ?, ?, ?, ?)');
+    stmt.run(date, contentId, contentName, category, type, completedAt);
 
-  // 포인트 부여
-  if (type === 'daily') addScore(date, POINTS.DAILY_HOMEWORK);
-  if (type === 'weekly') addScore(date, POINTS.WEEKLY_HOMEWORK);
-  notifyUpdate();
+    // 포인트 부여
+    if (type === 'daily') addScore(date, POINTS.DAILY_HOMEWORK);
+    if (type === 'weekly') addScore(date, POINTS.WEEKLY_HOMEWORK);
+    added = true;
+  });
+  transaction();
+  if (added) notifyUpdate();
 }
 
 /** 숙제 체크 해제 시 기록을 삭제합니다. */
@@ -184,16 +197,21 @@ export function removeHomeworkLog(date: string, contentId: string): void {
   if (!db) initDb();
   if (!db) return;
 
-  const existing = db.prepare('SELECT type FROM homework_logs WHERE date = ? AND content_id = ?').get(date, contentId) as { type: string } | undefined;
-  if (!existing) return;
+  let removed = false;
+  const transaction = db.transaction(() => {
+    const existing = db!.prepare('SELECT type FROM homework_logs WHERE date = ? AND content_id = ?').get(date, contentId) as { type: string } | undefined;
+    if (!existing) return;
 
-  const stmt = db.prepare('DELETE FROM homework_logs WHERE date = ? AND content_id = ?');
-  stmt.run(date, contentId);
+    const stmt = db!.prepare('DELETE FROM homework_logs WHERE date = ? AND content_id = ?');
+    stmt.run(date, contentId);
 
-  // 포인트 차감
-  if (existing.type === 'daily') subtractScore(date, POINTS.DAILY_HOMEWORK);
-  if (existing.type === 'weekly') subtractScore(date, POINTS.WEEKLY_HOMEWORK);
-  notifyUpdate();
+    // 포인트 차감
+    if (existing.type === 'daily') subtractScore(date, POINTS.DAILY_HOMEWORK);
+    if (existing.type === 'weekly') subtractScore(date, POINTS.WEEKLY_HOMEWORK);
+    removed = true;
+  });
+  transaction();
+  if (removed) notifyUpdate();
 }
 
 /** 그 날의 전체 숙제 통계(완료/전체)를 갱신합니다. */
@@ -270,4 +288,91 @@ export function getMonthlySummary(yearMonth: string): { totalLoots: number, tota
   });
 
   return { totalLoots, totalSeed, lootList, seedList };
+}
+
+/** 월간 통계 데이터를 추출합니다 (인포그래픽용). */
+export function getMonthlyStatistics(yearMonth: string): any {
+  if (!db) initDb();
+  if (!db) return null;
+
+  const year = parseInt(yearMonth.split('-')[0], 10);
+  const month = parseInt(yearMonth.split('-')[1], 10);
+  const totalDays = new Date(year, month, 0).getDate();
+
+  // 1. 기본 로그 가져오기
+  const logs = db.prepare("SELECT date, type, content FROM activity_logs WHERE date LIKE ?").all(`${yearMonth}-%`) as { date: string, type: string, content: string }[];
+  
+  // 2. 출석일수 (활동 로그가 있는 고유 날짜 수)
+  const attendanceDays = new Set(logs.map(l => l.date)).size;
+
+  // 3. 보람찬 활동들 (보스, 득템, 수익)
+  let totalBosses = 0;
+  let totalLoots = 0;
+  let totalSeed = 0;
+  const bossCounts: Record<string, number> = {};
+  const weeklyActivity = [0, 0, 0, 0, 0, 0, 0]; // 월~일 (0~6)
+  const heatmap: Record<string, number> = {};
+
+  logs.forEach(log => {
+    // 요일별 활동량 계산
+    const day = new Date(log.date).getDay();
+    const dayIdx = day === 0 ? 6 : day - 1; // 월요일(0) ~ 일요일(6)로 변환
+    weeklyActivity[dayIdx]++;
+
+    // 히트맵용 일별 활동량
+    heatmap[log.date] = (heatmap[log.date] || 0) + 1;
+
+    if (log.type === 'boss') {
+      totalBosses++;
+      // 보스 이름 추출 (예: "[보스 처치] 어비스" -> "어비스")
+      const bossName = log.content.replace('[보스 처치] ', '').trim();
+      bossCounts[bossName] = (bossCounts[bossName] || 0) + 1;
+    } else if (log.type === 'loot') {
+      const match = log.content.match(/(\d+)개$/);
+      totalLoots += match ? parseInt(match[1], 10) : 1;
+    } else if (log.type === 'calc') {
+      const match = log.content.match(/\(([^)]+)\)/);
+      if (match) {
+        const s = match[1];
+        let val = 0;
+        const joMatch = s.match(/(\d+)조/);
+        const eokMatch = s.match(/(\d+)억/);
+        const manMatch = s.match(/(\d+)만/);
+        const rawMatch = s.match(/([\d,]+)/);
+        if (joMatch) val += parseInt(joMatch[1], 10) * 1000000000000;
+        if (eokMatch) val += parseInt(eokMatch[1], 10) * 100000000;
+        if (manMatch) val += parseInt(manMatch[1], 10) * 10000;
+        if (!eokMatch && !manMatch && rawMatch) val = parseInt(rawMatch[1].replace(/,/g, ''), 10);
+        totalSeed += val;
+      }
+    }
+  });
+
+  // 4. 최애 보스 Top 3
+  const topBosses = Object.entries(bossCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name, count]) => ({ name, count }));
+
+  // 5. 히트맵 배열 변환
+  const heatmapList = Object.entries(heatmap).map(([date, count]) => ({ date, count }));
+
+  // 6. 등급 산출 로직 (출석일수 기준)
+  let grade: 'S' | 'A' | 'B' | 'C' | 'D' = 'D';
+  if (attendanceDays >= 25) grade = 'S';
+  else if (attendanceDays >= 20) grade = 'A';
+  else if (attendanceDays >= 12) grade = 'B';
+  else if (attendanceDays >= 5) grade = 'C';
+
+  return {
+    attendanceDays,
+    totalDays,
+    totalBosses,
+    totalLoots,
+    totalSeed,
+    topBosses,
+    weeklyActivity,
+    heatmap: heatmapList,
+    grade
+  };
 }

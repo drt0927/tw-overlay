@@ -111,7 +111,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
   customAlert: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 420, height: 640 },
-  diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 850, height: 850 },
+  diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 1000, height: 850 },
 };
 
 let gameRect: GameRect | null = null;
@@ -314,6 +314,8 @@ function createToggleableWindow(key: string, callbacks?: {
         ? (callbacks?.calcPosition || winCfg.calcPosition)!(gameRect, winCfg.pos)
         : { x: Math.round(gameRect.x + gameRect.width + winCfg.pos.offsetX), y: Math.round(gameRect.y + winCfg.pos.offsetY) };
       win.setPosition(x, y);
+    } else {
+      win.center();
     }
     win.webContents.send('config-data', config.load());
     if (callbacks?.onReady || winCfg.onOpen) (callbacks?.onReady || winCfg.onOpen)!(win);
@@ -386,7 +388,7 @@ export function toggleContentsCheckerWindow(): void {
   });
 }
 
-export function setAllAlwaysOnTop(_enabled: boolean): void { }
+
 export function getAllWindowHwnds(): string[] {
   const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
   // 사이드바(mainWindow)를 항상 첫 번째로 → promoteWindows에서 최하단 Z-Order 유지
@@ -475,20 +477,28 @@ export function syncOverlay(currentRect: GameRect): void {
     });
     gameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };
     closeSplashWindow();
-  } else hideAll();
+  } else {
+    // 게임 창을 찾을 수 없는 경우: 사이드바/오버레이 숨김 및 추적 해제
+    hideOverlayWindows();
+    gameRect = null;
+  }
 }
 
 export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResize?: boolean }): void {
   if (newSettings.isSidebarResize && mainWindow) {
-    const b = mainWindow.getBounds(); setProgrammaticMove('main');
-    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: SIDEBAR_HEIGHT }); return;
+    const b = mainWindow.getBounds();
+    setProgrammaticMove('main');
+    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: SIDEBAR_HEIGHT });
+    return;
   }
   const current = config.load(), updated = { ...current, ...newSettings };
   config.saveImmediate(updated);
   if (overlayWindow) {
-    isApplyingSize = true; const b = overlayWindow.getBounds();
+    isApplyingSize = true;
+    const b = overlayWindow.getBounds();
     overlayWindow.setBounds({ x: b.x, y: b.y, width: Math.max(MIN_W, updated.width), height: Math.max(MIN_H, updated.height) });
-    overlayWindow.setOpacity(updated.opacity); updateViewBounds();
+    overlayWindow.setOpacity(updated.opacity);
+    updateViewBounds();
     setTimeout(() => { isApplyingSize = false; }, 300);
   }
   [mainWindow, overlayWindow].forEach(win => win?.webContents.send('config-data', updated));
@@ -504,13 +514,57 @@ export function toggleClickThrough(): boolean {
   if (mainWindow) mainWindow.webContents.send('click-through-status', isClickThrough);
   return isClickThrough;
 }
-export function toggleSidebar(): boolean { isSidebarCollapsed = !isSidebarCollapsed; mainWindow?.webContents.send('sidebar-status', isSidebarCollapsed); return isSidebarCollapsed; }
-export function hideAll(): void {
-  [overlayWindow, mainWindow].forEach(win => { if (win && win.isVisible()) win.hide(); });
-  Object.values(windowRegistry).forEach(winCfg => { if (winCfg.ref && winCfg.ref.isVisible()) winCfg.ref.hide(); });
-  isTracking = false; closeSplashWindow();
+
+export function toggleSidebar(): boolean {
+  isSidebarCollapsed = !isSidebarCollapsed;
+  mainWindow?.webContents.send('sidebar-status', isSidebarCollapsed);
+  return isSidebarCollapsed;
 }
 
+export function hideAll(): void {
+  // 오버레이 창 종료 (Close)
+  if (overlayWindow) {
+    savePosition('overlay', overlayPos, true);
+    if (view) { try { overlayWindow.contentView.removeChildView(view); view.webContents.close(); } catch (e) { } view = null; }
+    overlayWindow.close();
+    overlayWindow = null;
+  }
+
+  // 사이드바는 숨김 (Hide) - 앱 실행 유지를 위함
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+    mainWindow.hide();
+  }
+
+  // 모든 유틸리티 창 종료 (Close)
+  Object.values(windowRegistry).forEach(winCfg => {
+    if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+      winCfg.ref.close(); // closed 이벤트에 의해 winCfg.ref = null 처리됨
+    }
+  });
+
+  isTracking = false;
+  gameRect = null; // 게임 상태 초기화
+  closeSplashWindow();
+}
+
+export function hideOverlayWindows(): void {
+  // 오버레이 창 종료 (Close)
+  if (overlayWindow) {
+    savePosition('overlay', overlayPos, true);
+    if (view) { try { overlayWindow.contentView.removeChildView(view); view.webContents.close(); } catch (e) { } view = null; }
+    overlayWindow.close();
+    overlayWindow = null;
+  }
+
+  // 사이드바 숨김 (Hide)
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+    mainWindow.hide();
+  }
+
+  isTracking = false;
+  gameRect = null; // 게임 상태 초기화
+  closeSplashWindow();
+}
 export function showGameExitReminder(): void {
   const cfg = config.load();
   if (!cfg.gameExitReminderEnabled || !cfg.gameExitReminderMessage?.trim()) return;
@@ -524,7 +578,7 @@ export function showGameExitReminder(): void {
     }));
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const winWidth = 500, winHeight = 560; // 공간 확보를 위해 크기 확장
+  const winWidth = 500, winHeight = 560;
 
   const reminderWin = new BrowserWindow(getStandardOptions(winWidth, winHeight, {
     center: true, resizable: false, skipTaskbar: false, alwaysOnTop: true,

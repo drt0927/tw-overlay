@@ -111,6 +111,10 @@ export interface AppConfig {
         trade?: WindowPosition;
         coefficientCalculator?: WindowPosition;
         contentsChecker?: WindowPosition;
+        evolutionCalculator?: WindowPosition;
+        magicStoneCalculator?: WindowPosition;
+        customAlert?: WindowPosition;
+        diary?: WindowPosition;
     };
     tradeServer?: string;
     tradeKeywords?: string[];

@@ -38,12 +38,13 @@ export const TITLE_BUFFER_LENGTH = 256;
 
 export const get_CONFIG_PATH = () => path.join(app.getPath('userData'), 'config.json');
 export const get_LOG_PATH = () => path.join(app.getPath('userData'), 'debug.log');
-export const CONTENTS_DATA_PATH = path.join(__dirname, '..', 'assets', 'data', 'contents.json');
 
 /** 리소스 경로 유틸리티 (dist 폴더 기준) */
 export const get_RESOURCE_PATH = (...paths: string[]) => {
   return path.join(app.getAppPath(), 'dist', ...paths);
 };
+
+export const get_CONTENTS_DATA_PATH = () => get_RESOURCE_PATH('assets', 'data', 'contents.json');
 
 export const DEFAULT_CONFIG: AppConfig = {
   width: 800, height: 600, opacity: 1.0,

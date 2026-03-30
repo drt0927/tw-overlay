@@ -1,6 +1,6 @@
 {
   "name": "tw-overlay",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {
@@ -25,7 +25,10 @@
       }
     ],
     "asar": true,
-    "asarUnpack": [],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**",
+      "node_modules/koffi/**"
+    ],
     "win": {
       "target": [
         "nsis"
@@ -47,7 +50,7 @@
     ]
   },
   "keywords": [],
-  "author": "",
+  "author": "filbertlab",
   "license": "ISC",
   "dependencies": {
     "adm-zip": "^0.5.16",

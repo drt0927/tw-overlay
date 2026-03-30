@@ -1,4 +1,4 @@
-import { app, globalShortcut } from 'electron';
+import { app } from 'electron';
 import {
   FOCUS_DELAY_MS,
   appState

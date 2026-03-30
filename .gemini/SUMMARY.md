@@ -1,19 +1,26 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.10.2)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.10.3)
 
-이 문서는 v1.10.1 버전을 기준으로 작성되었습니다.
+이 문서는 v1.10.3 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 게임 동기화 위젯.
 - **최종 빌드:** **TypeScript**, Electron, **Native Win32 API(Koffi)**, **SQLite(better-sqlite3)** 기반.
-- **주요 개선:** 설정 화면 안정화 및 UI 디테일 개선.
+- **주요 개선:** 게임 미실행 시 독립 유틸리티 모드 지원 및 다이어리 통계 강화.
 
 ## 2. 주요 기능 명세
+- **Infographic Statistics:** 월간 활동 히트맵, 최애 보스 Top 3 등 비주얼 리포트 제공.
+- **Standalone Utility Mode:** 트레이 메뉴를 통한 게임 독립적 도구(계산기, 일지 등) 실행.
 - **Adventure Log:** 플레이 기록(보스, 숙제, 득템, 수익)을 SQLite DB에 저장 및 시각화.
 - **Data Backup & Restore:** ZIP 파일 기반 설정 및 데이터 백업/복구.
 - **Unified Dynamic Theme:** 아이콘 색상 기반 통합 테마 시스템.
 - **Magic Stone Calculator:** 마정석 수익 계산 및 일지 자동 연동.
 - **Contents Checker:** 일일/주간 숙제 관리 및 자동 초기화.
 - **Field Boss Notifier:** 필드 보스 알림 및 처치 기록 연동.
+
+- **업데이트 히스토리 (v1.10.3 핵심)**
+- **신규 기능:** 모험 일지 내 '인포그래픽 통계' 탭 추가 (출석 히트맵, 보스 랭킹 등).
+- **UX 개선:** 시스템 트레이 메뉴 확장 및 게임 미실행 시에도 유틸리티 독립 사용 가능.
+- **UI 개선:** 다이어리 창 가로 넓이 확장(1000px) 및 커스텀 툴팁 적용.
 
 - **업데이트 히스토리 (v1.10.1 핵심)**
 - **버그 수정:** 환경 설정 내 '사이드바 메뉴 관리' 데이터 바인딩 오류 수정 (비동기 UI 생성 대응).

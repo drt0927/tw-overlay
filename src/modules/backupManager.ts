@@ -96,7 +96,17 @@ export async function importBackup(parentWindow: BrowserWindow): Promise<boolean
     return true;
   } catch (error) {
     log(`[BACKUP] Restore failed: ${error}`);
-    // 실패 시 .old 파일 복구 시도 (생략 가능하나 안전을 위해 고려)
+    // 실패 시 .old 파일로부터 원본 복구 (데이터 유실 방지)
+    const userDataPath = app.getPath('userData');
+    const configPath = path.join(userDataPath, 'config.json');
+    const dbPath = path.join(userDataPath, 'diary.db');
+    try {
+      if (fs.existsSync(configPath + '.old')) fs.renameSync(configPath + '.old', configPath);
+      if (fs.existsSync(dbPath + '.old')) fs.renameSync(dbPath + '.old', dbPath);
+      log('[BACKUP] Rollback successful — original files restored.');
+    } catch (rollbackError) {
+      log(`[BACKUP] CRITICAL: Rollback also failed: ${rollbackError}`);
+    }
     return false;
   }
 }

@@ -23,7 +23,7 @@
 
     .drag-handle {
       padding: 30px 24px;
-      cursor: move;
+      /* cursor: move removed */
       -webkit-app-region: drag;
       background: linear-gradient(to bottom, rgba(168, 85, 247, 0.1), transparent);
     }
@@ -32,11 +32,12 @@
       flex: 1;
       -webkit-app-region: no-drag;
       padding: 10px 0;
+      overflow-y: auto;
     }
 
     .nav-item {
       padding: 12px 24px;
-      cursor: pointer;
+      /* cursor: pointer removed, handled by style.css */
       color: var(--text-muted);
       font-size: 13px;
       font-weight: 700;
@@ -90,11 +91,11 @@
 
     .slot-card {
       transition: transform 0.2s, opacity 0.2s;
-      cursor: grab;
+      /* removed */
     }
 
     .slot-card:active {
-      cursor: grabbing;
+      /* removed */
     }
 
     .slot-card.dragging {
@@ -191,9 +192,12 @@
         </div>
       </div>
 
-      <div class="nav-container">
+      <div class="nav-container custom-scroll">
         <div class="nav-item active" onclick="showSection('general', this)">
           <i data-lucide="settings-2" class="w-4 h-4"></i> 일반 설정
+        </div>
+        <div class="nav-item" onclick="showSection('sound', this)">
+          <i data-lucide="volume-2" class="w-4 h-4"></i> 사운드 볼륨 관리
         </div>
         <div class="nav-item" onclick="showSection('overlay', this)">
           <i data-lucide="layout" class="w-4 h-4"></i> 오버레이 설정
@@ -289,6 +293,48 @@
                 <!-- 동적으로 생성됨 -->
               </div>
               <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 체크 해제 시 사이드바에서 해당 메뉴가 숨겨집니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사운드 설정 -->
+      <div id="section-sound" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="volume-2"
+              class="w-5 h-5 text-purple-500"></i> 앱 사운드 볼륨 관리</h2>
+
+          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+            <div class="space-y-4">
+              <label class="section-label flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-square" class="w-4 h-4 text-cyan-400"></i> 숙제 체크리스트 효과음 볼륨
+                </div>
+                <button id="mute-contents-checker" class="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-white/5 border border-white/10 transition-colors flex items-center gap-1" onclick="toggleMute('contents-checker')">
+                  <i data-lucide="volume-x" class="w-3.5 h-3.5"></i> 음소거
+                </button>
+              </label>
+              <div class="flex items-center gap-4">
+                <input type="range" id="volume-contents-checker" min="0" max="100" class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-cyan-500">
+                <span id="volume-contents-checker-val" class="text-xs font-bold text-cyan-400 w-12 text-right">50%</span>
+              </div>
+              <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 개별 숙제 완료 시 재생되는 소리의 크기입니다.</p>
+            </div>
+
+            <div class="space-y-4 pt-6 border-t border-white/5">
+              <label class="section-label flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="calculator" class="w-4 h-4 text-orange-400"></i> 계산기 및 일지 기록 효과음 볼륨
+                </div>
+                <button id="mute-calculators" class="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-white/5 border border-white/10 transition-colors flex items-center gap-1" onclick="toggleMute('calculators')">
+                  <i data-lucide="volume-x" class="w-3.5 h-3.5"></i> 음소거
+                </button>
+              </label>
+              <div class="flex items-center gap-4">
+                <input type="range" id="volume-calculators" min="0" max="100" class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-orange-500">
+                <span id="volume-calculators-val" class="text-xs font-bold text-orange-400 w-12 text-right">50%</span>
+              </div>
+              <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 마정석/보스 일지 기록 시 재생되는 소리의 크기입니다.</p>
             </div>
           </div>
         </div>
@@ -696,6 +742,44 @@
     let loadedMenus = []; // 동적으로 로드된 메뉴 데이터
     let lastConfig = null; // 마지막으로 수신된 설정 데이터
 
+    // --- 사운드 관리 기능 ---
+    let prevVolumes = {
+      'contents-checker': 50,
+      'calculators': 50
+    };
+
+    function toggleMute(type) {
+      const slider = document.getElementById(`volume-${type}`);
+      const valSpan = document.getElementById(`volume-${type}-val`);
+      if (!slider || !valSpan) return;
+
+      const current = parseInt(slider.value);
+      if (current > 0) {
+        prevVolumes[type] = current;
+        slider.value = 0;
+      } else {
+        slider.value = prevVolumes[type] || 50;
+      }
+      valSpan.innerText = slider.value + '%';
+      updateMuteButtonState(type, slider.value);
+    }
+
+    function updateMuteButtonState(type, value) {
+      const btn = document.getElementById(`mute-${type}`);
+      if (!btn) return;
+      const val = parseInt(value);
+      if (val === 0) {
+        btn.innerHTML = `<i data-lucide="volume-x" class="w-3.5 h-3.5"></i> 음소거 해제`;
+        btn.classList.add('text-red-400', 'border-red-500/30');
+        btn.classList.remove('text-slate-400', 'border-white/10');
+      } else {
+        btn.innerHTML = `<i data-lucide="volume-2" class="w-3.5 h-3.5"></i> 음소거`;
+        btn.classList.remove('text-red-400', 'border-red-500/30');
+        btn.classList.add('text-slate-400', 'border-white/10');
+      }
+      window.refreshIcons();
+    }
+
     // --- 단축키 설정 관련 ---
     let recordingShortcutKey = null;
     let currentShortcuts = {
@@ -946,6 +1030,40 @@
 
       // 체크박스 상태 적용 시도
       applyMenuCheckboxes(config);
+
+      const volContents = config.volumeContentsChecker !== undefined ? config.volumeContentsChecker : 50;
+      const volContentsEl = document.getElementById('volume-contents-checker');
+      const volContentsVal = document.getElementById('volume-contents-checker-val');
+      if (volContentsEl && volContentsVal) {
+        volContentsEl.value = volContents;
+        volContentsVal.innerText = volContents + '%';
+        if (volContents > 0) prevVolumes['contents-checker'] = volContents;
+        
+        volContentsEl.oninput = (e) => {
+          const val = e.target.value;
+          volContentsVal.innerText = val + '%';
+          updateMuteButtonState('contents-checker', val);
+          if (parseInt(val) > 0) prevVolumes['contents-checker'] = parseInt(val);
+        };
+        updateMuteButtonState('contents-checker', volContents);
+      }
+
+      const volCalc = config.volumeCalculators !== undefined ? config.volumeCalculators : 50;
+      const volCalcEl = document.getElementById('volume-calculators');
+      const volCalcVal = document.getElementById('volume-calculators-val');
+      if (volCalcEl && volCalcVal) {
+        volCalcEl.value = volCalc;
+        volCalcVal.innerText = volCalc + '%';
+        if (volCalc > 0) prevVolumes['calculators'] = volCalc;
+
+        volCalcEl.oninput = (e) => {
+          const val = e.target.value;
+          volCalcVal.innerText = val + '%';
+          updateMuteButtonState('calculators', val);
+          if (parseInt(val) > 0) prevVolumes['calculators'] = parseInt(val);
+        };
+        updateMuteButtonState('calculators', volCalc);
+      }
 
       // 필드보스 설정은 boss-settings.html로 이전됨
 
@@ -1320,7 +1438,11 @@
           gameExitReminderMessage: document.getElementById('game-exit-reminder-message').value.trim(),
 
           // 단축키 설정
-          shortcuts: currentShortcuts
+          shortcuts: currentShortcuts,
+
+          // 사운드 설정
+          volumeContentsChecker: parseInt(document.getElementById('volume-contents-checker').value),
+          volumeCalculators: parseInt(document.getElementById('volume-calculators').value)
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);

@@ -205,6 +205,13 @@
     lucide.createIcons();
 
     const SEED_PER_POUCH = 500000;
+    let config = null;
+
+    if (window.electronAPI && window.electronAPI.onConfigData) {
+        window.electronAPI.onConfigData((data) => {
+            config = data;
+        });
+    }
 
     function formatSeed(seed) {
       if (seed === 0) return '0 시드';
@@ -238,6 +245,13 @@
       const seedFormatted = document.getElementById('total-seed-formatted').innerText;
       
       if (parseInt(pouches) === 0) return;
+
+      const vol = (config && config.volumeCalculators !== undefined ? config.volumeCalculators : 50) / 100;
+      if (vol > 0) {
+          const audio = new Audio('assets/sound/item_get.wav');
+          audio.volume = vol;
+          audio.play().catch(e => {});
+      }
 
       const now = new Date();
       // YYYY-MM-DD 포맷 (로컬 타임 기준)

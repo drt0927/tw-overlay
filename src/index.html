@@ -211,6 +211,14 @@
 
     function recordKillAndRemove(toastId, bossName, spawnTime, event) {
       if (event) event.stopPropagation();
+      
+      const vol = (lastConfig && lastConfig.volumeCalculators !== undefined ? lastConfig.volumeCalculators : 50) / 100;
+      if (vol > 0) {
+          const audio = new Audio('assets/sound/item_get.wav');
+          audio.volume = vol;
+          audio.play().catch(e => {});
+      }
+
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -274,6 +282,7 @@
     });
 
     window.electronAPI.onConfigData((config) => {
+      lastConfig = config;
       bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
       
       currentHiddenMenuIds = config.hiddenMenuIds || [];
@@ -306,21 +315,52 @@
       }
     });
 
-    // 마우스 이벤트 초기화
-    updateIgnoreMouseEvents(true);
-    wrapper.addEventListener('mouseenter', () => updateIgnoreMouseEvents(false));
-    wrapper.addEventListener('mousemove', () => updateIgnoreMouseEvents(false));
-    wrapper.addEventListener('mouseleave', (e) => {
-      if (!e.relatedTarget || !toastContainer.contains(e.relatedTarget)) {
-        if (toastContainer.querySelectorAll('.boss-toast').length === 0) updateIgnoreMouseEvents(true);
+    // 마우스 이벤트 및 창 크기 동적 제어
+    let currentWidth = 400;
+    
+    function updateSidebarWindowWidth(neededWidth) {
+      if (currentWidth !== neededWidth) {
+        currentWidth = neededWidth;
+        window.electronAPI.applySettings({ isSidebarResize: true, width: neededWidth });
       }
-      tooltip.style.display = 'none';
-    });
-    toastContainer.addEventListener('mouseenter', () => updateIgnoreMouseEvents(false));
-    toastContainer.addEventListener('mousemove', () => updateIgnoreMouseEvents(false));
-    toastContainer.addEventListener('mouseleave', (e) => {
-      if (!e.relatedTarget || !wrapper.contains(e.relatedTarget)) updateIgnoreMouseEvents(true);
-    });
+    }
+
+    function checkMouseIgnore(e) {
+      // 1. 사이드바 본체 위에 있는지 확인
+      const isOverSidebar = wrapper.contains(e.target);
+      // 2. 알림 토스트 위에 있는지 확인
+      const activeToasts = toastContainer.querySelectorAll('.boss-toast');
+      let isOverToast = false;
+      activeToasts.forEach(toast => {
+        const rect = toast.getBoundingClientRect();
+        if (e.clientX >= rect.left && e.clientX <= rect.right && 
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          isOverToast = true;
+        }
+      });
+
+      const hasToasts = activeToasts.length > 0;
+
+      if (isOverSidebar || isOverToast) {
+        updateIgnoreMouseEvents(false);
+        updateSidebarWindowWidth(400); // 상호작용 중엔 넓게 유지
+      } else {
+        updateIgnoreMouseEvents(true);
+        // 토스트가 하나도 없을 때만 너비를 줄여서 드래그 방해 방지
+        if (!hasToasts) {
+          updateSidebarWindowWidth(50); 
+        } else {
+          updateSidebarWindowWidth(400); // 토스트가 있으면 공간 유지
+        }
+      }
+    }
+
+    // 전역 마우스 이동 감시
+    window.addEventListener('mousemove', checkMouseIgnore);
+    
+    // 초기 상태 설정
+    updateIgnoreMouseEvents(true);
+    updateSidebarWindowWidth(50); // 시작 시엔 좁게 설정
 
     refreshIcons();
   </script>

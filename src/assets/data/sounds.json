@@ -58,5 +58,13 @@
   {
     "name": "😱 으아아아",
     "file": "uaaaaa.webm"
+  },
+  {
+    "name": "⚔️ 일단은 보스부터 쓰러뜨리자",
+    "file": "voice_boss_first.wav"
+  },
+  {
+    "name": "🎉 모두 준비됐어? 곧 이벤트가 시작될 거야",
+    "file": "voice_event_start.wav"
   }
 ]

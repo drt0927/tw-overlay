@@ -92,7 +92,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   lastContentsResetCheck: 0,
   shortcuts: {
     toggleClickThrough: 'CommandOrControl+Shift+T'
-  }
+  },
+  volumeContentsChecker: 50,
+  volumeCalculators: 50
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

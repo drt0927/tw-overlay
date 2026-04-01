@@ -151,7 +151,6 @@ function savePosition(winType: string, pos: WindowPosition, immediate = false) {
   else config.save({ positions });
 }
 
-export const getMainWindow = () => mainWindow;
 export const getSplashWindow = () => splashWindow;
 export const getOverlayWindow = () => overlayWindow;
 export const getSettingsWindow = () => windowRegistry.settings.ref;
@@ -488,7 +487,7 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
   if (newSettings.isSidebarResize && mainWindow) {
     const b = mainWindow.getBounds();
     setProgrammaticMove('main');
-    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: SIDEBAR_HEIGHT });
+    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: b.height });
     return;
   }
   const current = config.load(), updated = { ...current, ...newSettings };
@@ -545,6 +544,20 @@ export function hideAll(): void {
   isTracking = false;
   gameRect = null; // 게임 상태 초기화
   closeSplashWindow();
+}
+
+export function getMainWindow(): BrowserWindow | null {
+  return (mainWindow && !mainWindow.isDestroyed()) ? mainWindow : null;
+}
+
+export function setMainWindowWidth(width: number): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const b = mainWindow.getBounds();
+    // width가 실제로 다를 때만 업데이트하여 불필요한 이벤트 발생 방지
+    if (b.width !== width) {
+      mainWindow.setBounds({ x: b.x, y: b.y, width, height: b.height });
+    }
+  }
 }
 
 export function hideOverlayWindows(): void {

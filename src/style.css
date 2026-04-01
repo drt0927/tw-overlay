@@ -1,6 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
 
+/* --- [CURSOR SYSTEM] --- */
 :root {
+  /* 1. 커서 에셋 정의 */
+  --cursor-url-default: url('./assets/mouse/cursor_default.cur');
+  --cursor-url-pointer: url('./assets/mouse/cursor_clicking.cur');
+  --cursor-url-grab:    url('./assets/mouse/_frames/grab_cursor/frame_02.cur');
+  --cursor-url-grabbing: url('./assets/mouse/grab_cursor.cur');
+  --cursor-url-wait:    url('./assets/mouse/cursor_loading.cur');
+  --cursor-url-error:   url('./assets/mouse/error_cursor.cur');
+  --cursor-url-help:    url('./assets/mouse/cursor_help.cur');
+
+  /* 2. 시맨틱 변수 매핑 */
+  --cursor-default: var(--cursor-url-default), auto;
+  --cursor-pointer: var(--cursor-url-pointer), pointer;
+  --cursor-grab:    var(--cursor-url-grab), grab;
+  --cursor-grabbing: var(--cursor-url-grabbing), grabbing;
+  --cursor-wait:    var(--cursor-url-wait), wait;
+  --cursor-error:   var(--cursor-url-error), not-allowed;
+  --cursor-help:    var(--cursor-url-help), help;
+
   --bg-dark: rgba(15, 18, 30, 0.95);
   --bg-panel: rgb(18, 18, 28);
   --bg-input: rgba(0, 0, 0, 0.3);
@@ -13,6 +32,59 @@
   --border: rgba(255, 255, 255, 0.12);
 }
 
+/* 3. 전역 커서 설정: 모든 요소에 적용 */
+*, *::before, *::after {
+  cursor: var(--cursor-default);
+}
+
+/* Tailwind Preflight / 브라우저 UA 오버라이드 (Tailwind가 나중에 로드되므로 !important 필수) */
+button, [role="button"], a, select, label, summary,
+input[type="button"], input[type="submit"], input[type="reset"],
+input[type="checkbox"], input[type="radio"], input[type="range"],
+input[type="file"], input[type="color"] {
+  cursor: var(--cursor-default) !important;
+}
+
+/* 시스템 커서 클래스 강제 오버라이드 (Tailwind 등 대응) */
+.cursor-pointer, [style*="cursor: pointer"], [style*="cursor:pointer"] {
+  cursor: var(--cursor-default) !important; /* 기본 상태는 화살표 */
+}
+
+.cursor-pointer:active, [style*="cursor: pointer"]:active {
+  cursor: var(--cursor-pointer) !important; /* 클릭 시에만 손가락 */
+}
+
+/* 클릭(Active) 시 손가락 커서로 전환 (내부 요소 포함) */
+:active, :active * {
+  cursor: var(--cursor-pointer) !important;
+}
+
+/* 특수 상태 */
+[disabled], .disabled, .is-disabled, .cursor-not-allowed, [disabled] *, .cursor-not-allowed * {
+  cursor: var(--cursor-error) !important;
+}
+
+.help-cursor, .cursor-help, [data-cursor="help"], .help-cursor *, .cursor-help * {
+  cursor: var(--cursor-help) !important;
+}
+
+.loading-cursor, .is-loading, .loading-cursor * {
+  cursor: var(--cursor-wait) !important;
+}
+
+/* 드래그 상태 (커스텀 드래그 커서 적용) */
+.drag-handle, .drag-handle-icon, .cursor-move, [style*="cursor: move"] {
+  cursor: var(--cursor-grab) !important;
+}
+.drag-handle:active, .drag-handle-icon:active, .cursor-move:active,
+[style*="cursor: move"]:active, .edit-mode .item-card:active {
+  cursor: var(--cursor-grabbing) !important;
+}
+body.is-dragging, body.is-dragging *, body.is-dragging .item-card {
+  cursor: var(--cursor-grabbing) !important;
+}
+
+/* --- [STYLE RESET & UTILS] --- */
 body {
   margin: 0; padding: 0;
   font-family: 'Inter', 'Noto Sans KR', sans-serif;
@@ -97,7 +169,7 @@ body {
   outline: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; position: relative; transition: all 0.2s;
+  position: relative; transition: all 0.2s;
   margin-bottom: 6px;
 }
 .tw-slot:hover {
@@ -153,7 +225,6 @@ svg.lucide {
 input[type="range"] {
   -webkit-appearance: none;
   background: transparent;
-  cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
@@ -198,7 +269,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 .post-item {
   display: flex; align-items: center; gap: 8px;
-  padding: 8px; border-radius: 8px; cursor: pointer;
+  padding: 8px; border-radius: 8px;
   transition: background 0.2s;
 }
 .post-item:hover { background: rgba(255,255,255,0.05); }
@@ -206,7 +277,7 @@ input[type="range"]:hover::-webkit-slider-thumb {
 /* 버튼 스타일 */
 .btn-primary {
   background: var(--primary); color: white; border: none; padding: 8px 16px;
-  border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
+  border-radius: 8px; font-size: 12px; font-weight: 700;
   transition: background 0.2s;
 }
 .btn-primary:hover { background: var(--primary-hover); }
@@ -323,7 +394,6 @@ input[type="range"]:hover::-webkit-slider-thumb {
   border-radius: 8px;
   color: #94a3b8;
   transition: all 0.2s;
-  cursor: pointer;
   border: none;
   background: transparent;
 }

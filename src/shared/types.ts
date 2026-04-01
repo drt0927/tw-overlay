@@ -126,6 +126,10 @@ export interface AppConfig {
     lastContentsResetCheck?: number;
     shortcuts?: ShortcutsConfig;
     customAlerts?: CustomAlert[];
+    
+    // --- Sound Settings ---
+    volumeContentsChecker?: number;
+    volumeCalculators?: number;
 }
 
 export interface GalleryPost {

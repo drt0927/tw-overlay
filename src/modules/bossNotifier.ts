@@ -1,11 +1,14 @@
 /**
  * 필드보스 알림 모듈
  */
+import { Notification } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import * as contents from './contentsChecker';
 import { log } from './logger';
 import { analytics } from './analytics';
+import { getGameStatus } from './pollingLoop';
+import * as diaryDb from './diaryDb';
 
 interface BossTime {
   time: string; // HH:mm
@@ -31,6 +34,11 @@ export const BOSS_SCHEDULE: BossTime[] = [
   { time: '21:00', name: '골모답' },
   { time: '21:30', name: '아칸' },
   { time: '23:00', name: '스페르첸드' },
+  { time: '23:30', name: '스페르첸드' }, // 테스트
+  { time: '23:31', name: '스페르첸드' }, // 테스트
+  { time: '23:32', name: '스페르첸드' }, // 테스트
+  { time: '23:33', name: '스페르첸드' }, // 테스트
+  { time: '23:34', name: '스페르첸드' }, // 테스트
 ];
 
 /** 보스별 출현 시간 문자열 반환 */
@@ -73,7 +81,7 @@ function checkBossTime(): void {
   const isReset = contents.checkReset();
   if (isReset) {
     // 초기화된 경우 모든 창에 업데이트된 데이터 전송
-    wm.applySettings({}); 
+    wm.applySettings({});
   }
 
   const now = new Date();
@@ -112,14 +120,43 @@ function checkBossTime(): void {
 
 function notify(bossName: string, soundFile: string, spawnTime: string, offset: number): void {
   log(`[BOSS] 필드보스 출현 알림: ${bossName} (스폰: ${spawnTime}, 오프셋: ${offset})`);
+
+  // 오늘 날짜 및 콘텐츠 확인용 데이터 생성
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const content = `[${bossName}] ${spawnTime} 스폰 처치 완료`;
+  const isAlreadyRecorded = diaryDb.isActivityLogged(dateStr, content);
+
+  // 게임창이 최소화되어 있거나 종료된 상태일 때 Windows 알림 발송
+  const gameStatus = getGameStatus();
+  if (gameStatus === 'minimized' || gameStatus === 'not-running') {
+    const title = '🕒 필드보스 출현 알림';
+    const body = offset === 0
+      ? `지금 [${bossName}]이(가) 출현했습니다!`
+      : `약 ${offset}분 후 [${bossName}]이(가) 출현합니다. (${spawnTime})`;
+
+    try {
+      const noti = new Notification({
+        title,
+        body,
+        silent: false
+      });
+      noti.show();
+      log(`[BOSS] Windows 네이티브 알림 발송 (상태: ${gameStatus}, 제목: ${title})`);
+    } catch (e) {
+      log(`[BOSS] 네이티브 알림 발송 실패: ${e}`);
+    }
+  }
+
   const sidebar = wm.getMainWindow();
   if (sidebar) {
-    sidebar.webContents.send('play-boss-sound', { 
-      bossName, 
-      soundFile, 
-      spawnTime, 
+    sidebar.webContents.send('play-boss-sound', {
+      bossName,
+      soundFile,
+      spawnTime,
       offset,
-      isCustom: false 
+      isCustom: false,
+      isAlreadyRecorded // 이미 기록되었는지 여부 전달
     });
   }
 }

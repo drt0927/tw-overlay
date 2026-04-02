@@ -919,7 +919,21 @@
         loadMonthData().then(() => { if (selectedDateStr) selectDate(selectedDateStr, Array.from(document.querySelectorAll('.calendar-cell')).find(c => c.classList.contains('active'))); });
       });
     }
-    loadMonthData();
+
+    // 초기 로드 시 오늘 날짜 자동 선택
+    loadMonthData().then(() => {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      // 달력 셀들 중에서 오늘 날짜를 찾아 선택 (renderCalendar 이후에 실행되므로 가능)
+      const cells = document.querySelectorAll('.calendar-cell');
+      for (const cell of cells) {
+        if (cell.classList.contains('today')) {
+          selectDate(todayStr, cell);
+          break;
+        }
+      }
+    });
   </script>
 </body>
 

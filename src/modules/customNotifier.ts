@@ -2,9 +2,11 @@
  * 커스텀 알림 모듈
  * 사용자가 설정한 시각 + offset으로 매일 반복 알림을 발송합니다.
  */
+import { Notification } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import { log } from './logger';
+import { getGameStatus } from './pollingLoop';
 
 let _timer: NodeJS.Timeout | null = null;
 
@@ -96,6 +98,22 @@ function checkAlerts(): void {
 }
 
 function notify(message: string, soundFile: string): void {
+  // 게임창이 최소화되어 있거나 종료된 상태일 때 Windows 알림 발송
+  const gameStatus = getGameStatus();
+  if (gameStatus === 'minimized' || gameStatus === 'not-running') {
+    try {
+      const noti = new Notification({
+        title: '🔔 커스텀 알림',
+        body: message,
+        silent: false
+      });
+      noti.show();
+      log(`[CUSTOM_ALERT] Windows 네이티브 알림 발송 (상태: ${gameStatus}, 메시지: ${message})`);
+    } catch (e) {
+      log(`[CUSTOM_ALERT] 네이티브 알림 발송 실패: ${e}`);
+    }
+  }
+
   const sidebar = wm.getMainWindow();
   if (sidebar) {
     sidebar.webContents.send('play-boss-sound', { bossName: message, soundFile });

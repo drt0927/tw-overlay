@@ -71,6 +71,7 @@
     
     let bossNotifyVolume = 0.5;
     let currentHiddenMenuIds = [];
+    let _lastRecordedBossKey = null;
 
     function refreshIcons() { if (window.lucide) lucide.createIcons(); }
 
@@ -145,7 +146,7 @@
       }
     }
 
-    function createToast(bossName, isCustomFromApi, spawnTime, offset) {
+    function createToast(bossName, isCustomFromApi, spawnTime, offset, isAlreadyRecorded) {
       const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
       const toastId = 'toast-' + Date.now();
       
@@ -164,6 +165,16 @@
         if (offset > 0) displayName += ` <span class="text-[10px] text-slate-500 font-medium ml-1">${offset}분 전</span>`;
       }
 
+      const buttonHtml = isAlreadyRecorded 
+        ? `<button disabled class="px-3 py-1.5 flex items-center gap-1.5 bg-slate-700 text-slate-400 rounded-lg transition-all text-[11px] font-bold cursor-default">
+            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+            이미 기록됨!
+          </button>`
+        : `<button onclick="recordKillAndRemove('${toastId}', '${bossName}', '${validSpawnTime || ''}', event)" class="cursor-custom-sword px-3 py-1.5 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500 hover:text-white transition-all text-[11px] font-bold">
+            <i data-lucide="sword" class="w-3.5 h-3.5"></i>
+            일지 기록
+          </button>`;
+
       toast.innerHTML = `
         <div class="flex items-start justify-between w-full gap-3">
           <div class="flex items-start gap-2.5 pt-0.5">
@@ -176,16 +187,14 @@
         </div>
         ${isRealBoss ? `
         <div class="mt-3 flex justify-end w-full border-t border-slate-700/50 pt-2">
-          <button onclick="recordKillAndRemove('${toastId}', '${bossName}', '${validSpawnTime || ''}', event)" class="px-3 py-1.5 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500 hover:text-white transition-all text-[11px] font-bold">
-            <i data-lucide="sword" class="w-3.5 h-3.5"></i>
-            일지 기록
-          </button>
+          ${buttonHtml}
         </div>` : ''}
       `;
       
       toastContainer.appendChild(toast);
       refreshIcons();
       updateIgnoreMouseEvents(false);
+      updateSidebarWindowWidth(400); // 알림 생성 시 즉시 너비 확장 (짤림 방지)
 
       // 자동 삭제 타이머
       let duration = 5000; // 커스텀 알림 기본 5초
@@ -209,9 +218,26 @@
       }
     }
 
-    function recordKillAndRemove(toastId, bossName, spawnTime, event) {
+    async function recordKillAndRemove(toastId, bossName, spawnTime, event) {
       if (event) event.stopPropagation();
       
+      const recordKey = `${bossName}-${spawnTime}`;
+      // 1차 필터: 현재 세션 내 메모리 체크 (가장 빠름)
+      if (_lastRecordedBossKey === recordKey) {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+          const btn = toast.querySelector('button[onclick^="recordKillAndRemove"]');
+          if (btn) {
+            btn.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5"></i> 이미 기록됨!`;
+            btn.disabled = true;
+            btn.className = "px-3 py-1.5 flex items-center gap-1.5 bg-slate-700 text-slate-400 rounded-lg transition-all text-[11px] font-bold cursor-default";
+            refreshIcons();
+          }
+          setTimeout(() => { removeToast(toastId); }, 1500);
+        }
+        return;
+      }
+
       const vol = (lastConfig && lastConfig.volumeCalculators !== undefined ? lastConfig.volumeCalculators : 50) / 100;
       if (vol > 0) {
           const audio = new Audio('assets/sound/item_get.wav');
@@ -228,16 +254,25 @@
       const content = `[${bossName}] ${spawnTime || recordTime.substring(0, 5)} 스폰 처치 완료`;
       
       try {
-        window.electronAPI.diaryAddActivity(date, recordTime, 'boss', content);
+        // 2차 필터: DB 실제 존재 여부 확인 (최종 보루)
+        const isSuccess = await window.electronAPI.diaryAddActivity(date, recordTime, 'boss', content);
+        
         const toast = document.getElementById(toastId);
         if (toast) {
           const btn = toast.querySelector('button[onclick^="recordKillAndRemove"]');
           if (btn) {
-            btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> 기록 완료!`;
-            btn.className = "px-3 py-1.5 flex items-center gap-1.5 bg-emerald-500 text-white rounded-lg transition-all text-[11px] font-bold";
+            if (isSuccess) {
+              _lastRecordedBossKey = recordKey;
+              btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> 기록 완료!`;
+              btn.className = "px-3 py-1.5 flex items-center gap-1.5 bg-emerald-500 text-white rounded-lg transition-all text-[11px] font-bold opacity-70 cursor-default";
+            } else {
+              btn.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5"></i> 이미 기록됨!`;
+              btn.className = "px-3 py-1.5 flex items-center gap-1.5 bg-slate-700 text-slate-400 rounded-lg transition-all text-[11px] font-bold cursor-default";
+            }
+            btn.disabled = true;
             refreshIcons();
           }
-          setTimeout(() => { removeToast(toastId); }, 1000);
+          setTimeout(() => { removeToast(toastId); }, isSuccess ? 1000 : 1500);
         }
       } catch (err) { console.error('Failed to record boss kill:', err); }
     }
@@ -253,7 +288,7 @@
     function openGallery() { document.getElementById('noti-badge').classList.add('hidden'); window.electronAPI.toggleGallery(); }
 
     // IPC 리스너 등록
-    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume, isCustom, spawnTime, offset }) => {
+    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume, isCustom, spawnTime, offset, isAlreadyRecorded }) => {
       if (!soundFile) return;
       bossAudio.src = `assets/sound/${soundFile}`;
       bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
@@ -261,7 +296,7 @@
       const btn = document.getElementById('boss-btn');
       btn.classList.add('animate-bounce', 'text-blue-400');
       setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
-      createToast(bossName, isCustom, spawnTime, offset);
+      createToast(bossName, isCustom, spawnTime, offset, isAlreadyRecorded);
     });
 
     window.electronAPI.onSidebarStatus((isCollapsed) => {

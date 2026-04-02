@@ -22,11 +22,19 @@ import * as wm from './windowManager';
 let pollingTimer: NodeJS.Timeout | null = null;
 let gameWasEverFound = false;
 
+export type GameStatus = 'running' | 'minimized' | 'not-running' | null;
+let _currentStatus: GameStatus = null;
+
+export function getGameStatus(): GameStatus {
+    return _currentStatus;
+}
+
 export function start(): void {
     let lastRect: GameQueryResult = null;
     let stableCount = 0;
     let isBoosted = false;
-    let lastStatus: 'running' | 'minimized' | 'not-running' | null = null;
+    // lastStatus 대신 _currentStatus 사용
+    _currentStatus = null;
 
     const rectEquals = (a: GameQueryResult, b: GameQueryResult): boolean => {
         if (!a || !b) return a === b;
@@ -64,7 +72,7 @@ export function start(): void {
 
         // 1. 게임 미실행 상태
         if (currentRect && 'notRunning' in currentRect) {
-            if (lastStatus !== 'not-running') {
+            if (_currentStatus !== 'not-running') {
                 if (gameWasEverFound) {
                     gameWasEverFound = false;
                     wm.hideAll(); // 종료 리마인더를 위해 한 번만 hideAll
@@ -72,7 +80,7 @@ export function start(): void {
                 } else {
                     wm.hideOverlayWindows();
                 }
-                lastStatus = 'not-running';
+                _currentStatus = 'not-running';
                 lastRect = null;
             }
             stableCount = 0;
@@ -83,9 +91,9 @@ export function start(): void {
 
         // 2. 게임 최소화/숨김 상태
         if (!currentRect || (currentRect && 'x' in currentRect && currentRect.x <= WINDOW_MINIMIZED_THRESHOLD)) {
-            if (lastStatus !== 'minimized') {
+            if (_currentStatus !== 'minimized') {
                 wm.hideAll(); // 최소화되는 순간 모든 창 종료 (운명 공동체)
-                lastStatus = 'minimized';
+                _currentStatus = 'minimized';
                 lastRect = null;
             }
             stableCount = 0;
@@ -113,10 +121,10 @@ export function start(): void {
             const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, windowHwnds);
         }
 
-        if (lastStatus !== 'running' || !rectEquals(currentRect, lastRect) || !isVisible) {
+        if (_currentStatus !== 'running' || !rectEquals(currentRect, lastRect) || !isVisible) {
             wm.syncOverlay(currentRect as GameRect);
             lastRect = currentRect;
-            lastStatus = 'running';
+            _currentStatus = 'running';
             stableCount = 0;
             nextDelay = POLLING_FAST_MS;
         } else {

@@ -128,22 +128,44 @@ function subtractScore(date: string, points: number): void {
   stmt.run(points, date);
 }
 
-/** 타임라인에 활동 기록을 추가합니다. (보스 처치, 계산기 등) */
-export function addActivityLog(date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string): void {
+/** 특정 활동이 이미 기록되어 있는지 확인합니다. */
+export function isActivityLogged(date: string, content: string): boolean {
   if (!db) initDb();
-  if (!db) return;
+  if (!db) return false;
+  const existing = db.prepare('SELECT id FROM activity_logs WHERE date = ? AND content = ?').get(date, content);
+  return !!existing;
+}
 
+/** 타임라인에 활동 기록을 추가합니다. (보스 처치, 계산기 등) */
+export function addActivityLog(date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string): boolean {
+  if (!db) initDb();
+  if (!db) return false;
+
+  let result = false;
   const transaction = db.transaction(() => {
     ensureDiaryExists(date);
+
+    // 보스 처치 기록인 경우 중복 체크 (동일 날짜, 동일 내용)
+    if (type === 'boss') {
+      const existing = db!.prepare('SELECT id FROM activity_logs WHERE date = ? AND content = ?').get(date, content);
+      if (existing) {
+        log(`[DIARY_DB] 이미 존재하는 보스 기록입니다. 스킵: ${content}`);
+        result = false;
+        return;
+      }
+    }
+
     const stmt = db!.prepare('INSERT INTO activity_logs (date, type, content, time) VALUES (?, ?, ?, ?)');
     stmt.run(date, type, content, time);
 
     // 포인트 부여
     if (type === 'boss') addScore(date, POINTS.BOSS_KILL);
     if (type === 'calc') addScore(date, POINTS.CALC_RECORD);
+    result = true;
   });
   transaction();
-  notifyUpdate();
+  if (result) notifyUpdate();
+  return result;
 }
 
 /** 활동 기록을 삭제합니다 (토글 해제용). */

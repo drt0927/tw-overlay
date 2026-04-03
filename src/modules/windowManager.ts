@@ -74,6 +74,7 @@ let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
 let view: WebContentsView | null = null;
+let uniformColorView: WebContentsView | null = null;
 
 // --- 창 레지스트리 정의 ---
 interface ManagedWindow {
@@ -112,6 +113,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
   customAlert: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 420, height: 640 },
   diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 1000, height: 850 },
+  uniformColor: { ref: null, pos: { offsetX: -360, offsetY: 40 }, key: 'uniformColor', html: 'uniform-color.html', width: 360, height: 800 },
 };
 
 let gameRect: GameRect | null = null;
@@ -164,6 +166,7 @@ export const getCoefficientCalculatorWindow = () => windowRegistry.coefficientCa
 export const getContentsCheckerWindow = () => windowRegistry.contentsChecker.ref;
 export const getEvolutionCalculatorWindow = () => windowRegistry.evolutionCalculator.ref;
 export const getCustomAlertWindow = () => windowRegistry.customAlert.ref;
+export const getUniformColorWindow = () => windowRegistry.uniformColor.ref;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
@@ -373,6 +376,69 @@ export function toggleCoefficientCalculatorWindow(): void { createToggleableWind
 export function toggleEvolutionCalculatorWindow(): void { createToggleableWindow('evolutionCalculator'); }
 export function toggleMagicStoneCalculatorWindow(): void { createToggleableWindow('magicStoneCalculator'); }
 export function toggleCustomAlertWindow(): void { createToggleableWindow('customAlert'); }
+export function toggleUniformColorWindow(): void {
+  const winCfg = windowRegistry['uniformColor'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.close();
+    return;
+  }
+
+  // 1. 오버레이와 동일한 옵션으로 창 생성
+  const win = new BrowserWindow(getStandardOptions(winCfg.width, winCfg.height));
+  winCfg.ref = win;
+  attachStackListeners(win);
+  win.loadFile(path.join(__dirname, '..', winCfg.html));
+
+  // 2. 오버레이와 동일하게 WebContentsView 즉시 생성 및 부착
+  uniformColorView = new WebContentsView({
+    webPreferences: {
+      backgroundThrottling: false,
+      preload: path.join(__dirname, '..', 'overlay-view-preload.js')
+    }
+  });
+  win.contentView.addChildView(uniformColorView);
+
+  // 3. 레이아웃 배치 (헤더 56px, 푸터 28px 제외)
+  const b = win.getContentBounds();
+  uniformColorView.setBounds({ x: 0, y: 56, width: b.width, height: b.height - 56 - 28 });
+
+  // 4. URL 로드 및 CSS 주입 (오버레이 방식)
+  uniformColorView.webContents.loadURL('https://twsnowflower.github.io/uniform_color/spin.html');
+  uniformColorView.webContents.on('did-finish-load', () => {
+    if (uniformColorView) {
+      uniformColorView.webContents.insertCSS('body { overflow: hidden !important; margin-top: -79px !important; margin-left: 0px !important; background: #0f121e !important; }', { cssOrigin: 'user' });
+    }
+  });
+
+  win.once('ready-to-show', () => {
+    if (gameRect) {
+      const { x, y } = winCfg.calcPosition
+        ? winCfg.calcPosition(gameRect, winCfg.pos)
+        : { x: Math.round(gameRect.x + gameRect.width + winCfg.pos.offsetX), y: Math.round(gameRect.y + winCfg.pos.offsetY) };
+      win.setPosition(x, y);
+    }
+    if (IS_DEV) {
+      win.webContents.openDevTools({ mode: 'detach' });
+      uniformColorView?.webContents.openDevTools({ mode: 'detach' });
+    }
+    win.show();
+  });
+
+  win.on('move', () => {
+    if (consumeProgrammaticMove('uniformColor') || !winCfg.ref || !gameRect) return;
+    const b = winCfg.ref.getBounds();
+    winCfg.pos = { offsetX: b.x - (gameRect.x + gameRect.width), offsetY: b.y - gameRect.y };
+    savePosition('uniformColor', winCfg.pos);
+  });
+
+  win.on('closed', () => {
+    if (uniformColorView) {
+      try { uniformColorView.webContents.close(); } catch (e) { }
+      uniformColorView = null;
+    }
+    winCfg.ref = null;
+  });
+}
 export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
 export function toggleContentsCheckerWindow(): void {
   createToggleableWindow('contentsChecker', {

@@ -80,6 +80,7 @@ export function register(): void {
     'toggle-evolution-calculator': wm.toggleEvolutionCalculatorWindow,
     'toggle-magic-stone-calculator': wm.toggleMagicStoneCalculatorWindow,
     'toggle-custom-alert': wm.toggleCustomAlertWindow,
+    'toggle-uniform-color': wm.toggleUniformColorWindow,
     'toggle-diary': wm.toggleDiaryWindow,
   };
 

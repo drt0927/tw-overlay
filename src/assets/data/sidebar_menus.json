@@ -96,6 +96,14 @@
     "api": "toggleDiary"
   },
   {
+    "id": "uniform-color-btn",
+    "label": "제복 색상 시뮬레이터",
+    "icon": "palette",
+    "tooltip": "제복 색상 시뮬레이터 (twsnowflower)",
+    "color": "rose-400",
+    "api": "toggleUniformColor"
+  },
+  {
     "id": "home-btn",
     "label": "홈 페이지",
     "icon": "home",

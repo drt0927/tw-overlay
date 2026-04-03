@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
   toggleMagicStoneCalculator: () => ipcRenderer.send('toggle-magic-stone-calculator'),
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
+  toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
   contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),

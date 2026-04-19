@@ -62,6 +62,13 @@ export function initDb(): void {
         time TEXT NOT NULL,
         FOREIGN KEY (date) REFERENCES diaries(date)
       );
+
+      CREATE TABLE IF NOT EXISTS shout_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp INTEGER NOT NULL, -- Unix Timestamp
+        sender TEXT NOT NULL,
+        message TEXT NOT NULL
+      );
     `);
     log('[DiaryDB] Database initialized successfully.');
   } catch (error) {
@@ -323,7 +330,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
 
   // 1. 기본 로그 가져오기
   const logs = db.prepare("SELECT date, type, content FROM activity_logs WHERE date LIKE ?").all(`${yearMonth}-%`) as { date: string, type: string, content: string }[];
-  
+
   // 2. 출석일수 (활동 로그가 있는 고유 날짜 수)
   const attendanceDays = new Set(logs.map(l => l.date)).size;
 
@@ -397,4 +404,50 @@ export function getMonthlyStatistics(yearMonth: string): any {
     heatmap: heatmapList,
     grade
   };
+}
+
+/** 
+ * 외치기 기록을 추가합니다. 
+ * 추가 시 24시간이 지난 기록은 자동으로 삭제하여 데이터베이스 크기를 유지합니다.
+ */
+export function addShoutLog(sender: string, message: string): void {
+  if (!db) initDb();
+  if (!db) return;
+
+  const now = Math.floor(Date.now() / 1000); // Unix Timestamp (seconds)
+  const oneDayAgo = now - (24 * 60 * 60);
+
+  const transaction = db.transaction(() => {
+    // 1. 오래된 기록 삭제 (24시간 경과)
+    db!.prepare('DELETE FROM shout_history WHERE timestamp < ?').run(oneDayAgo);
+
+    // 2. 새 기록 추가
+    const stmt = db!.prepare('INSERT INTO shout_history (timestamp, sender, message) VALUES (?, ?, ?)');
+    stmt.run(now, sender, message);
+  });
+  transaction();
+}
+
+/** 
+ * 최근 N시간 동안의 외치기 기록을 가져옵니다. (검색어 지원)
+ */
+export function getShoutHistory(hours: number = 24, searchQuery: string = ''): any[] {
+  if (!db) initDb();
+  if (!db) return [];
+
+  const since = Math.floor(Date.now() / 1000) - (hours * 60 * 60);
+
+  if (searchQuery.trim()) {
+    const stmt = db.prepare(`
+      SELECT * FROM shout_history 
+      WHERE timestamp > ? 
+      AND (message LIKE ? OR sender LIKE ?)
+      ORDER BY timestamp DESC
+    `);
+    const s = `%${searchQuery.trim()}%`;
+    return stmt.all(since, s, s);
+  } else {
+    const stmt = db.prepare('SELECT * FROM shout_history WHERE timestamp > ? ORDER BY timestamp DESC');
+    return stmt.all(since);
+  }
 }

@@ -239,20 +239,30 @@
     let config = null;
     let soundFiles = [];
     let currentFormType = 'daily';
+    let _soundReady = false;
 
     window.onload = async () => {
       soundFiles = await window.loadSoundList();
       const sel = document.getElementById('form-sound');
-      soundFiles.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.file; opt.textContent = s.name;
-        sel.appendChild(opt);
-      });
+      if (sel) {
+        sel.innerHTML = '';
+        soundFiles.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.file; opt.textContent = s.name;
+          sel.appendChild(opt);
+        });
+      }
+      _soundReady = true;
+      if (config) render(); // 설정 데이터가 이미 와 있다면 즉시 렌더링
+      
       window.bindEscapeClose();
       window.refreshIcons();
     };
 
-    window.electronAPI.onConfigData((data) => { config = data; render(); });
+    window.electronAPI.onConfigData((data) => { 
+      config = data; 
+      if (_soundReady) render(); 
+    });
 
     // --- 타입 탭 전환 ---
     function setFormType(type) {

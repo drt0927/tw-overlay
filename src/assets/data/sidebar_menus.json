@@ -16,6 +16,14 @@
     "api": "toggleTrade"
   },
   {
+    "id": "shout-history-btn",
+    "label": "외치기 히스토리",
+    "icon": "message-square-more",
+    "tooltip": "최근 24시간 외치기 기록",
+    "color": "purple-400",
+    "api": "toggleShoutHistory"
+  },
+  {
     "id": "abbreviation-btn",
     "label": "약어 사전",
     "icon": "book-open",

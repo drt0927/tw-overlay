@@ -19,6 +19,9 @@ import * as trade from './modules/tradeMonitor';
 import * as sm from './modules/shortcutManager';
 import { analytics } from './modules/analytics';
 import * as diaryDb from './modules/diaryDb';
+import { findChatLogPath } from './modules/chatLogPathFinder';
+import { chatLogManager } from './modules/chatLogManager';
+import { chatLogProcessor } from './modules/chatLogProcessor';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
@@ -74,6 +77,16 @@ app.whenReady().then(() => {
   }, 5000);
 
   const cfg = config.load();
+  
+  // 채팅 로그 경로 자동 탐색 및 설정 (비어있을 경우에만)
+  if (!cfg.chatLogPath) {
+    const foundPath = findChatLogPath();
+    if (foundPath) {
+      config.save({ chatLogPath: foundPath });
+      log(`[CHAT_LOG] 로그 경로 자동 설정 완료: ${foundPath}`);
+    }
+  }
+
   if (cfg.overlayVisible !== false) wm.setOverlayVisible(true);
 
   if (cfg.autoLaunch !== undefined) {
@@ -82,6 +95,10 @@ app.whenReady().then(() => {
 
   gallery.start(null, sidebar);
   trade.start(sidebar);
+
+  // 채팅 로그 감시 시스템 시작
+  chatLogProcessor.start();
+  chatLogManager.start();
 
   wm.onOverlayWindowReady(() => {
     gallery.updateWindows(wm.getOverlayWindow(), wm.getMainWindow(), wm.getGalleryWindow());

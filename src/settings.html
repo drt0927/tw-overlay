@@ -208,6 +208,9 @@
         <div class="nav-item" onclick="showSection('trade', this)">
           <i data-lucide="store" class="w-4 h-4"></i> 거래 게시판
         </div>
+        <div class="nav-item" onclick="showSection('chatlog', this)">
+          <i data-lucide="message-square-more" class="w-4 h-4"></i> 채팅 로그 설정
+        </div>
 
         <div class="nav-item" onclick="showSection('slots', this)">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
@@ -289,7 +292,8 @@
               <label class="section-label flex items-center gap-2 mb-4">
                 <i data-lucide="list-checks" class="w-4 h-4 text-purple-400"></i> 사이드바 메뉴 관리
               </label>
-              <div id="menu-management-grid" class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
+              <div id="menu-management-grid"
+                class="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
                 <!-- 동적으로 생성됨 -->
               </div>
               <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 체크 해제 시 사이드바에서 해당 메뉴가 숨겨집니다.</p>
@@ -310,13 +314,17 @@
                 <div class="flex items-center gap-2">
                   <i data-lucide="check-square" class="w-4 h-4 text-cyan-400"></i> 숙제 체크리스트 효과음 볼륨
                 </div>
-                <button id="mute-contents-checker" class="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-white/5 border border-white/10 transition-colors flex items-center gap-1" onclick="toggleMute('contents-checker')">
+                <button id="mute-contents-checker"
+                  class="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-white/5 border border-white/10 transition-colors flex items-center gap-1"
+                  onclick="toggleMute('contents-checker')">
                   <i data-lucide="volume-x" class="w-3.5 h-3.5"></i> 음소거
                 </button>
               </label>
               <div class="flex items-center gap-4">
-                <input type="range" id="volume-contents-checker" min="0" max="100" class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-cyan-500">
-                <span id="volume-contents-checker-val" class="text-xs font-bold text-cyan-400 w-12 text-right">50%</span>
+                <input type="range" id="volume-contents-checker" min="0" max="100"
+                  class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-cyan-500">
+                <span id="volume-contents-checker-val"
+                  class="text-xs font-bold text-cyan-400 w-12 text-right">50%</span>
               </div>
               <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 개별 숙제 완료 시 재생되는 소리의 크기입니다.</p>
             </div>
@@ -326,12 +334,15 @@
                 <div class="flex items-center gap-2">
                   <i data-lucide="calculator" class="w-4 h-4 text-orange-400"></i> 계산기 및 일지 기록 효과음 볼륨
                 </div>
-                <button id="mute-calculators" class="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-white/5 border border-white/10 transition-colors flex items-center gap-1" onclick="toggleMute('calculators')">
+                <button id="mute-calculators"
+                  class="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-white/5 border border-white/10 transition-colors flex items-center gap-1"
+                  onclick="toggleMute('calculators')">
                   <i data-lucide="volume-x" class="w-3.5 h-3.5"></i> 음소거
                 </button>
               </label>
               <div class="flex items-center gap-4">
-                <input type="range" id="volume-calculators" min="0" max="100" class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-orange-500">
+                <input type="range" id="volume-calculators" min="0" max="100"
+                  class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-orange-500">
                 <span id="volume-calculators-val" class="text-xs font-bold text-orange-400 w-12 text-right">50%</span>
               </div>
               <p class="text-[10px] text-slate-500 font-bold italic ml-1">* 마정석/보스 일지 기록 시 재생되는 소리의 크기입니다.</p>
@@ -450,8 +461,163 @@
               <div id="trade-keyword-list"
                 class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[120px] align-content-start">
               </div>
-              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1">* 거래게시판의 제목에 등록된 키워드가 포함된 경우 알림을 발송합니다.
+              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1 flex items-center gap-1">
+                <i data-lucide="info" class="w-3 h-3 text-emerald-500"></i>
+                * <span class="text-emerald-500/80">부분 일치(포함 검색):</span> 제목에 키워드가 포함되기만 하면 알림이 발송됩니다.
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-1. 채팅 로그 설정 (신설) -->
+      <div id="section-chatlog" class="settings-section space-y-8 hidden">
+        <div class="settings-group">
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="message-square-more"
+              class="w-5 h-5 text-indigo-500"></i> 테일즈위버 채팅 로그 설정</h2>
+          <div class="space-y-6">
+            <!-- 로그 경로 설정 -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2">
+                <i data-lucide="folder-search" class="w-4 h-4 text-indigo-400"></i> 채팅 로그 폴더 경로
+              </label>
+              <div class="flex gap-2">
+                <input type="text" id="chat-log-path-input"
+                  class="input-field flex-1 py-3 px-4 bg-black/40 text-xs text-slate-400" placeholder="자동 탐색 중..."
+                  readonly>
+                <button onclick="selectLogFolder()"
+                  class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition-all text-xs flex items-center gap-2">
+                  <i data-lucide="folder-open" class="w-3.5 h-3.5"></i> 폴더 선택
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-500 italic ml-1">* 테일즈위버가 설치된 폴더 내의 ChatLog 폴더를 선택해주세요.</p>
+            </div>
+
+            <!-- 득템 알림 키워드 -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="gem" class="w-4 h-4 text-indigo-400"></i> 득템 알림 및 모험일지 기록 키워드
+              </label>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="loot-keyword-input" class="input-field flex-1 py-3 px-4 bg-black/40"
+                  placeholder="예: 에오니스, 파편, 조각..." onkeypress="if(event.key==='Enter')addLootKeyword()">
+                <button onclick="addLootKeyword()"
+                  class="btn-primary !bg-indigo-600 hover:!bg-indigo-500 px-6 font-black shadow-lg shadow-indigo-900/20">추가</button>
+              </div>
+              <div id="loot-keyword-list"
+                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start">
+              </div>
+              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1 flex items-center gap-1">
+                <i data-lucide="info" class="w-3 h-3 text-indigo-400"></i>
+                * <span class="text-indigo-400/80">부분 일치(포함 검색):</span> 아이템 이름에 키워드가 포함되면 알림이 울리고 일지에 기록됩니다.
+              </p>
+            </div>
+
+            <!-- 인게임 외치기 알림 키워드 (추가) -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
+              <label class="section-label flex items-center gap-2 mb-4">
+                <i data-lucide="message-square-more" class="w-4 h-4 text-purple-400"></i> 인게임 외치기(Shout) 알림 키워드
+              </label>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="shout-keyword-input" class="input-field flex-1 py-3 px-4 bg-black/40"
+                  placeholder="예: 급처, 훈장, 수영석..." onkeypress="if(event.key==='Enter')addShoutKeyword()">
+                <button onclick="addShoutKeyword()"
+                  class="btn-primary px-6 font-black shadow-lg shadow-purple-900/20">추가</button>
+              </div>
+              <div id="shout-keyword-list"
+                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start">
+              </div>
+              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1 flex items-center gap-1">
+                <i data-lucide="info" class="w-3 h-3 text-purple-400"></i>
+                * <span class="text-purple-400/80">부분 일치(포함 검색):</span> 외치기 내용에 키워드가 포함되면 알림을 발송합니다.
+              </p>
+            </div>
+
+            <!-- 경험치 HUD 설정 -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
+                <input type="checkbox" id="show-xp-widget-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">경험치 HUD
+                    표시</span>
+                  <p class="text-[10px] text-slate-500 mt-0.5">게임 화면 위에 실시간 획득 경험치 및 시급 정보를 띄웁니다.</p>
+                </div>
+              </label>
+
+              <div id="xp-pos-controls" class="pl-4 space-y-4 transition-all">
+                <div class="grid grid-cols-2 gap-6">
+                  <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-2 block ml-1">좌측
+                      여백 (Left)</label>
+                    <div class="relative">
+                      <input type="number" id="xp-pos-left"
+                        class="input-field w-full py-2.5 px-4 bg-black/40 pr-10 text-xs">
+                      <span
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold">px</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-2 block ml-1">하단
+                      여백 (Bottom)</label>
+                    <div class="relative">
+                      <input type="number" id="xp-pos-bottom"
+                        class="input-field w-full py-2.5 px-4 bg-black/40 pr-10 text-xs">
+                      <span
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold">px</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex justify-end">
+                  <button onclick="applyXpHudSettings()"
+                    class="text-[10px] font-black bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-4 py-2 rounded-xl border border-purple-500/20 transition-all active:scale-95 flex items-center gap-1.5">
+                    <i data-lucide="check" class="w-3 h-3"></i> 위치 즉시 적용
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 마법진 알림 -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" id="magic-circle-alert-input" class="w-5 h-5 accent-indigo-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">긴급 회피 알림
+                    (마법진)</span>
+                  <p class="text-[10px] text-slate-500 mt-0.5">"발 밑에 마법진이 나타났다!" 메시지 감지 시 즉시 알림</p>
+                </div>
+              </label>
+
+              <!-- 경고음 선택 -->
+              <div class="pl-12 flex items-center gap-4">
+                <div class="flex-1">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-1.5 block ml-1">알림
+                    경고음 선택</label>
+                  <select id="magic-circle-sound-select" class="input-field w-full py-2 px-3 bg-black/40 text-xs">
+                    <!-- 사운드 목록 동적 로드 -->
+                  </select>
+                </div>
+                <button onclick="previewMagicCircleSound()"
+                  class="mt-5 p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/20 transition-all active:scale-95"
+                  title="미리듣기">
+                  <i data-lucide="play" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 게임 내 채팅 로그 설정 가이드 -->
+            <div class="p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 space-y-4">
+              <h3 class="text-sm font-black text-indigo-400 flex items-center gap-2">
+                <i data-lucide="help-circle" class="w-4 h-4"></i> 채팅 로그가 작동하지 않나요?
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                테일즈위버 게임 내 <b>[옵션(O) > 게임 > 인터페이스]</b> 탭에서 <b>채팅 로그</b> 항목이 <b>ON</b>으로 설정되어 있어야 실시간 분석이 가능합니다.
+              </p>
+              <div class="rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50">
+                <img src="assets/img/chat-log.png" alt="채팅 로그 설정 가이드"
+                  class="w-full h-auto opacity-80 hover:opacity-100 transition-opacity">
+              </div>
             </div>
           </div>
         </div>
@@ -675,7 +841,8 @@
                 </div>
                 <p id="update-status-desc" class="text-[11px] text-slate-500 font-bold"></p>
                 <!-- 릴리즈 노트 영역 추가 -->
-                <div id="update-release-notes" class="hidden mt-3 p-4 bg-black/40 rounded-xl border border-white/5 max-h-48 overflow-y-auto custom-scroll text-[11px] leading-relaxed text-slate-400 whitespace-pre-wrap font-medium">
+                <div id="update-release-notes"
+                  class="hidden mt-3 p-4 bg-black/40 rounded-xl border border-white/5 max-h-48 overflow-y-auto custom-scroll text-[11px] leading-relaxed text-slate-400 whitespace-pre-wrap font-medium">
                 </div>
               </div>
             </div>
@@ -735,12 +902,101 @@
     let currentSlots = [];
     let currentKeywords = [];
     let tradeKeywordsList = [];
+    let lootKeywordsList = [];
     let activeEditIndex = -1;
     let ALL_ICONS = [];
     let dragSrcIndex = -1;
     let soundFiles = [];
     let loadedMenus = []; // 동적으로 로드된 메뉴 데이터
     let lastConfig = null; // 마지막으로 수신된 설정 데이터
+
+    async function selectLogFolder() {
+      const result = await window.electronAPI.openChatLogFolderDialog();
+      if (result) {
+        document.getElementById('chat-log-path-input').value = result;
+      }
+    }
+
+    function renderLootKeywordList() {
+      const list = document.getElementById('loot-keyword-list');
+      if (!list) return;
+      list.innerHTML = '';
+      if (lootKeywordsList.length === 0) {
+        list.innerHTML = '<span class="text-xs text-slate-600 p-2">등록된 득템 키워드가 없습니다.</span>';
+        return;
+      }
+      lootKeywordsList.forEach((kw, i) => {
+        const span = document.createElement('span');
+        span.className = 'keyword-tag !border-indigo-500/30 !text-indigo-400 !bg-indigo-500/10';
+        span.innerHTML = `${kw} <button onclick="removeLootKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+        list.appendChild(span);
+      });
+      window.refreshIcons();
+    }
+
+    function addLootKeyword() {
+      const input = document.getElementById('loot-keyword-input');
+      const val = input.value.trim();
+      if (val && !lootKeywordsList.includes(val)) {
+        lootKeywordsList.push(val);
+        renderLootKeywordList();
+        input.value = '';
+      }
+    }
+
+    function removeLootKeyword(index) {
+      lootKeywordsList.splice(index, 1);
+      renderLootKeywordList();
+    }
+
+    function renderShoutKeywordList() {
+      const list = document.getElementById('shout-keyword-list');
+      if (!list) return;
+      list.innerHTML = '';
+      if (shoutKeywordsList.length === 0) {
+        list.innerHTML = '<span class="text-xs text-slate-600 p-2">등록된 외치기 키워드가 없습니다.</span>';
+        return;
+      }
+      shoutKeywordsList.forEach((kw, i) => {
+        const span = document.createElement('span');
+        span.className = 'keyword-tag !border-purple-500/30 !text-purple-400 !bg-purple-500/10';
+        span.innerHTML = `${kw} <button onclick="removeShoutKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+        list.appendChild(span);
+      });
+      window.refreshIcons();
+    }
+
+    function addShoutKeyword() {
+      const input = document.getElementById('shout-keyword-input');
+      const val = input.value.trim();
+      if (val && !shoutKeywordsList.includes(val)) {
+        shoutKeywordsList.push(val);
+        renderShoutKeywordList();
+        input.value = '';
+      }
+    }
+
+    function removeShoutKeyword(index) {
+      shoutKeywordsList.splice(index, 1);
+      renderShoutKeywordList();
+    }
+
+    function applyXpHudSettings() {
+      const leftInput = document.getElementById('xp-pos-left');
+      const bottomInput = document.getElementById('xp-pos-bottom');
+      
+      const leftVal = parseInt(leftInput.value);
+      const bottomVal = parseInt(bottomInput.value);
+
+      const settings = {
+        showXpWidget: document.getElementById('show-xp-widget-input').checked,
+        xpWidgetPos: {
+          left: isNaN(leftVal) ? 200 : leftVal,
+          bottom: isNaN(bottomVal) ? 0 : bottomVal
+        }
+      };
+      window.electronAPI.applySettings(settings);
+    }
 
     // --- 사운드 관리 기능 ---
     let prevVolumes = {
@@ -921,12 +1177,32 @@
 
     async function initSettings() {
       soundFiles = await window.loadSoundList();
+
+      // 마법진 사운드 목록 채우기
+      const soundSelect = document.getElementById('magic-circle-sound-select');
+      if (soundSelect && soundFiles.length > 0) {
+        soundSelect.innerHTML = '';
+        soundFiles.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.file;
+          opt.innerText = s.name;
+          soundSelect.appendChild(opt);
+        });
+      }
+
       window.bindEscapeClose();
       initIconList();
       await initDynamicMenuManagement();
       await checkOptimizeStatus();
       _initReady = true;
       hideLoading();
+    }
+
+    function previewMagicCircleSound() {
+      const soundFile = document.getElementById('magic-circle-sound-select').value;
+      if (soundFile) {
+        window.electronAPI.playSound(soundFile, 100);
+      }
     }
 
     async function initDynamicMenuManagement() {
@@ -1038,7 +1314,7 @@
         volContentsEl.value = volContents;
         volContentsVal.innerText = volContents + '%';
         if (volContents > 0) prevVolumes['contents-checker'] = volContents;
-        
+
         volContentsEl.oninput = (e) => {
           const val = e.target.value;
           volContentsVal.innerText = val + '%';
@@ -1070,6 +1346,18 @@
       currentSlots = JSON.parse(JSON.stringify(config.quickSlots || []));
       currentKeywords = JSON.parse(JSON.stringify(config.galleryKeywords || []));
       tradeKeywordsList = JSON.parse(JSON.stringify(config.tradeKeywords || []));
+      lootKeywordsList = JSON.parse(JSON.stringify(config.lootKeywords || []));
+      shoutKeywordsList = JSON.parse(JSON.stringify(config.shoutKeywords || []));
+
+      // 채팅 로그 설정 로드
+      document.getElementById('chat-log-path-input').value = config.chatLogPath || '';
+      document.getElementById('show-xp-widget-input').checked = config.showXpWidget !== false;
+      document.getElementById('xp-pos-left').value = config.xpWidgetPos?.left ?? 200;
+      document.getElementById('xp-pos-bottom').value = config.xpWidgetPos?.bottom ?? 0;
+      document.getElementById('magic-circle-alert-input').checked = !!config.enableMagicCircleAlert;
+      if (config.magicCircleAlertSound) {
+        document.getElementById('magic-circle-sound-select').value = config.magicCircleAlertSound;
+      }
 
       // 단축키 설정 로드
       if (config.shortcuts) {
@@ -1088,6 +1376,8 @@
       renderEditList();
       renderKeywordList();
       renderTradeKeywordList();
+      renderLootKeywordList();
+      renderShoutKeywordList();
 
       // 앱 버전 가져오기
       window.electronAPI.getAppVersion().then(v => {
@@ -1442,7 +1732,19 @@
 
           // 사운드 설정
           volumeContentsChecker: parseInt(document.getElementById('volume-contents-checker').value),
-          volumeCalculators: parseInt(document.getElementById('volume-calculators').value)
+          volumeCalculators: parseInt(document.getElementById('volume-calculators').value),
+
+          // 채팅 로그 설정
+          chatLogPath: document.getElementById('chat-log-path-input').value,
+          lootKeywords: lootKeywordsList,
+          shoutKeywords: shoutKeywordsList,
+          showXpWidget: document.getElementById('show-xp-widget-input').checked,
+          xpWidgetPos: {
+            left: parseInt(document.getElementById('xp-pos-left').value) || 0,
+            bottom: parseInt(document.getElementById('xp-pos-bottom').value) || 0
+          },
+          enableMagicCircleAlert: document.getElementById('magic-circle-alert-input').checked,
+          magicCircleAlertSound: document.getElementById('magic-circle-sound-select').value
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);

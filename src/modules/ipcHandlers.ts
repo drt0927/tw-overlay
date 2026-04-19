@@ -1,7 +1,7 @@
 /**
  * IPC 이벤트 핸들러 모듈
  */
-import { ipcMain, shell, app, BrowserWindow } from 'electron';
+import { ipcMain, shell, app, BrowserWindow, dialog } from 'electron';
 import * as config from './config';
 import { AppConfig, QuickSlotItem } from './constants';
 import * as wm from './windowManager';
@@ -226,6 +226,16 @@ export function register(): void {
     if (!isValidYearMonth(yearMonth)) return null;
     return diaryDb.getMonthlyStatistics(yearMonth);
   });
+  ipcMain.handle('diary-get-shout-history', (_e, hours: number, searchQuery: string) => {
+    return diaryDb.getShoutHistory(hours || 24, searchQuery || '');
+  });
+  ipcMain.on('toggle-shout-history', () => {
+    wm.toggleShoutHistoryWindow();
+  });
+  ipcMain.on('play-sound', (_e, { file, volume }) => {
+    const sidebar = wm.getMainWindow();
+    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName: '미리보기', soundFile: file, volume });
+  });
   ipcMain.on('diary-add-activity', (_e, date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string) => {
     if (!isValidDate(date) || typeof time !== 'string' || !validActivityTypes.includes(type) || typeof content !== 'string') return;
     diaryDb.addActivityLog(date, time, type, content);
@@ -251,6 +261,22 @@ export function register(): void {
   ipcMain.handle('backup-import', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     return win ? await backup.importBackup(win) : false;
+  });
+
+  // 채팅 로그 폴더 선택 다이얼로그
+  ipcMain.handle('dialog:openChatLogFolder', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory'],
+      title: '테일즈위버 ChatLog 폴더 선택'
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+    return result.filePaths[0];
   });
 
   ipcMain.on('close-app', () => { app.quit(); });

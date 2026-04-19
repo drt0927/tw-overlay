@@ -126,6 +126,15 @@ export interface AppConfig {
     lastContentsResetCheck?: number;
     shortcuts?: ShortcutsConfig;
     customAlerts?: CustomAlert[];
+
+    // --- Chat Log Settings ---
+    chatLogPath?: string;
+    lootKeywords?: string[];
+    shoutKeywords?: string[];
+    showXpWidget?: boolean;
+    xpWidgetPos?: { left: number; bottom: number };
+    enableMagicCircleAlert?: boolean;
+    magicCircleAlertSound?: string;
     
     // --- Sound Settings ---
     volumeContentsChecker?: number;

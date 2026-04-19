@@ -89,6 +89,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   backupExport: () => ipcRenderer.invoke('backup-export'),
   backupImport: () => ipcRenderer.invoke('backup-import'),
 
+  // 채팅 로그
+  openChatLogFolderDialog: () => ipcRenderer.invoke('dialog:openChatLogFolder'),
+  getShoutHistory: (hours: number, searchQuery: string) => ipcRenderer.invoke('diary-get-shout-history', hours, searchQuery),
+  toggleShoutHistory: () => ipcRenderer.send('toggle-shout-history'),
+  playSound: (file: string, volume: number) => ipcRenderer.send('play-sound', { file, volume }),
+
   // 이벤트 리스너 (중복 등록 방지를 위해 기존 리스너 제거 후 재등록)
   onSidebarStatus: (callback: (isCollapsed: boolean) => void) => {
     ipcRenderer.removeAllListeners('sidebar-status');
@@ -174,6 +180,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('diary-updated');
     ipcRenderer.on('diary-updated', () => callback());
   },
+  onEmergencyUiAlert: (callback: (message: string) => void) => {
+    ipcRenderer.removeAllListeners('emergency-ui-alert');
+    ipcRenderer.on('emergency-ui-alert', (_event, message) => callback(message));
+  },
+  onXpUpdate: (callback: (data: { total: number, epm: number, lastGain: number }) => void) => {
+    ipcRenderer.removeAllListeners('xp-update');
+    ipcRenderer.on('xp-update', (_event, data) => callback(data));
+  },
+  onShoutHistoryUpdated: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('shout-history-updated');
+    ipcRenderer.on('shout-history-updated', () => callback());
+  },
 
   cleanupAllListeners: () => {
     const events = [
@@ -182,8 +200,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
-      'incomplete-contents', 'diary-updated'
+      'incomplete-contents', 'diary-updated', 'emergency-ui-alert', 'xp-update'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }
-});
+  });

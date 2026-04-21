@@ -577,35 +577,6 @@
               </div>
             </div>
 
-            <!-- 마법진 알림 -->
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
-              <label
-                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-indigo-500/30 transition-all">
-                <input type="checkbox" id="magic-circle-alert-input" class="w-5 h-5 accent-indigo-600">
-                <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">긴급 회피 알림
-                    (마법진)</span>
-                  <p class="text-[10px] text-slate-500 mt-0.5">"발 밑에 마법진이 나타났다!" 메시지 감지 시 즉시 알림</p>
-                </div>
-              </label>
-
-              <!-- 경고음 선택 -->
-              <div class="pl-12 flex items-center gap-4">
-                <div class="flex-1">
-                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-1.5 block ml-1">알림
-                    경고음 선택</label>
-                  <select id="magic-circle-sound-select" class="input-field w-full py-2 px-3 bg-black/40 text-xs">
-                    <!-- 사운드 목록 동적 로드 -->
-                  </select>
-                </div>
-                <button onclick="previewMagicCircleSound()"
-                  class="mt-5 p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/20 transition-all active:scale-95"
-                  title="미리듣기">
-                  <i data-lucide="play" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-
             <!-- 게임 내 채팅 로그 설정 가이드 -->
             <div class="p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 space-y-4">
               <h3 class="text-sm font-black text-indigo-400 flex items-center gap-2">
@@ -817,7 +788,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.10.6</span></p>
+                        class="text-purple-400">1.11.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1178,31 +1149,12 @@
     async function initSettings() {
       soundFiles = await window.loadSoundList();
 
-      // 마법진 사운드 목록 채우기
-      const soundSelect = document.getElementById('magic-circle-sound-select');
-      if (soundSelect && soundFiles.length > 0) {
-        soundSelect.innerHTML = '';
-        soundFiles.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.file;
-          opt.innerText = s.name;
-          soundSelect.appendChild(opt);
-        });
-      }
-
       window.bindEscapeClose();
       initIconList();
       await initDynamicMenuManagement();
       await checkOptimizeStatus();
       _initReady = true;
       hideLoading();
-    }
-
-    function previewMagicCircleSound() {
-      const soundFile = document.getElementById('magic-circle-sound-select').value;
-      if (soundFile) {
-        window.electronAPI.playSound(soundFile, 100);
-      }
     }
 
     async function initDynamicMenuManagement() {
@@ -1354,10 +1306,6 @@
       document.getElementById('show-xp-widget-input').checked = config.showXpWidget !== false;
       document.getElementById('xp-pos-left').value = config.xpWidgetPos?.left ?? 200;
       document.getElementById('xp-pos-bottom').value = config.xpWidgetPos?.bottom ?? 0;
-      document.getElementById('magic-circle-alert-input').checked = !!config.enableMagicCircleAlert;
-      if (config.magicCircleAlertSound) {
-        document.getElementById('magic-circle-sound-select').value = config.magicCircleAlertSound;
-      }
 
       // 단축키 설정 로드
       if (config.shortcuts) {
@@ -1742,9 +1690,7 @@
           xpWidgetPos: {
             left: parseInt(document.getElementById('xp-pos-left').value) || 0,
             bottom: parseInt(document.getElementById('xp-pos-bottom').value) || 0
-          },
-          enableMagicCircleAlert: document.getElementById('magic-circle-alert-input').checked,
-          magicCircleAlertSound: document.getElementById('magic-circle-sound-select').value
+          }
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);

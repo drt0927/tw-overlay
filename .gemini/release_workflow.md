@@ -37,9 +37,18 @@
     - **Fixed**: 버그 수정 내역.
 
 ### 4. 배포 및 태깅 (GitHub)
+> **⚠️ 주의**: Windows PowerShell 환경에서는 `&&` 연산자가 오류를 발생시킬 수 있으므로, 아래 명령어들을 반드시 **한 줄씩 순차적으로** 실행하세요.
+
 - [ ] **로컬 테스트**: `npm run dist`를 실행하여 생성된 `.exe` 설치 파일로 최종 검증.
-- [ ] **Git 커밋**: "chore: release vX.X.X" 메시지로 변경 사항 커밋.
-- [ ] **태그 생성**: `git tag vX.X.X` 실행.
-- [ ] **푸시**: `git push origin main --tags` 실행. (GitHub Actions가 자동으로 빌드 및 드래프트 릴리즈 생성)
+- [ ] **Git 스테이징**: `git add .`
+- [ ] **Git 커밋**: `git commit -m "chore: release vX.X.X"` (이미 작업 브랜치에서 완료했다면 생략 가능)
+- [ ] **Main 브랜치 병합**:
+    1. `git checkout main`
+    2. `git merge <작업-브랜치명>` (예: `git merge feature/chat-log`)
+- [ ] **버전 태그 생성**:
+    - 만약 기존에 잘못 생성된 태그가 있다면 삭제: `git tag -d vX.X.X`
+    - 신규 태그 생성: `git tag vX.X.X`
+- [ ] **원격 푸시**: `git push origin main --tags`
+    - 이 명령이 실행되면 GitHub Actions가 자동으로 빌드 및 드래프트 릴리즈를 생성합니다.
 
 ---

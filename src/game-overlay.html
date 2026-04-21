@@ -14,48 +14,6 @@
       pointer-events: none;
     }
 
-    /* 긴급 알림 배너 */
-    .emergency-banner {
-      position: fixed;
-      left: 50%;
-      bottom: 20%;
-      transform: translateX(-50%) translateY(100px);
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(185, 28, 28, 0.95));
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 12px 30px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.4);
-      z-index: 10000;
-      opacity: 0;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .emergency-banner.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    .emergency-icon {
-      animation: pulse-red 1s infinite;
-    }
-
-    @keyframes pulse-red {
-
-      0%,
-      100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-      }
-
-      50% {
-        transform: scale(1.2);
-        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
-      }
-    }
-
     /* 경험치 위젯 (좌측 하단 100px 위 배치) */
     .xp-hud {
       position: fixed;
@@ -81,17 +39,6 @@
 </head>
 
 <body class="select-none">
-
-  <!-- Emergency Banner -->
-  <div id="emergency-banner" class="emergency-banner">
-    <div class="emergency-icon flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
-      <i data-lucide="zap-off" class="w-6 h-6 text-white"></i>
-    </div>
-    <div class="flex flex-col">
-      <span class="text-xs font-black text-white/70 uppercase tracking-tighter">Emergency Alert</span>
-      <span id="emergency-msg" class="text-sm font-black text-white">발 밑에 마법진이 나타났다!</span>
-    </div>
-  </div>
 
   <!-- XP HUD -->
   <div id="xp-hud" class="xp-hud">
@@ -136,17 +83,6 @@
         hud.style.left = `${config.xpWidgetPos.left}px`;
         hud.style.bottom = `${config.xpWidgetPos.bottom}px`;
       }
-    });
-
-    // 긴급 알림 (마법진) 수신
-    window.electronAPI.onEmergencyUiAlert((msg) => {
-      const banner = document.getElementById('emergency-banner');
-      const msgEl = document.getElementById('emergency-msg');
-      msgEl.innerText = msg;
-      banner.classList.add('show');
-      if (alertTimer) clearTimeout(alertTimer);
-      alertTimer = setTimeout(() => { banner.classList.remove('show'); alertTimer = null; }, 3500);
-      refreshIcons();
     });
 
     // 경험치 데이터 수신

@@ -99,9 +99,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   lootKeywords: [],
   shoutKeywords: [],
   showXpWidget: true,
-  xpWidgetPos: { left: 200, bottom: 0 },
-  enableMagicCircleAlert: true,
-  magicCircleAlertSound: 'gongseubgyeongbo-gongseubgyeongbo.mp3'
+  xpWidgetPos: { left: 200, bottom: 0 }
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

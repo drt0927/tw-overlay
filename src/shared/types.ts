@@ -133,8 +133,6 @@ export interface AppConfig {
     shoutKeywords?: string[];
     showXpWidget?: boolean;
     xpWidgetPos?: { left: number; bottom: number };
-    enableMagicCircleAlert?: boolean;
-    magicCircleAlertSound?: string;
     
     // --- Sound Settings ---
     volumeContentsChecker?: number;

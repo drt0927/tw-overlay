@@ -180,10 +180,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('diary-updated');
     ipcRenderer.on('diary-updated', () => callback());
   },
-  onEmergencyUiAlert: (callback: (message: string) => void) => {
-    ipcRenderer.removeAllListeners('emergency-ui-alert');
-    ipcRenderer.on('emergency-ui-alert', (_event, message) => callback(message));
-  },
   onXpUpdate: (callback: (data: { total: number, epm: number, lastGain: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-update');
     ipcRenderer.on('xp-update', (_event, data) => callback(data));
@@ -200,7 +196,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
-      'incomplete-contents', 'diary-updated', 'emergency-ui-alert', 'xp-update'
+      'incomplete-contents', 'diary-updated', 'xp-update'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

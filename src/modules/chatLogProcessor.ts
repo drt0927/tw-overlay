@@ -58,29 +58,6 @@ chatParser.on('TRADE_SHOUT', (data: { timestamp: string, sender: string, message
       }
     });
 
-    // 4. 긴급 알림 (마법진)
-    chatParser.on('EMERGENCY_ALERT', (data: { timestamp: string, type: string, message: string }) => {
-      const cfg = config.load();
-      if (cfg.enableMagicCircleAlert) {
-        this.sendNotification('⚠️ 긴급 회피 경보', data.message, 'critical');
-        // 사운드 재생 (사용자 설정 사운드)
-        const sidebar = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().includes('index.html'));
-        if (sidebar) {
-          sidebar.webContents.send('play-boss-sound', { 
-            bossName: '긴급 위협!', 
-            soundFile: cfg.magicCircleAlertSound || 'gongseubgyeongbo-gongseubgyeongbo.mp3', 
-            volume: 100 
-          });
-        }
-// 게임 전용 오버레이 UI에 경고 표시
-const allWindows = BrowserWindow.getAllWindows();
-const gameOverlay = allWindows.find(w => w.webContents.getURL().includes('game-overlay.html'));
-if (gameOverlay) {
-  gameOverlay.webContents.send('emergency-ui-alert', data.message);
-}
-}
-});
-
 // 5. 경험치 변동
 chatParser.on('XP_CHANGED', (data: { timestamp: string, amount: number, message: string }) => {
 this._sessionXP += data.amount;

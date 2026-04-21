@@ -91,26 +91,20 @@ class ChatParser extends EventEmitter {
         }
     }
 
-    // C. 긴급 알림 (마법진)
-    if (cleanMsg.includes('발 밑에 마법진이 나타났다!')) {
-        this.emit('EMERGENCY_ALERT', { timestamp, type: 'MAGIC_CIRCLE', message: cleanMsg });
-        return;
-    }
-
     // D. 외치기
     if (rawLine.includes('color="#c896c8"') && cleanMsg.includes('외치기 :')) {
         const shoutContent = cleanMsg.replace('외치기 :', '').trim();
         
-        // 유저명 추출 시도 (보통 [유저명] 님 형식)
-        const userMatch = shoutContent.match(/\[(.*?)\]/);
-        const sender = userMatch ? userMatch[1] : 'Unknown';
+        // 유저명 추출 시도: 유저가 직접 발송한 외치기는 메시지 끝에 항상 [캐릭터명]이 붙습니다.
+        // 정규식: 줄 끝($)에 위치한 [캐릭터명]을 캡처 그룹으로 추출
+        const userShoutSuffixRegex = /\[([^\]]+)\]$/;
+        const userMatch = shoutContent.match(userShoutSuffixRegex);
 
-        // [시스템 외치기 필터링]: 유저가 직접 발송한 외치기는 메시지 끝에 항상 [캐릭터명]이 붙습니다.
-        // 시스템 자동 외치기(아이템 획득 알림 등)는 이 접미사가 없으므로 이를 통해 필터링합니다.
-        // 정규식: 대괄호로 감싸진 캐릭터명이 줄의 마지막에 위치하는지 검사
-        const userShoutSuffixRegex = /\[[^\]]+\]$/;
-        if (userShoutSuffixRegex.test(shoutContent)) {
-            this.emit('TRADE_SHOUT', { timestamp, sender, message: shoutContent });
+        if (userMatch) {
+            const sender = userMatch[1];
+            // 메시지 본문에서 끝의 [캐릭터명] 부분을 제거하여 순수 내용만 전달 (가독성 향상)
+            const pureMessage = shoutContent.replace(userShoutSuffixRegex, '').trim();
+            this.emit('TRADE_SHOUT', { timestamp, sender, message: pureMessage });
         }
         return;
     }

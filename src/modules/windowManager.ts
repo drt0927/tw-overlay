@@ -123,7 +123,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
     }
   },
   gallery: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'gallery', html: 'gallery.html', width: 380, height: 600 },
-  abbreviation: { ref: null, pos: { offsetX: -320, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 320, height: 500 },
+  abbreviation: { ref: null, pos: { offsetX: -510, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 500, height: 700 },
   buffs: { ref: null, pos: { offsetX: -1000, offsetY: 40 }, key: 'buffs', html: 'buffs.html', width: 1000, height: 700 },
   bossSettings: { ref: null, pos: { offsetX: -370, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 370, height: 750 },
   etaRanking: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 380, height: 600 },

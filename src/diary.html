@@ -746,21 +746,27 @@
 
         const seedListEl = document.getElementById('monthly-seed-list');
         seedListEl.innerHTML = (summary.seedList || []).map(item => {
+          // 1. 괄호 안의 금액 추출
           const m = item.content.match(/\(([^)]+)\)/);
           const amountStr = m ? m[1] : '';
-          const descMatch = item.content.match(/:\s*([^(]+)/);
-          let desc = descMatch ? descMatch[1].trim() : '';
-
-          // 마정석 교환 기록인 경우 설명 보완
-          if (item.content.includes('마정석 교환')) {
-            desc = '금화 주머니: ' + desc;
+          
+          // 2. 설명 추출 (괄호 부분을 제거한 나머지 전체)
+          let desc = item.content.replace(/\s*\([^)]+\)/, '').trim();
+          
+          // 3. 기존 수동 기록 형식(💰 수익: 내용) 대응: 콜론이 있으면 그 뒤만 추출
+          if (desc.includes(':')) {
+            const parts = desc.split(':');
+            desc = parts[parts.length - 1].trim();
           }
+          
+          // 4. [자동] 태그가 있다면 가독성을 위해 유지하거나 정리
+          desc = desc.replace('[자동]', '<span class="opacity-50 text-[10px] mr-1">[Auto]</span>');
 
           return `
           <div class="flex items-baseline justify-between py-2 border-b border-orange-500/5 last:border-0 gap-2">
             <div class="flex items-baseline gap-2 min-w-0">
               <span class="text-[13px] font-mono text-slate-500 shrink-0">${item.date.slice(5)}</span>
-              <span class="text-[13px] font-bold text-slate-400 truncate" title="${desc}">${desc}</span>
+              <span class="text-[13px] font-bold text-slate-400 truncate" title="${desc.replace(/<[^>]*>/g, '')}">${desc}</span>
             </div>
             <span class="text-[13px] font-black text-orange-300 shrink-0 text-right">${amountStr}</span>
           </div>`}).join('') || '<div class="text-[13px] text-slate-600 italic py-6 text-center">기록 없음</div>';

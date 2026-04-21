@@ -15,25 +15,23 @@ class ChatLogProcessor {
     log('[CHAT_PROCESSOR] 시작됨 - 이벤트 리스너 등록');
     
     // 1. SEED 획득 처리
-    chatParser.on('SEED_GAINED', (data: { timestamp: string, amount: number, message: string }) => {
-      const today = new Date().toISOString().split('T')[0];
+    chatParser.on('SEED_GAINED', (data: { date: string, timestamp: string, amount: number, message: string }) => {
       const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
       
-      const content = `[자동기록] 획득 수익 (${this.formatNumber(data.amount)})`;
-      diaryDb.addActivityLog(today, timeOnly, 'calc', content);
+      const content = `[자동] ${data.message} (${this.formatNumber(data.amount)})`;
+      diaryDb.addActivityLog(data.date, timeOnly, 'calc', content);
     });
 
     // 2. 아이템 획득 처리
-    chatParser.on('ITEM_LOOTED', (data: { timestamp: string, message: string }) => {
+    chatParser.on('ITEM_LOOTED', (data: { date: string, timestamp: string, message: string }) => {
       const cfg = config.load();
       const keywords = cfg.lootKeywords || [];
       
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       if (matchedKeyword) {
-        const today = new Date().toISOString().split('T')[0];
         const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
         
-        diaryDb.addActivityLog(today, timeOnly, 'loot', `[득템] ${data.message}`);
+        diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`);
         this.sendNotification('아이템 획득 알림', data.message);
       }
     });

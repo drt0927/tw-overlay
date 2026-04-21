@@ -65,11 +65,11 @@ export const DEFAULT_CONFIG: AppConfig = {
   fieldBossNotifyOffsets: [5],
   fieldBossNotifyVolume: 50,
   fieldBossSettings: {
-    '골론': { name: '골론', enabled: true, soundFile: 'uaaaaa.webm' },
-    '파멸의 기원': { name: '파멸의 기원', enabled: true, soundFile: 'uaaaaa.webm' },
-    '스페르첸드': { name: '스페르첸드', enabled: true, soundFile: 'uaaaaa.webm' },
-    '골모답': { name: '골모답', enabled: true, soundFile: 'uaaaaa.webm' },
-    '아칸': { name: '아칸', enabled: true, soundFile: 'uaaaaa.webm' },
+    '골론': { name: '골론', enabled: true, soundFile: 'voice_boss_first.wav' },
+    '파멸의 기원': { name: '파멸의 기원', enabled: true, soundFile: 'voice_boss_first.wav' },
+    '스페르첸드': { name: '스페르첸드', enabled: true, soundFile: 'voice_boss_first.wav' },
+    '골모답': { name: '골모답', enabled: true, soundFile: 'voice_boss_first.wav' },
+    '아칸': { name: '아칸', enabled: true, soundFile: 'voice_boss_first.wav' },
   },
   positions: {
     overlay: { offsetX: 10, offsetY: 10 },

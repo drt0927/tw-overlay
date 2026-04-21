@@ -67,15 +67,27 @@ class ChatLogManager {
 
     if (!fs.existsSync(filePath)) {
       log(`[CHAT_LOG] 오늘의 로그 파일이 아직 생성되지 않음: ${filePath}`);
-      this._currentFilePath = filePath; // 경로는 저장해둠 (나중에 생성되면 연결)
+      this._currentFilePath = filePath; // 경로는 저장해둠
       return;
     }
 
+    // [추가] 새 파일을 읽기 시작할 때, 상단 헤더를 읽어 날짜 정보를 파서에 전달
     try {
-      // 테일즈위버 로그는 EUC-KR이므로 바이너리로 읽어서 수동 디코딩해야 함
-      // tail 패키지의 특성상 문자열로 넘겨받기 전에 인코딩을 처리하기 위해 
-      // 아래와 같이 fs.watch의 대안으로 사용하거나, 수동 버퍼 처리가 필요할 수 있음.
-      // 여기서는 일반적인 tail 사용 후 파서에서 보정 시도.
+      const initialContent = fs.readFileSync(filePath, 'binary');
+      const decodedContent = iconv.decode(Buffer.from(initialContent, 'binary'), 'euc-kr');
+      const lines = decodedContent.split('\n');
+      // 상단 20줄 이내에서 날짜 정보 검색
+      for (let i = 0; i < Math.min(lines.length, 20); i++) {
+        if (lines[i].includes('Date :')) {
+          chatParser.parseLine(lines[i]);
+          break;
+        }
+      }
+    } catch (e) {
+      log(`[CHAT_LOG] 초기 날짜 읽기 실패: ${e}`);
+    }
+
+    try {
       this._tail = new Tail(filePath, {
         fromBeginning: false,
         follow: true,

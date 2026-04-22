@@ -37,6 +37,7 @@ function buildMenuTemplate(): any[] {
         'toggleBossSettings': wm.toggleBossSettingsWindow,
         'toggleCustomAlert': wm.toggleCustomAlertWindow,
         'toggleBuffTimer': wm.toggleBuffTimerWindow,
+        'toggleXpHud': wm.toggleXpHudWindow,
         'toggleEtaRanking': wm.toggleEtaRankingWindow,
         'toggleContentsChecker': wm.toggleContentsCheckerWindow,
         'toggleEvolutionCalculator': wm.toggleEvolutionCalculatorWindow,

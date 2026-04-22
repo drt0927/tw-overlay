@@ -564,50 +564,6 @@
               </p>
             </div>
 
-            <!-- 경험치 HUD 설정 -->
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
-              <label
-                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
-                <input type="checkbox" id="show-xp-widget-input" class="w-5 h-5 accent-purple-600">
-                <div>
-                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">경험치 HUD
-                    표시</span>
-                  <p class="text-[10px] text-slate-500 mt-0.5">게임 화면 위에 실시간 획득 경험치 및 시급 정보를 띄웁니다.</p>
-                </div>
-              </label>
-
-              <div id="xp-pos-controls" class="pl-4 space-y-4 transition-all">
-                <div class="grid grid-cols-2 gap-6">
-                  <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-2 block ml-1">좌측
-                      여백 (Left)</label>
-                    <div class="relative">
-                      <input type="number" id="xp-pos-left"
-                        class="input-field w-full py-2.5 px-4 bg-black/40 pr-10 text-xs">
-                      <span
-                        class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold">px</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-tighter mb-2 block ml-1">하단
-                      여백 (Bottom)</label>
-                    <div class="relative">
-                      <input type="number" id="xp-pos-bottom"
-                        class="input-field w-full py-2.5 px-4 bg-black/40 pr-10 text-xs">
-                      <span
-                        class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-bold">px</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="flex justify-end">
-                  <button onclick="applyXpHudSettings()"
-                    class="text-[10px] font-black bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-4 py-2 rounded-xl border border-purple-500/20 transition-all active:scale-95 flex items-center gap-1.5">
-                    <i data-lucide="check" class="w-3 h-3"></i> 위치 즉시 적용
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <!-- 게임 내 채팅 로그 설정 가이드 -->
             <div class="p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 space-y-4">
               <h3 class="text-sm font-black text-indigo-400 flex items-center gap-2">
@@ -983,23 +939,6 @@
       renderShoutKeywordList();
     }
 
-    function applyXpHudSettings() {
-      const leftInput = document.getElementById('xp-pos-left');
-      const bottomInput = document.getElementById('xp-pos-bottom');
-      
-      const leftVal = parseInt(leftInput.value);
-      const bottomVal = parseInt(bottomInput.value);
-
-      const settings = {
-        showXpWidget: document.getElementById('show-xp-widget-input').checked,
-        xpWidgetPos: {
-          left: isNaN(leftVal) ? 200 : leftVal,
-          bottom: isNaN(bottomVal) ? 0 : bottomVal
-        }
-      };
-      window.electronAPI.applySettings(settings);
-    }
-
     // --- 사운드 관리 기능 ---
     let prevVolumes = {
       'contents-checker': 50,
@@ -1335,9 +1274,6 @@
       // 채팅 로그 설정 로드
       document.getElementById('chat-log-path-input').value = config.chatLogPath || '';
       document.getElementById('chat-log-auto-delete-input').value = config.chatLogAutoDeleteDays ?? 0;
-      document.getElementById('show-xp-widget-input').checked = config.showXpWidget !== false;
-      document.getElementById('xp-pos-left').value = config.xpWidgetPos?.left ?? 200;
-      document.getElementById('xp-pos-bottom').value = config.xpWidgetPos?.bottom ?? 0;
 
       // 단축키 설정 로드
       if (config.shortcuts) {
@@ -1719,11 +1655,6 @@
           chatLogAutoDeleteDays: parseInt(document.getElementById('chat-log-auto-delete-input').value) || 0,
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,
-          showXpWidget: document.getElementById('show-xp-widget-input').checked,
-          xpWidgetPos: {
-            left: parseInt(document.getElementById('xp-pos-left').value) || 0,
-            bottom: parseInt(document.getElementById('xp-pos-bottom').value) || 0
-          }
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);

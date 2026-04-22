@@ -72,6 +72,14 @@
     "api": "toggleBuffTimer"
   },
   {
+    "id": "xp-hud-btn",
+    "label": "경험치 HUD",
+    "icon": "activity",
+    "tooltip": "경험치 HUD 설정 및 초기화",
+    "color": "emerald-400",
+    "api": "toggleXpHud"
+  },
+  {
     "id": "eta-ranking-btn",
     "label": "에타 랭킹 조회",
     "icon": "trophy",

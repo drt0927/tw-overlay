@@ -288,15 +288,14 @@
     function openGallery() { document.getElementById('noti-badge').classList.add('hidden'); window.electronAPI.toggleGallery(); }
 
     // IPC 리스너 등록
-    window.electronAPI.onPlayBossSound(({ bossName, soundFile, volume, isCustom, spawnTime, offset, isAlreadyRecorded }) => {
+    window.electronAPI.onPlaySound(({ label, soundFile, volume, isCustom, spawnTime, offset, isAlreadyRecorded }) => {
       if (!soundFile) return;
       bossAudio.src = `assets/sound/${soundFile}`;
       bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
       bossAudio.play().catch(e => console.error('Audio play failed:', e));
       const btn = document.getElementById('boss-btn');
-      btn.classList.add('animate-bounce', 'text-blue-400');
-      setTimeout(() => btn.classList.remove('animate-bounce'), 5000);
-      createToast(bossName, isCustom, spawnTime, offset, isAlreadyRecorded);
+      if (btn) { btn.classList.add('animate-bounce', 'text-blue-400'); setTimeout(() => btn.classList.remove('animate-bounce'), 5000); }
+      createToast(label, isCustom, spawnTime, offset, isAlreadyRecorded);
     });
 
     window.electronAPI.onSidebarStatus((isCollapsed) => {

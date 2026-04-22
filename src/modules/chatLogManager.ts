@@ -125,10 +125,14 @@ class ChatLogManager {
    */
   private checkFileChange(): void {
     const todayPath = this.getTodayFilePath();
-    
+
     // 파일 경로가 바뀌었거나(자정), 이전에 파일이 없었는데 새로 생겼을 경우
     if (todayPath !== this._currentFilePath || (todayPath && !this._tail && fs.existsSync(todayPath))) {
       log('[CHAT_LOG] 로그 파일 변경 감지, 재연결 시도');
+      // 날짜가 바뀐 시점(자정)에 오래된 로그 정리도 함께 실행
+      if (todayPath !== this._currentFilePath) {
+        this.cleanupOldLogs();
+      }
       this.start();
     }
   }

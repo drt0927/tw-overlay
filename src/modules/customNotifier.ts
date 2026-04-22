@@ -116,6 +116,6 @@ function notify(message: string, soundFile: string): void {
 
   const sidebar = wm.getMainWindow();
   if (sidebar) {
-    sidebar.webContents.send('play-boss-sound', { bossName: message, soundFile });
+    sidebar.webContents.send('play-sound', { label: message, soundFile });
   }
 }

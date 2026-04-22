@@ -145,8 +145,8 @@ function notify(bossName: string, soundFile: string, spawnTime: string, offset: 
 
   const sidebar = wm.getMainWindow();
   if (sidebar) {
-    sidebar.webContents.send('play-boss-sound', {
-      bossName,
+    sidebar.webContents.send('play-sound', {
+      label: bossName,
       soundFile,
       spawnTime,
       offset,

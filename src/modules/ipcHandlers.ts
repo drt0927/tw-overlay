@@ -84,6 +84,7 @@ export function register(): void {
     'toggle-uniform-color': wm.toggleUniformColorWindow,
     'toggle-diary': wm.toggleDiaryWindow,
     'toggle-buff-timer': wm.toggleBuffTimerWindow,
+    'toggle-xp-hud': wm.toggleXpHudWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -164,7 +165,7 @@ export function register(): void {
 
   ipcMain.on('preview-boss-sound', (_e, soundFile: string, volume: number | null, bossName: string = '미리보기') => {
     const sidebar = wm.getMainWindow();
-    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName, soundFile, volume });
+    if (sidebar) sidebar.webContents.send('play-sound', { label: bossName, soundFile, volume });
   });
 
   ipcMain.on('save-quick-slots', (_e, slots: QuickSlotItem[]) => {
@@ -236,7 +237,7 @@ export function register(): void {
   });
   ipcMain.on('play-sound', (_e, { file, volume }) => {
     const sidebar = wm.getMainWindow();
-    if (sidebar) sidebar.webContents.send('play-boss-sound', { bossName: '미리보기', soundFile: file, volume });
+    if (sidebar) sidebar.webContents.send('play-sound', { label: '미리보기', soundFile: file, volume });
   });
   ipcMain.on('diary-add-activity', (_e, date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string) => {
     if (!isValidDate(date) || typeof time !== 'string' || !validActivityTypes.includes(type) || typeof content !== 'string') return;
@@ -292,5 +293,9 @@ export function register(): void {
   // 버프 타이머 테스트 종료 — 테스트 버프 제거
   ipcMain.on('buff-timer-clear-test', () => {
     buffTimerManager.clearTestBuffs();
+  });
+  // XP 세션 초기화
+  ipcMain.on('xp-reset', () => {
+    import('./chatLogProcessor').then(mod => mod.chatLogProcessor.resetXp());
   });
 }

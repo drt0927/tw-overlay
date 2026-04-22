@@ -31,12 +31,27 @@ class BuffTimerManager {
   private _activeBuffs: Map<string, ActiveBuff> = new Map();
   private _tickInterval: NodeJS.Timeout | null = null;
   private _buffDefs: Map<string, BuffDefinition> = new Map();
+  /** config.load() I/O 최소화를 위한 warnSeconds 캐시 */
+  private _cachedWarnSeconds: number[] = [60, 10];
 
   public start(): void {
     this.loadBuffDefs();
+    this._refreshWarnSecondsCache();
     if (this._tickInterval) clearInterval(this._tickInterval);
     this._tickInterval = setInterval(() => this._tick(), 1000);
     log('[BUFF_TIMER] 매니저 시작됨');
+  }
+
+  /**
+   * 설정이 변경될 때 호출하여 warnSeconds 캐시를 갱신
+   */
+  public refreshConfig(): void {
+    this._refreshWarnSecondsCache();
+  }
+
+  private _refreshWarnSecondsCache(): void {
+    const cfg = config.load();
+    this._cachedWarnSeconds = cfg.buffTimerWarnSeconds ?? [60, 10];
   }
 
   public stop(): void {
@@ -114,8 +129,7 @@ class BuffTimerManager {
    * 1초마다 실행 — 남은시간 계산 및 경고 트리거
    */
   private _tick(): void {
-    const cfg = config.load();
-    const warnSeconds = cfg.buffTimerWarnSeconds ?? [60, 10];
+    const warnSeconds = this._cachedWarnSeconds;
     const now = Date.now();
     let changed = false;
 
@@ -164,16 +178,12 @@ class BuffTimerManager {
       this._sendToGameOverlay('buff-timer-warning', { buffId: buff.buffId, phase, warnSec });
     }
 
-    // 청각적 알림 — mainWindow를 통해 사운드 재생
+    // 청각적 알림 — 범용 play-sound 채널로 전송
     if (cfg.buffTimerAudioAlert !== false) {
       const soundFile = cfg.buffTimerSound || 'voice_boss_first.wav';
       const volume = cfg.buffTimerVolume ?? 70;
-      this._sendToMainWindow('play-boss-sound', {
-        bossName: phase === 'warn2' ? `[임박] ${buff.name} 5초 전!` : `[경고] ${buff.name} ${label} 남음`,
-        soundFile: soundFile,
-        volume: volume,
-        isCustom: true
-      });
+      const label2 = phase === 'warn2' ? `[임박] ${buff.name} 5초 전!` : `[경고] ${buff.name} ${label} 남음`;
+      this._sendToMainWindow('play-sound', { label: label2, soundFile, volume, isCustom: true });
     }
   }
 
@@ -181,8 +191,7 @@ class BuffTimerManager {
    * 현재 활성 버프 목록을 HUD에 전송
    */
   private _sendHudUpdate(): void {
-    const cfg = config.load();
-    const warnSeconds = [...(cfg.buffTimerWarnSeconds ?? [60, 10])].sort((a, b) => b - a);
+    const warnSeconds = [...this._cachedWarnSeconds].sort((a, b) => b - a);
     const now = Date.now();
 
     const states: BuffTimerState[] = [];
@@ -221,7 +230,10 @@ class BuffTimerManager {
    */
   private _sendToGameOverlay(channel: string, data: any): void {
     const wins = BrowserWindow.getAllWindows();
-    const overlay = wins.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+    const overlay = wins.find(w => {
+      if (w.isDestroyed()) return false;
+      try { return w.webContents.getURL().includes('game-overlay.html'); } catch { return false; }
+    });
     if (overlay) overlay.webContents.send(channel, data);
   }
 
@@ -230,7 +242,10 @@ class BuffTimerManager {
    */
   private _sendToMainWindow(channel: string, data: any): void {
     const wins = BrowserWindow.getAllWindows();
-    const main = wins.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
+    const main = wins.find(w => {
+      if (w.isDestroyed()) return false;
+      try { return w.webContents.getURL().includes('index.html'); } catch { return false; }
+    });
     if (main) main.webContents.send(channel, data);
   }
 

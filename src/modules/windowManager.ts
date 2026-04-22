@@ -10,6 +10,7 @@ import * as gallery from './galleryMonitor';
 import * as trade from './tradeMonitor';
 import * as tracker from './tracker';
 import { log } from './logger';
+import { buffTimerManager } from './buffTimerManager';
 
 // --- 상태 관리 ---
 let activeWindowsStack: BrowserWindow[] = [];
@@ -139,6 +140,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   shoutHistory: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'shoutHistory', html: 'shout-history.html', width: 450, height: 600 },
   gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 },
   buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 600 },
+  xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 500 },
 };
 
 let gameRect: GameRect | null = null;
@@ -413,6 +415,7 @@ export function toggleUniformColorWindow(): void {
 export function toggleShoutHistoryWindow(): void { createToggleableWindow('shoutHistory'); }
 export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
 export function toggleBuffTimerWindow(): void { createToggleableWindow('buffTimer'); }
+export function toggleXpHudWindow(): void { createToggleableWindow('xpHud'); }
 export function toggleContentsCheckerWindow(): void {
   createToggleableWindow('contentsChecker', {
     onReady: (win) => {
@@ -505,8 +508,8 @@ export function syncOverlay(currentRect: GameRect): void {
       if (Math.abs(b.x - gX) > POSITION_THRESHOLD || Math.abs(b.y - gY) > POSITION_THRESHOLD || Math.abs(b.width - gW) > POSITION_THRESHOLD || Math.abs(b.height - gH) > POSITION_THRESHOLD) {
         gameOverlayWindow.setBounds({ x: gX, y: gY, width: gW, height: gH });
       }
-      // 게임 복귀 시 숨겨진 상태면 다시 표시
-      if (!gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
+      // 게임 복귀 시 숨겨진 상태면 다시 표시 (isDestroyed 재확인 후 처리)
+      if (!gameOverlayWindow.isDestroyed() && !gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
     }
 
     const currentSidebarB = mainWindow.getBounds();
@@ -559,6 +562,9 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
   }
   [mainWindow, overlayWindow, gameOverlayWindow].forEach(win => win?.webContents.send('config-data', updated));
   Object.values(windowRegistry).forEach(winCfg => winCfg.ref?.webContents.send('config-data', updated));
+
+  // buffTimerManager warnSeconds 캐시 갱신
+  buffTimerManager.refreshConfig();
 
   // 설정 저장 시 트레이 메뉴(숨김 메뉴 등) 즉시 동기화
   import('./tray').then(mod => {

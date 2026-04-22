@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>경험치 HUD</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+  <style>
+    :root {
+      --bg: #0f0e1a;
+      --surface: #17152b;
+      --surface2: #1f1c38;
+      --border: rgba(52,211,153,0.12);
+      --accent: #34d399;
+      --accent-hover: #6ee7b7;
+      --accent-dim: rgba(52,211,153,0.12);
+      --accent-glow: rgba(52,211,153,0.2);
+      --text: #ecfdf5;
+      --text-muted: #6ee7b7;
+      --danger: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── 수치 카드 ── */
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(52,211,153,0.3);
+      box-shadow: 0 0 12px rgba(52,211,153,0.08);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      opacity: 0.75;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.6;
+      margin-top: 2px;
+    }
+
+    /* ── 구분선 ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+
+    /* ── 섹션 라벨 ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.7;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    /* ── 토글 스위치 ── */
+    .toggle-wrap { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle-wrap input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-wrap input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    /* ── 설정 행 ── */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .setting-row-label { font-size: 12px; font-weight: 600; color: var(--text); }
+    .setting-row-sub   { font-size: 10px; color: var(--text-muted); margin-top: 2px; opacity: 0.7; }
+
+    /* ── 숫자 인풋 ── */
+    .num-input {
+      width: 100%;
+      padding: 6px 28px 6px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .num-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    /* ── 버튼 ── */
+    .btn-sm {
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      border: none;
+    }
+    .btn-sm:active { transform: scale(0.96); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: #052e16;
+      box-shadow: 0 2px 8px rgba(52,211,153,0.25);
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #059669, #10b981); }
+
+    .btn-danger {
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--danger);
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.2); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── 경과 시간 ── */
+    #elapsed-timer {
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    /* ── 초기화 플래시 ── */
+    @keyframes reset-flash {
+      0%   { opacity: 1; }
+      30%  { opacity: 0.2; }
+      60%  { opacity: 1; }
+      80%  { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .reset-flash { animation: reset-flash 0.5s ease-out; }
+
+    /* ── 스크롤 ── */
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .scroll-area::-webkit-scrollbar { width: 4px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: rgba(52,211,153,0.2); border-radius: 4px; }
+  </style>
+</head>
+
+<body class="panel-glass p-0 h-screen flex flex-col relative">
+
+  <!-- 헤더 -->
+  <div class="win-header">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-emerald-500/10 border-emerald-500/20">
+        <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i>
+      </div>
+      <div class="win-title-text">
+        <span class="win-title-main">경험치 HUD</span>
+      </div>
+    </div>
+    <div class="win-controls">
+      <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 본문 스크롤 영역 -->
+  <div class="scroll-area">
+
+    <!-- ① 세션 통계 -->
+    <div>
+      <div class="section-label">
+        <i data-lucide="bar-chart-2" style="width:11px;height:11px"></i>
+        현재 세션 통계
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div class="stat-card">
+          <div class="stat-label">총 획득 경험치</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub" id="stat-total-raw"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">분당 경험치 (EPM)</div>
+          <div class="stat-value" id="stat-epm">0</div>
+          <div class="stat-sub" id="stat-epm-raw"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="stat-label">세션 경과 시간</div>
+            <div style="font-size:18px;font-weight:900;color:var(--text);margin-top:4px;" id="elapsed-timer">00:00:00</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="stat-label">세션 시작</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-top:4px;" id="stat-start-time">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ② 초기화 -->
+    <div>
+      <div class="section-label">
+        <i data-lucide="rotate-ccw" style="width:11px;height:11px"></i>
+        세션 초기화
+      </div>
+      <div class="stat-card" style="flex-direction:row;align-items:center;justify-content:space-between;gap:10px;">
+        <div>
+          <div class="setting-row-label">경험치 세션 초기화</div>
+          <div class="setting-row-sub">누적 경험치와 분당 경험치를 0으로 리셋합니다.</div>
+        </div>
+        <button class="btn-sm btn-danger" id="btn-reset" style="white-space:nowrap;flex-shrink:0;">
+          <i data-lucide="rotate-ccw" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px;"></i>
+          초기화
+        </button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ③ 표시 설정 -->
+    <div>
+      <div class="section-label">
+        <i data-lucide="monitor" style="width:11px;height:11px"></i>
+        표시 설정
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-row-label">경험치 HUD 표시</div>
+          <div class="setting-row-sub">게임 화면 위에 경험치 정보를 오버레이로 표시합니다.</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="toggle-show" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ④ 위치 설정 -->
+    <div>
+      <div class="section-label">
+        <i data-lucide="move" style="width:11px;height:11px"></i>
+        HUD 위치
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">좌측 여백 (Left)</div>
+          <div style="position:relative;">
+            <input type="number" id="pos-left" class="num-input" min="0" max="3000" value="50">
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">하단 여백 (Bottom)</div>
+          <div style="position:relative;">
+            <input type="number" id="pos-bottom" class="num-input" min="0" max="3000" value="110">
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
+          </div>
+        </div>
+      </div>
+      <button id="btn-apply-pos"
+        style="margin-top:8px;width:100%;padding:6px 0;background:var(--accent-dim);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;transition:background 0.15s;"
+        onmouseover="this.style.background='rgba(52,211,153,0.2)'" onmouseout="this.style.background='var(--accent-dim)'">
+        <i data-lucide="check" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px;"></i>
+        위치 즉시 적용
+      </button>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:5px;font-style:italic;opacity:0.6;">
+        * 화면 왼쪽·아래쪽으로부터의 거리입니다.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+
+    // ── 숫자 포맷 ──
+    function formatXP(num) {
+      if (num >= 100000000) {
+        const eok = Math.floor(num / 100000000);
+        const remainder = num % 100000000;
+        if (remainder >= 10000) return `${eok}억 ${Math.floor(remainder / 10000)}만`;
+        return `${eok}억`;
+      }
+      if (num >= 10000) return `${Math.floor(num / 10000)}만`;
+      return num.toLocaleString();
+    }
+
+    function formatRaw(num) {
+      return num > 0 ? `(${num.toLocaleString()})` : '';
+    }
+
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function formatStartTime(ts) {
+      const d = new Date(ts);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    }
+
+    // ── 상태 ──
+    let _sessionTotal = 0;
+    let _sessionEpm   = 0;
+    let _startTime    = Date.now();
+    let _elapsedTimer = null;
+
+    function startElapsedTimer() {
+      if (_elapsedTimer) clearInterval(_elapsedTimer);
+      _elapsedTimer = setInterval(() => {
+        document.getElementById('elapsed-timer').textContent = formatTime(Date.now() - _startTime);
+      }, 1000);
+    }
+
+    function updateStats(total, epm) {
+      _sessionTotal = total;
+      _sessionEpm   = epm;
+      document.getElementById('stat-total').textContent   = formatXP(total);
+      document.getElementById('stat-total-raw').textContent = formatRaw(total);
+      document.getElementById('stat-epm').textContent     = formatXP(epm);
+      document.getElementById('stat-epm-raw').textContent = formatRaw(epm) + (epm > 0 ? '/분' : '');
+    }
+
+    // ── XP 수신 ──
+    window.electronAPI.onXpUpdate((data) => {
+      updateStats(data.total, data.epm);
+    });
+
+    // ── 초기화 완료 수신 ──
+    window.electronAPI.onXpResetDone((data) => {
+      _startTime = data.startTime;
+      updateStats(0, 0);
+      document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
+
+      // 플래시 피드백
+      const cards = document.querySelectorAll('.stat-card, #elapsed-timer');
+      cards.forEach(el => {
+        el.classList.remove('reset-flash');
+        void el.offsetWidth; // reflow
+        el.classList.add('reset-flash');
+      });
+    });
+
+    // ── 초기화 버튼 ──
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      window.electronAPI.resetXp();
+    });
+
+    // ── 표시 토글 — 변경 즉시 저장 ──
+    document.getElementById('toggle-show').addEventListener('change', (e) => {
+      window.electronAPI.applySettings({ showXpWidget: e.target.checked });
+    });
+
+    // ── 위치 즉시 적용 ──
+    document.getElementById('btn-apply-pos').addEventListener('click', () => {
+      const left   = parseInt(document.getElementById('pos-left').value)   || 0;
+      const bottom = parseInt(document.getElementById('pos-bottom').value) || 0;
+      window.electronAPI.applySettings({ xpWidgetPos: { left, bottom } });
+    });
+
+    // ── 설정 수신 ──
+    window.electronAPI.onConfigData((config) => {
+      document.getElementById('toggle-show').checked = config.showXpWidget !== false;
+
+      const pos = config.xpWidgetPos ?? { left: 50, bottom: 110 };
+      document.getElementById('pos-left').value   = pos.left;
+      document.getElementById('pos-bottom').value = pos.bottom;
+    });
+
+    window.onload = () => {
+      refreshIcons();
+      if (window.bindEscapeClose) window.bindEscapeClose();
+      document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
+      startElapsedTimer();
+    };
+  </script>
+</body>
+
+</html>

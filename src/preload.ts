@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
   toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
+  toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
+  resetXp: () => ipcRenderer.send('xp-reset'),
 
   contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
@@ -145,9 +147,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('boss-times-data');
     ipcRenderer.on('boss-times-data', (_event, times) => callback(times));
   },
-  onPlayBossSound: (callback: (data: { bossName: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean }) => void) => {
-    ipcRenderer.removeAllListeners('play-boss-sound');
-    ipcRenderer.on('play-boss-sound', (_event, data) => callback(data));
+  onPlaySound: (callback: (data: { label: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean, isAlreadyRecorded?: boolean, volume?: number }) => void) => {
+    ipcRenderer.removeAllListeners('play-sound');
+    ipcRenderer.on('play-sound', (_event, data) => callback(data));
   },
   onTradePosts: (callback: (posts: TradePost[]) => void) => {
     ipcRenderer.removeAllListeners('trade-posts');
@@ -200,16 +202,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
   buffTimerTest: () => ipcRenderer.send('buff-timer-test'),
   buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
+  onXpResetDone: (callback: (data: { startTime: number }) => void) => {
+    ipcRenderer.removeAllListeners('xp-reset-done');
+    ipcRenderer.on('xp-reset-done', (_event, data) => callback(data));
+  },
 
   cleanupAllListeners: () => {
     const events = [
       'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
       'url-change', 'load-status', 'gallery-posts', 'gallery-new-activity',
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
-      'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
+      'boss-times-data', 'play-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
-      'buff-timer-update', 'buff-timer-warning',
+      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

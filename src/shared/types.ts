@@ -165,6 +165,7 @@ export interface AppConfig {
 
     // --- Buff Timer Settings ---
     buffTimerEnabled?: boolean;
+    showBuffHud?: boolean;
     buffTimerWarnSeconds?: number[];
     buffTimerAudioAlert?: boolean;
     buffTimerVisualAlert?: boolean;
@@ -176,6 +177,7 @@ export interface AppConfig {
     // --- Sound Settings ---
     volumeContentsChecker?: number;
     volumeCalculators?: number;
+    sidebarPosition?: 'left' | 'right';
 }
 
 export interface GalleryPost {

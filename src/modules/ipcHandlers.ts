@@ -285,11 +285,11 @@ export function register(): void {
   ipcMain.on('close-app', () => { app.quit(); });
 
   // 버프 타이머 테스트 — 3개 버프 강제 활성화
-  ipcMain.on('buff-timer-test', () => {
-    const TEST_BUFFS = ['exp_heart', 'rare_heart', 'stat_exorcist'];
-    TEST_BUFFS.forEach(buffId => buffTimerManager.activateBuff(buffId, 'test'));
+  ipcMain.on('buff-timer-test', (event, seconds?: number) => {
+   const TEST_BUFFS = ['exp_heart', 'rare_heart', 'stat_exorcist'];
+   const durationMs = (seconds && seconds > 0) ? seconds * 1000 : undefined;
+   TEST_BUFFS.forEach(buffId => buffTimerManager.activateBuff(buffId, 'test', durationMs));
   });
-
   // 버프 타이머 테스트 종료 — 테스트 버프 제거
   ipcMain.on('buff-timer-clear-test', () => {
     buffTimerManager.clearTestBuffs();

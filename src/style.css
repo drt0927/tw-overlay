@@ -227,43 +227,31 @@ body {
   width: 38px;
   height: 100vh;
   box-sizing: border-box;
-  background: rgba(15, 18, 30, 0.95);
-  /* 투명도를 살짝 낮춤 */
-  border-left: 1px solid var(--border);
-  transition: width 0.3s ease;
+  background: rgba(15, 18, 30, 0.98);
+  border-left: 1.5px solid rgba(168, 85, 247, 0.4); /* 보더 강화 */
   position: absolute;
   left: 0;
+  right: auto;
   top: 0;
 }
 
-.slot-container {
-  flex: 1;
-  width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 2px;
-}
-
-/* 사이드바 슬롯 영역 전용 슬림 스크롤바 */
-.slot-container::-webkit-scrollbar {
-  width: 2px;
-}
-
-.slot-container::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.3);
-  border-radius: 10px;
-}
-
-.slot-container::-webkit-scrollbar-track {
-  background: transparent;
+/* 왼쪽 배치 시 레이아웃 반전: 본체를 윈도우의 오른쪽 끝에 고정 */
+body[data-sidebar-pos="left"] .sidebar-wrapper {
+  left: auto;
+  right: 0;
+  border-left: none;
+  border-right: 1.5px solid rgba(168, 85, 247, 0.4);
 }
 
 .sidebar-wrapper.collapsed {
   width: 20px;
-  border-left: 2px solid var(--primary);
+  border-left: 3px solid var(--primary); /* 축소 시 보더 더 두껍게 */
+}
+
+/* 왼쪽 배치 시 축소 보더 반전 */
+body[data-sidebar-pos="left"] .sidebar-wrapper.collapsed {
+  border-left: none;
+  border-right: 3px solid var(--primary);
 }
 
 .sidebar-wrapper.collapsed .slot-container,

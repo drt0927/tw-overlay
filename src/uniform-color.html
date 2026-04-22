@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
@@ -59,6 +60,7 @@
 
   <script>
     if (typeof lucide !== 'undefined') lucide.createIcons();
+    if (window.bindEscapeClose) window.bindEscapeClose();
   </script>
 </body>
 

@@ -201,7 +201,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('buff-timer-warning', (_event, data) => callback(data));
   },
   toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
-  buffTimerTest: () => ipcRenderer.send('buff-timer-test'),
+  buffTimerTest: (seconds?: number) => ipcRenderer.send('buff-timer-test', seconds),
   buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
   onXpResetDone: (callback: (data: { startTime: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-reset-done');
@@ -220,4 +220,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }
-  });
+});

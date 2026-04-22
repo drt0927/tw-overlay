@@ -13,18 +13,22 @@
       --bg: #0f0e1a;
       --surface: #17152b;
       --surface2: #1f1c38;
-      --border: rgba(167,139,250,0.1);
+      --border: rgba(167, 139, 250, 0.1);
       --accent: #a78bfa;
       --accent-hover: #c4b5fd;
-      --accent-dim: rgba(167,139,250,0.15);
-      --accent-glow: rgba(167,139,250,0.25);
+      --accent-dim: rgba(167, 139, 250, 0.15);
+      --accent-glow: rgba(167, 139, 250, 0.25);
       --warn: #f59e0b;
       --danger: #ef4444;
       --text: #ede9fe;
       --text-muted: #a89fc5;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     .master-toggle {
       display: flex;
@@ -36,26 +40,47 @@
     }
 
     /* Toggle switch */
-    .toggle-wrap { position: relative; display: inline-block; width: 36px; height: 20px; }
-    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-wrap {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-wrap input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
     .toggle-slider {
-      position: absolute; inset: 0;
-      background: rgba(255,255,255,0.1);
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 20px;
       cursor: pointer;
       transition: background 0.2s;
     }
+
     .toggle-slider::before {
       content: '';
       position: absolute;
-      width: 14px; height: 14px;
-      left: 3px; top: 3px;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
       background: white;
       border-radius: 50%;
       transition: transform 0.2s;
     }
-    .toggle-wrap input:checked + .toggle-slider { background: var(--accent); }
-    .toggle-wrap input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    .toggle-wrap input:checked+.toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-wrap input:checked+.toggle-slider::before {
+      transform: translateX(16px);
+    }
 
     /* Main content */
     .content {
@@ -64,16 +89,18 @@
       gap: 0;
       flex: 1;
       overflow: hidden;
-      background: rgba(0,0,0,0.2);
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .panel {
       padding: 14px;
       overflow-y: auto;
-      border-right: 1px solid rgba(167,139,250,0.1);
+      border-right: 1px solid rgba(167, 139, 250, 0.1);
     }
 
-    .panel:last-child { border-right: none; }
+    .panel:last-child {
+      border-right: none;
+    }
 
     .panel-title {
       font-size: 10px;
@@ -86,7 +113,11 @@
     }
 
     /* Buff list */
-    .buff-list { display: flex; flex-direction: column; gap: 4px; }
+    .buff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
     .buff-item {
       display: flex;
@@ -100,11 +131,18 @@
       transition: background 0.15s, border-color 0.15s;
     }
 
-    .buff-item:hover { background: var(--accent-dim); border-color: rgba(167,139,250,0.4); }
-    .buff-item.disabled { opacity: 0.4; }
+    .buff-item:hover {
+      background: var(--accent-dim);
+      border-color: rgba(167, 139, 250, 0.4);
+    }
+
+    .buff-item.disabled {
+      opacity: 0.4;
+    }
 
     .buff-item-icon {
-      width: 20px; height: 20px;
+      width: 20px;
+      height: 20px;
       border-radius: 5px;
       display: flex;
       align-items: center;
@@ -114,18 +152,58 @@
       flex-shrink: 0;
     }
 
-    .cat-exp    { background: rgba(34,197,94,0.18);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-    .cat-drop   { background: rgba(192,132,252,0.18); color: #e879f9; border: 1px solid rgba(192,132,252,0.3); }
-    .cat-stats  { background: rgba(167,139,250,0.2);  color: #c4b5fd; border: 1px solid rgba(167,139,250,0.4); }
-    .cat-damage { background: rgba(251,146,60,0.18);  color: #fb923c; border: 1px solid rgba(251,146,60,0.3); }
-    .cat-util   { background: rgba(45,212,191,0.18);  color: #2dd4bf; border: 1px solid rgba(45,212,191,0.3); }
+    .cat-exp {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
 
-    .buff-item-info { flex: 1; min-width: 0; }
-    .buff-item-name { font-size: 12px; font-weight: 600; color: var(--text); }
-    .buff-item-sub  { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .cat-drop {
+      background: rgba(192, 132, 252, 0.18);
+      color: #e879f9;
+      border: 1px solid rgba(192, 132, 252, 0.3);
+    }
+
+    .cat-stats {
+      background: rgba(167, 139, 250, 0.2);
+      color: #c4b5fd;
+      border: 1px solid rgba(167, 139, 250, 0.4);
+    }
+
+    .cat-damage {
+      background: rgba(251, 146, 60, 0.18);
+      color: #fb923c;
+      border: 1px solid rgba(251, 146, 60, 0.3);
+    }
+
+    .cat-util {
+      background: rgba(45, 212, 191, 0.18);
+      color: #2dd4bf;
+      border: 1px solid rgba(45, 212, 191, 0.3);
+    }
+
+    .buff-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .buff-item-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .buff-item-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
 
     /* Right panel sections */
-    .section { margin-bottom: 18px; }
+    .section {
+      margin-bottom: 18px;
+    }
+
     .section-label {
       font-size: 11px;
       font-weight: 600;
@@ -138,7 +216,12 @@
     }
 
     /* 경고 칩 */
-    .warn-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+    .warn-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+    }
 
     .warn-chip {
       display: flex;
@@ -154,7 +237,9 @@
       transition: border-color 0.15s;
     }
 
-    .warn-chip:hover { border-color: rgba(239,68,68,0.4); }
+    .warn-chip:hover {
+      border-color: rgba(239, 68, 68, 0.4);
+    }
 
     .warn-chip .remove-btn {
       display: flex;
@@ -165,7 +250,10 @@
       transition: opacity 0.15s;
     }
 
-    .warn-chip .remove-btn:hover { opacity: 1; color: var(--danger); }
+    .warn-chip .remove-btn:hover {
+      opacity: 1;
+      color: var(--danger);
+    }
 
     .add-chip-btn {
       display: flex;
@@ -173,7 +261,7 @@
       gap: 4px;
       padding: 4px 8px;
       background: transparent;
-      border: 1px dashed rgba(167,139,250,0.4);
+      border: 1px dashed rgba(167, 139, 250, 0.4);
       border-radius: 20px;
       font-size: 11px;
       color: var(--accent);
@@ -181,7 +269,10 @@
       transition: background 0.15s, border-color 0.15s;
     }
 
-    .add-chip-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+    .add-chip-btn:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+    }
 
     .add-input-row {
       display: none;
@@ -191,7 +282,9 @@
       margin-top: 8px;
     }
 
-    .add-input-row.visible { display: flex; }
+    .add-input-row.visible {
+      display: flex;
+    }
 
     .add-input-row input {
       width: 70px;
@@ -204,7 +297,10 @@
       outline: none;
     }
 
-    .add-input-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .add-input-row input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
 
     .btn-sm {
       padding: 4px 10px;
@@ -216,10 +312,26 @@
       border: none;
     }
 
-    .btn-primary { background: linear-gradient(135deg, #8b5cf6, #a78bfa); color: white; box-shadow: 0 2px 8px rgba(167,139,250,0.25); }
-    .btn-primary:hover { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
-    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+      color: white;
+      box-shadow: 0 2px 8px rgba(167, 139, 250, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
 
     /* 볼륨 슬라이더 */
     .volume-row {
@@ -257,7 +369,10 @@
       white-space: nowrap;
     }
 
-    .preview-btn:hover { background: var(--accent-dim); color: var(--text); }
+    .preview-btn:hover {
+      background: var(--accent-dim);
+      color: var(--text);
+    }
 
     /* 알림 토글 행 */
     .alert-row {
@@ -271,8 +386,17 @@
       margin-bottom: 6px;
     }
 
-    .alert-row-label { font-size: 12px; font-weight: 600; color: var(--text); }
-    .alert-row-sub   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .alert-row-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .alert-row-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
 
 
 
@@ -285,7 +409,7 @@
       background: var(--surface);
       gap: 6px;
       flex-shrink: 0;
-      box-shadow: 0 -1px 0 rgba(167,139,250,0.08);
+      box-shadow: 0 -1px 0 rgba(167, 139, 250, 0.08);
     }
   </style>
 </head>
@@ -320,7 +444,8 @@
 
   <div class="bg-violet-500/10 border-b border-violet-500/20 py-2 px-4 flex items-center gap-2 flex-shrink-0">
     <i data-lucide="info" class="w-3.5 h-3.5 text-violet-300 shrink-0"></i>
-    <span class="text-violet-200 text-[11px] font-medium leading-tight">게임 내 채팅 로그 파일에서 아이템 사용 내역을 읽어오므로, <strong>게임 내 설정 > 게임 > 채팅 로그</strong> 기능이 켜져 있어야 동작합니다.</span>
+    <span class="text-violet-200 text-[11px] font-medium leading-tight">게임 내 채팅 로그 파일에서 아이템 사용 내역을 읽어오므로, <strong>게임 내
+        설정 > 게임 > 채팅 로그</strong> 기능이 켜져 있어야 동작합니다.</span>
   </div>
 
   <!-- 본문 -->
@@ -350,7 +475,8 @@
             <button class="btn-sm btn-primary" id="confirm-add-warn">추가</button>
             <button class="btn-sm btn-ghost" id="cancel-add-warn">취소</button>
           </div>
-          <div id="add-error-msg" class="text-red-500 font-bold text-[11px] ml-1 opacity-0 transition-opacity duration-200"></div>
+          <div id="add-error-msg"
+            class="text-red-500 font-bold text-[11px] ml-1 opacity-0 transition-opacity duration-200"></div>
         </div>
       </div>
 
@@ -372,7 +498,8 @@
         </div>
         <div class="flex flex-col gap-2 mt-3 p-3 bg-white/5 border border-white/5 rounded-lg" id="volume-container">
           <div class="flex items-center gap-2">
-            <select id="sound-select" class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-slate-300 focus:outline-none w-1/2">
+            <select id="sound-select"
+              class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-slate-300 focus:outline-none w-1/2">
               <!-- JS dynamic options -->
             </select>
             <button class="preview-btn shrink-0 w-1/2 justify-center" id="preview-sound">
@@ -413,6 +540,24 @@
         </div>
       </div>
 
+      <!-- HUD 표시 설정 -->
+      <div class="section">
+        <div class="section-label">
+          <i data-lucide="monitor" style="width:12px;height:12px"></i>
+          인게임 오버레이 설정
+        </div>
+        <div class="alert-row">
+          <div>
+            <div class="alert-row-label">인게임 HUD 표시</div>
+            <div class="alert-row-sub">게임 화면 내에 버프 타이머 위젯 표시</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="show-hud-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
       <!-- HUD 위치 설정 -->
       <div class="section">
         <div class="section-label">
@@ -425,7 +570,8 @@
             <div style="position:relative;">
               <input type="number" id="hud-pos-left" min="0" max="3000"
                 style="width:100%;padding:5px 28px 5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;">
-              <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
+              <span
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
             </div>
           </div>
           <div>
@@ -433,14 +579,17 @@
             <div style="position:relative;">
               <input type="number" id="hud-pos-bottom" min="0" max="3000"
                 style="width:100%;padding:5px 28px 5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;">
-              <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
+              <span
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
             </div>
           </div>
         </div>
         <button id="btn-apply-pos"
           style="margin-top:8px;width:100%;padding:5px 0;background:var(--accent-dim);border:1px solid rgba(167,139,250,0.3);border-radius:6px;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;transition:background 0.15s;"
-          onmouseover="this.style.background='rgba(167,139,250,0.25)'" onmouseout="this.style.background='var(--accent-dim)'">
-          <i data-lucide="check" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px;"></i>
+          onmouseover="this.style.background='rgba(167,139,250,0.25)'"
+          onmouseout="this.style.background='var(--accent-dim)'">
+          <i data-lucide="check"
+            style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px;"></i>
           위치 즉시 적용
         </button>
         <div style="font-size:10px;color:var(--text-muted);margin-top:5px;font-style:italic;">
@@ -453,9 +602,18 @@
 
   <!-- 푸터 -->
   <div class="footer">
-    <button class="btn-sm btn-ghost" id="btn-test" title="3개 버프를 강제로 HUD에 표시합니다">
-      <i data-lucide="flask-conical" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:3px"></i>
-      테스트 (HUD 미리보기)
+    <div class="flex items-center gap-1.5 mr-auto">
+      <span class="text-[10px] text-slate-500 font-bold uppercase">테스트 시간</span>
+      <div class="relative">
+        <input type="number" id="test-seconds-input" value="1200" min="1" max="3600"
+          style="width:70px;padding:4px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;font-weight:700;outline:none;text-align:center;">
+        <span class="absolute -right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold">초</span>
+      </div>
+    </div>
+    <button class="btn-sm btn-ghost" id="btn-test" title="입력한 시간만큼 남은 테스트 버프를 표시합니다">
+      <i data-lucide="flask-conical"
+        style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:3px"></i>
+      테스트 (미리보기)
     </button>
     <button class="btn-sm btn-primary" id="btn-save">저장</button>
   </div>
@@ -463,24 +621,21 @@
   <script>
     function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
-    // ── 버프 목록 (chatTriggers가 있는 버프만 표시) ──
     const TRACKED_BUFFS = [
-      { id: 'exp_heart',    name: '경험의 심장',   duration: '20분 유지', cat: 'exp',    image: 'assets/img/buffs/경험의심장.png' },
-      { id: 'rare_heart',   name: '레어의 심장',   duration: '20분 유지', cat: 'drop',   image: 'assets/img/buffs/레어의심장.png' },
-      { id: 'stat_exorcist',name: '퇴마사의 은총', duration: '20분 유지', cat: 'stats',  image: 'assets/img/buffs/퇴마사의은총.png' },
+      { id: 'exp_heart', name: '경험의 심장', duration: '20분 유지', cat: 'exp', image: 'assets/img/buffs/경험의심장.png' },
+      { id: 'rare_heart', name: '레어의 심장', duration: '20분 유지', cat: 'drop', image: 'assets/img/buffs/레어의심장.png' },
+      { id: 'stat_exorcist', name: '퇴마사의 은총', duration: '20분 유지', cat: 'stats', image: 'assets/img/buffs/퇴마사의은총.png' },
     ];
-
 
     const CAT_LABELS = { exp: 'E', drop: 'R', stats: 'S', damage: 'D', util: 'U' };
 
     let cfg = {};
-    let buffEnabled = {}; // buffId → boolean
+    let buffEnabled = {};
     let warnSeconds = [60, 10];
 
     function renderBuffList() {
       const list = document.getElementById('buff-list');
       list.innerHTML = '';
-
       TRACKED_BUFFS.forEach(buff => {
         const enabled = buffEnabled[buff.id] !== false;
         const div = document.createElement('div');
@@ -488,7 +643,7 @@
         div.dataset.id = buff.id;
         const iconHtml = buff.image
           ? `<div class="buff-item-icon" style="background:transparent;border:none;padding:0">
-               <img src="${buff.image}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">
+               <img src="${buff.image}" style="width:100%;height:100%;object-fit:contain">
              </div>`
           : `<div class="buff-item-icon cat-${buff.cat}">${CAT_LABELS[buff.cat] || 'U'}</div>`;
 
@@ -498,211 +653,129 @@
             <div class="buff-item-name">${buff.name}</div>
             <div class="buff-item-sub">${buff.duration}</div>
           </div>
-          <label class="toggle-wrap" onclick="event.stopPropagation()">
+          <label class="toggle-wrap">
             <input type="checkbox" ${enabled ? 'checked' : ''} data-buff-id="${buff.id}">
             <span class="toggle-slider"></span>
           </label>
         `;
-
-        div.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+        div.querySelector('input').addEventListener('change', (e) => {
           buffEnabled[buff.id] = e.target.checked;
           div.classList.toggle('disabled', !e.target.checked);
         });
-
         list.appendChild(div);
       });
     }
 
     function renderWarnChips() {
       const container = document.getElementById('warn-chips');
-      // 기존 칩 제거 (추가 버튼 빼고)
       container.querySelectorAll('.warn-chip, .warn-chip-fixed').forEach(el => el.remove());
-
       const sorted = [...warnSeconds].sort((a, b) => b - a);
       sorted.forEach(sec => {
-        const label = sec >= 60 ? `${Math.floor(sec / 60)}분 전` : `${sec}초 전`;
         const chip = document.createElement('div');
         chip.className = 'warn-chip';
-        chip.dataset.sec = sec;
-        chip.innerHTML = `
-          <span>${label}</span>
-          <span class="remove-btn" data-sec="${sec}">
-            <i data-lucide="x" style="width:10px;height:10px"></i>
-          </span>
-        `;
+        chip.innerHTML = `<span>${sec >= 60 ? Math.floor(sec / 60) + '분' : sec + '초'} 전</span><span class="remove-btn" data-sec="${sec}"><i data-lucide="x" style="width:10px;height:10px"></i></span>`;
         chip.querySelector('.remove-btn').addEventListener('click', () => {
           warnSeconds = warnSeconds.filter(s => s !== sec);
           renderWarnChips();
-          refreshIcons();
         });
         container.insertBefore(chip, container.querySelector('.add-chip-btn'));
       });
-
-      // 5초 고정 칩 렌더링
-      const fixedChip = document.createElement('div');
-      fixedChip.className = 'warn-chip-fixed flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded text-[11px] font-bold text-red-300';
-      fixedChip.innerHTML = `<span>5초 전 (고정)</span>`;
-      container.insertBefore(fixedChip, container.querySelector('.add-chip-btn'));
-
+      const fixed = document.createElement('div');
+      fixed.className = 'warn-chip-fixed flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded text-[11px] font-bold text-red-300';
+      fixed.innerHTML = `<span>5초 전 (고정)</span>`;
+      container.insertBefore(fixed, container.querySelector('.add-chip-btn'));
       refreshIcons();
     }
 
-    // 추가 버튼
     function setupAddChip() {
       const container = document.getElementById('warn-chips');
-      if (container.querySelector('.add-chip-btn')) return; // 중복 방지
-
+      if (container.querySelector('.add-chip-btn')) return;
       const addBtn = document.createElement('button');
       addBtn.className = 'add-chip-btn';
       addBtn.innerHTML = `<i data-lucide="plus" style="width:11px;height:11px"></i> 추가`;
-      addBtn.addEventListener('click', () => {
-        document.getElementById('add-input-row').classList.add('visible');
-        document.getElementById('add-warn-input').focus();
-      });
+      addBtn.onclick = () => document.getElementById('add-input-row').classList.add('visible');
       container.appendChild(addBtn);
     }
 
-    document.getElementById('confirm-add-warn').addEventListener('click', () => {
+    document.getElementById('confirm-add-warn').onclick = () => {
       const input = document.getElementById('add-warn-input');
-      const val = parseInt(input.value, 10);
-      if (val <= 5) {
-        input.value = '';
-        input.style.borderColor = '#ef4444';
-        const errMsg = document.getElementById('add-error-msg');
-        errMsg.textContent = '6초 이상만 가능합니다!';
-        errMsg.style.opacity = '1';
-        setTimeout(() => {
-          input.style.borderColor = '';
-          errMsg.style.opacity = '0';
-        }, 2000);
-        input.focus();
-        return;
-      } else if (val >= 6 && val <= 1199 && !warnSeconds.includes(val)) {
+      const val = parseInt(input.value);
+      if (val > 5 && !warnSeconds.includes(val)) {
         warnSeconds.push(val);
         renderWarnChips();
       }
       input.value = '';
       document.getElementById('add-input-row').classList.remove('visible');
-      refreshIcons();
-    });
+    };
 
-    document.getElementById('cancel-add-warn').addEventListener('click', () => {
-      document.getElementById('add-warn-input').value = '';
-      document.getElementById('add-input-row').classList.remove('visible');
-    });
+    document.getElementById('cancel-add-warn').onclick = () => document.getElementById('add-input-row').classList.remove('visible');
 
-    document.getElementById('add-warn-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('confirm-add-warn').click();
-      if (e.key === 'Escape') document.getElementById('cancel-add-warn').click();
-    });
-
-    // 볼륨 슬라이더
-    document.getElementById('volume-slider').addEventListener('input', (e) => {
-      document.getElementById('volume-val').textContent = e.target.value;
-    });
-
-    // 오디오 토글 → 볼륨 행 비활성화
-    document.getElementById('audio-toggle').addEventListener('change', (e) => {
+    document.getElementById('audio-toggle').onchange = (e) => {
       document.getElementById('volume-container').style.opacity = e.target.checked ? '1' : '0.4';
       document.getElementById('volume-container').style.pointerEvents = e.target.checked ? '' : 'none';
-    });
+    };
 
-    // 미리듣기
-    document.getElementById('preview-sound').addEventListener('click', () => {
-      const vol = parseInt(document.getElementById('volume-slider').value, 10);
-      const soundFile = document.getElementById('sound-select').value || 'voice_boss_first.wav';
-      window.playPreview(soundFile, vol, '버프 타이머 테스트');
-    });
+    document.getElementById('volume-slider').oninput = (e) => document.getElementById('volume-val').textContent = e.target.value;
 
-    // 테스트 — 3개 버프 강제 활성화
-    document.getElementById('btn-test').addEventListener('click', () => {
-      window.electronAPI.buffTimerTest();
-    });
+    document.getElementById('preview-sound').onclick = () => {
+      const vol = parseInt(document.getElementById('volume-slider').value);
+      const file = document.getElementById('sound-select').value || 'voice_boss_first.wav';
+      window.playPreview(file, vol, '버프 타이머 테스트');
+    };
 
-    // HUD 위치 즉시 적용
-    document.getElementById('btn-apply-pos').addEventListener('click', () => {
-      const left   = parseInt(document.getElementById('hud-pos-left').value)   || 0;
+    document.getElementById('btn-test').onclick = () => {
+      const secs = parseInt(document.getElementById('test-seconds-input').value) || 1200;
+      window.electronAPI.buffTimerTest(secs);
+    };
+
+    document.getElementById('show-hud-toggle').onchange = (e) => window.electronAPI.applySettings({ showBuffHud: e.target.checked });
+    document.getElementById('master-toggle').onchange = (e) => window.electronAPI.applySettings({ buffTimerEnabled: e.target.checked });
+
+    document.getElementById('btn-apply-pos').onclick = () => {
+      const left = parseInt(document.getElementById('hud-pos-left').value) || 0;
       const bottom = parseInt(document.getElementById('hud-pos-bottom').value) || 0;
       window.electronAPI.applySettings({ buffTimerHudPos: { left, bottom } });
-    });
+    };
 
-    // 저장
-    document.getElementById('btn-save').addEventListener('click', () => {
-      const newCfg = {
+    document.getElementById('btn-save').onclick = () => {
+      window.electronAPI.applySettings({
         buffTimerEnabled: document.getElementById('master-toggle').checked,
+        showBuffHud: document.getElementById('show-hud-toggle').checked,
         buffTimerWarnSeconds: [...warnSeconds],
         buffTimerAudioAlert: document.getElementById('audio-toggle').checked,
         buffTimerVisualAlert: document.getElementById('visual-toggle').checked,
-        buffTimerVolume: parseInt(document.getElementById('volume-slider').value, 10),
+        buffTimerVolume: parseInt(document.getElementById('volume-slider').value),
         buffTimerSound: document.getElementById('sound-select').value,
         buffTimerBuffs: { ...buffEnabled },
-        buffTimerHudPos: {
-          left:   parseInt(document.getElementById('hud-pos-left').value)   || 0,
-          bottom: parseInt(document.getElementById('hud-pos-bottom').value) || 0,
-        },
-      };
-      window.electronAPI.applySettings(newCfg);
-    });
+        buffTimerHudPos: { left: parseInt(document.getElementById('hud-pos-left').value) || 0, bottom: parseInt(document.getElementById('hud-pos-bottom').value) || 0 }
+      });
+    };
 
-    // ── 초기화 ──
     window.electronAPI.onConfigData(async (config) => {
       cfg = config;
-      
-      // 사운드 목록 로드
       if (window.loadSoundList) {
-        try {
-          const soundFiles = await window.loadSoundList();
-          const sel = document.getElementById('sound-select');
-          sel.innerHTML = '';
-          soundFiles.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.file;
-            opt.textContent = s.name;
-            sel.appendChild(opt);
-          });
-          if (config.buffTimerSound) sel.value = config.buffTimerSound;
-        } catch (e) {
-          console.error("Failed to load sounds", e);
-        }
+        const sounds = await window.loadSoundList();
+        const sel = document.getElementById('sound-select');
+        sel.innerHTML = sounds.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+        if (config.buffTimerSound) sel.value = config.buffTimerSound;
       }
       document.getElementById('master-toggle').checked = config.buffTimerEnabled !== false;
+      document.getElementById('show-hud-toggle').checked = config.showBuffHud !== false;
       document.getElementById('audio-toggle').checked = config.buffTimerAudioAlert !== false;
       document.getElementById('visual-toggle').checked = config.buffTimerVisualAlert !== false;
-
       const vol = config.buffTimerVolume ?? 70;
       document.getElementById('volume-slider').value = vol;
       document.getElementById('volume-val').textContent = vol;
-
-      // 5초 이하는 고정이므로 필터링. 기존 유저의 10초 설정도 필요 없어질 확률이 높으므로 초기값은 [60]으로.
-      const loadedSecs = config.buffTimerWarnSeconds ?? [60];
-      warnSeconds = [...loadedSecs].filter(s => s > 5);
+      warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
       buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true }) };
-
-      // 오디오 토글 상태에 따라 볼륨 행 비활성화
-      const audioEnabled = config.buffTimerAudioAlert !== false;
-      document.getElementById('volume-container').style.opacity = audioEnabled ? '1' : '0.4';
-      document.getElementById('volume-container').style.pointerEvents = audioEnabled ? '' : 'none';
-
-      // HUD 위치 로드
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
-      document.getElementById('hud-pos-left').value   = hudPos.left;
+      document.getElementById('hud-pos-left').value = hudPos.left;
       document.getElementById('hud-pos-bottom').value = hudPos.bottom;
-
-      renderBuffList();
-      setupAddChip();
-      renderWarnChips();
-      refreshIcons();
+      renderBuffList(); setupAddChip(); renderWarnChips(); refreshIcons();
     });
 
-    window.onload = () => {
-      refreshIcons();
-      if (window.bindEscapeClose) window.bindEscapeClose();
-    };
-
-    // 창 닫힐 때 테스트 버프 자동 제거
-    window.addEventListener('beforeunload', () => {
-      window.electronAPI.buffTimerClearTest();
-    });
+    window.onload = () => { refreshIcons(); if (window.bindEscapeClose) window.bindEscapeClose(); };
+    window.addEventListener('beforeunload', () => window.electronAPI.buffTimerClearTest());
   </script>
 </body>
 

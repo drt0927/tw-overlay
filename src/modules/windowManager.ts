@@ -139,7 +139,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   uniformColor: { ref: null, pos: { offsetX: -360, offsetY: 40 }, key: 'uniformColor', html: 'uniform-color.html', width: 360, height: 800 },
   shoutHistory: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'shoutHistory', html: 'shout-history.html', width: 450, height: 600 },
   gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 },
-  buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 600 },
+  buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 850 },
   xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 1050 },
 };
 
@@ -568,7 +568,10 @@ export function syncOverlay(currentRect: GameRect): void {
     }
 
     const currentSidebarB = mainWindow.getBounds();
-    const newSidebarX = gX + gW, newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
+    const cfg = config.load();
+    const sidebarPos = cfg.sidebarPosition || 'right';
+    const newSidebarX = (sidebarPos === 'left') ? gX - currentSidebarB.width : gX + gW;
+    const newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
     const newSidebarH = gH - 30; // 제목 표시줄 두께만큼 높이 축소
 
     if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD ||
@@ -601,8 +604,13 @@ export function syncOverlay(currentRect: GameRect): void {
 export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResize?: boolean }): void {
   if (newSettings.isSidebarResize && mainWindow) {
     const b = mainWindow.getBounds();
+    const cfg = config.load();
+    let newX = b.x;
+    if (cfg.sidebarPosition === 'left' && gameRect) {
+      newX = gameRect.x - newSettings.width!;
+    }
     setProgrammaticMove('main');
-    mainWindow.setBounds({ x: b.x, y: b.y, width: newSettings.width, height: b.height });
+    mainWindow.setBounds({ x: newX, y: b.y, width: newSettings.width, height: b.height });
     return;
   }
   const current = config.load(), updated = { ...current, ...newSettings };
@@ -620,6 +628,9 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
 
   // buffTimerManager warnSeconds 캐시 갱신
   buffTimerManager.refreshConfig();
+
+  // 설정 변경 즉시 반영 (사이드바 위치 등)
+  if (gameRect) syncOverlay(gameRect);
 
   // 설정 저장 시 트레이 메뉴(숨김 메뉴 등) 즉시 동기화
   import('./tray').then(mod => {
@@ -683,7 +694,12 @@ export function setMainWindowWidth(width: number): void {
     const b = mainWindow.getBounds();
     // width가 실제로 다를 때만 업데이트하여 불필요한 이벤트 발생 방지
     if (b.width !== width) {
-      mainWindow.setBounds({ x: b.x, y: b.y, width, height: b.height });
+      const cfg = config.load();
+      let newX = b.x;
+      if (cfg.sidebarPosition === 'left' && gameRect) {
+        newX = gameRect.x - width;
+      }
+      mainWindow.setBounds({ x: newX, y: b.y, width, height: b.height });
     }
   }
 }

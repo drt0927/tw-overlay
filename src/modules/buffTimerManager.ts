@@ -84,7 +84,7 @@ class BuffTimerManager {
   /**
    * 버프 타이머 활성화 (이미 활성화된 경우 리셋)
    */
-  public activateBuff(buffId: string, usedBy: string = 'self'): void {
+  public activateBuff(buffId: string, usedBy: string = 'self', customDurationMs?: number): void {
     const cfg = config.load();
 
     // 전체 기능 비활성화 체크
@@ -109,17 +109,19 @@ class BuffTimerManager {
       return;
     }
 
+    const durationMs = customDurationMs ?? def.durationMs;
+
     const activeBuff: ActiveBuff = {
       buffId,
       name: def.name,
-      durationMs: def.durationMs,
+      durationMs: durationMs,
       startTime: Date.now(),
       usedBy,
       warnedAt: new Set(),
     };
 
     this._activeBuffs.set(buffId, activeBuff);
-    log(`[BUFF_TIMER] 버프 활성화: ${def.name} (${def.durationMs / 60000}분), 사용자: ${usedBy}`);
+    log(`[BUFF_TIMER] 버프 활성화: ${def.name} (${durationMs / 60000}분), 사용자: ${usedBy}`);
 
     // 즉시 HUD 갱신
     this._sendHudUpdate();

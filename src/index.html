@@ -68,10 +68,13 @@
     const toastContainer = document.getElementById('toast-container');
     const wrapper = document.getElementById('wrapper');
     const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
-    
+
     let bossNotifyVolume = 0.5;
     let currentHiddenMenuIds = [];
     let _lastRecordedBossKey = null;
+    let lastConfig = null;
+    let sidebarPos = 'right';
+    let isCollapsed = false;
 
     function refreshIcons() { if (window.lucide) lucide.createIcons(); }
 
@@ -79,6 +82,15 @@
       const rect = el.getBoundingClientRect();
       tooltip.innerText = text;
       tooltip.style.top = `${rect.top + 4}px`;
+
+      if (sidebarPos === 'left') {
+        tooltip.style.left = 'auto';
+        tooltip.style.right = '42px'; // 본체 왼쪽(공백 쪽)으로 표시
+      } else {
+        tooltip.style.left = '42px'; // 본체 오른쪽(공백 쪽)으로 표시
+        tooltip.style.right = 'auto';
+      }
+
       tooltip.style.display = 'flex';
     }
 
@@ -91,7 +103,7 @@
       try {
         const response = await fetch('assets/data/sidebar_menus.json');
         const menus = await response.json();
-        
+
         const dynamicContainer = document.getElementById('dynamic-menus');
         const systemContainer = document.getElementById('system-menus');
         dynamicContainer.innerHTML = '';
@@ -105,7 +117,7 @@
           btn.innerHTML = `<i data-lucide="${menu.icon}" class="${menu.id.includes('icon') ? '' : 'w-4 h-4'}"></i>`;
           if (menu.id === 'overlay-toggle-btn') btn.querySelector('i').id = 'overlay-icon';
           if (menu.id === 'click-through-btn') btn.querySelector('i').id = 'click-through-icon';
-          
+
           if (menu.id === 'gallery-btn') {
             btn.innerHTML += `<span id="noti-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>`;
           }
@@ -149,14 +161,14 @@
     function createToast(bossName, isCustomFromApi, spawnTime, offset, isAlreadyRecorded) {
       const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
       const toastId = 'toast-' + Date.now();
-      
+
       const toast = document.createElement('div');
       toast.id = toastId;
       toast.className = 'boss-toast show';
-      
+
       const iconName = isRealBoss ? 'skull' : 'bell-ring';
       const iconColor = isRealBoss ? 'text-[#a855f7]' : 'text-amber-400';
-      
+
       let displayName = bossName;
       const validSpawnTime = (spawnTime && spawnTime !== 'undefined' && spawnTime !== 'null') ? spawnTime : null;
 
@@ -165,7 +177,7 @@
         if (offset > 0) displayName += ` <span class="text-[10px] text-slate-500 font-medium ml-1">${offset}분 전</span>`;
       }
 
-      const buttonHtml = isAlreadyRecorded 
+      const buttonHtml = isAlreadyRecorded
         ? `<button disabled class="px-3 py-1.5 flex items-center gap-1.5 bg-slate-700 text-slate-400 rounded-lg transition-all text-[11px] font-bold cursor-default">
             <i data-lucide="info" class="w-3.5 h-3.5"></i>
             이미 기록됨!
@@ -190,7 +202,7 @@
           ${buttonHtml}
         </div>` : ''}
       `;
-      
+
       toastContainer.appendChild(toast);
       refreshIcons();
       updateIgnoreMouseEvents(false);
@@ -220,7 +232,7 @@
 
     async function recordKillAndRemove(toastId, bossName, spawnTime, event) {
       if (event) event.stopPropagation();
-      
+
       const recordKey = `${bossName}-${spawnTime}`;
       // 1차 필터: 현재 세션 내 메모리 체크 (가장 빠름)
       if (_lastRecordedBossKey === recordKey) {
@@ -240,9 +252,9 @@
 
       const vol = (lastConfig && lastConfig.volumeCalculators !== undefined ? lastConfig.volumeCalculators : 50) / 100;
       if (vol > 0) {
-          const audio = new Audio('assets/sound/item_get.wav');
-          audio.volume = vol;
-          audio.play().catch(e => {});
+        const audio = new Audio('assets/sound/item_get.wav');
+        audio.volume = vol;
+        audio.play().catch(e => { });
       }
 
       const now = new Date();
@@ -252,11 +264,11 @@
       const date = `${year}-${month}-${dateStr}`;
       const recordTime = (spawnTime && spawnTime !== 'null' && spawnTime !== '') ? (spawnTime + ':00') : (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0'));
       const content = `[${bossName}] ${spawnTime || recordTime.substring(0, 5)} 스폰 처치 완료`;
-      
+
       try {
         // 2차 필터: DB 실제 존재 여부 확인 (최종 보루)
         const isSuccess = await window.electronAPI.diaryAddActivity(date, recordTime, 'boss', content);
-        
+
         const toast = document.getElementById(toastId);
         if (toast) {
           const btn = toast.querySelector('button[onclick^="recordKillAndRemove"]');
@@ -298,9 +310,18 @@
       createToast(label, isCustom, spawnTime, offset, isAlreadyRecorded);
     });
 
-    window.electronAPI.onSidebarStatus((isCollapsed) => {
+    window.electronAPI.onSidebarStatus((collapsed) => {
+      isCollapsed = collapsed;
       wrapper.className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';
-      document.getElementById('toggle-icon').setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+
+      let iconName = 'chevron-left';
+      if (sidebarPos === 'left') {
+        iconName = isCollapsed ? 'chevron-left' : 'chevron-right';
+      } else {
+        iconName = isCollapsed ? 'chevron-right' : 'chevron-left';
+      }
+
+      document.getElementById('toggle-icon').setAttribute('data-lucide', iconName);
       tooltip.style.display = 'none';
       refreshIcons();
     });
@@ -317,8 +338,27 @@
 
     window.electronAPI.onConfigData((config) => {
       lastConfig = config;
+      sidebarPos = config.sidebarPosition || 'right';
+
+      // CSS 데이터 속성 부여 (레이아웃 자동 전환용)
+      document.body.dataset.sidebarPos = sidebarPos;
+
+      // 왼쪽 배치: 리사이즈 시 X 좌표 이동(gX-width)이 깜박임을 유발하므로 400px 고정
+      if (sidebarPos === 'left' && currentWidth !== 400) {
+        performWidthUpdate(400);
+      }
+
+      // 화살표 방향 갱신
+      let iconName = 'chevron-left';
+      if (sidebarPos === 'left') {
+        iconName = isCollapsed ? 'chevron-left' : 'chevron-right';
+      } else {
+        iconName = isCollapsed ? 'chevron-right' : 'chevron-left';
+      }
+      document.getElementById('toggle-icon').setAttribute('data-lucide', iconName);
+
       bossNotifyVolume = (config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50) / 100;
-      
+
       currentHiddenMenuIds = config.hiddenMenuIds || [];
       applyMenuVisibility();
 
@@ -330,8 +370,8 @@
         btn.className = 'tw-slot';
         btn.innerHTML = slot.iconType === 'text' && slot.textChar ? `<span class="tw-slot-text">${slot.textChar}</span>` : `<i data-lucide="${slot.icon || 'link'}"></i>`;
         if (slot.external) { const dot = document.createElement('div'); dot.className = 'external-dot'; btn.appendChild(dot); }
-        btn.onmouseenter = () => { const rect = btn.getBoundingClientRect(); tooltip.innerText = slot.label || 'LINK'; tooltip.style.top = `${rect.top + 4}px`; tooltip.style.display = 'flex'; };
-        btn.onmouseleave = () => { tooltip.style.display = 'none'; };
+        btn.onmouseenter = () => showTooltip(slot.label || 'LINK', btn);
+        btn.onmouseleave = () => hideTooltip();
         btn.onclick = () => { if (slot.external) window.electronAPI.openExternal(slot.url); else window.electronAPI.navigate(slot.url); };
         container.appendChild(btn);
       });
@@ -351,17 +391,62 @@
 
     // 마우스 이벤트 및 창 크기 동적 제어
     let currentWidth = 400;
-    
+    let isResizing = false;
+    let resizeTimer = null;
+    let shrinkTimer = null;
+
     function updateSidebarWindowWidth(neededWidth) {
+      // 왼쪽 배치: width 변경 → X좌표 이동(gX-width) → 윈도우 350px 점프 → 깜박임
+      // 오른쪽 배치: X 고정(gX+gW) → width만 변경 → 시각적 문제 없음
+      if (sidebarPos === 'left') return;
+
+      // 확장 요청 시: 진행 중인 축소 타이머를 항상 취소 (currentWidth 상태와 무관하게 선제 취소)
+      if (neededWidth !== 50 && shrinkTimer) {
+        clearTimeout(shrinkTimer);
+        shrinkTimer = null;
+      }
+
       if (currentWidth !== neededWidth) {
-        currentWidth = neededWidth;
-        window.electronAPI.applySettings({ isSidebarResize: true, width: neededWidth });
+        if (neededWidth === 50) {
+          // 좁아질 때는 200ms 지연을 주어 깜박임 방지 (Debounce)
+          if (shrinkTimer) return; 
+          shrinkTimer = setTimeout(() => {
+            performWidthUpdate(50);
+            shrinkTimer = null;
+          }, 200);
+        } else {
+          // 넓어질 때는 즉시 반응
+          performWidthUpdate(neededWidth);
+        }
       }
     }
 
+    function performWidthUpdate(width) {
+      currentWidth = width;
+      isResizing = true;
+      if (resizeTimer) clearTimeout(resizeTimer);
+
+      window.electronAPI.applySettings({ isSidebarResize: true, width: width });
+
+      resizeTimer = setTimeout(() => {
+        isResizing = false;
+      }, 300);
+    }
+
     function checkMouseIgnore(e) {
-      // 1. 사이드바 본체 위에 있는지 확인
-      const isOverSidebar = wrapper.contains(e.target);
+      if (isResizing) return;
+
+      // 1. 사이드바 본체(wrapper) 요소의 실제 경계를 기준으로 마우스 위치 판정
+      // window.innerWidth 기반 계산은 창 크기 변화(50↔400) 시 좌표 불일치로 깜박임 유발
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const hitPadding = 14;
+      const isOverSidebar = (
+        e.clientX >= wrapperRect.left - hitPadding &&
+        e.clientX <= wrapperRect.right + hitPadding &&
+        e.clientY >= wrapperRect.top - hitPadding &&
+        e.clientY <= wrapperRect.bottom + hitPadding
+      );
+
       // 2. 알림 토스트 위에 있는지 확인
       const activeToasts = toastContainer.querySelectorAll('.boss-toast');
       let isOverToast = false;
@@ -372,7 +457,6 @@
           isOverToast = true;
         }
       });
-
       const hasToasts = activeToasts.length > 0;
 
       if (isOverSidebar || isOverToast) {
@@ -388,10 +472,9 @@
         }
       }
     }
-
     // 전역 마우스 이동 감시
     window.addEventListener('mousemove', checkMouseIgnore);
-    
+
     // 초기 상태 설정
     updateIgnoreMouseEvents(true);
     updateSidebarWindowWidth(50); // 시작 시엔 좁게 설정

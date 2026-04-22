@@ -400,6 +400,11 @@
       if (!showXpWidget) hud.classList.add('hidden');
       else               hud.classList.remove('hidden');
 
+      // 버프 HUD 표시 여부 제어
+      const buffHud = document.getElementById('buff-hud');
+      if (config.showBuffHud === false) buffHud.classList.add('hidden');
+      else                              buffHud.classList.remove('hidden');
+
       if (config.xpWidgetPos) {
         hud.style.left   = `${config.xpWidgetPos.left}px`;
         hud.style.bottom = `${config.xpWidgetPos.bottom}px`;

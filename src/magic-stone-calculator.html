@@ -233,8 +233,9 @@
         }
       }
 
-      if (remaining > 0 || result === '') {
-        result += remaining;
+      // 만 단위 이상 기록이 있으면 나머지는 버림, 없으면(1만 미만) 숫자 표시
+      if (result === '') {
+        result = remaining.toLocaleString();
       }
 
       return result.trim() + ' 시드';

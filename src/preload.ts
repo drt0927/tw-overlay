@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
   resetXp: () => ipcRenderer.send('xp-reset'),
+  invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 
   contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
@@ -183,7 +184,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('diary-updated');
     ipcRenderer.on('diary-updated', () => callback());
   },
-  onXpUpdate: (callback: (data: { total: number, epm: number, lastGain: number }) => void) => {
+  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[] }) => void) => {
     ipcRenderer.removeAllListeners('xp-update');
     ipcRenderer.on('xp-update', (_event, data) => callback(data));
   },

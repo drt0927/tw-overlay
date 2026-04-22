@@ -81,7 +81,7 @@ class ChatParser extends EventEmitter {
     
     // 순수 숫자인 경우
     if (/^\d+$/.test(cleanText)) {
-      return parseInt(cleanText, 10);
+      return Number(cleanText);
     }
 
     let total = 0;
@@ -91,7 +91,7 @@ class ChatParser extends EventEmitter {
 
     while ((match = unitRegex.exec(cleanText)) !== null) {
       foundAny = true;
-      const num = parseInt(match[1], 10);
+      const num = Number(match[1]);
       const unit = match[2];
 
       if (unit === '억') total += num * 100000000;
@@ -106,6 +106,16 @@ class ChatParser extends EventEmitter {
    * 로그 한 줄을 파싱하여 적절한 이벤트를 발생시킴
    */
   public parseLine(rawLine: string): void {
+    // 파일 헤더의 Date : YYYY-MM-DD 패턴 감지
+    const headerDateMatch = rawLine.match(/Date\s*:\s*(\d{4}-\d{2}-\d{2})/);
+    if (headerDateMatch) {
+      if (this._currentDate !== headerDateMatch[1]) {
+        log(`[CHAT_PARSER] 날짜 변경 감지 (헤더): ${this._currentDate} -> ${headerDateMatch[1]}`);
+        this._currentDate = headerDateMatch[1];
+      }
+      return;
+    }
+
     const cleanLine = this.stripHtml(rawLine);
 
     // 1. 날짜 헤더 감지 (Date : 2026년 4월 19일)

@@ -608,7 +608,11 @@
 
     function formatSeed(seed) {
       if (seed === 0) return '0 시드';
-      const units = [{ label: '조', value: 1000000000000 }, { label: '억', value: 100000000 }, { label: '만', value: 10000 }];
+      const units = [
+        { label: '조', value: 1000000000000 },
+        { label: '억', value: 100000000 },
+        { label: '만', value: 10000 }
+      ];
       let result = '', remaining = seed;
       for (const unit of units) {
         if (remaining >= unit.value) {
@@ -616,7 +620,11 @@
           remaining %= unit.value;
         }
       }
-      return (result || (remaining + '')) + ' 시드';
+      // 만 단위 이상 기록이 있으면 나머지는 버림, 없으면(1만 미만) 숫자 표시
+      if (result === '') {
+        result = remaining.toLocaleString();
+      }
+      return result.trim() + ' 시드';
     }
 
     function switchTab(tabId) {
@@ -763,12 +771,12 @@
           desc = desc.replace('[자동]', '<span class="opacity-50 text-[10px] mr-1">[Auto]</span>');
 
           return `
-          <div class="flex items-baseline justify-between py-2 border-b border-orange-500/5 last:border-0 gap-2">
-            <div class="flex items-baseline gap-2 min-w-0">
+          <div class="flex items-baseline justify-between py-2 border-b border-orange-500/5 last:border-0 gap-3">
+            <div class="flex items-baseline gap-2 min-w-0 flex-1">
               <span class="text-[13px] font-mono text-slate-500 shrink-0">${item.date.slice(5)}</span>
               <span class="text-[13px] font-bold text-slate-400 truncate" title="${desc.replace(/<[^>]*>/g, '')}">${desc}</span>
             </div>
-            <span class="text-[13px] font-black text-orange-300 shrink-0 text-right">${amountStr}</span>
+            <span class="text-[13px] font-black text-orange-300 shrink-0 text-right max-w-[180px] break-all">${amountStr}</span>
           </div>`}).join('') || '<div class="text-[13px] text-slate-600 italic py-6 text-center">기록 없음</div>';
 
         renderCalendar();

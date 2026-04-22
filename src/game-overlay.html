@@ -277,14 +277,13 @@
     function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
     function formatXP(num) {
-      if (num >= 100000000) {
-        const eok = Math.floor(num / 100000000);
-        const remainder = num % 100000000;
-        if (remainder >= 10000) return `${eok}억 ${Math.floor(remainder / 10000)}만`;
-        return `${eok}억`;
-      }
-      if (num >= 10000) return `${Math.floor(num / 10000)}만`;
-      return num.toLocaleString();
+      const n = Number(num);
+      if (isNaN(n) || n <= 0) return '0';
+      
+      if (n >= 1000000000000) return (n / 1000000000000).toFixed(2) + '조';
+      if (n >= 100000000) return (n / 100000000).toFixed(1) + '억';
+      if (n >= 10000) return Math.floor(n / 10000).toLocaleString() + '만';
+      return Math.floor(n).toLocaleString();
     }
 
     // 남은 시간 포맷: 1분 이상 m:ss, 미만 ss초

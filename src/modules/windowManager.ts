@@ -140,7 +140,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   shoutHistory: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'shoutHistory', html: 'shout-history.html', width: 450, height: 600 },
   gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 },
   buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 600 },
-  xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 500 },
+  xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 1050 },
 };
 
 let gameRect: GameRect | null = null;
@@ -410,8 +410,63 @@ export function toggleUniformColorWindow(): void {
     return;
   }
 
-  // ... (기존 로직)
+  // 1. 독립 창 생성 및 로드
+  const win = new BrowserWindow(getStandardOptions(winCfg.width, winCfg.height));
+  winCfg.ref = win;
+  attachStackListeners(win);
+  win.loadFile(path.join(__dirname, '..', winCfg.html));
+
+  // 2. 외부 페이지용 WebContentsView 생성 및 부착
+  uniformColorView = new WebContentsView({
+    webPreferences: {
+      backgroundThrottling: false,
+      preload: path.join(__dirname, '..', 'overlay-view-preload.js')
+    }
+  });
+  win.contentView.addChildView(uniformColorView);
+
+  // 3. 뷰 영역 배치 (헤더 56px, 푸터 28px 제외)
+  const b = win.getContentBounds();
+  uniformColorView.setBounds({ x: 0, y: 56, width: b.width, height: b.height - 56 - 28 });
+
+  // 4. URL 로드 및 CSS 교정 (여백 제거 및 배경색 통일)
+  uniformColorView.webContents.loadURL('https://twsnowflower.github.io/uniform_color/spin.html');
+  uniformColorView.webContents.on('did-finish-load', () => {
+    if (uniformColorView) {
+      uniformColorView.webContents.insertCSS('body { overflow: hidden !important; margin-top: -79px !important; margin-left: 0px !important; background: #0f121e !important; }', { cssOrigin: 'user' });
+    }
+  });
+
+  win.once('ready-to-show', () => {
+    if (gameRect) {
+      const { x, y } = winCfg.calcPosition
+        ? winCfg.calcPosition(gameRect, winCfg.pos)
+        : { x: Math.round(gameRect.x + gameRect.width + winCfg.pos.offsetX), y: Math.round(gameRect.y + winCfg.pos.offsetY) };
+      win.setPosition(x, y);
+    }
+    if (IS_DEV) {
+      win.webContents.openDevTools({ mode: 'detach' });
+      uniformColorView?.webContents.openDevTools({ mode: 'detach' });
+    }
+    win.show();
+  });
+
+  win.on('move', () => {
+    if (consumeProgrammaticMove('uniformColor') || !winCfg.ref || !gameRect) return;
+    const b = winCfg.ref.getBounds();
+    winCfg.pos = { offsetX: b.x - (gameRect.x + gameRect.width), offsetY: b.y - gameRect.y };
+    savePosition('uniformColor', winCfg.pos);
+  });
+
+  win.on('closed', () => {
+    if (uniformColorView) {
+      try { uniformColorView.webContents.close(); } catch (e) { }
+      uniformColorView = null;
+    }
+    winCfg.ref = null;
+  });
 }
+
 export function toggleShoutHistoryWindow(): void { createToggleableWindow('shoutHistory'); }
 export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
 export function toggleBuffTimerWindow(): void { createToggleableWindow('buffTimer'); }
@@ -432,7 +487,7 @@ export function toggleContentsCheckerWindow(): void {
 
 export function getAllWindowHwnds(): string[] {
   const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
-  
+
   // gameOverlayWindow도 명시적으로 포함 (스택에 없을 수 있으므로)
   if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && gameOverlayWindow.isVisible()) {
     if (!windows.includes(gameOverlayWindow)) windows.push(gameOverlayWindow);

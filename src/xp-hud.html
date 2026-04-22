@@ -13,24 +13,28 @@
       --bg: #0f0e1a;
       --surface: #17152b;
       --surface2: #1f1c38;
-      --border: rgba(52,211,153,0.12);
+      --border: rgba(52, 211, 153, 0.12);
       --accent: #34d399;
       --accent-hover: #6ee7b7;
-      --accent-dim: rgba(52,211,153,0.12);
-      --accent-glow: rgba(52,211,153,0.2);
+      --accent-dim: rgba(52, 211, 153, 0.12);
+      --accent-glow: rgba(52, 211, 153, 0.2);
       --text: #ecfdf5;
       --text-muted: #6ee7b7;
       --danger: #f87171;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     /* ── 수치 카드 ── */
     .stat-card {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 14px 16px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -38,8 +42,8 @@
     }
 
     .stat-card:hover {
-      border-color: rgba(52,211,153,0.3);
-      box-shadow: 0 0 12px rgba(52,211,153,0.08);
+      border-color: rgba(52, 211, 153, 0.3);
+      box-shadow: 0 0 12px rgba(52, 211, 153, 0.08);
     }
 
     .stat-label {
@@ -52,19 +56,61 @@
     }
 
     .stat-value {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 900;
       color: var(--text);
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.03em;
-      line-height: 1;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
     }
 
-    .stat-sub {
-      font-size: 10px;
-      color: var(--text-muted);
+    .unit-sm {
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.5;
+      margin: 0 2px 0 1px;
+    }
+
+    .remainder-sm {
+      font-size: 14px;
       opacity: 0.6;
-      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    /* ── 차트 영역 ── */
+    .chart-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      height: 160px;
+      position: relative;
+    }
+
+    .stat-grid-top {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-grid-sub {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .essence-card {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(59, 130, 246, 0.1));
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .essence-label {
+      color: #c084fc;
+    }
+
+    .essence-value {
+      color: #e9d5ff;
+      font-size: 20px;
     }
 
     /* ── 구분선 ── */
@@ -89,26 +135,47 @@
     }
 
     /* ── 토글 스위치 ── */
-    .toggle-wrap { position: relative; display: inline-block; width: 36px; height: 20px; }
-    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-wrap {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-wrap input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
     .toggle-slider {
-      position: absolute; inset: 0;
-      background: rgba(255,255,255,0.1);
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 20px;
       cursor: pointer;
       transition: background 0.2s;
     }
+
     .toggle-slider::before {
       content: '';
       position: absolute;
-      width: 14px; height: 14px;
-      left: 3px; top: 3px;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
       background: white;
       border-radius: 50%;
       transition: transform 0.2s;
     }
-    .toggle-wrap input:checked + .toggle-slider { background: var(--accent); }
-    .toggle-wrap input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    .toggle-wrap input:checked+.toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-wrap input:checked+.toggle-slider::before {
+      transform: translateX(16px);
+    }
 
     /* ── 설정 행 ── */
     .setting-row {
@@ -121,8 +188,18 @@
       border: 1px solid var(--border);
     }
 
-    .setting-row-label { font-size: 12px; font-weight: 600; color: var(--text); }
-    .setting-row-sub   { font-size: 10px; color: var(--text-muted); margin-top: 2px; opacity: 0.7; }
+    .setting-row-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .setting-row-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      opacity: 0.7;
+    }
 
     /* ── 숫자 인풋 ── */
     .num-input {
@@ -137,6 +214,7 @@
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
+
     .num-input:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 2px var(--accent-glow);
@@ -152,45 +230,20 @@
       transition: background 0.15s, transform 0.1s;
       border: none;
     }
-    .btn-sm:active { transform: scale(0.96); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #10b981, #34d399);
-      color: #052e16;
-      box-shadow: 0 2px 8px rgba(52,211,153,0.25);
+    .btn-sm:active {
+      transform: scale(0.96);
     }
-    .btn-primary:hover { background: linear-gradient(135deg, #059669, #10b981); }
 
     .btn-danger {
-      background: rgba(248,113,113,0.12);
-      border: 1px solid rgba(248,113,113,0.3);
+      background: rgba(248, 113, 113, 0.12);
+      border: 1px solid rgba(248, 113, 113, 0.3);
       color: var(--danger);
     }
-    .btn-danger:hover { background: rgba(248,113,113,0.2); }
 
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
+    .btn-danger:hover {
+      background: rgba(248, 113, 113, 0.2);
     }
-    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
-
-    /* ── 경과 시간 ── */
-    #elapsed-timer {
-      font-variant-numeric: tabular-nums;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    /* ── 초기화 플래시 ── */
-    @keyframes reset-flash {
-      0%   { opacity: 1; }
-      30%  { opacity: 0.2; }
-      60%  { opacity: 1; }
-      80%  { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-    .reset-flash { animation: reset-flash 0.5s ease-out; }
 
     /* ── 스크롤 ── */
     .scroll-area {
@@ -202,9 +255,17 @@
       gap: 14px;
     }
 
-    .scroll-area::-webkit-scrollbar { width: 4px; }
-    .scroll-area::-webkit-scrollbar-thumb { background: rgba(52,211,153,0.2); border-radius: 4px; }
+    .scroll-area::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .scroll-area::-webkit-scrollbar-thumb {
+      background: rgba(52, 211, 153, 0.2);
+      border-radius: 4px;
+    }
   </style>
+  <!-- Chart.js (Local) -->
+  <script src="assets/chart.umd.min.js"></script>
 </head>
 
 <body class="panel-glass p-0 h-screen flex flex-col relative">
@@ -230,40 +291,79 @@
   <div class="scroll-area">
 
     <!-- ① 세션 통계 -->
-    <div>
+    <div class="stat-grid-top">
       <div class="section-label">
         <i data-lucide="bar-chart-2" style="width:11px;height:11px"></i>
         현재 세션 통계
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+
+      <!-- 총 경험치 (가장 크게) -->
+      <div class="stat-card">
+        <div class="stat-label">총 획득 경험치</div>
+        <div class="stat-value text-emerald-300" id="stat-total">0</div>
+      </div>
+
+      <!-- EPM 및 실시간 페이스 (2단) -->
+      <div class="stat-grid-sub">
         <div class="stat-card">
-          <div class="stat-label">총 획득 경험치</div>
-          <div class="stat-value" id="stat-total">0</div>
-          <div class="stat-sub" id="stat-total-raw"></div>
+          <div class="stat-label">분당 평균 (EPM)</div>
+          <div class="stat-value !text-[17px]" id="stat-epm">0</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">분당 경험치 (EPM)</div>
-          <div class="stat-value" id="stat-epm">0</div>
-          <div class="stat-sub" id="stat-epm-raw"></div>
+        <div class="stat-card border-emerald-500/30">
+          <div class="stat-label text-emerald-400">실시간 페이스 (5m)</div>
+          <div class="stat-value !text-[17px] text-emerald-400" id="stat-moving-epm">0</div>
         </div>
       </div>
+
+      <!-- 정수 기대값 카드 -->
+      <div class="stat-card essence-card">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="stat-label essence-label">시간당 경험의 정수 예상값</div>
+            <div class="stat-value essence-value" id="stat-essence-per-hour">0.00개</div>
+          </div>
+          <div class="text-right">
+            <div class="stat-label">다음 경험의 정수까지</div>
+            <div class="text-xs font-bold text-slate-300" id="stat-essence-eta">--분 남음</div>
+          </div>
+        </div>
+        <div class="w-full bg-slate-800/50 h-1.5 rounded-full mt-3 overflow-hidden">
+          <div id="essence-progress"
+            class="bg-purple-500 h-full transition-all duration-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+            style="width: 0%"></div>
+        </div>
+      </div>
+
       <div class="stat-card">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div class="stat-label">세션 경과 시간</div>
-            <div style="font-size:18px;font-weight:900;color:var(--text);margin-top:4px;" id="elapsed-timer">00:00:00</div>
+            <div style="font-size:16px;font-weight:900;color:var(--text);margin-top:2px;" id="elapsed-timer">00:00:00
+            </div>
           </div>
           <div style="text-align:right;">
             <div class="stat-label">세션 시작</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-top:4px;" id="stat-start-time">—</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-top:2px;" id="stat-start-time">—
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- ② 실시간 추이 차트 -->
+    <div class="mt-2">
+      <div class="section-label">
+        <i data-lucide="line-chart" style="width:11px;height:11px"></i>
+        최근 30분 사냥 리듬
+      </div>
+      <div class="chart-container">
+        <canvas id="xpChart"></canvas>
+      </div>
+    </div>
+
     <hr class="divider">
 
-    <!-- ② 초기화 -->
+    <!-- ③ 초기화 -->
     <div>
       <div class="section-label">
         <i data-lucide="rotate-ccw" style="width:11px;height:11px"></i>
@@ -272,10 +372,9 @@
       <div class="stat-card" style="flex-direction:row;align-items:center;justify-content:space-between;gap:10px;">
         <div>
           <div class="setting-row-label">경험치 세션 초기화</div>
-          <div class="setting-row-sub">누적 경험치와 분당 경험치를 0으로 리셋합니다.</div>
+          <div class="setting-row-sub">데이터를 모두 리셋합니다.</div>
         </div>
         <button class="btn-sm btn-danger" id="btn-reset" style="white-space:nowrap;flex-shrink:0;">
-          <i data-lucide="rotate-ccw" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px;"></i>
           초기화
         </button>
       </div>
@@ -283,7 +382,7 @@
 
     <hr class="divider">
 
-    <!-- ③ 표시 설정 -->
+    <!-- ④ 표시 설정 -->
     <div>
       <div class="section-label">
         <i data-lucide="monitor" style="width:11px;height:11px"></i>
@@ -292,7 +391,7 @@
       <div class="setting-row">
         <div>
           <div class="setting-row-label">경험치 HUD 표시</div>
-          <div class="setting-row-sub">게임 화면 위에 경험치 정보를 오버레이로 표시합니다.</div>
+          <div class="setting-row-sub">게임 화면 오버레이 여부</div>
         </div>
         <label class="toggle-wrap">
           <input type="checkbox" id="toggle-show" checked>
@@ -303,7 +402,7 @@
 
     <hr class="divider">
 
-    <!-- ④ 위치 설정 -->
+    <!-- ⑤ 위치 설정 -->
     <div>
       <div class="section-label">
         <i data-lucide="move" style="width:11px;height:11px"></i>
@@ -314,26 +413,25 @@
           <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">좌측 여백 (Left)</div>
           <div style="position:relative;">
             <input type="number" id="pos-left" class="num-input" min="0" max="3000" value="50">
-            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
+            <span
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
           </div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">하단 여백 (Bottom)</div>
           <div style="position:relative;">
             <input type="number" id="pos-bottom" class="num-input" min="0" max="3000" value="110">
-            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
+            <span
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);font-weight:700;">px</span>
           </div>
         </div>
       </div>
       <button id="btn-apply-pos"
         style="margin-top:8px;width:100%;padding:6px 0;background:var(--accent-dim);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;transition:background 0.15s;"
-        onmouseover="this.style.background='rgba(52,211,153,0.2)'" onmouseout="this.style.background='var(--accent-dim)'">
-        <i data-lucide="check" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px;"></i>
+        onmouseover="this.style.background='rgba(52,211,153,0.2)'"
+        onmouseout="this.style.background='var(--accent-dim)'">
         위치 즉시 적용
       </button>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:5px;font-style:italic;opacity:0.6;">
-        * 화면 왼쪽·아래쪽으로부터의 거리입니다.
-      </div>
     </div>
 
   </div>
@@ -341,20 +439,28 @@
   <script>
     function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
-    // ── 숫자 포맷 ──
+    // ── 숫자 포맷 (단위 스타일링 적용) ──
     function formatXP(num) {
-      if (num >= 100000000) {
-        const eok = Math.floor(num / 100000000);
-        const remainder = num % 100000000;
-        if (remainder >= 10000) return `${eok}억 ${Math.floor(remainder / 10000)}만`;
-        return `${eok}억`;
+      if (num === 0) return '0';
+      const units = [
+        { label: '조', value: 1000000000000 },
+        { label: '억', value: 100000000 },
+        { label: '만', value: 10000 }
+      ];
+      let html = '';
+      let remainder = num;
+      for (const unit of units) {
+        if (remainder >= unit.value) {
+          const val = Math.floor(remainder / unit.value);
+          html += `${val}<span class="unit-sm">${unit.label}</span>`;
+          remainder %= unit.value;
+        }
       }
-      if (num >= 10000) return `${Math.floor(num / 10000)}만`;
-      return num.toLocaleString();
-    }
-
-    function formatRaw(num) {
-      return num > 0 ? `(${num.toLocaleString()})` : '';
+      // 만 단위 이상 기록이 있으면 나머지는 버림, 없으면(1만 미만) 숫자 표시
+      if (html === '') {
+        html = remainder.toLocaleString();
+      }
+      return html;
     }
 
     function formatTime(ms) {
@@ -370,10 +476,51 @@
       return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
     }
 
+    // ── 차트 설정 ──
+    let xpChart = null;
+    function initChart() {
+      const ctx = document.getElementById('xpChart').getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 140);
+      gradient.addColorStop(0, 'rgba(52, 211, 153, 0.3)');
+      gradient.addColorStop(1, 'rgba(52, 211, 153, 0)');
+
+      xpChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array(30).fill(''),
+          datasets: [{
+            label: '분당 경험치',
+            data: Array(30).fill(0),
+            borderColor: '#34d399',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            backgroundColor: gradient,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { display: false },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: '#6ee7b7',
+                font: { size: 9 },
+                callback: (val) => val >= 100000000 ? (val / 100000000).toFixed(1) + '억' : (val / 10000).toFixed(0) + '만'
+              }
+            }
+          }
+        }
+      });
+    }
+
     // ── 상태 ──
-    let _sessionTotal = 0;
-    let _sessionEpm   = 0;
-    let _startTime    = Date.now();
+    let _startTime = Date.now();
     let _elapsedTimer = null;
 
     function startElapsedTimer() {
@@ -383,66 +530,90 @@
       }, 1000);
     }
 
-    function updateStats(total, epm) {
-      _sessionTotal = total;
-      _sessionEpm   = epm;
-      document.getElementById('stat-total').textContent   = formatXP(total);
-      document.getElementById('stat-total-raw').textContent = formatRaw(total);
-      document.getElementById('stat-epm').textContent     = formatXP(epm);
-      document.getElementById('stat-epm-raw').textContent = formatRaw(epm) + (epm > 0 ? '/분' : '');
-    }
+    function updateStats(data, isInitial = false) {
+      if (!data) return;
+      if (document.getElementById('stat-total')) document.getElementById('stat-total').innerHTML = formatXP(data.total || 0);
+      if (document.getElementById('stat-epm')) document.getElementById('stat-epm').innerHTML = formatXP(data.epm || 0);
+      if (document.getElementById('stat-moving-epm')) document.getElementById('stat-moving-epm').innerHTML = formatXP(data.movingEpm || 0);
 
-    // ── XP 수신 ──
+      // 정수 계산 (100억 = 1정수)
+      const ESSENCE_XP = 10000000000;
+      const movingEpm = data.movingEpm || 0;
+      const hourlyXP = movingEpm * 60;
+      const hourlyEssence = hourlyXP / ESSENCE_XP;
+      if (document.getElementById('stat-essence-per-hour')) document.getElementById('stat-essence-per-hour').textContent = hourlyEssence.toFixed(2) + '개';
+
+      // 다음 정수까지 남은 시간
+      const totalXP = data.total || 0;
+      const currentEssenceProgress = totalXP % ESSENCE_XP;
+      const remainingForEssence = ESSENCE_XP - currentEssenceProgress;
+      const progressPercent = (currentEssenceProgress / ESSENCE_XP) * 100;
+      if (document.getElementById('essence-progress')) document.getElementById('essence-progress').style.width = progressPercent + '%';
+
+      if (movingEpm > 0) {
+        const minsRemaining = remainingForEssence / movingEpm;
+        if (document.getElementById('stat-essence-eta')) document.getElementById('stat-essence-eta').textContent = Math.ceil(minsRemaining) + '분 남음';
+      } else {
+        if (document.getElementById('stat-essence-eta')) document.getElementById('stat-essence-eta').textContent = '--분 남음';
+      }
+
+      // 차트 업데이트 (오버플로 방지를 위해 '만' 단위로 스케일링하여 전달)
+      if (xpChart && data.history) {
+        const displayData = data.history.slice(-30).map(v => v / 10000); // 만 단위로 스케일링
+        while (displayData.length < 30) displayData.unshift(0);
+        xpChart.data.datasets[0].data = displayData;
+        xpChart.update(isInitial ? undefined : 'none');
+      }
+    }
+    // ── 이벤트 리스너 ──
     window.electronAPI.onXpUpdate((data) => {
-      updateStats(data.total, data.epm);
+      updateStats(data);
     });
 
-    // ── 초기화 완료 수신 ──
     window.electronAPI.onXpResetDone((data) => {
       _startTime = data.startTime;
-      updateStats(0, 0);
+      updateStats({ total: 0, epm: 0, movingEpm: 0, history: [] }, true);
       document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
-
-      // 플래시 피드백
-      const cards = document.querySelectorAll('.stat-card, #elapsed-timer');
-      cards.forEach(el => {
-        el.classList.remove('reset-flash');
-        void el.offsetWidth; // reflow
-        el.classList.add('reset-flash');
-      });
     });
 
-    // ── 초기화 버튼 ──
     document.getElementById('btn-reset').addEventListener('click', () => {
       window.electronAPI.resetXp();
     });
 
-    // ── 표시 토글 — 변경 즉시 저장 ──
     document.getElementById('toggle-show').addEventListener('change', (e) => {
       window.electronAPI.applySettings({ showXpWidget: e.target.checked });
     });
 
-    // ── 위치 즉시 적용 ──
     document.getElementById('btn-apply-pos').addEventListener('click', () => {
-      const left   = parseInt(document.getElementById('pos-left').value)   || 0;
+      const left = parseInt(document.getElementById('pos-left').value) || 0;
       const bottom = parseInt(document.getElementById('pos-bottom').value) || 0;
       window.electronAPI.applySettings({ xpWidgetPos: { left, bottom } });
     });
 
-    // ── 설정 수신 ──
     window.electronAPI.onConfigData((config) => {
-      document.getElementById('toggle-show').checked = config.showXpWidget !== false;
-
-      const pos = config.xpWidgetPos ?? { left: 50, bottom: 110 };
-      document.getElementById('pos-left').value   = pos.left;
-      document.getElementById('pos-bottom').value = pos.bottom;
+      if (config.showXpWidget !== undefined) document.getElementById('toggle-show').checked = config.showXpWidget;
+      if (config.xpWidgetPos) {
+        document.getElementById('pos-left').value = config.xpWidgetPos.left;
+        document.getElementById('pos-bottom').value = config.xpWidgetPos.bottom;
+      }
     });
 
     window.onload = () => {
       refreshIcons();
-      if (window.bindEscapeClose) window.bindEscapeClose();
-      document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
+      initChart();
       startElapsedTimer();
+      if (window.bindEscapeClose) window.bindEscapeClose();
+
+      // 초기 데이터 요청 (약간의 지연을 주어 차트 캔버스가 완전히 준비되도록 함)
+      setTimeout(() => {
+        window.electronAPI.invoke('xp-get-stats').then(stats => {
+          if (stats) {
+            _startTime = stats.startTime;
+            document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
+            updateStats(stats, true); // true 인자를 주어 초기 렌더링 강제화
+          }
+        });
+      }, 50);
     };
   </script>
 </body>

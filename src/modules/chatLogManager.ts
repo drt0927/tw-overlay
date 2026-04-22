@@ -1,5 +1,6 @@
 import { Tail } from 'tail';
 import * as fs from 'fs';
+import { promises as fsp } from 'fs';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
 import { log } from './logger';
@@ -17,7 +18,7 @@ class ChatLogManager {
   public start(): void {
     this.stop();
     this.initWatch();
-    this.cleanupOldLogs();
+    this.cleanupOldLogs().catch(e => log(`[CHAT_LOG] Cleanup error: ${e}`));
     
     // 1분마다 날짜 변경(자정) 및 파일 존재 여부 체크
     this._watchTimer = setInterval(() => this.checkFileChange(), 60000);
@@ -131,7 +132,7 @@ class ChatLogManager {
       log('[CHAT_LOG] 로그 파일 변경 감지, 재연결 시도');
       // 날짜가 바뀐 시점(자정)에 오래된 로그 정리도 함께 실행
       if (todayPath !== this._currentFilePath) {
-        this.cleanupOldLogs();
+        this.cleanupOldLogs().catch(e => log(`[CHAT_LOG] Cleanup error: ${e}`));
       }
       this.start();
     }
@@ -140,21 +141,26 @@ class ChatLogManager {
   /**
    * 오래된 채팅 로그 파일 정리
    */
-  private cleanupOldLogs(): void {
+  private async cleanupOldLogs(): Promise<void> {
     const cfg = config.load();
     const days = cfg.chatLogAutoDeleteDays || 0;
     if (days <= 0 || !cfg.chatLogPath || !fs.existsSync(cfg.chatLogPath)) return;
 
     try {
-      const files = fs.readdirSync(cfg.chatLogPath);
+      const files = await fsp.readdir(cfg.chatLogPath);
       const now = new Date();
       // 시간/분/초를 무시하고 날짜만 비교하기 위해 자정으로 설정
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const msPerDay = 24 * 60 * 60 * 1000;
       const regex = /^TWChatLog_(\d{4})_(\d{2})_(\d{2})\.html$/;
 
+      const todayStr = `TWChatLog_${today.getFullYear()}_${String(today.getMonth() + 1).padStart(2, '0')}_${String(today.getDate()).padStart(2, '0')}.html`;
+
       let deletedCount = 0;
       for (const file of files) {
+        // 오늘 날짜 파일은 절대 건드리지 않음
+        if (file === todayStr) continue;
+
         const match = file.match(regex);
         if (match) {
           const fileDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
@@ -162,8 +168,13 @@ class ChatLogManager {
           
           if (diffMs > days * msPerDay) {
             const filePath = path.join(cfg.chatLogPath, file);
-            fs.unlinkSync(filePath);
-            deletedCount++;
+            try {
+              await fsp.unlink(filePath);
+              deletedCount++;
+            } catch (err) {
+              // 게임이 사용 중이거나 권한 문제 등으로 삭제 실패 시 로그만 남기고 패스
+              log(`[CHAT_LOG] 파일 삭제 실패 (${file}): ${err}`);
+            }
           }
         }
       }

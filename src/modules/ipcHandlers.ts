@@ -294,7 +294,11 @@ export function register(): void {
   ipcMain.on('buff-timer-clear-test', () => {
     buffTimerManager.clearTestBuffs();
   });
-  // XP 세션 초기화
+  // XP 세션 제어
+  ipcMain.handle('xp-get-stats', async () => {
+    const mod = await import('./chatLogProcessor');
+    return mod.chatLogProcessor.getStats();
+  });
   ipcMain.on('xp-reset', () => {
     import('./chatLogProcessor').then(mod => mod.chatLogProcessor.resetXp());
   });

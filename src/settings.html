@@ -493,6 +493,37 @@
               <p class="text-[10px] text-slate-500 italic ml-1">* 테일즈위버가 설치된 폴더 내의 ChatLog 폴더를 선택해주세요.</p>
             </div>
 
+            <!-- 채팅 로그 자동 삭제 -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2">
+                <i data-lucide="trash-2" class="w-4 h-4 text-indigo-400"></i> 오래된 채팅 로그 자동 삭제
+              </label>
+              <div class="flex items-center gap-4">
+                <input type="number" id="chat-log-auto-delete-input" class="input-field w-24 py-2 px-3 bg-black/40 text-center" min="0" placeholder="0">
+                <span class="text-sm font-bold text-slate-300">일 지난 로그 삭제</span>
+              </div>
+              <p class="text-xs text-slate-500 font-bold italic ml-1">
+                * <span class="text-indigo-400">0</span>으로 설정하면 자동 삭제 기능이 비활성화됩니다. (기본값: 0)
+              </p>
+              <!-- 동작 시점 안내 -->
+              <div class="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl space-y-2">
+                <p class="text-xs font-black text-indigo-400 flex items-center gap-1.5">
+                  <i data-lucide="clock" class="w-3.5 h-3.5"></i> 자동 삭제가 실행되는 시점
+                </p>
+                <ul class="space-y-1.5">
+                  <li class="flex items-start gap-2 text-xs text-slate-400">
+                    <i data-lucide="power" class="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5"></i>
+                    <span><span class="text-white font-bold">앱 실행 시</span> — TW-Overlay를 시작할 때 설정된 기간이 지난 로그를 즉시 정리합니다.</span>
+                  </li>
+                  <li class="flex items-start gap-2 text-xs text-slate-400">
+                    <i data-lucide="moon" class="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5"></i>
+                    <span><span class="text-white font-bold">매일 자정</span> — 날짜가 바뀔 때마다 백그라운드에서 자동으로 정리합니다.</span>
+                  </li>
+                </ul>
+                <p class="text-[11px] text-slate-600 italic">* 저장 후 즉시 적용하려면 앱을 재시작하세요.</p>
+              </div>
+            </div>
+
             <!-- 득템 알림 키워드 -->
             <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
               <label class="section-label flex items-center gap-2 mb-4">
@@ -1303,6 +1334,7 @@
 
       // 채팅 로그 설정 로드
       document.getElementById('chat-log-path-input').value = config.chatLogPath || '';
+      document.getElementById('chat-log-auto-delete-input').value = config.chatLogAutoDeleteDays ?? 0;
       document.getElementById('show-xp-widget-input').checked = config.showXpWidget !== false;
       document.getElementById('xp-pos-left').value = config.xpWidgetPos?.left ?? 200;
       document.getElementById('xp-pos-bottom').value = config.xpWidgetPos?.bottom ?? 0;
@@ -1684,6 +1716,7 @@
 
           // 채팅 로그 설정
           chatLogPath: document.getElementById('chat-log-path-input').value,
+          chatLogAutoDeleteDays: parseInt(document.getElementById('chat-log-auto-delete-input').value) || 0,
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,
           showXpWidget: document.getElementById('show-xp-widget-input').checked,

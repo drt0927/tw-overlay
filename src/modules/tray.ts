@@ -5,41 +5,44 @@ import { app, Tray, Menu, nativeImage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as wm from './windowManager';
+import * as config from './config';
 import { log } from './logger';
 import { appState } from './constants';
 
 let tray: Tray | null = null;
 
-export function createTray(): Tray {
-  let iconPath = path.join(__dirname, '..', 'icons', 'icon.ico');
-
-  // 아이콘 파일이 없는 경우를 대비한 방어 로직
-  if (!fs.existsSync(iconPath)) {
-    log(`[TRAY] 아이콘 파일을 찾을 수 없음: ${iconPath}`);
-  }
-
-  const icon = nativeImage.createFromPath(iconPath);
-  tray = new Tray(icon);
-
-  // 사이드바 메뉴 데이터를 읽어와 트레이 메뉴 구성
+function buildMenuTemplate(): any[] {
   let menuTemplate: any[] = [];
   try {
     const menusPath = path.join(__dirname, '..', 'assets', 'data', 'sidebar_menus.json');
     if (fs.existsSync(menusPath)) {
       const menus = JSON.parse(fs.readFileSync(menusPath, 'utf8'));
       
+      const cfg = config.load();
+      let hiddenMenuIds = cfg.hiddenMenuIds;
+      if (!hiddenMenuIds && cfg.visibleMenuIds) {
+        const oldKnownMenuIds = ['gallery-btn', 'abbreviation-btn', 'buffs-btn', 'boss-btn', 'custom-alert-btn', 'eta-ranking-btn', 'trade-btn', 'contents-checker-btn', 'home-btn', 'overlay-toggle-btn', 'click-through-btn'];
+        hiddenMenuIds = oldKnownMenuIds.filter(id => !cfg.visibleMenuIds!.includes(id));
+      } else if (!hiddenMenuIds) {
+        hiddenMenuIds = [];
+      }
+
       const apiMapping: Record<string, () => void> = {
         'openGallery': wm.toggleGalleryWindow,
         'toggleTrade': wm.toggleTradeWindow,
+        'toggleShoutHistory': wm.toggleShoutHistoryWindow,
         'toggleAbbreviation': wm.toggleAbbreviationWindow,
         'toggleBuffs': wm.toggleBuffsWindow,
         'toggleCoefficientCalculator': wm.toggleCoefficientCalculatorWindow,
         'toggleBossSettings': wm.toggleBossSettingsWindow,
+        'toggleCustomAlert': wm.toggleCustomAlertWindow,
+        'toggleBuffTimer': wm.toggleBuffTimerWindow,
         'toggleEtaRanking': wm.toggleEtaRankingWindow,
         'toggleContentsChecker': wm.toggleContentsCheckerWindow,
         'toggleEvolutionCalculator': wm.toggleEvolutionCalculatorWindow,
         'toggleMagicStoneCalculator': wm.toggleMagicStoneCalculatorWindow,
         'toggleDiary': wm.toggleDiaryWindow,
+        'toggleUniformColor': wm.toggleUniformColorWindow,
         'toggleOverlay': wm.toggleOverlay,
         'toggleClickThrough': wm.toggleClickThrough
       };
@@ -47,6 +50,9 @@ export function createTray(): Tray {
       menus.forEach((m: any) => {
         // 시스템 버튼(isSystem: true)은 트레이 메뉴에서 제외
         if (m.isSystem) return;
+
+        // 사용자가 숨김 처리한 메뉴 제외
+        if (hiddenMenuIds && hiddenMenuIds.includes(m.id)) return;
 
         const apiKey = m.api || m.action;
         if (apiKey && apiMapping[apiKey]) {
@@ -78,7 +84,21 @@ export function createTray(): Tray {
     }
   });
 
-  const contextMenu = Menu.buildFromTemplate(menuTemplate);
+  return menuTemplate;
+}
+
+export function createTray(): Tray {
+  let iconPath = path.join(__dirname, '..', 'icons', 'icon.ico');
+
+  // 아이콘 파일이 없는 경우를 대비한 방어 로직
+  if (!fs.existsSync(iconPath)) {
+    log(`[TRAY] 아이콘 파일을 찾을 수 없음: ${iconPath}`);
+  }
+
+  const icon = nativeImage.createFromPath(iconPath);
+  tray = new Tray(icon);
+
+  const contextMenu = Menu.buildFromTemplate(buildMenuTemplate());
 
   tray.setToolTip('TW-Overlay');
   tray.setContextMenu(contextMenu);
@@ -96,6 +116,12 @@ export function createTray(): Tray {
   });
 
   return tray;
+}
+
+export function updateTrayMenu(): void {
+  if (!tray) return;
+  const contextMenu = Menu.buildFromTemplate(buildMenuTemplate());
+  tray.setContextMenu(contextMenu);
 }
 
 export function destroyTray(): void {

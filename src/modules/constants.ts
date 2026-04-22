@@ -99,7 +99,19 @@ export const DEFAULT_CONFIG: AppConfig = {
   lootKeywords: [],
   shoutKeywords: [],
   showXpWidget: true,
-  xpWidgetPos: { left: 200, bottom: 0 }
+  xpWidgetPos: { left: 200, bottom: 0 },
+  buffTimerEnabled: true,
+  buffTimerWarnSeconds: [60, 10],
+  buffTimerVisualAlert: true,
+  buffTimerAudioAlert: true,
+  buffTimerVolume: 70,
+  buffTimerBuffs: {
+    'exp_heart': true,
+    'rare_heart': true,
+    'stat_exorcist': true,
+  },
+  buffTimerHudPos: { left: 350, bottom: 0 },
+
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

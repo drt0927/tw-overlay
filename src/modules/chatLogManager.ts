@@ -17,6 +17,7 @@ class ChatLogManager {
   public start(): void {
     this.stop();
     this.initWatch();
+    this.cleanupOldLogs();
     
     // 1분마다 날짜 변경(자정) 및 파일 존재 여부 체크
     this._watchTimer = setInterval(() => this.checkFileChange(), 60000);
@@ -129,6 +130,44 @@ class ChatLogManager {
     if (todayPath !== this._currentFilePath || (todayPath && !this._tail && fs.existsSync(todayPath))) {
       log('[CHAT_LOG] 로그 파일 변경 감지, 재연결 시도');
       this.start();
+    }
+  }
+
+  /**
+   * 오래된 채팅 로그 파일 정리
+   */
+  private cleanupOldLogs(): void {
+    const cfg = config.load();
+    const days = cfg.chatLogAutoDeleteDays || 0;
+    if (days <= 0 || !cfg.chatLogPath || !fs.existsSync(cfg.chatLogPath)) return;
+
+    try {
+      const files = fs.readdirSync(cfg.chatLogPath);
+      const now = new Date();
+      // 시간/분/초를 무시하고 날짜만 비교하기 위해 자정으로 설정
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const regex = /^TWChatLog_(\d{4})_(\d{2})_(\d{2})\.html$/;
+
+      let deletedCount = 0;
+      for (const file of files) {
+        const match = file.match(regex);
+        if (match) {
+          const fileDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+          const diffMs = today.getTime() - fileDate.getTime();
+          
+          if (diffMs > days * msPerDay) {
+            const filePath = path.join(cfg.chatLogPath, file);
+            fs.unlinkSync(filePath);
+            deletedCount++;
+          }
+        }
+      }
+      if (deletedCount > 0) {
+        log(`[CHAT_LOG] 오래된 로그 파일 ${deletedCount}개 삭제 완료 (기준: ${days}일)`);
+      }
+    } catch (e) {
+      log(`[CHAT_LOG] 오래된 로그 정리 실패: ${e}`);
     }
   }
 }

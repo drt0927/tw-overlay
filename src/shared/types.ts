@@ -64,6 +64,31 @@ export interface ShortcutsConfig {
     toggleClickThrough: string;
 }
 
+/** 채팅 로그 버프 감지 트리거 */
+export type ChatPatternType = 'SELF_USE' | 'PARTY_ITEM' | 'EFFECT_APPLIED' | 'FIXED_MSG';
+
+export interface ChatTrigger {
+    pattern: ChatPatternType;
+    keyword: string;
+    matchType?: 'exact' | 'contains'; // 기본값: 'exact'
+}
+
+/** buffs.json 단일 항목 타입 */
+export interface BuffDefinition {
+    id: string;
+    name: string;
+    category: string;
+    effect: string;
+    duration: string;
+    durationMs: number;
+    group: string;
+    removeOnExit?: boolean;
+    removeOnDeath?: boolean;
+    image: string;
+    chatTriggers: ChatTrigger[];
+    description: string;
+}
+
 export interface ResetRule {
     type: 'daily' | 'weekly';
     dayOfWeek?: number;
@@ -96,6 +121,8 @@ export interface AppConfig {
     autoLaunch?: boolean;
     autoUpdateEnabled?: boolean;
     galleryKeywords?: string[];
+    hiddenMenuIds?: string[];
+    visibleMenuIds?: string[];
     fieldBossNotifyEnabled?: boolean;
     fieldBossNotifyOffsets?: number[];
     fieldBossNotifyVolume?: number;
@@ -115,6 +142,7 @@ export interface AppConfig {
         magicStoneCalculator?: WindowPosition;
         customAlert?: WindowPosition;
         diary?: WindowPosition;
+        buffTimer?: WindowPosition;
     };
     tradeServer?: string;
     tradeKeywords?: string[];
@@ -129,11 +157,22 @@ export interface AppConfig {
 
     // --- Chat Log Settings ---
     chatLogPath?: string;
+    chatLogAutoDeleteDays?: number;
     lootKeywords?: string[];
     shoutKeywords?: string[];
     showXpWidget?: boolean;
     xpWidgetPos?: { left: number; bottom: number };
-    
+
+    // --- Buff Timer Settings ---
+    buffTimerEnabled?: boolean;
+    buffTimerWarnSeconds?: number[];
+    buffTimerAudioAlert?: boolean;
+    buffTimerVisualAlert?: boolean;
+    buffTimerVolume?: number;
+    buffTimerSound?: string;
+    buffTimerBuffs?: { [buffId: string]: boolean }; // buffId → 감지 활성화 여부
+    buffTimerHudPos?: { left: number; bottom: number };
+
     // --- Sound Settings ---
     volumeContentsChecker?: number;
     volumeCalculators?: number;

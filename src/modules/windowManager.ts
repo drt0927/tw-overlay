@@ -9,6 +9,7 @@ import * as bossNotifier from './bossNotifier';
 import * as gallery from './galleryMonitor';
 import * as trade from './tradeMonitor';
 import * as tracker from './tracker';
+import { log } from './logger';
 
 // --- 상태 관리 ---
 let activeWindowsStack: BrowserWindow[] = [];
@@ -136,7 +137,8 @@ const windowRegistry: Record<string, ManagedWindow> = {
   diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 1000, height: 850 },
   uniformColor: { ref: null, pos: { offsetX: -360, offsetY: 40 }, key: 'uniformColor', html: 'uniform-color.html', width: 360, height: 800 },
   shoutHistory: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'shoutHistory', html: 'shout-history.html', width: 450, height: 600 },
-  gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 }
+  gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 },
+  buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 600 },
 };
 
 let gameRect: GameRect | null = null;
@@ -410,6 +412,7 @@ export function toggleUniformColorWindow(): void {
 }
 export function toggleShoutHistoryWindow(): void { createToggleableWindow('shoutHistory'); }
 export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
+export function toggleBuffTimerWindow(): void { createToggleableWindow('buffTimer'); }
 export function toggleContentsCheckerWindow(): void {
   createToggleableWindow('contentsChecker', {
     onReady: (win) => {
@@ -502,6 +505,8 @@ export function syncOverlay(currentRect: GameRect): void {
       if (Math.abs(b.x - gX) > POSITION_THRESHOLD || Math.abs(b.y - gY) > POSITION_THRESHOLD || Math.abs(b.width - gW) > POSITION_THRESHOLD || Math.abs(b.height - gH) > POSITION_THRESHOLD) {
         gameOverlayWindow.setBounds({ x: gX, y: gY, width: gW, height: gH });
       }
+      // 게임 복귀 시 숨겨진 상태면 다시 표시
+      if (!gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
     }
 
     const currentSidebarB = mainWindow.getBounds();
@@ -554,6 +559,11 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
   }
   [mainWindow, overlayWindow, gameOverlayWindow].forEach(win => win?.webContents.send('config-data', updated));
   Object.values(windowRegistry).forEach(winCfg => winCfg.ref?.webContents.send('config-data', updated));
+
+  // 설정 저장 시 트레이 메뉴(숨김 메뉴 등) 즉시 동기화
+  import('./tray').then(mod => {
+    if (mod.updateTrayMenu) mod.updateTrayMenu();
+  }).catch(e => log(`[WINDOW_MANAGER] 트레이 메뉴 업데이트 실패: ${e}`));
 }
 
 export function toggleClickThrough(): boolean {
@@ -584,6 +594,11 @@ export function hideAll(): void {
   // 사이드바는 숨김 (Hide) - 앱 실행 유지를 위함
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
     mainWindow.hide();
+  }
+
+  // 게임 전용 오버레이 숨김
+  if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && gameOverlayWindow.isVisible()) {
+    gameOverlayWindow.hide();
   }
 
   // 모든 유틸리티 창 종료 (Close)
@@ -624,6 +639,11 @@ export function hideOverlayWindows(): void {
   // 사이드바 숨김 (Hide)
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
     mainWindow.hide();
+  }
+
+  // 게임 전용 오버레이 숨김 (게임 창 최소화/종료 시)
+  if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && gameOverlayWindow.isVisible()) {
+    gameOverlayWindow.hide();
   }
 
   isTracking = false;

@@ -15,6 +15,7 @@ import * as sm from './shortcutManager';
 import { analytics } from './analytics';
 import * as diaryDb from './diaryDb';
 import * as backup from './backupManager';
+import { buffTimerManager } from './buffTimerManager';
 
 let _registered = false;
 
@@ -82,6 +83,7 @@ export function register(): void {
     'toggle-custom-alert': wm.toggleCustomAlertWindow,
     'toggle-uniform-color': wm.toggleUniformColorWindow,
     'toggle-diary': wm.toggleDiaryWindow,
+    'toggle-buff-timer': wm.toggleBuffTimerWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -280,4 +282,15 @@ export function register(): void {
   });
 
   ipcMain.on('close-app', () => { app.quit(); });
+
+  // 버프 타이머 테스트 — 3개 버프 강제 활성화
+  ipcMain.on('buff-timer-test', () => {
+    const TEST_BUFFS = ['exp_heart', 'rare_heart', 'stat_exorcist'];
+    TEST_BUFFS.forEach(buffId => buffTimerManager.activateBuff(buffId, 'test'));
+  });
+
+  // 버프 타이머 테스트 종료 — 테스트 버프 제거
+  ipcMain.on('buff-timer-clear-test', () => {
+    buffTimerManager.clearTestBuffs();
+  });
 }

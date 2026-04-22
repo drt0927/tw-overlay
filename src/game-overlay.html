@@ -14,7 +14,7 @@
       pointer-events: none;
     }
 
-    /* 경험치 위젯 (좌측 하단 100px 위 배치) */
+    /* ── XP HUD ── */
     .xp-hud {
       position: fixed;
       left: 50px;
@@ -25,15 +25,233 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       display: flex;
-      /* 기본 노출 */
       flex-direction: column;
       align-items: flex-start;
       gap: 2px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .xp-hud.hidden {
-      display: none;
+    .xp-hud.hidden { display: none; }
+
+    /* ── 버프 타이머 HUD ── */
+    .buff-hud {
+      position: fixed;
+      left: 20px;
+      bottom: 120px;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 10px;
+      max-width: 340px;
+      align-items: flex-start;
+    }
+
+    /* ── 뱃지 (36×36 정사각형) ── */
+    .buff-badge {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 18, 30, 0.92);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+      flex-shrink: 0;
+      cursor: default;
+      box-shadow:
+        0 0 0 1px rgba(168, 85, 247, 0.12) inset,
+        0 2px 6px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.35s ease, box-shadow 0.35s ease;
+      animation: badge-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes badge-enter {
+      from { opacity: 0; transform: translateY(10px) scale(0.75); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    .buff-badge.leaving {
+      animation: badge-exit 0.28s ease-in forwards;
+    }
+
+    @keyframes badge-exit {
+      from { opacity: 1; transform: translateY(0)   scale(1); }
+      to   { opacity: 0; transform: translateY(-8px) scale(0.82); }
+    }
+
+    /* ── 아이콘 ── */
+    .buff-badge-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .buff-badge-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 카테고리별 폴백 */
+    .buff-badge-icon.cat-exp      { background: rgba(34,197,94,0.22);   color: #4ade80; }
+    .buff-badge-icon.cat-drop     { background: rgba(168,85,247,0.22);  color: #c084fc; }
+    .buff-badge-icon.cat-stats    { background: rgba(59,130,246,0.22);  color: #60a5fa; }
+    .buff-badge-icon.cat-damage   { background: rgba(249,115,22,0.22);  color: #fb923c; }
+    .buff-badge-icon.cat-utility  { background: rgba(20,184,166,0.22);  color: #2dd4bf; }
+
+    /* ── 하단 그라디언트 스크림 + 시간 ── */
+    .buff-badge-scrim {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 50%;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(5, 5, 15, 0.85) 100%
+      );
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 3px;
+      border-radius: 0 0 8px 8px;
+      z-index: 1;
+    }
+
+    .buff-badge-time {
+      font-size: 9px;
+      font-weight: 900;
+      color: #e2e8f0;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.3px;
+      text-shadow: 0 1px 2px rgba(0,0,0,1);
+      line-height: 1;
+    }
+
+    /* ── 페이즈별 스크림 오버레이 틴트 ── */
+    .buff-badge-tint {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.35s ease, background 0.35s ease;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── SVG 링 프로그레스 (viewBox 42×42, r=18, center=21) ── */
+    .buff-badge-ring {
+      position: absolute;
+      inset: -3px;
+      width: calc(100% + 6px);
+      height: calc(100% + 6px);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 2;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.9s linear, stroke 0.35s ease;
+      transform-origin: center;
+      transform: rotate(-90deg);
+    }
+
+    /* ── 커스텀 툴팁 ── */
+    .buff-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(15, 18, 30, 0.97);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #e2e8f0;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .buff-badge:hover .buff-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ══════════════════════════════
+       페이즈별 스타일
+    ══════════════════════════════ */
+
+    /* NORMAL: 브랜드 퍼플 링 */
+    .buff-badge.phase-normal {
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 0 0 1px rgba(168, 85, 247, 0.15) inset,
+        0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .buff-badge.phase-normal .ring-fill      { stroke: rgba(168, 85, 247, 0.75); }
+    .buff-badge.phase-normal .buff-badge-time { color: #e2e8f0; }
+    .buff-badge.phase-normal .buff-badge-tint { opacity: 0; }
+
+    /* WARN1: 노란색 */
+    .buff-badge.phase-warn1 {
+      border-color: rgba(234, 179, 8, 0.65);
+      box-shadow:
+        0 0 0 1px rgba(234, 179, 8, 0.15) inset,
+        0 0 14px rgba(234, 179, 8, 0.25),
+        0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .buff-badge.phase-warn1 .ring-fill       { stroke: rgba(234, 179, 8, 0.9); }
+    .buff-badge.phase-warn1 .buff-badge-time  { color: #fbbf24; }
+    .buff-badge.phase-warn1 .buff-badge-tint  {
+      background: rgba(234, 179, 8, 0.07);
+      opacity: 1;
+    }
+
+    /* WARN2: 빨간색 pulse */
+    .buff-badge.phase-warn2 {
+      border-color: rgba(239, 68, 68, 0.85);
+      animation:
+        badge-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+        badge-danger-pulse 0.65s ease-in-out infinite;
+    }
+    .buff-badge.phase-warn2 .ring-fill       { stroke: rgba(239, 68, 68, 1.0); }
+    .buff-badge.phase-warn2 .buff-badge-time  { color: #f87171; }
+    .buff-badge.phase-warn2 .buff-badge-tint  {
+      background: rgba(239, 68, 68, 0.1);
+      opacity: 1;
+    }
+
+    @keyframes badge-danger-pulse {
+      0%, 100% {
+        box-shadow:
+          0 0 0 1px rgba(239,68,68,0.2) inset,
+          0 0 8px  rgba(239, 68, 68, 0.35);
+        border-color: rgba(239, 68, 68, 0.55);
+      }
+      50% {
+        box-shadow:
+          0 0 0 1px rgba(239,68,68,0.3) inset,
+          0 0 22px rgba(239, 68, 68, 0.75);
+        border-color: rgba(239, 68, 68, 1.0);
+      }
     }
   </style>
 </head>
@@ -52,6 +270,9 @@
     </div>
   </div>
 
+  <!-- 버프 타이머 HUD -->
+  <div id="buff-hud" class="buff-hud"></div>
+
   <script>
     function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
@@ -66,22 +287,129 @@
       return num.toLocaleString();
     }
 
-    let alertTimer = null;
+    // 남은 시간 포맷: 1분 이상 m:ss, 미만 ss초
+    function formatMs(ms) {
+      const totalSec = Math.max(0, Math.ceil(ms / 1000));
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      if (m > 0) return `${m}:${String(s).padStart(2, '0')}`;
+      return `${s}s`;
+    }
+
+    function getCatClass(buffId) {
+      if (buffId.startsWith('exp_'))  return 'cat-exp';
+      if (buffId.startsWith('rare_')) return 'cat-drop';
+      if (buffId.startsWith('stat_')) return 'cat-stats';
+      if (buffId.startsWith('dmg_'))  return 'cat-damage';
+      return 'cat-utility';
+    }
+
+    function getCatLabel(buffId) {
+      if (buffId.startsWith('exp_'))  return 'E';
+      if (buffId.startsWith('rare_')) return 'R';
+      if (buffId.startsWith('stat_')) return 'S';
+      if (buffId.startsWith('dmg_'))  return 'D';
+      return 'U';
+    }
+
+    // SVG 링: 뱃지 36px + inset -3px 양쪽 → viewBox 42×42, center 21, r 18
+    const RING_R    = 18;
+    const RING_C    = 21;
+    const RING_CIRC = 2 * Math.PI * RING_R; // ≈ 113.1
+
+    function buildBadgeHtml(state) {
+      const pct      = state.durationMs > 0 ? state.remainingMs / state.durationMs : 0;
+      const offset   = (RING_CIRC * (1 - pct)).toFixed(2);
+      const timeStr  = formatMs(state.remainingMs);
+      const catClass = getCatClass(state.buffId);
+      const catLabel = getCatLabel(state.buffId);
+
+      const iconHtml = state.image
+        ? `<div class="buff-badge-icon">
+             <img src="${state.image}" alt="${catLabel}"
+               onerror="this.parentElement.className='buff-badge-icon ${catClass}';this.parentElement.textContent='${catLabel}'">
+           </div>`
+        : `<div class="buff-badge-icon ${catClass}">${catLabel}</div>`;
+
+      return `
+        ${iconHtml}
+        <div class="buff-badge-tint"></div>
+        <div class="buff-badge-scrim">
+          <span class="buff-badge-time" id="buff-time-${state.buffId}">${timeStr}</span>
+        </div>
+        <svg class="buff-badge-ring" viewBox="0 0 42 42">
+          <circle class="ring-track" cx="${RING_C}" cy="${RING_C}" r="${RING_R}"/>
+          <circle class="ring-fill" id="buff-ring-${state.buffId}"
+            cx="${RING_C}" cy="${RING_C}" r="${RING_R}"
+            stroke-dasharray="${RING_CIRC.toFixed(2)}"
+            stroke-dashoffset="${offset}"/>
+        </svg>
+        <div class="buff-tooltip">${state.name}</div>
+      `;
+    }
+
+    // ── 버프 HUD 렌더링 ──
+    let _currentBuffIds = new Set();
+
+    function renderBuffHud(states) {
+      const hud    = document.getElementById('buff-hud');
+      const newIds = new Set(states.map(s => s.buffId));
+
+      // 만료된 뱃지 퇴장 애니메이션
+      _currentBuffIds.forEach(id => {
+        if (!newIds.has(id)) {
+          const el = document.getElementById(`buff-badge-${id}`);
+          if (el) {
+            el.classList.add('leaving');
+            setTimeout(() => el.remove(), 300);
+          }
+        }
+      });
+
+      states.forEach(state => {
+        const pct        = state.durationMs > 0 ? state.remainingMs / state.durationMs : 0;
+        const offset     = (RING_CIRC * (1 - pct)).toFixed(2);
+        const timeStr    = formatMs(state.remainingMs);
+        const phaseClass = `phase-${state.phase}`;
+
+        let badge = document.getElementById(`buff-badge-${state.buffId}`);
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.id        = `buff-badge-${state.buffId}`;
+          badge.className = `buff-badge ${phaseClass}`;
+          badge.innerHTML = buildBadgeHtml(state);
+          hud.appendChild(badge);
+        } else {
+          // 기존 뱃지 업데이트 (DOM 재생성 없이)
+          badge.className = `buff-badge ${phaseClass}`;
+          const timeEl = document.getElementById(`buff-time-${state.buffId}`);
+          const ringEl = document.getElementById(`buff-ring-${state.buffId}`);
+          if (timeEl) timeEl.textContent = timeStr;
+          if (ringEl) ringEl.style.strokeDashoffset = offset;
+        }
+      });
+
+      _currentBuffIds = newIds;
+    }
+
     let showXpWidget = true;
 
     // 설정 데이터 수신
     window.electronAPI.onConfigData((config) => {
       showXpWidget = config.showXpWidget !== false;
       const hud = document.getElementById('xp-hud');
-      
-      // 보이기/숨기기 적용
       if (!showXpWidget) hud.classList.add('hidden');
-      else hud.classList.remove('hidden');
+      else               hud.classList.remove('hidden');
 
-      // 위치(Position) 적용
       if (config.xpWidgetPos) {
-        hud.style.left = `${config.xpWidgetPos.left}px`;
+        hud.style.left   = `${config.xpWidgetPos.left}px`;
         hud.style.bottom = `${config.xpWidgetPos.bottom}px`;
+      }
+
+      if (config.buffTimerHudPos) {
+        const buffHud = document.getElementById('buff-hud');
+        buffHud.style.left   = `${config.buffTimerHudPos.left}px`;
+        buffHud.style.bottom = `${config.buffTimerHudPos.bottom}px`;
       }
     });
 
@@ -89,7 +417,23 @@
     window.electronAPI.onXpUpdate((data) => {
       if (!showXpWidget) return;
       document.getElementById('xp-total').innerText = formatXP(data.total);
-      document.getElementById('xp-epm').innerText = formatXP(data.epm);
+      document.getElementById('xp-epm').innerText   = formatXP(data.epm);
+    });
+
+    // 버프 타이머 HUD 업데이트
+    window.electronAPI.onBuffTimerUpdate((states) => {
+      renderBuffHud(states);
+    });
+
+    // warn2 flash
+    window.electronAPI.onBuffTimerWarning((data) => {
+      const badge = document.getElementById(`buff-badge-${data.buffId}`);
+      if (badge && data.phase === 'warn2') {
+        badge.style.opacity = '0.25';
+        setTimeout(() => { badge.style.opacity = '1'; }, 100);
+        setTimeout(() => { badge.style.opacity = '0.25'; }, 210);
+        setTimeout(() => { badge.style.opacity = '1'; }, 320);
+      }
     });
 
     window.onload = refreshIcons;

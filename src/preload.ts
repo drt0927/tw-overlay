@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
   toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
+
   contentsToggleItem: (id: string) => ipcRenderer.send('contents-toggle-item', id),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
@@ -188,6 +189,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('shout-history-updated');
     ipcRenderer.on('shout-history-updated', () => callback());
   },
+  onBuffTimerUpdate: (callback: (states: any[]) => void) => {
+    ipcRenderer.removeAllListeners('buff-timer-update');
+    ipcRenderer.on('buff-timer-update', (_event, states) => callback(states));
+  },
+  onBuffTimerWarning: (callback: (data: { buffId: string, phase: string, warnSec: number }) => void) => {
+    ipcRenderer.removeAllListeners('buff-timer-warning');
+    ipcRenderer.on('buff-timer-warning', (_event, data) => callback(data));
+  },
+  toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
+  buffTimerTest: () => ipcRenderer.send('buff-timer-test'),
+  buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
 
   cleanupAllListeners: () => {
     const events = [
@@ -196,7 +208,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-boss-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
-      'incomplete-contents', 'diary-updated', 'xp-update'
+      'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
+      'buff-timer-update', 'buff-timer-warning',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

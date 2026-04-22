@@ -5,8 +5,11 @@
     "category": "Experience",
     "effect": "경험치 +900% (팀원 +400%)",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "potato",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "특정 이벤트 기간 지급. 쿨타임 40분. 경험의 심장과 중복 불가."
   },
   {
@@ -15,8 +18,11 @@
     "category": "Experience",
     "effect": "경험치 +900%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "potato",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "이벤트 지급. 자신만 사용 가능. 경험의 심장/군고구마와 중복 불가."
   },
   {
@@ -25,8 +31,13 @@
     "category": "Experience",
     "effect": "경험치 +400%",
     "duration": "20분",
+    "durationMs": 1200000,
     "group": "potato",
     "removeOnExit": true,
+    "image": "assets/img/buffs/경험의심장.png",
+    "chatTriggers": [
+      { "pattern": "SELF_USE", "keyword": "경험의 심장" }
+    ],
     "description": "머큐리얼 케이브/어비스 심층 보스 처치 시 획득. 고구마류와 중복 불가."
   },
   {
@@ -35,8 +46,11 @@
     "category": "Experience",
     "effect": "경험치 +400%",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "stamp",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "도전 과제 완료 도장 100개로 교환. 참 잘했어요와 중복 불가."
   },
   {
@@ -45,8 +59,11 @@
     "category": "Experience",
     "effect": "경험치 +100%",
     "duration": "2시간",
+    "durationMs": 7200000,
     "group": "stamp",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "일일/주간 과제 보상. 도장 버프와 중복 불가."
   },
   {
@@ -55,8 +72,11 @@
     "category": "Experience",
     "effect": "경험치 +150%",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "stamp",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "일일/주간 과제 보상. 도장 버프와 중복 불가."
   },
   {
@@ -65,8 +85,11 @@
     "category": "Experience",
     "effect": "경험치 +100%",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "club_eos",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "모험가 서포트 상자 등에서 획득. 클럽 상점 버프와 중복 불가."
   },
   {
@@ -75,8 +98,11 @@
     "category": "Experience",
     "effect": "경험치 +150%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "club_eos",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "나르비크 플리마켓 베크렐에게 구매. 에오스/스승의 증표와 중복 불가."
   },
   {
@@ -85,8 +111,11 @@
     "category": "Experience",
     "effect": "경험치 +10%, 레어 +10%",
     "duration": "8분",
+    "durationMs": 480000,
     "group": "teacher",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "사제 명성치 교환."
   },
   {
@@ -95,8 +124,11 @@
     "category": "Experience",
     "effect": "경험치 +20%, 레어 +20%",
     "duration": "24분",
+    "durationMs": 1440000,
     "group": "teacher",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "사제 명성치 교환."
   },
   {
@@ -105,8 +137,11 @@
     "category": "Experience",
     "effect": "경험치 +40%, 레어 +40%",
     "duration": "1시간 12분",
+    "durationMs": 4320000,
     "group": "teacher",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "사제 명성치 교환."
   },
   {
@@ -115,8 +150,11 @@
     "category": "Experience",
     "effect": "경험치 +80%, 레어 +80%",
     "duration": "3시간 36분",
+    "durationMs": 12960000,
     "group": "teacher",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "사제 명성치 교환."
   },
   {
@@ -125,8 +163,11 @@
     "category": "Experience",
     "effect": "경험치 +200%",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이벤트 기간 지급."
   },
   {
@@ -135,8 +176,11 @@
     "category": "Experience",
     "effect": "경험치 +100%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "izabel_exp",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "확률형 아이템 획득. 특선 묘약과 중복 가능."
   },
   {
@@ -145,8 +189,11 @@
     "category": "Experience",
     "effect": "경험치 +500%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "izabel_exp",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이자벨의 비법 100개 교환."
   },
   {
@@ -155,8 +202,11 @@
     "category": "Experience",
     "effect": "경험치 +200%, 레어 +200%",
     "duration": "무제한",
+    "durationMs": 0,
     "group": "none",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "PC방 접속 시 자동 적용."
   },
   {
@@ -165,8 +215,11 @@
     "category": "DropRate",
     "effect": "레어 +30%",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "네냐플 고양이X 대화 (OTP 가입 필요)."
   },
   {
@@ -175,8 +228,13 @@
     "category": "DropRate",
     "effect": "레어 +50%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [
+      { "pattern": "PARTY_ITEM", "keyword": "로토의 부적" }
+    ],
     "description": "엘티보 눈사람족 수장 구매."
   },
   {
@@ -185,8 +243,11 @@
     "category": "DropRate",
     "effect": "레어 +500%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "rare_potato",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "레어의 심장과 중복 불가."
   },
   {
@@ -195,8 +256,11 @@
     "category": "DropRate",
     "effect": "레어 +500%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "rare_potato",
     "removeOnExit": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "이벤트 지급. 자신만 사용 가능."
   },
   {
@@ -205,8 +269,13 @@
     "category": "DropRate",
     "effect": "레어 +250%",
     "duration": "20분",
+    "durationMs": 1200000,
     "group": "rare_potato",
     "removeOnExit": true,
+    "image": "assets/img/buffs/레어의심장.png",
+    "chatTriggers": [
+      { "pattern": "SELF_USE", "keyword": "레어의 심장" }
+    ],
     "description": "머큐리얼 케이브/어비스 보스 드랍."
   },
   {
@@ -215,8 +284,11 @@
     "category": "DropRate",
     "effect": "레어 +400%",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이벤트 기간 지급."
   },
   {
@@ -225,8 +297,11 @@
     "category": "DropRate",
     "effect": "레어 +150%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "클럽 포인트로 구매."
   },
   {
@@ -235,8 +310,11 @@
     "category": "DropRate",
     "effect": "레어 +200%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "클럽 포인트로 구매."
   },
   {
@@ -245,9 +323,12 @@
     "category": "Stats",
     "effect": "능력치 +20",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_trust",
     "removeOnExit": false,
     "removeOnDeath": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "네냐플 이셀다 교환. 사망 시 사라짐."
   },
   {
@@ -256,9 +337,14 @@
     "category": "Stats",
     "effect": "능력치 +34",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_trust",
     "removeOnExit": false,
     "removeOnDeath": true,
+    "image": "",
+    "chatTriggers": [
+      { "pattern": "FIXED_MSG", "keyword": "친구들이 주는 신뢰가 힘을 주고 있다" }
+    ],
     "description": "조제 획득. 사망 시 사라짐. 네냐플 친밀도에 따라 모든 능력치 최대 +34까지 증가."
   },
   {
@@ -267,8 +353,11 @@
     "category": "Stats",
     "effect": "능력치 +20",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_fixed",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "축복의 물약/특선 묘약(고정)과 중복 불가."
   },
   {
@@ -277,8 +366,11 @@
     "category": "Stats",
     "effect": "능력치 +100",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_fixed",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이자벨의 비법(고정) 100개 교환."
   },
   {
@@ -287,8 +379,11 @@
     "category": "Stats",
     "effect": "능력치 +20",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_fixed",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이자벨(고정)과 중복 불가."
   },
   {
@@ -297,8 +392,11 @@
     "category": "Stats",
     "effect": "능력치 +10%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_ratio",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "퇴마사의 은총/특선 묘약(비율)과 중복 불가."
   },
   {
@@ -307,8 +405,11 @@
     "category": "Stats",
     "effect": "능력치 +50%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "stat_ratio",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이자벨의 비법(비율) 100개 교환."
   },
   {
@@ -317,8 +418,13 @@
     "category": "Stats",
     "effect": "능력치 +10%",
     "duration": "20분",
+    "durationMs": 1200000,
     "group": "stat_ratio",
     "removeOnExit": false,
+    "image": "assets/img/buffs/퇴마사의은총.png",
+    "chatTriggers": [
+      { "pattern": "PARTY_ITEM", "keyword": "퇴마사의 은총" }
+    ],
     "description": "보스 드랍. 이자벨(비율)과 중복 불가."
   },
   {
@@ -327,8 +433,11 @@
     "category": "Damage",
     "effect": "대미지 +20%",
     "duration": "5분",
+    "durationMs": 300000,
     "group": "dmg_potion",
     "removeOnDeath": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "조제/아카드라트 드랍. 사망 시 사라짐."
   },
   {
@@ -337,8 +446,11 @@
     "category": "Damage",
     "effect": "대미지 +5%, 크리티컬 +5%, 이속 +2",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "dmg_potion",
     "removeOnDeath": true,
+    "image": "",
+    "chatTriggers": [],
     "description": "조제 획득. 사망 시 사라짐. (기존 대미지 20%에서 대미지 5% + 크리티컬 5%로 변경됨)"
   },
   {
@@ -347,8 +459,11 @@
     "category": "Damage",
     "effect": "대미지 +5%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "클럽 포인트로 구매."
   },
   {
@@ -357,8 +472,11 @@
     "category": "Damage",
     "effect": "대미지 +10%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "dmg_pot",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "괴력의 물약/특선 묘약(대미지)과 중복 불가."
   },
   {
@@ -367,8 +485,11 @@
     "category": "Damage",
     "effect": "대미지 +10%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "dmg_pot",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이자벨 비법(대미지)과 중복 불가 그룹."
   },
   {
@@ -377,8 +498,11 @@
     "category": "Damage",
     "effect": "대미지 +10%",
     "duration": "30분",
+    "durationMs": 1800000,
     "group": "dmg_pot",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "이자벨(대미지)과 중복 불가."
   },
   {
@@ -387,8 +511,13 @@
     "category": "Utility",
     "effect": "경험치 +15%, 레어 +15%, 대미지 +10%, 능력치 +30%, 이속 +15, 속성 +15, 크리티컬 +10%",
     "duration": "2시간",
+    "durationMs": 7200000,
     "group": "event_mega",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [
+      { "pattern": "EFFECT_APPLIED", "keyword": "일루미네이션 축제 음료" }
+    ],
     "description": "비접속 시 시간 정지. 농축액, 행운/신속/충전의 비약과 중복 불가."
   },
   {
@@ -397,8 +526,11 @@
     "category": "Utility",
     "effect": "경험치 +100%, 대미지 +20%, 능력치 +30%, 이속 +15, 속성 +15, 크리티컬 +10%",
     "duration": "30분/1시간",
+    "durationMs": 3600000,
     "group": "event_mega",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "비접속 시 시간 정지. 에오스, 농축액, 괴력 등과 중복 불가. 이자벨(대미지) 먼저 사용 시 사용 불가."
   },
   {
@@ -407,8 +539,11 @@
     "category": "Utility",
     "effect": "대미지 +10%, 능력치 +10%, 크리티컬 +10%",
     "duration": "2시간",
+    "durationMs": 7200000,
     "group": "event_mega",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [],
     "description": "축제 음료/눈사람 포션과 중복 불가."
   },
   {
@@ -417,8 +552,13 @@
     "category": "Utility",
     "effect": "속성 +10",
     "duration": "1시간",
+    "durationMs": 3600000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [
+      { "pattern": "PARTY_ITEM", "keyword": "앰플", "matchType": "contains" }
+    ],
     "description": "무속성 스킬에 속성 부여."
   },
   {
@@ -427,8 +567,13 @@
     "category": "Utility",
     "effect": "이속 +15, 속성 +15",
     "duration": "2시간",
+    "durationMs": 7200000,
     "group": "none",
     "removeOnExit": false,
+    "image": "",
+    "chatTriggers": [
+      { "pattern": "EFFECT_APPLIED", "keyword": "신속 포션" }
+    ],
     "description": "이벤트 기간 획득."
   }
 ]

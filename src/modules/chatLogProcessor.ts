@@ -3,6 +3,8 @@ import * as diaryDb from './diaryDb';
 import * as config from './config';
 import { log } from './logger';
 import { Notification, BrowserWindow } from 'electron';
+import { buffTimerManager } from './buffTimerManager';
+
 
 /**
  * 파싱된 채팅 데이터를 실제 앱 기능(DB 저장, 알림 등)으로 연결하는 프로세서
@@ -73,7 +75,14 @@ gameOverlay.webContents.send('xp-update', {
 });
 }
 });
+
+// 6. 버프 사용 감지 → 타이머 활성화
+chatParser.on('BUFF_USED', (data: { date: string, timestamp: string, buffId: string, usedBy: string, message: string }) => {
+  log(`[CHAT_PROCESSOR] 버프 감지: ${data.buffId} (사용자: ${data.usedBy})`);
+  buffTimerManager.activateBuff(data.buffId, data.usedBy);
+});
   }
+
 
   private formatNumber(num: number): string {
     if (num >= 100000000) {

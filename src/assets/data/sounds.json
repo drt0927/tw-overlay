@@ -66,5 +66,21 @@
   {
     "name": "🎉 모두 준비됐어? 곧 이벤트가 시작될 거야",
     "file": "voice_event_start.wav"
+  },
+  {
+    "name": "🔮 소환사 한명이 게임을 종료 했습니다.",
+    "file": "summoner_ended.mp3"
+  },
+  {
+    "name": "💻 윈도우 종료음 1",
+    "file": "windows_shutdown_1.mp3"
+  },
+  {
+    "name": "💻 윈도우 종료음 2",
+    "file": "windows_shutdown_2.mp3"
+  },
+  {
+    "name": "💻 윈도우 효과음",
+    "file": "windows_sound_1.mp3"
   }
 ]

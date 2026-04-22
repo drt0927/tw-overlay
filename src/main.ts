@@ -22,6 +22,7 @@ import * as diaryDb from './modules/diaryDb';
 import { findChatLogPath } from './modules/chatLogPathFinder';
 import { chatLogManager } from './modules/chatLogManager';
 import { chatLogProcessor } from './modules/chatLogProcessor';
+import { buffTimerManager } from './modules/buffTimerManager';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
@@ -99,6 +100,7 @@ app.whenReady().then(() => {
   // 채팅 로그 감시 시스템 시작
   chatLogProcessor.start();
   chatLogManager.start();
+  buffTimerManager.start();
 
   wm.onOverlayWindowReady(() => {
     gallery.updateWindows(wm.getOverlayWindow(), wm.getMainWindow(), wm.getGalleryWindow());
@@ -116,6 +118,7 @@ app.on('before-quit', () => {
   trade.stop();
   tray.destroyTray();
   tracker.stop();
+  buffTimerManager.stop();
 });
 
 app.on('window-all-closed', () => app.quit());

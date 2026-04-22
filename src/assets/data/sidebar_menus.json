@@ -64,6 +64,14 @@
     "api": "toggleCustomAlert"
   },
   {
+    "id": "buff-timer-btn",
+    "label": "버프 타이머 알림",
+    "icon": "timer",
+    "tooltip": "버프 타이머 알림 설정",
+    "color": "violet-400",
+    "api": "toggleBuffTimer"
+  },
+  {
     "id": "eta-ranking-btn",
     "label": "에타 랭킹 조회",
     "icon": "trophy",

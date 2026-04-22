@@ -1,11 +1,14 @@
 import { EventEmitter } from 'events';
 import { log } from './logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { ChatTrigger, ChatPatternType } from '../shared/types';
 
 /**
  * 테일즈위버 채팅 로그 파싱 결과 타입 정의
  */
 export interface ParsedChatData {
-  type: 'SEED' | 'ITEM' | 'XP' | 'TRADE' | 'ALERT' | 'PROGRESS';
+  type: 'SEED' | 'ITEM' | 'XP' | 'TRADE' | 'ALERT' | 'PROGRESS' | 'BUFF_USED';
   originalTime: string; // [HH시 mm분 ss초]
   message: string;      // HTML 제거된 순수 메시지
   data?: any;           // 가공된 숫자나 객체 데이터
@@ -17,10 +20,46 @@ export interface ParsedChatData {
 class ChatParser extends EventEmitter {
   private _currentDate: string = ''; // YYYY-MM-DD 형식
 
+  // 버프 트리거 역인덱스: keyword → [{ buffId, trigger }]
+  private _triggerIndex: Map<string, Array<{ buffId: string; trigger: ChatTrigger }>> = new Map();
+  // FIXED_MSG 전용: 고정 메시지 → buffId
+  private _fixedMsgIndex: Map<string, string> = new Map();
+
   constructor() {
     super();
     // 초기값은 오늘 날짜로 설정 (로그 헤더 감지 전 대비)
     this._currentDate = new Date().toISOString().split('T')[0];
+    this.loadBuffTriggers();
+  }
+
+  /**
+   * buffs.json에서 chatTriggers를 로드하여 역인덱스 구성
+   */
+  public loadBuffTriggers(): void {
+    try {
+      const buffsPath = path.join(__dirname, '..', 'assets', 'data', 'buffs.json');
+      const raw = fs.readFileSync(buffsPath, 'utf-8');
+      const buffs: Array<{ id: string; chatTriggers?: ChatTrigger[] }> = JSON.parse(raw);
+
+      this._triggerIndex.clear();
+      this._fixedMsgIndex.clear();
+
+      for (const buff of buffs) {
+        if (!buff.chatTriggers || buff.chatTriggers.length === 0) continue;
+        for (const trigger of buff.chatTriggers) {
+          if (trigger.pattern === 'FIXED_MSG') {
+            this._fixedMsgIndex.set(trigger.keyword, buff.id);
+          } else {
+            const key = trigger.keyword.toLowerCase();
+            if (!this._triggerIndex.has(key)) this._triggerIndex.set(key, []);
+            this._triggerIndex.get(key)!.push({ buffId: buff.id, trigger });
+          }
+        }
+      }
+      log(`[CHAT_PARSER] 버프 트리거 로드 완료: ${this._triggerIndex.size}개 keyword, ${this._fixedMsgIndex.size}개 FIXED_MSG`);
+    } catch (e) {
+      log(`[CHAT_PARSER] 버프 트리거 로드 실패: ${e}`);
+    }
   }
 
   /**
@@ -130,6 +169,80 @@ class ChatParser extends EventEmitter {
         this.emit('ITEM_LOOTED', { date: this._currentDate, timestamp, message: cleanMsg });
         return;
     }
+
+    // F. 버프 사용 감지
+    this._detectBuffUsed(rawLine, cleanMsg, timestamp);
+  }
+
+  /**
+   * 버프 사용 채팅 메시지 감지
+   */
+  private _detectBuffUsed(rawLine: string, cleanMsg: string, timestamp: string): void {
+    // FIXED_MSG: 고정 메시지 포함 여부 체크
+    for (const [keyword, buffId] of this._fixedMsgIndex) {
+      if (cleanMsg.includes(keyword)) {
+        this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy: 'self', message: cleanMsg });
+        return;
+      }
+    }
+
+    // SELF_USE: "XXX를/을 사용하였습니다."
+    const selfUseMatch = cleanMsg.match(/^(.+?)(?:를|을) 사용하였습니다\.?$/);
+    if (selfUseMatch) {
+      const keyword = selfUseMatch[1].trim().toLowerCase();
+      const hits = this._lookupTrigger(keyword, 'SELF_USE');
+      if (hits.length > 0) {
+        hits.forEach(({ buffId }) => {
+          this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy: 'self', message: cleanMsg });
+        });
+        return;
+      }
+    }
+
+    // PARTY_ITEM: "[닉네임]님이 [아이템명] 아이템을 사용하셨습니다"
+    const partyItemMatch = cleanMsg.match(/\[(.+?)\]님이 \[(.+?)\] 아이템을 사용하셨습니다/);
+    if (partyItemMatch) {
+      const usedBy = partyItemMatch[1].trim();
+      const itemName = partyItemMatch[2].trim().toLowerCase();
+      const hits = this._lookupTrigger(itemName, 'PARTY_ITEM');
+      if (hits.length > 0) {
+        hits.forEach(({ buffId }) => {
+          this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy, message: cleanMsg });
+        });
+        return;
+      }
+    }
+
+    // EFFECT_APPLIED: "[아이템명] 효과가 발동/적용"
+    const effectMatch = cleanMsg.match(/\[(.+?)\] 효과가/);
+    if (effectMatch) {
+      const itemName = effectMatch[1].trim().toLowerCase();
+      const hits = this._lookupTrigger(itemName, 'EFFECT_APPLIED');
+      if (hits.length > 0) {
+        hits.forEach(({ buffId }) => {
+          this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy: 'self', message: cleanMsg });
+        });
+        return;
+      }
+    }
+  }
+
+  /**
+   * 트리거 인덱스에서 keyword와 pattern으로 매칭
+   * exact 또는 contains 매칭 지원
+   */
+  private _lookupTrigger(inputKey: string, pattern: ChatPatternType): Array<{ buffId: string; trigger: ChatTrigger }> {
+    const results: Array<{ buffId: string; trigger: ChatTrigger }> = [];
+    for (const [key, entries] of this._triggerIndex) {
+      for (const entry of entries) {
+        if (entry.trigger.pattern !== pattern) continue;
+        const matchType = entry.trigger.matchType ?? 'exact';
+        if (matchType === 'contains' ? inputKey.includes(key) : inputKey === key) {
+          results.push(entry);
+        }
+      }
+    }
+    return results;
   }
 }
 

@@ -269,7 +269,7 @@ export function addHomeworkLog(date: string, contentId: string, contentName: str
     const existing = db!.prepare('SELECT id FROM homework_logs WHERE date = ? AND content_id = ?').get(date, contentId);
     if (existing) return;
 
-    const stmt = db!.prepare('INSERT INTO homework_logs (date, content_id, content_name, category, type, completed_at) VALUES (?, ?, ?, ?, ?)');
+    const stmt = db!.prepare('INSERT INTO homework_logs (date, content_id, content_name, category, type, completed_at) VALUES (?, ?, ?, ?, ?, ?)');
     stmt.run(date, contentId, contentName, category, type, completedAt);
 
     // 포인트 부여

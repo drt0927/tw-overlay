@@ -4,14 +4,16 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.11.4-violet.svg)
+![Version](https://img.shields.io/badge/version-1.11.5-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.11.4 (2026.04.25)
-이번 업데이트는 모험 일지의 **데이터 시각화**와 **멀티 모니터 환경의 안정성**을 비약적으로 향상시켰습니다.
+## 🚀 최신 버전: v1.11.5 (2026.04.25)
+이번 업데이트는 모험 일지의 **데이터 시각화**와 **멀티 모니터 환경의 안정성**을 비약적으로 향상시켰으며, 숙제 체크리스트 관련 치명적 오류를 해결했습니다.
+
+- **🐞 숙제 체크리스트 버그 수정**: 숙제 체크 시 발생하던 DB 쿼리 오류를 해결했습니다.
 
 - **📊 월간 수익 추이 그래프**: 한 달간의 수입 흐름을 선 그래프로 한눈에 분석할 수 있습니다.
 - **🔋 DB 엔진 성능 최적화**: 데이터 구조 개선을 통해 수만 건의 로그도 지연 없이 통계 처리가 가능합니다.

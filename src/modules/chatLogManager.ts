@@ -75,8 +75,8 @@ class ChatLogManager {
 
     // [추가] 새 파일을 읽기 시작할 때, 상단 헤더를 읽어 날짜 정보를 파서에 전달
     try {
-      const initialContent = fs.readFileSync(filePath, 'binary');
-      const decodedContent = iconv.decode(Buffer.from(initialContent, 'binary'), 'euc-kr');
+      const buffer = fs.readFileSync(filePath);
+      const decodedContent = iconv.decode(buffer, 'euc-kr');
       const lines = decodedContent.split('\n');
       // 상단 20줄 이내에서 날짜 정보 검색
       for (let i = 0; i < Math.min(lines.length, 20); i++) {

@@ -60,6 +60,7 @@ export function initDb(): void {
         type TEXT NOT NULL,
         content TEXT NOT NULL,
         time TEXT NOT NULL,
+        amount INTEGER DEFAULT 0,
         FOREIGN KEY (date) REFERENCES diaries(date)
       );
 
@@ -70,11 +71,70 @@ export function initDb(): void {
         message TEXT NOT NULL
       );
     `);
+
+    // 마이그레이션: amount 컬럼이 없는 경우 추가 (이미 테이블이 생성된 경우 대비)
+    try {
+      const columns = db.prepare("PRAGMA table_info(activity_logs)").all() as any[];
+      const hasAmount = columns.some(c => c.name === 'amount');
+      if (!hasAmount) {
+        db.exec("ALTER TABLE activity_logs ADD COLUMN amount INTEGER DEFAULT 0");
+        log('[DiaryDB] activity_logs table updated with amount column.');
+        migrateExistingData();
+      }
+    } catch (e) {
+      log(`[DiaryDB] Migration check failed: ${e}`);
+    }
+
     log('[DiaryDB] Database initialized successfully.');
   } catch (error) {
     log(`[DiaryDB] Failed to initialize database: ${error}`);
     console.error('[DiaryDB] Error:', error);
   }
+}
+
+/** 기존 문자열 데이터를 amount 컬럼으로 마이그레이션 */
+function migrateExistingData(): void {
+  if (!db) return;
+  log('[DiaryDB] Migrating existing activity data to amount column...');
+  
+  const rows = db.prepare("SELECT id, type, content FROM activity_logs WHERE amount = 0").all() as any[];
+  const updateStmt = db.prepare("UPDATE activity_logs SET amount = ? WHERE id = ?");
+
+  const transaction = db.transaction((rows) => {
+    for (const row of rows) {
+      let amount = 0;
+      if (row.type === 'calc') {
+        const match = row.content.match(/\(([^)]+)\)/);
+        if (match) amount = parseMigrationNumber(match[1]);
+      } else if (row.type === 'loot') {
+        const match = row.content.match(/(\d+)개$/);
+        amount = match ? parseInt(match[1], 10) : 1;
+      }
+      if (amount > 0) {
+        updateStmt.run(amount, row.id);
+      }
+    }
+  });
+
+  transaction(rows);
+  log(`[DiaryDB] Migration completed for ${rows.length} rows.`);
+}
+
+/** 마이그레이션용 숫자 파싱 (chatParser의 로직과 유사) */
+function parseMigrationNumber(s: string): number {
+  let val = 0;
+  const joMatch = s.match(/(\d+)조/);
+  const eokMatch = s.match(/(\d+)억/);
+  const manMatch = s.match(/(\d+)만/);
+  const rawMatch = s.match(/([\d,]+)/);
+
+  if (joMatch) val += parseInt(joMatch[1], 10) * 1000000000000;
+  if (eokMatch) val += parseInt(eokMatch[1], 10) * 100000000;
+  if (manMatch) val += parseInt(manMatch[1], 10) * 10000;
+  if (!eokMatch && !manMatch && rawMatch) {
+    val = parseInt(rawMatch[1].replace(/,/g, ''), 10);
+  }
+  return val;
 }
 
 /** 데이터베이스 연결을 명시적으로 닫습니다 (백업 복구용). */
@@ -144,7 +204,7 @@ export function isActivityLogged(date: string, content: string): boolean {
 }
 
 /** 타임라인에 활동 기록을 추가합니다. (보스 처치, 계산기 등) */
-export function addActivityLog(date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string): boolean {
+export function addActivityLog(date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string, amount: number = 0): boolean {
   if (!db) initDb();
   if (!db) return false;
 
@@ -162,8 +222,8 @@ export function addActivityLog(date: string, time: string, type: 'boss' | 'calc'
       }
     }
 
-    const stmt = db!.prepare('INSERT INTO activity_logs (date, type, content, time) VALUES (?, ?, ?, ?)');
-    stmt.run(date, type, content, time);
+    const stmt = db!.prepare('INSERT INTO activity_logs (date, type, content, time, amount) VALUES (?, ?, ?, ?, ?)');
+    stmt.run(date, type, content, time, amount);
 
     // 포인트 부여
     if (type === 'boss') addScore(date, POINTS.BOSS_KILL);
@@ -209,7 +269,7 @@ export function addHomeworkLog(date: string, contentId: string, contentName: str
     const existing = db!.prepare('SELECT id FROM homework_logs WHERE date = ? AND content_id = ?').get(date, contentId);
     if (existing) return;
 
-    const stmt = db!.prepare('INSERT INTO homework_logs (date, content_id, content_name, category, type, completed_at) VALUES (?, ?, ?, ?, ?, ?)');
+    const stmt = db!.prepare('INSERT INTO homework_logs (date, content_id, content_name, category, type, completed_at) VALUES (?, ?, ?, ?, ?)');
     stmt.run(date, contentId, contentName, category, type, completedAt);
 
     // 포인트 부여
@@ -274,7 +334,7 @@ export function getMonthlySummary(yearMonth: string): { totalLoots: number, tota
   if (!db) initDb();
   if (!db) return { totalLoots: 0, totalSeed: 0, lootList: [], seedList: [] };
 
-  const logs = db.prepare("SELECT date, type, content FROM activity_logs WHERE date LIKE ? AND type IN ('loot', 'calc') ORDER BY date DESC, time DESC").all(`${yearMonth}-%`) as { date: string, type: string, content: string }[];
+  const logs = db.prepare("SELECT date, type, content, amount FROM activity_logs WHERE date LIKE ? AND type IN ('loot', 'calc') ORDER BY date DESC, time DESC").all(`${yearMonth}-%`) as { date: string, type: string, content: string, amount: number }[];
 
   let totalLoots = 0;
   let totalSeed = 0;
@@ -284,35 +344,10 @@ export function getMonthlySummary(yearMonth: string): { totalLoots: number, tota
   logs.forEach(log => {
     if (log.type === 'loot') {
       lootList.push({ date: log.date, content: log.content });
-      const match = log.content.match(/(\d+)개$/);
-      if (match) {
-        totalLoots += parseInt(match[1], 10);
-      } else {
-        totalLoots += 1;
-      }
+      totalLoots += log.amount || 1;
     } else if (log.type === 'calc') {
       seedList.push({ date: log.date, content: log.content });
-
-      // 금액 추출 로직 개선 (한글 단위 대응)
-      const match = log.content.match(/\(([^)]+)\)/);
-      if (match) {
-        const s = match[1];
-        let val = 0;
-        const joMatch = s.match(/(\d+)조/);
-        const eokMatch = s.match(/(\d+)억/);
-        const manMatch = s.match(/(\d+)만/);
-        const rawMatch = s.match(/([\d,]+)/);
-
-        if (joMatch) val += parseInt(joMatch[1], 10) * 1000000000000;
-        if (eokMatch) val += parseInt(eokMatch[1], 10) * 100000000;
-        if (manMatch) val += parseInt(manMatch[1], 10) * 10000;
-
-        // '억', '만' 단위가 없는 순수 숫자 처리
-        if (!eokMatch && !manMatch && rawMatch) {
-          val = parseInt(rawMatch[1].replace(/,/g, ''), 10);
-        }
-        totalSeed += val;
-      }
+      totalSeed += log.amount || 0;
     }
   });
 
@@ -329,7 +364,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
   const totalDays = new Date(year, month, 0).getDate();
 
   // 1. 기본 로그 가져오기
-  const logs = db.prepare("SELECT date, type, content FROM activity_logs WHERE date LIKE ?").all(`${yearMonth}-%`) as { date: string, type: string, content: string }[];
+  const logs = db.prepare("SELECT date, type, content, amount FROM activity_logs WHERE date LIKE ?").all(`${yearMonth}-%`) as { date: string, type: string, content: string, amount: number }[];
 
   // 2. 출석일수 (활동 로그가 있는 고유 날짜 수)
   const attendanceDays = new Set(logs.map(l => l.date)).size;
@@ -357,23 +392,9 @@ export function getMonthlyStatistics(yearMonth: string): any {
       const bossName = log.content.replace('[보스 처치] ', '').trim();
       bossCounts[bossName] = (bossCounts[bossName] || 0) + 1;
     } else if (log.type === 'loot') {
-      const match = log.content.match(/(\d+)개$/);
-      totalLoots += match ? parseInt(match[1], 10) : 1;
+      totalLoots += log.amount || 1;
     } else if (log.type === 'calc') {
-      const match = log.content.match(/\(([^)]+)\)/);
-      if (match) {
-        const s = match[1];
-        let val = 0;
-        const joMatch = s.match(/(\d+)조/);
-        const eokMatch = s.match(/(\d+)억/);
-        const manMatch = s.match(/(\d+)만/);
-        const rawMatch = s.match(/([\d,]+)/);
-        if (joMatch) val += parseInt(joMatch[1], 10) * 1000000000000;
-        if (eokMatch) val += parseInt(eokMatch[1], 10) * 100000000;
-        if (manMatch) val += parseInt(manMatch[1], 10) * 10000;
-        if (!eokMatch && !manMatch && rawMatch) val = parseInt(rawMatch[1].replace(/,/g, ''), 10);
-        totalSeed += val;
-      }
+      totalSeed += log.amount || 0;
     }
   });
 
@@ -404,6 +425,40 @@ export function getMonthlyStatistics(yearMonth: string): any {
     heatmap: heatmapList,
     grade
   };
+}
+
+/**
+ * 특정 월의 일별 수익 데이터를 가져옵니다 (차트용).
+ */
+export function getMonthlyRevenueData(yearMonth: string): { date: string, amount: number }[] {
+  if (!db) initDb();
+  if (!db) return [];
+
+  // 1. DB에서 해당 월의 일별 합계 가져오기
+  const rows = db.prepare(`
+    SELECT date, SUM(amount) as daily_sum 
+    FROM activity_logs 
+    WHERE date LIKE ? AND type = 'calc'
+    GROUP BY date
+    ORDER BY date ASC
+  `).all(`${yearMonth}-%`) as { date: string, daily_sum: number }[];
+
+  const dailyMap = new Map(rows.map(r => [r.date, r.daily_sum]));
+
+  // 2. 해당 월의 모든 날짜를 생성 (데이터가 없는 날은 0으로 채움)
+  const [year, month] = yearMonth.split('-').map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  const result = [];
+
+  for (let d = 1; d <= lastDay; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    result.push({
+      date: dateStr,
+      amount: dailyMap.get(dateStr) || 0
+    });
+  }
+
+  return result;
 }
 
 /** 

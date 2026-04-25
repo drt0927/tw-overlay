@@ -333,7 +333,18 @@ function createToggleableWindow(key: string, callbacks?: {
 }): void {
   const winCfg = windowRegistry[key];
   if (!winCfg || winCfg.ref) { if (winCfg?.ref) winCfg.ref.close(); return; }
-  const win = new BrowserWindow(getStandardOptions(winCfg.width, winCfg.height));
+
+  // 현재 게임 창이 있는 모니터(없으면 주 모니터)의 작업 영역 높이 확인
+  const display = gameRect 
+    ? screen.getDisplayNearestPoint({ x: gameRect.x, y: gameRect.y }) 
+    : screen.getPrimaryDisplay();
+  const maxH = display.workAreaSize.height;
+  
+  // 설정된 높이가 모니터 높이보다 크면 클램핑
+  const finalW = winCfg.width;
+  const finalH = Math.min(winCfg.height, maxH - 40); // 상단 여백 등 고려하여 약간의 여유(40px) 둠
+
+  const win = new BrowserWindow(getStandardOptions(finalW, finalH));
   winCfg.ref = win;
   attachStackListeners(win);
   win.loadFile(path.join(__dirname, '..', winCfg.html));
@@ -543,9 +554,14 @@ export function syncOverlay(currentRect: GameRect): void {
   if (currentRect && currentRect.x > -10000) {
     if (!mainWindow.isVisible()) mainWindow.show();
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
-    const display = screen.getDisplayNearestPoint({ x: currentRect.x, y: currentRect.y });
-    const scaleFactor = display.scaleFactor || 1;
-    const gX = Math.round(currentRect.x / scaleFactor), gY = Math.round(currentRect.y / scaleFactor), gW = Math.round(currentRect.width / scaleFactor), gH = Math.round(currentRect.height / scaleFactor);
+    // Win32 물리 좌표를 Electron 논리 좌표(DIP)로 변환 (DPI 스케일링 및 멀티 모니터 오프셋 대응)
+    const dipRect = screen.screenToDipRect(null, { 
+      x: currentRect.x, 
+      y: currentRect.y, 
+      width: currentRect.width, 
+      height: currentRect.height 
+    });
+    const gX = dipRect.x, gY = dipRect.y, gW = dipRect.width, gH = dipRect.height;
     if (overlayWindow && isOverlayVisible) {
       const b = overlayWindow.getBounds();
       let newW = b.width, newH = b.height;

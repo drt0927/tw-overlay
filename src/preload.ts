@@ -82,7 +82,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   diaryGetByMonth: (yearMonth: string) => ipcRenderer.invoke('diary-get-by-month', yearMonth),
   diaryGetMonthlySummary: (yearMonth: string) => ipcRenderer.invoke('diary-get-monthly-summary', yearMonth),
   diaryGetStatistics: (yearMonth: string) => ipcRenderer.invoke('diary-get-statistics', yearMonth),
-  diaryAddActivity: (date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string) => ipcRenderer.send('diary-add-activity', date, time, type, content),
+  diaryGetMonthlyRevenue: (yearMonth: string) => ipcRenderer.invoke('diary-get-monthly-revenue', yearMonth),
+  diaryAddActivity: (date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string, amount: number = 0) => ipcRenderer.send('diary-add-activity', date, time, type, content, amount),
   diaryRemoveActivity: (date: string, type: string, content: string) => ipcRenderer.send('diary-remove-activity', date, type, content),
   diaryUpdateMonster: (date: string, monsterId: string) => ipcRenderer.send('diary-update-monster', date, monsterId),
 

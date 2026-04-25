@@ -229,6 +229,10 @@ export function register(): void {
     if (!isValidYearMonth(yearMonth)) return null;
     return diaryDb.getMonthlyStatistics(yearMonth);
   });
+  ipcMain.handle('diary-get-monthly-revenue', (_e, yearMonth: string) => {
+    if (!isValidYearMonth(yearMonth)) return [];
+    return diaryDb.getMonthlyRevenueData(yearMonth);
+  });
   ipcMain.handle('diary-get-shout-history', (_e, hours: number, searchQuery: string) => {
     return diaryDb.getShoutHistory(hours || 24, searchQuery || '');
   });
@@ -239,9 +243,9 @@ export function register(): void {
     const sidebar = wm.getMainWindow();
     if (sidebar) sidebar.webContents.send('play-sound', { label: '미리보기', soundFile: file, volume });
   });
-  ipcMain.on('diary-add-activity', (_e, date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string) => {
+  ipcMain.on('diary-add-activity', (_e, date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string, amount: number = 0) => {
     if (!isValidDate(date) || typeof time !== 'string' || !validActivityTypes.includes(type) || typeof content !== 'string') return;
-    diaryDb.addActivityLog(date, time, type, content);
+    diaryDb.addActivityLog(date, time, type, content, amount);
   });
   ipcMain.on('diary-remove-activity', (_e, date: string, type: string, content: string) => {
     if (!isValidDate(date) || typeof type !== 'string' || typeof content !== 'string') return;

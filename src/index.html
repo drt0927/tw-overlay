@@ -23,13 +23,16 @@
       <i id="toggle-icon" data-lucide="chevron-left"></i>
     </div>
 
-    <!-- 동적 메뉴 영역 -->
-    <div id="dynamic-menus" class="flex flex-col gap-0.5"></div>
+    <!-- 스크롤 가능한 중간 메뉴 영역 -->
+    <div class="flex-1 overflow-y-auto sidebar-scroll-area flex flex-col w-full items-center">
+      <!-- 동적 메뉴 영역 -->
+      <div id="dynamic-menus" class="flex flex-col gap-0.5"></div>
 
-    <!-- 퀵슬롯 컨테이너 -->
-    <div id="slot-container" class="slot-container flex flex-col gap-2 mt-2"></div>
+      <!-- 퀵슬롯 컨테이너 -->
+      <div id="slot-container" class="slot-container flex flex-col gap-2 mt-2"></div>
+    </div>
 
-    <!-- 시스템 하단 버튼 영역 -->
+    <!-- 시스템 하단 버튼 영역 (고정) -->
     <div id="system-menus" class="mt-auto flex flex-col gap-0.5"></div>
 
     <!-- 커피 후원 버튼 -->

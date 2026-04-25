@@ -28,7 +28,7 @@ class ChatLogProcessor {
     chatParser.on('SEED_GAINED', (data: { date: string, timestamp: string, amount: number, message: string }) => {
       const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
       const content = `[자동] ${data.message} (${this.formatNumber(data.amount)})`;
-      diaryDb.addActivityLog(data.date, timeOnly, 'calc', content);
+      diaryDb.addActivityLog(data.date, timeOnly, 'calc', content, data.amount);
     });
 
     // 2. 아이템 획득 처리 (기존 로직 유지)
@@ -38,7 +38,12 @@ class ChatLogProcessor {
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       if (matchedKeyword) {
         const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
-        diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`);
+        
+        // 아이템 개수 추출 시도 (예: "포션 5개 획득")
+        const amountMatch = data.message.match(/(\d+)개/);
+        const amount = amountMatch ? parseInt(amountMatch[1], 10) : 1;
+
+        diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
         this.sendNotification('아이템 획득 알림', data.message);
       }
     });
@@ -61,9 +66,9 @@ class ChatLogProcessor {
 
     // 5. 경험치 변동
     chatParser.on('XP_CHANGED', (data: { timestamp: string, amount: number, message: string }) => {
+      this.checkMinuteRollover();
       this._sessionXP += data.amount;
       this._currentMinuteXP += data.amount;
-      this.checkMinuteRollover();
 
       const allWindows = BrowserWindow.getAllWindows();
       const elapsedMins = (Date.now() - this._startTime) / 60000;

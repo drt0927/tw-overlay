@@ -107,9 +107,28 @@ class ChatLogProcessor {
                         ['exp_heart', 'rare_heart', 'stat_exorcist'].includes(data.buffId);
 
       if (isAllowed) {
-        buffTimerManager.activateBuff(data.buffId, data.usedBy);
+        const startTime = this.parseLogTimestamp(data.date, data.timestamp);
+        buffTimerManager.activateBuff(data.buffId, data.usedBy, undefined, startTime);
       }
     });
+  }
+
+  /**
+   * 로그 날짜와 시간 문자열을 기반으로 타임스탬프(ms) 계산
+   */
+  private parseLogTimestamp(dateStr: string, timestampStr: string): number {
+    try {
+      // dateStr: "2026-04-26", timestampStr: "12시 34분 56초"
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const timeOnly = timestampStr.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
+      const [hh, mm, ss] = timeOnly.split(':').map(Number);
+      
+      const date = new Date(y, m - 1, d, hh, mm, ss);
+      return date.getTime();
+    } catch (e) {
+      log(`[CHAT_PROCESSOR] 시간 파싱 실패: ${e}`);
+      return Date.now();
+    }
   }
 
   private checkMinuteRollover(): void {

@@ -621,12 +621,30 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
   if (newSettings.isSidebarResize && mainWindow) {
     const b = mainWindow.getBounds();
     const cfg = config.load();
+    const sidebarPos = cfg.sidebarPosition || 'right';
+    
     let newX = b.x;
-    if (cfg.sidebarPosition === 'left' && gameRect) {
-      newX = gameRect.x - newSettings.width!;
+    let newY = b.y;
+    let newH = b.height;
+
+    if (gameRect) {
+      // gameRect는 DIP 좌표임 (syncOverlay에서 저장됨)
+      if (sidebarPos === 'left') {
+        newX = gameRect.x - newSettings.width!;
+      } else {
+        newX = gameRect.x + gameRect.width;
+      }
+      newY = gameRect.y + 30; // 제목 표시줄 오프셋
+      newH = gameRect.height - 30;
     }
+
     setProgrammaticMove('main');
-    mainWindow.setBounds({ x: newX, y: b.y, width: newSettings.width, height: b.height });
+    mainWindow.setBounds({ 
+      x: Math.round(newX), 
+      y: Math.round(newY), 
+      width: newSettings.width, 
+      height: Math.round(newH) 
+    });
     return;
   }
   const current = config.load(), updated = { ...current, ...newSettings };
@@ -711,11 +729,28 @@ export function setMainWindowWidth(width: number): void {
     // width가 실제로 다를 때만 업데이트하여 불필요한 이벤트 발생 방지
     if (b.width !== width) {
       const cfg = config.load();
+      const sidebarPos = cfg.sidebarPosition || 'right';
+      
       let newX = b.x;
-      if (cfg.sidebarPosition === 'left' && gameRect) {
-        newX = gameRect.x - width;
+      let newY = b.y;
+      let newH = b.height;
+
+      if (gameRect) {
+        if (sidebarPos === 'left') {
+          newX = gameRect.x - width;
+        } else {
+          newX = gameRect.x + gameRect.width;
+        }
+        newY = gameRect.y + 30;
+        newH = gameRect.height - 30;
       }
-      mainWindow.setBounds({ x: newX, y: b.y, width, height: b.height });
+      
+      mainWindow.setBounds({ 
+        x: Math.round(newX), 
+        y: Math.round(newY), 
+        width: width, 
+        height: Math.round(newH) 
+      });
     }
   }
 }

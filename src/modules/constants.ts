@@ -100,6 +100,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   lootKeywords: [],
   shoutKeywords: [],
   showXpWidget: true,
+  ignoreNegativeXp: true,
   xpWidgetPos: { left: 200, bottom: 0 },
   buffTimerEnabled: true,
   showBuffHud: true,

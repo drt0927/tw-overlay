@@ -161,6 +161,7 @@ export interface AppConfig {
     lootKeywords?: string[];
     shoutKeywords?: string[];
     showXpWidget?: boolean;
+    ignoreNegativeXp?: boolean;
     xpWidgetPos?: { left: number; bottom: number };
 
     // --- Buff Timer Settings ---

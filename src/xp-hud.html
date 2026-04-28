@@ -398,6 +398,16 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+      <div class="setting-row mt-2">
+        <div>
+          <div class="setting-row-label">경험치 감소 무시</div>
+          <div class="setting-row-sub">경험치 판매 시 합계에서 제외</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="toggle-ignore-negative" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <hr class="divider">
@@ -557,9 +567,9 @@
         if (document.getElementById('stat-essence-eta')) document.getElementById('stat-essence-eta').textContent = '--분 남음';
       }
 
-      // 차트 업데이트 (오버플로 방지를 위해 '만' 단위로 스케일링하여 전달)
+      // 차트 업데이트 (y축 callback에서 단위 변환을 수행하므로 여기서는 원본 전달)
       if (xpChart && data.history) {
-        const displayData = data.history.slice(-30).map(v => v / 10000); // 만 단위로 스케일링
+        const displayData = data.history.slice(-30);
         while (displayData.length < 30) displayData.unshift(0);
         xpChart.data.datasets[0].data = displayData;
         xpChart.update(isInitial ? undefined : 'none');
@@ -584,6 +594,10 @@
       window.electronAPI.applySettings({ showXpWidget: e.target.checked });
     });
 
+    document.getElementById('toggle-ignore-negative').addEventListener('change', (e) => {
+      window.electronAPI.applySettings({ ignoreNegativeXp: e.target.checked });
+    });
+
     document.getElementById('btn-apply-pos').addEventListener('click', () => {
       const left = parseInt(document.getElementById('pos-left').value) || 0;
       const bottom = parseInt(document.getElementById('pos-bottom').value) || 0;
@@ -592,6 +606,7 @@
 
     window.electronAPI.onConfigData((config) => {
       if (config.showXpWidget !== undefined) document.getElementById('toggle-show').checked = config.showXpWidget;
+      if (config.ignoreNegativeXp !== undefined) document.getElementById('toggle-ignore-negative').checked = config.ignoreNegativeXp;
       if (config.xpWidgetPos) {
         document.getElementById('pos-left').value = config.xpWidgetPos.left;
         document.getElementById('pos-bottom').value = config.xpWidgetPos.bottom;

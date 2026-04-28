@@ -66,6 +66,11 @@ class ChatLogProcessor {
 
     // 5. 경험치 변동
     chatParser.on('XP_CHANGED', (data: { timestamp: string, amount: number, message: string }) => {
+      const cfg = config.load();
+      if (cfg.ignoreNegativeXp && data.amount < 0) {
+        return;
+      }
+
       this.checkMinuteRollover();
       this._sessionXP += data.amount;
       this._currentMinuteXP += data.amount;

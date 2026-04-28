@@ -4,17 +4,17 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.11.8-violet.svg)
+![Version](https://img.shields.io/badge/version-1.11.9-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.11.8 (2026.04.28)
-이번 패치는 멀티모니터 DPI 환경에서 숙제 체크리스트 체크/해제 시 사이드바가 왼쪽으로 이동하고 높이가 줄어드는 이중 DIP 변환 버그와, 게임 창이 두 모니터에 걸쳐 있을 때 사이드바가 게임창 안쪽으로 들어오는 엣지 정렬 오류를 수정했습니다.
+## 🚀 최신 버전: v1.11.9 (2026.04.28)
+이번 패치는 XP HUD 이용 시 경험치를 판매할 때 통계가 감소하여 발생하는 혼동을 방지하기 위해 필터링 기능을 추가하고, 사냥 리듬 차트의 시각적 오류를 수정했습니다.
 
-- **🗺️ 이중 DIP 변환 버그 수정**: `physicalGameRect`를 별도 저장하여 `applySettings` 호출 시 DIP 좌표가 이중 변환되어 누적 축소되던 현상을 해결했습니다.
-- **📐 사이드바 엣지 정렬 개선**: 게임 창이 두 모니터에 걸쳐 있을 때, 사이드바가 붙는 엣지(물리 좌표 1×1)를 기준으로 DIP 변환하여 사이드바가 게임창 안쪽으로 들어오는 현상을 개선했습니다.
+- **📉 경험치 감소량 무시 옵션**: 100억 경험치 판매 시 HUD의 총 획득량과 EPM이 깎이지 않도록 무시하는 기능을 추가했습니다. (기본 활성)
+- **📊 사냥 리듬 차트 y축 수정**: 차트 y축 라벨이 단위 중복 계산으로 인해 "0만"으로만 표시되던 버그를 수정했습니다.
 
 ---
 

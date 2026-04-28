@@ -4,18 +4,17 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.11.7-violet.svg)
+![Version](https://img.shields.io/badge/version-1.11.8-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.11.7 (2026.04.28)
-이번 패치는 멀티모니터 DPI 오류, 사이드바 Z-order 버그, 리사이즈 시 오래된 게임창 좌표 참조 문제를 근본적으로 수정하여 안정성을 높였습니다.
+## 🚀 최신 버전: v1.11.8 (2026.04.28)
+이번 패치는 멀티모니터 DPI 환경에서 숙제 체크리스트 체크/해제 시 사이드바가 왼쪽으로 이동하고 높이가 줄어드는 이중 DIP 변환 버그와, 게임 창이 두 모니터에 걸쳐 있을 때 사이드바가 게임창 안쪽으로 들어오는 엣지 정렬 오류를 수정했습니다.
 
-- **🖥️ Z-order 버그 수정**: `alwaysOnTop` 게임 오버레이 창을 `promoteWindows` 대상에서 제외하여, 사이드바 등 일반 창이 게임 창 뒤로 밀리는 현상을 해결했습니다.
-- **🗺️ 멀티모니터 DPI 정확도 개선**: `screenToDipRect` 호출 시 `null` 대신 `mainWindow`를 기준으로 사용해 보조 모니터에서도 정확한 좌표 변환이 적용됩니다.
-- **📐 리사이즈 시 stale gameRect 참조 제거**: 사이드바 너비 조절 시 오래된 게임창 좌표 대신 현재 창 bounds를 기준으로 위치를 계산하여 위치 이탈 문제를 원천 차단합니다.
+- **🗺️ 이중 DIP 변환 버그 수정**: `physicalGameRect`를 별도 저장하여 `applySettings` 호출 시 DIP 좌표가 이중 변환되어 누적 축소되던 현상을 해결했습니다.
+- **📐 사이드바 엣지 정렬 개선**: 게임 창이 두 모니터에 걸쳐 있을 때, 사이드바가 붙는 엣지(물리 좌표 1×1)를 기준으로 DIP 변환하여 사이드바가 게임창 안쪽으로 들어오는 현상을 개선했습니다.
 
 ---
 

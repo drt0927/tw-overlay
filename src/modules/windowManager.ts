@@ -144,6 +144,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
 };
 
 let gameRect: GameRect | null = null;
+let physicalGameRect: GameRect | null = null; // syncOverlay 재호출용 물리(Win32) 좌표 — DIP 이중 변환 방지
 let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
 let isTracking = false;
 const isProgrammaticMoveMap: Record<string, boolean> = {};
@@ -313,7 +314,7 @@ function createOverlayWindow(targetUrl?: string): void {
     updateViewBounds();
     if (isOverlayVisible) {
       overlayWindow?.show();
-      if (gameRect) { isTracking = false; syncOverlay(gameRect); }
+      if (physicalGameRect) { isTracking = false; syncOverlay(physicalGameRect); }
     }
     overlayWindow?.webContents.send('config-data', config.load());
     if (IS_DEV) { overlayWindow?.webContents.openDevTools({ mode: 'detach' }); view?.webContents.openDevTools({ mode: 'detach' }); }
@@ -551,9 +552,12 @@ export function syncOverlay(currentRect: GameRect): void {
   if (currentRect && currentRect.x > -10000) {
     if (!mainWindow.isVisible()) mainWindow.show();
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
-    // Win32 물리 좌표를 Electron 논리 좌표(DIP)로 변환 (DPI 스케일링 및 멀티 모니터 오프셋 대응)
-    // mainWindow를 전달해야 게임 창이 위치한 모니터의 DPI 스케일을 올바르게 적용함 (null은 주 모니터 DPI 사용)
-    const dipRect = screen.screenToDipRect(mainWindow, {
+    // 물리 좌표를 보존 — applySettings에서 syncOverlay 재호출 시 이중 DIP 변환 방지
+    physicalGameRect = { x: currentRect.x, y: currentRect.y, width: currentRect.width, height: currentRect.height, isForeground: currentRect.isForeground };
+    // Win32 물리 좌표를 Electron 논리 좌표(DIP)로 변환
+    // null을 전달하면 rect에 가장 가까운 모니터(= 게임 창이 있는 모니터)의 DPI를 자동 적용함.
+    // mainWindow(사이드바)를 전달하면 사이드바가 다른 모니터에 있을 때 잘못된 DPI가 적용되므로 부적합.
+    const dipRect = screen.screenToDipRect(null, {
       x: currentRect.x,
       y: currentRect.y,
       width: currentRect.width,
@@ -584,7 +588,13 @@ export function syncOverlay(currentRect: GameRect): void {
     const currentSidebarB = mainWindow.getBounds();
     const cfg = config.load();
     const sidebarPos = cfg.sidebarPosition || 'right';
-    const newSidebarX = (sidebarPos === 'left') ? gX - currentSidebarB.width : gX + gW;
+    // 게임 창이 두 모니터에 걸쳐 있을 때, 중심 기반 모니터 감지가 아닌
+    // 사이드바가 붙는 쪽 엣지(물리 좌표 1×1)를 기준으로 DIP 변환하여 정확히 정렬
+    const edgePhysX = sidebarPos === 'left'
+      ? currentRect.x
+      : currentRect.x + currentRect.width;
+    const edgeDipX = screen.screenToDipRect(null, { x: edgePhysX, y: currentRect.y, width: 1, height: 1 }).x;
+    const newSidebarX = sidebarPos === 'left' ? edgeDipX - currentSidebarB.width : edgeDipX;
     const newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
     const newSidebarH = gH - 30; // 제목 표시줄 두께만큼 높이 축소
 
@@ -612,6 +622,7 @@ export function syncOverlay(currentRect: GameRect): void {
     // 게임 창을 찾을 수 없는 경우: 사이드바/오버레이 숨김 및 추적 해제
     hideOverlayWindows();
     gameRect = null;
+    physicalGameRect = null;
   }
 }
 
@@ -660,8 +671,8 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
   // buffTimerManager warnSeconds 캐시 갱신
   buffTimerManager.refreshConfig();
 
-  // 설정 변경 즉시 반영 (사이드바 위치 등)
-  if (gameRect) syncOverlay(gameRect);
+  // 설정 변경 즉시 반영 (물리 좌표 사용 — DIP 이중 변환 방지)
+  if (physicalGameRect) syncOverlay(physicalGameRect);
 
   // 설정 저장 시 트레이 메뉴(숨김 메뉴 등) 즉시 동기화
   import('./tray').then(mod => {

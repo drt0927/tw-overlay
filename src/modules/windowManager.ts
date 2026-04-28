@@ -720,23 +720,6 @@ export function getMainWindow(): BrowserWindow | null {
   return (mainWindow && !mainWindow.isDestroyed()) ? mainWindow : null;
 }
 
-export function setMainWindowWidth(width: number): void {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    const b = mainWindow.getBounds();
-    if (b.width !== width) {
-      const cfg = config.load();
-      const sidebarPos = cfg.sidebarPosition || 'right';
-      let newX = b.x;
-      if (sidebarPos === 'left') {
-        // 사이드바 우측 끝(b.x + b.width)을 게임 좌측에 고정하면서 너비만 변경
-        newX = b.x + b.width - width;
-      }
-      // X(right 방향)와 Y/H는 syncOverlay가 관리 — stale gameRect 사용 금지
-      mainWindow.setBounds({ x: Math.round(newX), y: b.y, width, height: b.height });
-    }
-  }
-}
-
 export function hideOverlayWindows(): void {
   // 오버레이 창 종료 (Close)
   if (overlayWindow) {

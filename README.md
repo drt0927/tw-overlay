@@ -4,18 +4,18 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.11.6-violet.svg)
+![Version](https://img.shields.io/badge/version-1.11.7-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.11.6 (2026.04.27)
-이번 패치는 사이드바 메뉴 조작 시 발생하던 윈도우 위치 이탈 및 크기 오류를 해결하여 안정성을 높였습니다.
+## 🚀 최신 버전: v1.11.7 (2026.04.28)
+이번 패치는 멀티모니터 DPI 오류, 사이드바 Z-order 버그, 리사이즈 시 오래된 게임창 좌표 참조 문제를 근본적으로 수정하여 안정성을 높였습니다.
 
-- **🖥️ 사이드바 위치 보정 로직 강화**: 메뉴 클릭 등으로 사이드바 크기가 변할 때, 항상 최신 게임창 위치를 참조하여 자석(Anchoring) 기능을 즉시 재실행합니다.
-- **📏 윈도우 크기(높이) 불일치 해결**: 사이드바가 확장될 때 게임창 높이와 어긋나거나 기본 높이에 고정되던 문제를 수정했습니다.
-- **🛡️ 화면 끝 밀림 방어**: 모니터 우측 끝에서 사이드바가 확장될 때 OS에 의해 게임창 안으로 밀려들어오는 현상을 방지합니다.
+- **🖥️ Z-order 버그 수정**: `alwaysOnTop` 게임 오버레이 창을 `promoteWindows` 대상에서 제외하여, 사이드바 등 일반 창이 게임 창 뒤로 밀리는 현상을 해결했습니다.
+- **🗺️ 멀티모니터 DPI 정확도 개선**: `screenToDipRect` 호출 시 `null` 대신 `mainWindow`를 기준으로 사용해 보조 모니터에서도 정확한 좌표 변환이 적용됩니다.
+- **📐 리사이즈 시 stale gameRect 참조 제거**: 사이드바 너비 조절 시 오래된 게임창 좌표 대신 현재 창 bounds를 기준으로 위치를 계산하여 위치 이탈 문제를 원천 차단합니다.
 
 ---
 

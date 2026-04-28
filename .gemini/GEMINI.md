@@ -1,6 +1,6 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.11.6)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.11.7)
 
-이 문서는 v1.11.6 버전을 기준으로 작성되었습니다.
+이 문서는 v1.11.7 버전을 기준으로 작성되었습니다.
  상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요. UI 일관성을 위한 디자인 가이드는 [DESIGN_TOKENS.md](./DESIGN_TOKENS.md)에서 확인하실 수 있습니다.
 
 ## 📌 프로젝트 소개
@@ -43,12 +43,13 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 - **Log Streaming:** `tail` 모듈을 사용하여 실시간 분석을 유지하며, 10초 주기 백그라운드 타이머를 통해 데이터 연속성을 보장합니다.
 - **Integer Safety:** 모든 숫자 처리를 `Number` 타입으로 안전하게 처리하여 21억 오버플로 문제를 근본적으로 해결했습니다.
 
-### 4. 업데이트 히스토리 (v1.11.6 패치)
-- **수정:** 사이드바 메뉴 조작 시 윈도우 위치 이탈 및 크기(높이) 축소 버그 수정.
-- **개선:** 사이드바 너비 조절 시 항상 최신 게임창 위치(`gameRect`)를 참조하도록 자석(Anchoring) 로직 강화.
-- **보완:** 멀티 모니터 경계 및 화면 끝에서 OS에 의해 창이 밀려나는 현상 방어.
+### 4. 업데이트 히스토리 (v1.11.7 패치)
+- **수정:** `getAllWindowHwnds()`에서 `alwaysOnTop(TOPMOST)` 게임 오버레이 창 제외 → Z-order 역전 버그 해결.
+- **수정:** `syncOverlay()`의 `screenToDipRect` 기준 창을 `null`→`mainWindow`로 변경 → 멀티모니터 DPI 정확도 개선.
+- **수정:** `applySettings()` 리사이즈 시 stale `gameRect` 참조 제거 → 현재 bounds 기반으로 위치 계산.
+- **제거:** 미사용 dead code `setMainWindowWidth()` 함수 삭제.
 
 ---
-최종 수정일: 2026-04-27
+최종 수정일: 2026-04-28
 작성자: Gemini CLI Agent
-버전: v1.11.6
+버전: v1.11.7

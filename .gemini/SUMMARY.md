@@ -1,6 +1,6 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.11.6)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.11.7)
 
-이 문서는 v1.11.6 버전을 기준으로 작성되었습니다.
+이 문서는 v1.11.7 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 실시간 게임 데이터 시각화 분석기.

@@ -83,12 +83,13 @@ function createGameOverlayWindow(): void {
   if (gameOverlayWindow) return;
   gameOverlayWindow = new BrowserWindow(getStandardOptions(0, 0, {
     skipTaskbar: true,
-    alwaysOnTop: true,
+    alwaysOnTop: false,
     focusable: false,
     hasShadow: false
   }));
   gameOverlayWindow.setIgnoreMouseEvents(true);
   gameOverlayWindow.loadFile(path.join(__dirname, '..', 'game-overlay.html'));
+  attachStackListeners(gameOverlayWindow);
   gameOverlayWindow.once('ready-to-show', () => {
     gameOverlayWindow?.showInactive();
     // 생성 직후 최신 설정 전송 (경험치 HUD 위치 등 반영용)
@@ -498,9 +499,7 @@ export function toggleContentsCheckerWindow(): void {
 
 
 export function getAllWindowHwnds(): string[] {
-  // gameOverlayWindow는 alwaysOnTop(TOPMOST) 창이므로 제외 — promoteWindows의 SetWindowPos가 TOPMOST 창을
-  // hwndInsertAfter로 사용하면 non-TOPMOST 창들이 게임 창 뒤로 밀려남
-  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible() && win !== gameOverlayWindow);
+  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
 
   // 사이드바(mainWindow)를 항상 첫 번째로 → promoteWindows에서 최하단 Z-Order 유지
   windows.sort((a, b) => {

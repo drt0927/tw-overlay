@@ -4,17 +4,17 @@
 
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.11.9-violet.svg)
+![Version](https://img.shields.io/badge/version-1.11.10-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.11.9 (2026.04.28)
-이번 패치는 XP HUD 이용 시 경험치를 판매할 때 통계가 감소하여 발생하는 혼동을 방지하기 위해 필터링 기능을 추가하고, 사냥 리듬 차트의 시각적 오류를 수정했습니다.
+## 🚀 최신 버전: v1.11.10 (2026.04.28)
+이번 패치는 오버레이 창들이 윈도우 스택에서 적절한 순서를 유지하지 못해 다른 앱 창들을 가리거나 레이어가 꼬이는 문제를 해결하기 위해 Z-Order 관리 로직을 고도화했습니다.
 
-- **📉 경험치 감소량 무시 옵션**: 100억 경험치 판매 시 HUD의 총 획득량과 EPM이 깎이지 않도록 무시하는 기능을 추가했습니다. (기본 활성)
-- **📊 사냥 리듬 차트 y축 수정**: 차트 y축 라벨이 단위 중복 계산으로 인해 "0만"으로만 표시되던 버그를 수정했습니다.
+- **🔝 오버레이 Z-Order 관리 통합**: `gameOverlayWindow`(경험치/알림 오버레이)를 항상 최상단(`TOPMOST`)으로 고정하는 대신, 앱의 통합 윈도우 스택 리스너에 등록하여 다른 오버레이 창들과 자연스러운 전후 관계를 유지하도록 수정했습니다.
+- **🛠 윈도우 스택 필터링 개선**: 윈도우 스택을 정렬할 때 오버레이 창들이 누락되거나 잘못된 위치에 배치되지 않도록 필터링 및 정렬 로직을 개선했습니다.
 
 ---
 

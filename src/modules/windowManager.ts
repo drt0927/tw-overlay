@@ -497,12 +497,9 @@ export function toggleContentsCheckerWindow(): void {
 
 
 export function getAllWindowHwnds(): string[] {
-  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
-
-  // gameOverlayWindow도 명시적으로 포함 (스택에 없을 수 있으므로)
-  if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && gameOverlayWindow.isVisible()) {
-    if (!windows.includes(gameOverlayWindow)) windows.push(gameOverlayWindow);
-  }
+  // gameOverlayWindow는 alwaysOnTop(TOPMOST) 창이므로 제외 — promoteWindows의 SetWindowPos가 TOPMOST 창을
+  // hwndInsertAfter로 사용하면 non-TOPMOST 창들이 게임 창 뒤로 밀려남
+  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible() && win !== gameOverlayWindow);
 
   // 사이드바(mainWindow)를 항상 첫 번째로 → promoteWindows에서 최하단 Z-Order 유지
   windows.sort((a, b) => {
@@ -555,11 +552,12 @@ export function syncOverlay(currentRect: GameRect): void {
     if (!mainWindow.isVisible()) mainWindow.show();
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
     // Win32 물리 좌표를 Electron 논리 좌표(DIP)로 변환 (DPI 스케일링 및 멀티 모니터 오프셋 대응)
-    const dipRect = screen.screenToDipRect(null, { 
-      x: currentRect.x, 
-      y: currentRect.y, 
-      width: currentRect.width, 
-      height: currentRect.height 
+    // mainWindow를 전달해야 게임 창이 위치한 모니터의 DPI 스케일을 올바르게 적용함 (null은 주 모니터 DPI 사용)
+    const dipRect = screen.screenToDipRect(mainWindow, {
+      x: currentRect.x,
+      y: currentRect.y,
+      width: currentRect.width,
+      height: currentRect.height
     });
     const gX = dipRect.x, gY = dipRect.y, gW = dipRect.width, gH = dipRect.height;
     if (overlayWindow && isOverlayVisible) {
@@ -622,29 +620,28 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     const b = mainWindow.getBounds();
     const cfg = config.load();
     const sidebarPos = cfg.sidebarPosition || 'right';
-    
     let newX = b.x;
-    let newY = b.y;
-    let newH = b.height;
-
-    if (gameRect) {
-      // gameRect는 DIP 좌표임 (syncOverlay에서 저장됨)
-      if (sidebarPos === 'left') {
-        newX = gameRect.x - newSettings.width!;
-      } else {
-        newX = gameRect.x + gameRect.width;
-      }
-      newY = gameRect.y + 30; // 제목 표시줄 오프셋
-      newH = gameRect.height - 30;
+    if (sidebarPos === 'left') {
+      // 사이드바 우측 끝을 게임 좌측에 고정하면서 너비만 변경
+      newX = b.x + b.width - newSettings.width!;
     }
-
+    // X(right 방향)와 Y/H는 syncOverlay가 관리 — stale gameRect 사용 금지
     setProgrammaticMove('main');
-    mainWindow.setBounds({ 
-      x: Math.round(newX), 
-      y: Math.round(newY), 
-      width: newSettings.width, 
-      height: Math.round(newH) 
-    });
+    mainWindow.setBounds({ x: Math.round(newX), y: b.y, width: newSettings.width, height: b.height });
+
+    // 열려있는 자식 창들도 재배치 (사이드바 X 변경에 따른 오프셋 보정)
+    if (gameRect) {
+      Object.keys(windowRegistry).forEach(key => {
+        const winCfg = windowRegistry[key];
+        if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {
+          setProgrammaticMove(key);
+          const { x, y } = winCfg.calcPosition
+            ? winCfg.calcPosition(gameRect!, winCfg.pos)
+            : { x: Math.round(gameRect!.x + gameRect!.width + winCfg.pos.offsetX), y: Math.round(gameRect!.y + winCfg.pos.offsetY) };
+          winCfg.ref.setPosition(x, y);
+        }
+      });
+    }
     return;
   }
   const current = config.load(), updated = { ...current, ...newSettings };
@@ -726,31 +723,16 @@ export function getMainWindow(): BrowserWindow | null {
 export function setMainWindowWidth(width: number): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     const b = mainWindow.getBounds();
-    // width가 실제로 다를 때만 업데이트하여 불필요한 이벤트 발생 방지
     if (b.width !== width) {
       const cfg = config.load();
       const sidebarPos = cfg.sidebarPosition || 'right';
-      
       let newX = b.x;
-      let newY = b.y;
-      let newH = b.height;
-
-      if (gameRect) {
-        if (sidebarPos === 'left') {
-          newX = gameRect.x - width;
-        } else {
-          newX = gameRect.x + gameRect.width;
-        }
-        newY = gameRect.y + 30;
-        newH = gameRect.height - 30;
+      if (sidebarPos === 'left') {
+        // 사이드바 우측 끝(b.x + b.width)을 게임 좌측에 고정하면서 너비만 변경
+        newX = b.x + b.width - width;
       }
-      
-      mainWindow.setBounds({ 
-        x: Math.round(newX), 
-        y: Math.round(newY), 
-        width: width, 
-        height: Math.round(newH) 
-      });
+      // X(right 방향)와 Y/H는 syncOverlay가 관리 — stale gameRect 사용 금지
+      mainWindow.setBounds({ x: Math.round(newX), y: b.y, width, height: b.height });
     }
   }
 }

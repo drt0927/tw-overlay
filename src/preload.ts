@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPost, UpdateStatusInfo, EtaRankingParams, TradePost, TradeActivity } from './shared/types';
+import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPost, UpdateStatusInfo, EtaRankingParams, TradePost, TradeActivity, ScamAnalysisResult, ModelStatus, GpuDetectionResult, ServerStatus, SessionState } from './shared/types';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // 창 제어
@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
   toggleMagicStoneCalculator: () => ipcRenderer.send('toggle-magic-stone-calculator'),
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
+  toggleScamDetector: () => ipcRenderer.send('toggle-scam-detector'),
   toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
@@ -99,6 +100,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getShoutHistory: (hours: number, searchQuery: string) => ipcRenderer.invoke('diary-get-shout-history', hours, searchQuery),
   toggleShoutHistory: () => ipcRenderer.send('toggle-shout-history'),
   playSound: (file: string, volume: number) => ipcRenderer.send('play-sound', { file, volume }),
+
+  // 사기꾼 탐지
+  scamSetEnabled: (enabled: boolean) => ipcRenderer.send('scam-set-enabled', enabled),
+  scamGetModelStatus: (): Promise<ModelStatus> => ipcRenderer.invoke('scam-get-model-status'),
+  scamGetConstants: (): Promise<{ analysisIntervalSec: number }> => ipcRenderer.invoke('scam-get-constants'),
+  scamGetMsgerLogPath: (): Promise<string> => ipcRenderer.invoke('scam-get-msger-log-path'),
+  openMsgerLogFolderDialog: (): Promise<string | null> => ipcRenderer.invoke('dialog:openMsgerLogFolder'),
+  scamDownloadModel: (): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-download-model'),
+  scamDetectGpu: (): Promise<GpuDetectionResult> => ipcRenderer.invoke('scam-detect-gpu'),
+  scamGetServerStatus: (): Promise<ServerStatus> => ipcRenderer.invoke('scam-get-server-status'),
+  scamGetSessionStates: (): Promise<SessionState[]> => ipcRenderer.invoke('scam-get-session-states'),
+  scamGetQueueLength: (): Promise<number> => ipcRenderer.invoke('scam-get-queue-length'),
+  scamCloseSession: (filePath: string) => ipcRenderer.send('scam-close-session', filePath),
+  scamTriggerAnalyze: (filePath: string) => ipcRenderer.send('scam-trigger-analyze', filePath),
+  scamStopServer: () => ipcRenderer.send('scam-stop-server'),
+  scamInjectTest: (scenario?: string): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-inject-test', scenario),
+  scamDownloadBinaryVariant: (variant: string): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-download-binary-variant', variant),
 
   // 이벤트 리스너 (중복 등록 방지를 위해 기존 리스너 제거 후 재등록)
   onSidebarStatus: (callback: (isCollapsed: boolean) => void) => {
@@ -208,6 +226,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('xp-reset-done');
     ipcRenderer.on('xp-reset-done', (_event, data) => callback(data));
   },
+  onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
+    ipcRenderer.removeAllListeners('scam-alert');
+    ipcRenderer.on('scam-alert', (_event, result) => callback(result));
+  },
+  onScamAnalysisResult: (callback: (result: ScamAnalysisResult) => void) => {
+    ipcRenderer.removeAllListeners('scam-analysis-result');
+    ipcRenderer.on('scam-analysis-result', (_event, result) => callback(result));
+  },
+  onScamProgress: (callback: (pct: number) => void) => {
+    ipcRenderer.removeAllListeners('scam-progress');
+    ipcRenderer.on('scam-progress', (_event, pct) => callback(pct));
+  },
+  onScamSessionUpdate: (callback: (sessions: SessionState[]) => void) => {
+    ipcRenderer.removeAllListeners('scam-session-update');
+    ipcRenderer.on('scam-session-update', (_event, sessions) => callback(sessions));
+  },
+  onScamAnalysisToken: (callback: (data: { filePath: string; token: string }) => void) => {
+    ipcRenderer.removeAllListeners('scam-analysis-token');
+    ipcRenderer.on('scam-analysis-token', (_event, data) => callback(data));
+  },
 
   cleanupAllListeners: () => {
     const events = [
@@ -218,6 +256,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done',
+      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

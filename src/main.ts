@@ -23,6 +23,7 @@ import { findChatLogPath } from './modules/chatLogPathFinder';
 import { chatLogManager } from './modules/chatLogManager';
 import { chatLogProcessor } from './modules/chatLogProcessor';
 import { buffTimerManager } from './modules/buffTimerManager';
+import * as scamMonitor from './modules/scamMonitor';
 
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
@@ -102,6 +103,11 @@ app.whenReady().then(() => {
   chatLogManager.start();
   buffTimerManager.start();
 
+  // 사기꾼 탐지 모니터 (활성화된 경우에만)
+  if (config.load().scamDetectorEnabled) {
+    scamMonitor.start();
+  }
+
   wm.onOverlayWindowReady(() => {
     gallery.updateWindows(wm.getOverlayWindow(), wm.getMainWindow(), wm.getGalleryWindow());
     trade.updateWindows(wm.getMainWindow(), wm.getTradeWindow());
@@ -119,6 +125,7 @@ app.on('before-quit', () => {
   tray.destroyTray();
   tracker.stop();
   buffTimerManager.stop();
+  scamMonitor.stop();
 });
 
 app.on('window-all-closed', () => app.quit());

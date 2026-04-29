@@ -142,6 +142,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 },
   buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 850 },
   xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 1050 },
+  scamDetector: { ref: null, pos: { offsetX: -480, offsetY: 40 }, key: 'scamDetector', html: 'scam-detector.html', width: 480, height: 780 },
 };
 
 let gameRect: GameRect | null = null;
@@ -196,6 +197,7 @@ export const getContentsCheckerWindow = () => windowRegistry.contentsChecker.ref
 export const getEvolutionCalculatorWindow = () => windowRegistry.evolutionCalculator.ref;
 export const getCustomAlertWindow = () => windowRegistry.customAlert.ref;
 export const getUniformColorWindow = () => windowRegistry.uniformColor.ref;
+export const getScamDetectorWindow = () => windowRegistry.scamDetector.ref;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
@@ -482,6 +484,7 @@ export function toggleUniformColorWindow(): void {
 
 export function toggleShoutHistoryWindow(): void { createToggleableWindow('shoutHistory'); }
 export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
+export function toggleScamDetectorWindow(): void { createToggleableWindow('scamDetector'); }
 export function toggleBuffTimerWindow(): void { createToggleableWindow('buffTimer'); }
 export function toggleXpHudWindow(): void { createToggleableWindow('xpHud'); }
 export function toggleContentsCheckerWindow(): void {

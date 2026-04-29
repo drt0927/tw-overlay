@@ -16,6 +16,7 @@ import { analytics } from './analytics';
 import * as diaryDb from './diaryDb';
 import * as backup from './backupManager';
 import { buffTimerManager } from './buffTimerManager';
+import * as scam from './scamMonitor';
 
 let _registered = false;
 
@@ -67,6 +68,7 @@ export function register(): void {
 
   // 창 토글 핸들러 일괄 등록
   const toggleHandlers: Record<string, () => void> = {
+    'toggle-scam-detector': wm.toggleScamDetectorWindow,
     'toggle-gallery': wm.toggleGalleryWindow,
     'toggle-abbreviation': wm.toggleAbbreviationWindow,
     'toggle-buffs': wm.toggleBuffsWindow,
@@ -287,6 +289,57 @@ export function register(): void {
   });
 
   ipcMain.on('close-app', () => { app.quit(); });
+
+  // --- 사기꾼 탐지 ---
+  ipcMain.on('scam-set-enabled', (_e, enabled: boolean) => {
+    config.save({ scamDetectorEnabled: enabled });
+    if (enabled) scam.start();
+    else scam.stop();
+  });
+  ipcMain.handle('scam-get-model-status', () => scam.getModelStatus());
+  ipcMain.handle('scam-get-constants', () => scam.getConstants());
+  ipcMain.handle('scam-get-msger-log-path', () => scam.getCurrentMsgerLogPath());
+  ipcMain.handle('dialog:openMsgerLogFolder', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory'],
+      title: '테일즈위버 MsgerLog 폴더 선택'
+    });
+    return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0];
+  });
+  ipcMain.handle('scam-detect-gpu', () => scam.detectGpu());
+  ipcMain.handle('scam-get-server-status', () => scam.getServerStatus());
+  ipcMain.handle('scam-get-session-states', () => scam.getSessionStates());
+  ipcMain.handle('scam-get-queue-length', () => scam.getQueueLength());
+  ipcMain.on('scam-close-session', (_e, filePath: string) => scam.closeSession(filePath));
+  ipcMain.on('scam-trigger-analyze', (_e, filePath: string) => scam.triggerAnalyze(filePath));
+  ipcMain.on('scam-stop-server', () => scam.stopServer());
+  ipcMain.handle('scam-inject-test', (_e, scenario?: string) => scam.injectTestSession(scenario));
+  ipcMain.handle('scam-download-binary-variant', async (event, gpuChoice: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    try {
+      scam.stopServer();
+      const gpuResult = await scam.buildGpuResultForUserChoice(gpuChoice);
+      await scam.downloadServerBinary(gpuResult, (pct) => {
+        win?.webContents.send('scam-progress', pct);
+      });
+      return { success: true, binaryVariant: gpuResult.binaryVariant };
+    } catch (e) {
+      return { success: false, error: String(e) };
+    }
+  });
+  ipcMain.handle('scam-download-model', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    try {
+      await scam.downloadModel((pct) => {
+        win?.webContents.send('scam-progress', pct);
+      });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: String(e) };
+    }
+  });
 
   // 버프 타이머 테스트 — 3개 버프 강제 활성화
   ipcMain.on('buff-timer-test', (event, seconds?: number) => {

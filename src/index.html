@@ -313,6 +313,44 @@
       createToast(label, isCustom, spawnTime, offset, isAlreadyRecorded);
     });
 
+    window.electronAPI.onScamAlert((result) => {
+      const isScam = result.verdict === 'SCAM';
+      const toastId = 'scam-toast-' + Date.now();
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = 'boss-toast show';
+      toast.style.borderLeft = isScam ? '3px solid #ef4444' : '3px solid #f59e0b';
+
+      const title = isScam ? '🚨 사기 위험 감지!' : '⚠️ 사기 의심 감지';
+      const colorClass = isScam ? 'text-red-400' : 'text-yellow-400';
+      const rawReason = result.analysisReason?.split('\n')[0]?.trim() || result.detectedScamTypes || '';
+      const reason = rawReason.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      toast.innerHTML = `
+        <div class="flex items-start justify-between w-full gap-3">
+          <div class="flex items-start gap-2.5 pt-0.5">
+            <i data-lucide="shield-alert" class="w-4 h-4 ${colorClass} mt-0.5 shrink-0"></i>
+            <div class="flex-1">
+              <div class="boss-toast-name leading-snug font-bold ${colorClass}">${title}</div>
+              ${reason ? `<div class="text-[10px] text-slate-400 mt-1 leading-snug line-clamp-2">${reason}</div>` : ''}
+            </div>
+          </div>
+          <button onclick="document.getElementById('${toastId}')?.remove()" class="p-1 text-slate-400 hover:text-white bg-white/5 hover:bg-red-500/80 rounded-md transition-colors shrink-0">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 italic border-t border-slate-700/50 pt-2">
+          ※ AI 판정은 참고용. 100% 안전 보장 불가. 에타 레벨·교환창 아이템을 직접 확인하세요.
+        </div>
+      `;
+
+      toastContainer.appendChild(toast);
+      refreshIcons();
+      updateIgnoreMouseEvents(false);
+      updateSidebarWindowWidth(400);
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 30000);
+    });
+
     window.electronAPI.onSidebarStatus((collapsed) => {
       isCollapsed = collapsed;
       wrapper.className = isCollapsed ? 'sidebar-wrapper collapsed' : 'sidebar-wrapper';

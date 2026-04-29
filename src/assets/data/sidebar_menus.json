@@ -72,6 +72,14 @@
     "api": "toggleBuffTimer"
   },
   {
+    "id": "scam-detector-btn",
+    "label": "사기꾼 탐지 AI",
+    "icon": "shield-alert",
+    "tooltip": "1:1 대화 실시간 사기꾼 탐지 [BETA]",
+    "color": "red-400",
+    "api": "toggleScamDetector"
+  },
+  {
     "id": "xp-hud-btn",
     "label": "경험치 HUD",
     "icon": "activity",

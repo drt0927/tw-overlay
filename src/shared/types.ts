@@ -143,6 +143,7 @@ export interface AppConfig {
         customAlert?: WindowPosition;
         diary?: WindowPosition;
         buffTimer?: WindowPosition;
+        scamDetector?: WindowPosition;
     };
     tradeServer?: string;
     tradeKeywords?: string[];
@@ -174,6 +175,12 @@ export interface AppConfig {
     buffTimerSound?: string;
     buffTimerBuffs?: { [buffId: string]: boolean }; // buffId → 감지 활성화 여부
     buffTimerHudPos?: { left: number; bottom: number };
+
+    // --- Scam Detector Settings ---
+    scamDetectorEnabled?: boolean;
+    msgerLogPath?: string;
+    scamAlertSound?: string;
+    scamGpuVariant?: LlamaServerVariant;
 
     // --- Sound Settings ---
     volumeContentsChecker?: number;
@@ -235,6 +242,63 @@ export interface TradePost {
 export interface TradeActivity {
     type: string;
     count: number;
+}
+
+// --- Scam Detector Types ---
+
+export interface MessengerMessage {
+  timestamp: string;
+  sender: string;
+  content: string;
+  isSystem: boolean;
+}
+
+export interface ScamAnalysisResult {
+  verdict: 'SCAM' | 'SUSPICIOUS' | 'SAFE' | 'UNKNOWN';
+  detectedScamTypes: string;
+  analysisReason: string;
+  actionGuidance: string;
+  rawResponse: string;
+  filePath: string;
+  analyzedAt: number;
+}
+
+export interface ModelStatus {
+  downloaded: boolean;
+  downloading: boolean;
+  progress: number;
+  modelPath: string;
+  serverBinaryReady: boolean;
+}
+
+export interface ServerStatus {
+  running: boolean;
+  ready: boolean;
+  pid: number | null;
+  activeSessions: number;
+}
+
+export interface SessionState {
+  filePath: string;
+  fileName: string;
+  messageCount: number;
+  newSinceLastAnalysis: number;
+  analyzing: boolean;
+  debounceActive: boolean;
+  lastVerdict: 'SCAM' | 'SUSPICIOUS' | 'SAFE' | 'UNKNOWN';
+  lastMessageTime: number;
+  lastAnalysisAt: number;
+}
+
+export type LlamaServerVariant = 'cuda-13.1' | 'cuda-12.4' | 'vulkan' | 'cpu';
+
+export interface GpuDetectionResult {
+  gpuType: 'nvidia' | 'amd' | 'intel' | 'none';
+  gpuName: string;
+  cudaVersion?: string;     // e.g. "12.4", "13.1"
+  binaryVariant: LlamaServerVariant;
+  binaryUrl: string;
+  cudartUrl?: string;       // CUDA 빌드 전용 — 런타임 DLL zip
 }
 
 // --- Diary (Adventure Log) System Types ---

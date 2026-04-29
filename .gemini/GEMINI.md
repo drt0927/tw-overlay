@@ -1,6 +1,6 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.11.10)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.0)
 
-이 문서는 v1.11.10 버전을 기준으로 작성되었습니다.
+이 문서는 v1.12.0 버전을 기준으로 작성되었습니다.
  상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요. UI 일관성을 위한 디자인 가이드는 [DESIGN_TOKENS.md](./DESIGN_TOKENS.md)에서 확인하실 수 있습니다.
 
 ## 📌 프로젝트 소개
@@ -13,6 +13,7 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 - **Backend:** Node.js (Main Process), Native Win32 API via Koffi (Window Tracking)
 - **Database:** **SQLite (better-sqlite3)** - 로컬 활동 기록 저장용 (v1.11.4 스키마 확장)
 - **Log Analysis:** **tail (Node.js)** - 실시간 채팅 로그 스트리밍 분석 엔진
+- **LLM Inference:** **llama-server (llama.cpp)** - Gemma 4 E2B GGUF 로컬 추론 (v1.12.0)
 - **Build System:** Node.js 기반 커스텀 리소스 복사 (`scripts/copy-resources.js`)
 - **CI/CD:** GitHub Actions (Windows-latest 기반 빌드)
 
@@ -45,7 +46,10 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 
 ### 4. 업데이트 히스토리
 
-#### v1.11.10 (최신 패치)
+#### v1.12.0 (최신)
+- **추가:** 사기꾼 탐지 AI (BETA) — MsgerLog 폴더를 실시간 감시하여 신규 1:1 대화 발생 시 자동으로 세션을 생성하고, Gemma 4 E2B GGUF 모델을 llama-server(llama.cpp)로 로컬 추론합니다. SCAM·SUSPICIOUS·SAFE·UNKNOWN 4단계 판정, SSE 스트리밍 출력, 시청각 알람, GPU 자동 감지(NVIDIA CUDA 12.4/AMD-Intel Vulkan/CPU 폴백), LLM 직렬화 큐, 테스트 케이스 5종 내장.
+
+#### v1.11.10
 - **수정:** `gameOverlayWindow` (경험치/알림 오버레이)가 항상 최상단(`alwaysOnTop: true`)으로 고정되어 다른 앱 창들을 가리던 문제를 수정했습니다. 이제 앱의 공통 윈도우 스택 관리 로직에 통합되어 다른 오버레이 창들과 자연스럽게 레이어 순서(Z-Order)가 유지됩니다.
 
 #### v1.11.9
@@ -55,4 +59,4 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 ---
 최종 수정일: 2026-04-28
 작성자: Gemini CLI Agent
-버전: v1.11.10
+버전: v1.12.0

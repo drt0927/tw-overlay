@@ -212,6 +212,7 @@
           <i data-lucide="message-square-more" class="w-4 h-4"></i> 채팅 로그 설정
         </div>
 
+
         <div class="nav-item" onclick="showSection('slots', this)">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
         </div>
@@ -734,6 +735,7 @@
         </div>
       </div>
 
+
       <!-- 8. 데이터 관리 (백업/복구) -->
       <div id="section-data" class="settings-section space-y-8 hidden">
         <div class="settings-group">
@@ -798,7 +800,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.11.10</span></p>
+                        class="text-purple-400">1.12.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1688,6 +1690,7 @@
           chatLogAutoDeleteDays: parseInt(document.getElementById('chat-log-auto-delete-input').value) || 0,
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,
+
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);

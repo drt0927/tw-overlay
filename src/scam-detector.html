@@ -94,6 +94,8 @@
     .log-entry.SUSPICIOUS { border-color:#f59e0b; }
     .log-entry.SAFE       { border-color:#22c55e; }
     .log-entry.UNKNOWN    { border-color:#475569; }
+    .log-entry.has-detail { cursor: pointer; }
+    .log-entry.has-detail:hover { background: rgba(0,0,0,0.32); }
 
     /* 스크롤 */
     .scroll-area { overflow-y: auto; }
@@ -243,6 +245,11 @@
         <div class="w-full rounded-full h-2" style="background:#1e293b;">
           <div id="progress-bar" class="h-2 rounded-full transition-all" style="width:0%; background:#ef4444;"></div>
         </div>
+        <button onclick="cancelDownload()"
+          class="no-drag w-full py-2 rounded-xl font-bold transition-all"
+          style="background:rgba(71,85,105,0.3); border:1px solid rgba(71,85,105,0.4); color:#94a3b8; font-size:12px;">
+          다운로드 취소
+        </button>
       </div>
 
       <!-- 바이너리 교체 (설치 완료 후 표시) -->
@@ -398,6 +405,7 @@
     let _logEntries = [];
     let _streamBuffers = {};     // filePath → 누적 스트리밍 텍스트
     let _analyzingState = {};    // filePath → 이전 analyzing 상태
+    let _serverStatus = { ready: false, running: false, pid: null };
 
     // ── IPC 수신 ──
 
@@ -421,6 +429,12 @@
         _analyzingState[s.filePath] = s.analyzing;
       });
       renderSessions(sessions, queueLength ?? 0);
+    });
+
+    window.electronAPI.onScamProgress((pct, label) => {
+      document.getElementById('progress-pct').textContent = `${pct}%`;
+      document.getElementById('progress-bar').style.width = `${pct}%`;
+      if (label) document.getElementById('progress-label').textContent = label;
     });
 
     window.electronAPI.onScamAnalysisToken(({ filePath, token }) => {
@@ -453,6 +467,11 @@
         const sessions = await window.electronAPI.scamGetSessionStates();
         const queueLen = await window.electronAPI.scamGetQueueLength();
         renderSessions(sessions, queueLen);
+      } catch (_) {}
+
+      try {
+        const past = await window.electronAPI.scamGetRecentResults();
+        past.forEach(r => appendLog(r));
       } catch (_) {}
 
       // 서버 상태는 3초마다 폴링
@@ -514,7 +533,7 @@
           downloadArea.classList.add('hidden');
           rebinaryArea.classList.add('hidden');
           document.getElementById('progress-area').classList.remove('hidden');
-          if (toggle) toggle.disabled = true;
+          if (toggle) { toggle.disabled = true; toggle.title = '다운로드 완료 후 활성화됩니다.'; }
         } else if (status.downloaded) {
           _modelReady = true;
           statusEl.textContent = '✅ 모델 및 llama-server 준비 완료';
@@ -535,6 +554,15 @@
           document.getElementById('progress-area').classList.add('hidden');
           rebinaryArea.classList.add('hidden');
           if (toggle) { toggle.disabled = true; toggle.title = '모델을 먼저 다운로드해주세요.'; }
+          // GPU 정보 표시
+          try {
+            const gpuInfo = await window.electronAPI.scamDetectGpu();
+            const gpuInfoEl = document.getElementById('gpu-info-text');
+            if (gpuInfoEl) {
+              gpuInfoEl.textContent = gpuInfo?.gpuName ? `감지된 GPU: ${gpuInfo.gpuName}` : 'GPU 정보를 가져올 수 없습니다';
+              gpuInfoEl.classList.remove('hidden');
+            }
+          } catch (_) {}
         }
         updateTestButtons();
       } catch (_) {}
@@ -543,6 +571,7 @@
     async function refreshServerStatus() {
       try {
         const s = await window.electronAPI.scamGetServerStatus();
+        _serverStatus = s;
         const dot = document.getElementById('server-dot');
         const text = document.getElementById('server-status-text');
         const pid = document.getElementById('server-pid');
@@ -590,6 +619,13 @@
         return;
       }
 
+      // 스크롤 위치 저장
+      const prevListScroll = listEl.scrollTop;
+      const prevStreamScrolls = {};
+      listEl.querySelectorAll('.stream-box[id]').forEach(box => {
+        prevStreamScrolls[box.id] = box.scrollTop;
+      });
+
       const now = Date.now();
       listEl.innerHTML = sessions.map(s => {
         const boxId = makeBoxId(s.filePath);
@@ -599,7 +635,7 @@
         const elapsed = Math.floor((now - s.lastAnalysisAt) / 1000);
         const remaining = Math.max(0, ANALYSIS_INTERVAL_SEC - elapsed);
         const timerText = s.analyzing
-          ? '🔍 AI 분석 중...'
+          ? (_serverStatus.ready ? '🔍 AI 분석 중...' : '⚙️ AI 서버 시작 중...')
           : s.newSinceLastAnalysis === 0
             ? '새 메시지 대기 중'
             : remaining > 0
@@ -621,7 +657,7 @@
             <div class="flex items-start gap-2 min-w-0">
               <div class="status-dot ${dotClass} mt-1.5 shrink-0"></div>
               <div class="min-w-0">
-                <div class="font-bold text-slate-200 truncate" style="font-size:12px;">${escapeHtml(s.fileName)}</div>
+                <div class="font-bold text-slate-200 truncate" style="font-size:12px;">${s.displayName ? escapeHtml(s.displayName) + '와의 대화' : escapeHtml(s.fileName)}</div>
                 <div class="text-slate-500 mt-0.5" style="font-size:11px;">메시지 ${s.messageCount}개</div>
                 <div class="text-slate-400 mt-0.5" style="font-size:11px;"
                   data-timer="${fpEncoded}"
@@ -629,6 +665,7 @@
                   data-new-count="${s.newSinceLastAnalysis}"
                   data-analyzing="${s.analyzing}"
                   data-debounce="${s.debounceActive}"
+                  data-message-count="${s.messageCount}"
                 >${timerText}</div>
               </div>
             </div>
@@ -649,6 +686,12 @@
         </div>`;
       }).join('');
 
+      // 스크롤 위치 복원
+      listEl.scrollTop = prevListScroll;
+      for (const [boxId, scrollTop] of Object.entries(prevStreamScrolls)) {
+        const box = document.getElementById(boxId);
+        if (box) box.scrollTop = scrollTop;
+      }
     }
 
     // ── 타이머 인플레이스 업데이트 ──
@@ -664,7 +707,7 @@
 
         // 타이머 텍스트 업데이트
         if (analyzing) {
-          el.textContent = '🔍 AI 분석 중...';
+          el.textContent = _serverStatus.ready ? '🔍 AI 분석 중...' : '⚙️ AI 서버 시작 중...';
         } else if (newCount === 0) {
           el.textContent = '새 메시지 대기 중';
         } else if (debounce) {
@@ -680,7 +723,8 @@
         // 즉시 분석 버튼 활성/비활성
         const btn = document.getElementById(`btn-analyze-${fpEncoded}`);
         if (btn) {
-          const canAnalyze = !analyzing;
+          const msgCount = parseInt(el.dataset.messageCount ?? '0', 10);
+          const canAnalyze = !analyzing && msgCount > 0;
           btn.disabled = !canAnalyze;
           btn.style.color  = canAnalyze ? '#60a5fa' : '#334155';
           btn.style.cursor = canAnalyze ? 'pointer' : 'default';
@@ -713,11 +757,25 @@
       const label = document.getElementById('scam-enabled-label');
       label.textContent = enabled ? '활성화됨' : '비활성화';
       label.style.color = enabled ? '#4ade80' : '#64748b';
+      if (!enabled) setTimeout(refreshServerStatus, 500);
     }
 
     function stopServer() {
       window.electronAPI.scamStopServer();
       setTimeout(refreshServerStatus, 600);
+    }
+
+    function cancelDownload() {
+      window.electronAPI.scamAbortDownload();
+      document.getElementById('progress-area').classList.add('hidden');
+      document.getElementById('download-area').classList.remove('hidden');
+      document.getElementById('progress-bar').style.width = '0%';
+      document.getElementById('progress-pct').textContent = '0%';
+      document.getElementById('progress-label').textContent = '다운로드 중...';
+      const btn = document.getElementById('download-btn');
+      if (btn) btn.disabled = false;
+      const statusEl = document.getElementById('model-status-text');
+      if (statusEl) { statusEl.textContent = '⬇️ 모델 및 llama-server 다운로드 필요'; statusEl.style.color = '#94a3b8'; }
     }
 
     async function startDownload() {
@@ -742,11 +800,6 @@
       document.getElementById('progress-label').textContent = `다운로드 중... (${vLabel})`;
       statusEl.textContent = `⬇️ 다운로드 중...`;
 
-      window.electronAPI.onScamProgress((pct) => {
-        document.getElementById('progress-pct').textContent = `${pct}%`;
-        document.getElementById('progress-bar').style.width = `${pct}%`;
-      });
-
       const result = await window.electronAPI.scamDownloadModel();
       if (result.success) {
         await loadModelStatus();
@@ -754,7 +807,8 @@
         progressArea.classList.add('hidden');
         downloadArea.classList.remove('hidden');
         btn.disabled = false;
-        alert(`다운로드 실패: ${result.error}`);
+        statusEl.textContent = `❌ 다운로드 실패: ${result.error}`;
+        statusEl.style.color = '#f87171';
       }
     }
 
@@ -768,11 +822,6 @@
       statusEl.classList.remove('hidden');
       progressArea.classList.remove('hidden');
       document.getElementById('progress-label').textContent = `바이너리 교체 중... (${variant})`;
-
-      window.electronAPI.onScamProgress((pct) => {
-        document.getElementById('progress-pct').textContent = `${pct}%`;
-        document.getElementById('progress-bar').style.width = `${pct}%`;
-      });
 
       const result = await window.electronAPI.scamDownloadBinaryVariant(variant);
       progressArea.classList.add('hidden');
@@ -811,7 +860,7 @@
 
     function previewSound() {
       const sel = document.getElementById('scam-alert-sound-select');
-      if (sel?.value) window.electronAPI.playSound(sel.value, 80);
+      if (sel?.value) window.electronAPI.playSound(sel.value, 100);
     }
 
     function closeSession(encodedPath) {
@@ -894,13 +943,18 @@
         const label = { SCAM:'위험', SUSPICIOUS:'주의', SAFE:'안전', UNKNOWN:'대기중' }[r.verdict] ?? '대기중';
         const time = new Date(r.analyzedAt).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
         const file = r.filePath.split(/[\\/]/).pop() ?? r.filePath;
-        return `<div class="log-entry ${r.verdict} mb-1.5">
+        const hasDetail = !!(r.analysisReason || r.actionGuidance);
+        return `<div class="log-entry ${r.verdict}${hasDetail ? ' has-detail' : ''} mb-1.5"${hasDetail ? ' onclick="this.querySelector(\'.log-detail\').classList.toggle(\'hidden\')"' : ''}>
           <div class="flex items-center justify-between gap-2">
             <span class="font-bold">${icon} ${label}</span>
-            <span class="text-slate-500">${time}</span>
+            <span class="text-slate-500">${time}${hasDetail ? ' <span style="font-size:10px;opacity:0.5;">▼ 상세</span>' : ''}</span>
           </div>
           <div class="text-slate-500 mt-0.5" style="font-size:11px;">${escapeHtml(file)}</div>
           ${r.detectedScamTypes ? `<div class="text-slate-400 mt-0.5" style="font-size:11px;">${escapeHtml(r.detectedScamTypes)}</div>` : ''}
+          ${hasDetail ? `<div class="log-detail hidden mt-2 space-y-1 pt-2 border-t border-white/5" style="font-size:11px; color:#94a3b8;">
+            ${r.analysisReason ? `<p><strong class="text-slate-500">분석 이유:</strong> ${escapeHtml(r.analysisReason)}</p>` : ''}
+            ${r.actionGuidance ? `<p><strong class="text-slate-500">행동 지침:</strong> ${escapeHtml(r.actionGuidance)}</p>` : ''}
+          </div>` : ''}
         </div>`;
       }).join('');
     }
@@ -909,6 +963,14 @@
     document.addEventListener('DOMContentLoaded', () => {
       window.refreshIcons?.();
       window.bindEscapeClose?.();
+
+      // <details> 상태 복원 및 저장
+      document.querySelectorAll('details').forEach(el => {
+        const key = `details-${el.querySelector('summary')?.textContent?.trim().slice(0, 20) ?? ''}`;
+        if (localStorage.getItem(key) === 'closed') el.open = false;
+        el.addEventListener('toggle', () => localStorage.setItem(key, el.open ? 'open' : 'closed'));
+      });
+
       init();
     });
     window.addEventListener('beforeunload', () => {

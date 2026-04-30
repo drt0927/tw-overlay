@@ -136,6 +136,14 @@
     "api": "toggleUniformColor"
   },
   {
+    "id": "fullscreen-btn",
+    "label": "풀스크린 업스케일링",
+    "icon": "expand",
+    "tooltip": "게임 창을 전체화면으로 업스케일링 (Anime4K)",
+    "color": "sky-400",
+    "api": "toggleFullscreen"
+  },
+  {
     "id": "home-btn",
     "label": "홈 페이지",
     "icon": "home",

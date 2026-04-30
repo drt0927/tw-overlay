@@ -16,9 +16,21 @@ import { analytics } from './analytics';
 import * as diaryDb from './diaryDb';
 import * as backup from './backupManager';
 import { buffTimerManager } from './buffTimerManager';
+import * as fullscreenManager from './fullscreenManager';
+import * as tracker from './tracker';
 import * as scam from './scamMonitor';
 
 let _registered = false;
+
+const VALID_CAPTURE_MODES = new Set(['wgc', 'dxgi']);
+const VALID_UPSCALE_MODES = new Set(['passthrough', 'anime4k-s', 'anime4k-l']);
+const ALLOWED_DOCK_FEATURES = new Set([
+  'buffTimer', 'xpHud', 'bossSettings', 'shoutHistory',
+  'gallery', 'trade', 'customAlert', 'contentsChecker',
+  'abbreviation', 'buffs', 'coefficientCalculator', 'etaRanking',
+  'evolutionCalculator', 'magicStoneCalculator', 'diary',
+  'scamDetector', 'uniformColor',
+]);
 
 export function register(): void {
   if (_registered) return;
@@ -87,6 +99,7 @@ export function register(): void {
     'toggle-diary': wm.toggleDiaryWindow,
     'toggle-buff-timer': wm.toggleBuffTimerWindow,
     'toggle-xp-hud': wm.toggleXpHudWindow,
+    'toggle-fullscreen': wm.toggleFullscreenWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -290,6 +303,56 @@ export function register(): void {
 
   ipcMain.on('close-app', () => { app.quit(); });
 
+  // --- 풀스크린 업스케일링 ---
+  ipcMain.handle('fullscreen:isAvailable', () => fullscreenManager.isAddonAvailable());
+
+  ipcMain.handle('fullscreen:start', (_e, opts: { captureMode?: string; upscaleMode?: string } = {}) => {
+    if (opts.captureMode !== undefined && !VALID_CAPTURE_MODES.has(opts.captureMode))
+      return { success: false, error: `Invalid captureMode: ${opts.captureMode}` };
+    if (opts.upscaleMode !== undefined && !VALID_UPSCALE_MODES.has(opts.upscaleMode))
+      return { success: false, error: `Invalid upscaleMode: ${opts.upscaleMode}` };
+
+    const mainWin = wm.getMainWindow();
+    if (!mainWin) return { success: false, error: 'No main window' };
+    const gameHwnd = tracker.getGameHwnd();
+    if (!gameHwnd) return { success: false, error: '게임이 실행 중이지 않습니다' };
+    const hwndBuf = mainWin.getNativeWindowHandle();
+    const electronHwnd = (hwndBuf.length >= 8 ? hwndBuf.readBigUInt64LE(0) : BigInt(hwndBuf.readUInt32LE(0))).toString();
+    const result = fullscreenManager.startFullscreen(electronHwnd, gameHwnd, opts);
+    if (result.success) {
+      wm.setFullscreenMode(true);
+    }
+    return result;
+  });
+
+  ipcMain.handle('fullscreen:stop', () => {
+    wm.stopFullscreenForCleanup();
+    return { success: true };
+  });
+
+  ipcMain.on('fullscreen:setOverlayActive', (_e, active: boolean) => {
+    fullscreenManager.setOverlayActive(active);
+  });
+
+  ipcMain.on('fullscreen:setUpscaleMode', (_e, mode: string) => {
+    if (!VALID_UPSCALE_MODES.has(mode)) return;
+    fullscreenManager.setUpscaleMode(mode);
+  });
+
+  ipcMain.handle('fullscreen:getStatus', () => fullscreenManager.getStatus());
+  ipcMain.handle('tracker:isGameRunning', () => !!tracker.getGameHwnd());
+
+  // --- 풀스크린 독 ---
+  ipcMain.on('dock:open-feature', (_e, featureKey: string) => {
+    if (typeof featureKey !== 'string' || !ALLOWED_DOCK_FEATURES.has(featureKey)) return;
+    analytics.trackEvent(`dock_open_${featureKey}`);
+    wm.openFeatureFromDock(featureKey);
+  });
+
+  ipcMain.on('dock:close', () => {
+    wm.closeDock();
+  });
+
   // --- 사기꾼 탐지 ---
   ipcMain.on('scam-set-enabled', (_e, enabled: boolean) => {
     config.save({ scamDetectorEnabled: enabled });
@@ -312,17 +375,19 @@ export function register(): void {
   ipcMain.handle('scam-get-server-status', () => scam.getServerStatus());
   ipcMain.handle('scam-get-session-states', () => scam.getSessionStates());
   ipcMain.handle('scam-get-queue-length', () => scam.getQueueLength());
-  ipcMain.on('scam-close-session', (_e, filePath: string) => scam.closeSession(filePath));
-  ipcMain.on('scam-trigger-analyze', (_e, filePath: string) => scam.triggerAnalyze(filePath));
+  ipcMain.on('scam-close-session', (_e, filePath: unknown) => { if (typeof filePath === 'string') scam.closeSession(filePath); });
+  ipcMain.on('scam-trigger-analyze', (_e, filePath: unknown) => { if (typeof filePath === 'string') scam.triggerAnalyze(filePath); });
   ipcMain.on('scam-stop-server', () => scam.stopServer());
   ipcMain.handle('scam-inject-test', (_e, scenario?: string) => scam.injectTestSession(scenario));
+  ipcMain.handle('scam-get-recent-results', () => scam.getRecentResults());
+  ipcMain.on('scam-abort-download', () => scam.abortDownload());
   ipcMain.handle('scam-download-binary-variant', async (event, gpuChoice: string) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     try {
       scam.stopServer();
       const gpuResult = await scam.buildGpuResultForUserChoice(gpuChoice);
-      await scam.downloadServerBinary(gpuResult, (pct) => {
-        win?.webContents.send('scam-progress', pct);
+      await scam.downloadServerBinary(gpuResult, (pct, label?) => {
+        win?.webContents.send('scam-progress', pct, label);
       });
       return { success: true, binaryVariant: gpuResult.binaryVariant };
     } catch (e) {
@@ -332,8 +397,8 @@ export function register(): void {
   ipcMain.handle('scam-download-model', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     try {
-      await scam.downloadModel((pct) => {
-        win?.webContents.send('scam-progress', pct);
+      await scam.downloadModel((pct, label?) => {
+        win?.webContents.send('scam-progress', pct, label);
       });
       return { success: true };
     } catch (e) {

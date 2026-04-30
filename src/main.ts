@@ -7,6 +7,7 @@ import { log } from './modules/logger';
 import * as config from './modules/config';
 import * as tracker from './modules/tracker';
 import * as wm from './modules/windowManager';
+import * as fullscreenManager from './modules/fullscreenManager';
 import * as ipcHandlers from './modules/ipcHandlers';
 import * as gallery from './modules/galleryMonitor';
 import * as tray from './modules/tray';
@@ -66,6 +67,13 @@ app.whenReady().then(() => {
     sm.updateFocusState(isGameFocused || isAppFocused);
   });
 
+  tracker.setGameForegroundListener((_gameHwndStr) => {
+    if (fullscreenManager.isFullscreenActive()) {
+      const scalingHwnd = fullscreenManager.getScalingHwnd();
+      if (scalingHwnd) tracker.placeGameBelowWindow(scalingHwnd);
+    }
+  });
+
   // DEV 테스트: mandatory 업데이트 시뮬레이션
   // wm.setMandatoryUpdateLock(true);
   // setupUpdater(sidebar);
@@ -116,6 +124,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   appState.isQuitting = true;
+  wm.stopFullscreenForCleanup();
   if (config.hasPending()) config.saveImmediate();
   pollingLoop.stop();
   bossNotifier.stop();

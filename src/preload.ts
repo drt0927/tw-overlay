@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
+  toggleFullscreen: () => ipcRenderer.send('toggle-fullscreen'),
   resetXp: () => ipcRenderer.send('xp-reset'),
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 
@@ -117,6 +118,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   scamStopServer: () => ipcRenderer.send('scam-stop-server'),
   scamInjectTest: (scenario?: string): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-inject-test', scenario),
   scamDownloadBinaryVariant: (variant: string): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-download-binary-variant', variant),
+  scamGetRecentResults: (): Promise<ScamAnalysisResult[]> => ipcRenderer.invoke('scam-get-recent-results'),
+  scamAbortDownload: () => ipcRenderer.send('scam-abort-download'),
 
   // 이벤트 리스너 (중복 등록 방지를 위해 기존 리스너 제거 후 재등록)
   onSidebarStatus: (callback: (isCollapsed: boolean) => void) => {
@@ -219,6 +222,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('buff-timer-warning');
     ipcRenderer.on('buff-timer-warning', (_event, data) => callback(data));
   },
+  onFullscreenActive: (callback: (active: boolean) => void) => {
+    ipcRenderer.removeAllListeners('fullscreen:active');
+    ipcRenderer.on('fullscreen:active', (_event, active) => callback(active));
+  },
   toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
   buffTimerTest: (seconds?: number) => ipcRenderer.send('buff-timer-test', seconds),
   buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
@@ -234,9 +241,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('scam-analysis-result');
     ipcRenderer.on('scam-analysis-result', (_event, result) => callback(result));
   },
-  onScamProgress: (callback: (pct: number) => void) => {
+  onScamProgress: (callback: (pct: number, label?: string) => void) => {
     ipcRenderer.removeAllListeners('scam-progress');
-    ipcRenderer.on('scam-progress', (_event, pct) => callback(pct));
+    ipcRenderer.on('scam-progress', (_event, pct, label) => callback(pct, label));
   },
   onScamSessionUpdate: (callback: (sessions: SessionState[]) => void) => {
     ipcRenderer.removeAllListeners('scam-session-update');
@@ -247,6 +254,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('scam-analysis-token', (_event, data) => callback(data));
   },
 
+  // 풀스크린 독
+  dockOpenFeature: (featureKey: string) => ipcRenderer.send('dock:open-feature', featureKey),
+  dockClose: () => ipcRenderer.send('dock:close'),
+  onDockFeatureOpened: (callback: (featureKey: string) => void) => {
+    ipcRenderer.removeAllListeners('dock:feature-opened');
+    ipcRenderer.on('dock:feature-opened', (_event, featureKey) => callback(featureKey));
+  },
+  onDockFeatureClosed: (callback: (featureKey: string) => void) => {
+    ipcRenderer.removeAllListeners('dock:feature-closed');
+    ipcRenderer.on('dock:feature-closed', (_event, featureKey) => callback(featureKey));
+  },
+
+  // 풀스크린 업스케일링
+  fullscreenIsAvailable: () => ipcRenderer.invoke('fullscreen:isAvailable'),
+  fullscreenStart: (opts: { captureMode?: string; upscaleMode?: string } = {}) => ipcRenderer.invoke('fullscreen:start', opts),
+  fullscreenStop: () => ipcRenderer.invoke('fullscreen:stop'),
+  isGameRunning: () => ipcRenderer.invoke('tracker:isGameRunning'),
+  fullscreenSetOverlayActive: (active: boolean) => ipcRenderer.send('fullscreen:setOverlayActive', active),
+  fullscreenSetUpscaleMode: (mode: string) => ipcRenderer.send('fullscreen:setUpscaleMode', mode),
+  fullscreenGetStatus: () => ipcRenderer.invoke('fullscreen:getStatus'),
+
   cleanupAllListeners: () => {
     const events = [
       'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
@@ -256,6 +284,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done',
+      'dock:feature-opened', 'dock:feature-closed',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));

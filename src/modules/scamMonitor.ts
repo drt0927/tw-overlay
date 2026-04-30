@@ -14,7 +14,7 @@ import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
-import { app } from 'electron';
+import { app, Notification } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import { log } from './logger';
@@ -76,6 +76,8 @@ interface ActiveSession {
   analyzing: boolean;
   lastVerdict: ScamAnalysisResult['verdict'];
   closed: boolean;
+  consecutiveFailures: number;
+  displayName: string;
 }
 
 // ──────────────────────────────────────────────────────
@@ -84,6 +86,7 @@ interface ActiveSession {
 
 let _serverProcess: ChildProcess | null = null;
 let _serverReady = false;
+let _startingServer: Promise<void> | null = null;
 let _modelDownloading = false;
 let _modelProgress = 0;
 let _binaryDownloading = false;
@@ -94,6 +97,9 @@ let _folderWatcher: fs.FSWatcher | null = null;
 let _folderPollTimer: NodeJS.Timeout | null = null;
 // llama-server는 동시 추론을 지원하지 않으므로 순차 실행 큐로 직렬화
 let _llmQueue: Promise<void> = Promise.resolve();
+let _broadcastTimer: NodeJS.Timeout | null = null;
+let _recentResults: ScamAnalysisResult[] = [];
+let _downloadAbortFlag = false;
 
 // ──────────────────────────────────────────────────────
 // 경로
@@ -141,15 +147,16 @@ export function getModelStatus(): ModelStatus {
   };
 }
 
-function httpsDownload(url: string, onProgress: (pct: number, label?: string) => void): Promise<Buffer> {
+function httpsDownload(url: string, onProgress: (pct: number, label?: string) => void, skipSSLVerify = false): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
 
-    const doGet = (u: string) => {
-      https.get(u, { headers: { 'User-Agent': 'tw-overlay/1.0' } }, (res) => {
+    const doGet = (u: string, redirectCount = 0) => {
+      if (redirectCount > 10) { reject(new Error('Too many redirects')); return; }
+      https.get(u, { headers: { 'User-Agent': 'tw-overlay/1.0' }, rejectUnauthorized: !skipSSLVerify }, (res) => {
         const status = res.statusCode ?? 0;
         if ([301, 302, 307, 308].includes(status) && res.headers.location) {
-          doGet(res.headers.location);
+          doGet(res.headers.location, redirectCount + 1);
           return;
         }
         if (status !== 200) { reject(new Error(`HTTP ${status}`)); return; }
@@ -158,13 +165,25 @@ function httpsDownload(url: string, onProgress: (pct: number, label?: string) =>
         let received = 0;
 
         res.on('data', (chunk: Buffer) => {
+          if (_downloadAbortFlag) {
+            res.destroy();
+            reject(new Error('ABORTED'));
+            return;
+          }
           chunks.push(chunk);
           received += chunk.length;
           if (total > 0) onProgress(Math.round((received / total) * 100));
         });
         res.on('end', () => resolve(Buffer.concat(chunks)));
         res.on('error', reject);
-      }).on('error', reject);
+      }).on('error', (err) => {
+        if (!skipSSLVerify && /certificate|SSL|CERT/i.test(err.message)) {
+          log(`[SCAM] SSL 검증 실패, 재시도: ${err.message}`);
+          httpsDownload(url, onProgress, true).then(resolve).catch(reject);
+          return;
+        }
+        reject(err);
+      });
     };
 
     doGet(url);
@@ -175,7 +194,7 @@ function extractZip(zipPath: string, destDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn('powershell', [
       '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
-      `Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${destDir}' -Force`,
+      `Expand-Archive -LiteralPath '${zipPath.replace(/'/g, "''")}' -DestinationPath '${destDir.replace(/'/g, "''")}' -Force`,
     ], { stdio: 'ignore' });
     proc.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`Expand-Archive 실패 (exit ${code})`)));
     proc.on('error', reject);
@@ -226,11 +245,12 @@ export async function detectGpu(): Promise<GpuDetectionResult> {
   };
 }
 
-export async function downloadModel(onProgress: (pct: number) => void): Promise<void> {
+export async function downloadModel(onProgress: (pct: number, label?: string) => void): Promise<void> {
   const modelPath = getModelPath();
   const modelDir = path.dirname(modelPath);
   if (!fs.existsSync(modelDir)) fs.mkdirSync(modelDir, { recursive: true });
 
+  _downloadAbortFlag = false;
   _modelDownloading = true;
   _modelProgress = 0;
 
@@ -240,14 +260,15 @@ export async function downloadModel(onProgress: (pct: number) => void): Promise<
       log('[SCAM] 모델 파일 이미 존재, 다운로드 건너뜀');
     } else {
       const tmpPath = modelPath + '.tmp';
-      await new Promise<void>((resolve, reject) => {
+      const doModelDownload = (skipSSLVerify: boolean) => new Promise<void>((resolve, reject) => {
         const file = fs.createWriteStream(tmpPath);
 
-        const doGet = (url: string) => {
-          https.get(url, { headers: { 'User-Agent': 'tw-overlay/1.0' } }, (res) => {
+        const doGet = (url: string, redirectCount = 0) => {
+          if (redirectCount > 10) { reject(new Error('Too many redirects')); return; }
+          https.get(url, { headers: { 'User-Agent': 'tw-overlay/1.0' }, rejectUnauthorized: !skipSSLVerify }, (res) => {
             const status = res.statusCode ?? 0;
             if ([301, 302, 307, 308].includes(status) && res.headers.location) {
-              doGet(res.headers.location); return;
+              doGet(res.headers.location, redirectCount + 1); return;
             }
             if (status !== 200) {
               file.close(); fs.unlink(tmpPath, () => { });
@@ -259,6 +280,14 @@ export async function downloadModel(onProgress: (pct: number) => void): Promise<
             let received = 0;
 
             res.on('data', (chunk: Buffer) => {
+              if (_downloadAbortFlag) {
+                res.destroy();
+                file.close();
+                fs.unlink(tmpPath, () => {});
+                _modelDownloading = false;
+                reject(new Error('ABORTED'));
+                return;
+              }
               received += chunk.length;
               if (total > 0) {
                 _modelProgress = Math.round((received / total) * 100);
@@ -283,6 +312,15 @@ export async function downloadModel(onProgress: (pct: number) => void): Promise<
               _modelDownloading = false; reject(err);
             });
           }).on('error', (err) => {
+            if (!skipSSLVerify && /certificate|SSL|CERT/i.test(err.message)) {
+              log(`[SCAM] 모델 다운로드 SSL 검증 실패, 재시도: ${err.message}`);
+              file.close(() => {
+                fs.unlink(tmpPath, () => {
+                  doModelDownload(true).then(resolve).catch(reject);
+                });
+              });
+              return;
+            }
             file.close(); fs.unlink(tmpPath, () => { });
             _modelDownloading = false; reject(err);
           });
@@ -290,6 +328,7 @@ export async function downloadModel(onProgress: (pct: number) => void): Promise<
 
         doGet(MODEL_URL);
       });
+      await doModelDownload(false);
     }
 
     // llama-server 바이너리가 없을 때만 다운로드
@@ -309,7 +348,7 @@ export async function downloadModel(onProgress: (pct: number) => void): Promise<
 
 export async function downloadServerBinary(
   gpuResult: GpuDetectionResult,
-  onProgress: (pct: number) => void,
+  onProgress: (pct: number, label?: string) => void,
 ): Promise<void> {
   const binDir = getServerBinDir();
   if (!fs.existsSync(binDir)) fs.mkdirSync(binDir, { recursive: true });
@@ -322,6 +361,7 @@ export async function downloadServerBinary(
     const buf = await httpsDownload(gpuResult.binaryUrl, onProgress);
     await fs.promises.writeFile(zipPath, buf);
     log('[SCAM] llama-server ZIP 압축 해제 중...');
+    onProgress(100, '압축 해제 중...');
     await extractZip(zipPath, binDir);
     await fs.promises.unlink(zipPath);
 
@@ -332,6 +372,7 @@ export async function downloadServerBinary(
       const cudartZipPath = path.join(binDir, 'cudart.zip');
       await fs.promises.writeFile(cudartZipPath, cudartBuf);
       log('[SCAM] CUDA 런타임 ZIP 압축 해제 중...');
+      onProgress(100, '압축 해제 중...');
       await extractZip(cudartZipPath, binDir);
       await fs.promises.unlink(cudartZipPath);
     }
@@ -403,7 +444,12 @@ async function spawnServer(gpuLayers: number): Promise<void> {
 
 async function startServer(): Promise<void> {
   if (_serverReady) return;
+  if (_startingServer) return _startingServer;
+  _startingServer = _doStartServer().finally(() => { _startingServer = null; });
+  return _startingServer;
+}
 
+async function _doStartServer(): Promise<void> {
   const binaryPath = getServerBinaryPath();
   if (!fs.existsSync(binaryPath)) {
     throw new Error('llama-server.exe 가 없습니다. 다운로드 후 다시 시도해주세요.');
@@ -422,8 +468,17 @@ async function startServer(): Promise<void> {
       await spawnServer(99);
     } catch (gpuErr) {
       log(`[SCAM] GPU 모드 실패 (${gpuErr}), CPU 모드로 재시도...`);
-      stopServer();
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise<void>((res) => {
+        const proc = _serverProcess;
+        if (!proc) { res(); return; }
+        let timer: NodeJS.Timeout | null = null;
+        const done = () => { if (timer) { clearTimeout(timer); timer = null; } res(); };
+        proc.once('exit', done);
+        try { proc.kill(); } catch (_) {}
+        timer = setTimeout(done, 2000); // 2초 후 강제 진행 (보험)
+      });
+      _serverProcess = null;
+      _serverReady = false;
       await spawnServer(0);
     }
   }
@@ -457,12 +512,21 @@ export function getSessionStates(): SessionState[] {
     lastVerdict: s.lastVerdict,
     lastMessageTime: s.lastMessageTime,
     lastAnalysisAt: s.lastAnalysisAt,
+    displayName: s.displayName,
   }));
+}
+
+export function getRecentResults(): ScamAnalysisResult[] {
+  return _recentResults;
+}
+
+export function abortDownload(): void {
+  _downloadAbortFlag = true;
 }
 
 export function triggerAnalyze(filePath: string): void {
   const session = _sessions.get(filePath);
-  if (!session || session.closed || session.analyzing) return;
+  if (!session || !canAnalyze(session)) return;
   if (session.debounceTimer) {
     clearTimeout(session.debounceTimer);
     session.debounceTimer = null;
@@ -489,8 +553,12 @@ export function closeSession(filePath: string): void {
 }
 
 function broadcastSessionUpdate(): void {
-  const scamWin = wm.getScamDetectorWindow();
-  scamWin?.webContents.send('scam-session-update', getSessionStates(), _sessionQueue.length);
+  if (_broadcastTimer) clearTimeout(_broadcastTimer);
+  _broadcastTimer = setTimeout(() => {
+    _broadcastTimer = null;
+    const scamWin = wm.getScamDetectorWindow();
+    scamWin?.webContents.send('scam-session-update', getSessionStates(), _sessionQueue.length);
+  }, 16);
 }
 
 // ──────────────────────────────────────────────────────
@@ -787,8 +855,14 @@ function onNewLine(session: ActiveSession, line: string): void {
   if (!msg) return;
 
   session.messages.push(msg);
+  if (session.messages.length > MAX_MESSAGES_FOR_PROMPT * 2) {
+    session.messages = session.messages.slice(-MAX_MESSAGES_FOR_PROMPT);
+  }
   session.lastMessageTime = Date.now();
   session.newSinceLastAnalysis++;
+  if (!session.displayName && !msg.isSystem && msg.sender) {
+    session.displayName = msg.sender;
+  }
   broadcastSessionUpdate();
 
   resetInactivityTimer(session);
@@ -815,8 +889,12 @@ function onNewLine(session: ActiveSession, line: string): void {
   broadcastSessionUpdate();
 }
 
+function canAnalyze(session: ActiveSession): boolean {
+  return !session.closed && !session.analyzing && session.messages.length > 0;
+}
+
 async function analyze(session: ActiveSession): Promise<void> {
-  if (session.analyzing || session.messages.length === 0) return;
+  if (!canAnalyze(session)) return;
   session.analyzing = true;
   const savedCount = session.newSinceLastAnalysis;
   session.newSinceLastAnalysis = 0;
@@ -841,17 +919,28 @@ async function analyze(session: ActiveSession): Promise<void> {
     log(`[SCAM] 분석 결과: ${result.verdict} | 응답 앞부분: ${raw.slice(0, 120).replace(/\n/g, '↵')}`);
 
     // 모든 결과를 스캠 탐지 창 로그에 기록
+    _recentResults.unshift(result);
+    if (_recentResults.length > 20) _recentResults.pop();
     wm.getScamDetectorWindow()?.webContents.send('scam-analysis-result', result);
 
     const shouldAlert =
       (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&
       result.verdict !== session.lastVerdict;
     session.lastVerdict = result.verdict;
+    session.consecutiveFailures = 0;
 
     if (shouldAlert) await sendAlert(result);
   } catch (e) {
     session.newSinceLastAnalysis = savedCount;
-    log(`[SCAM] 분석 실패: ${e}`);
+    session.consecutiveFailures++;
+    log(`[SCAM] 분석 실패 (${session.consecutiveFailures}회 연속): ${e}`);
+    if (session.consecutiveFailures >= 3) {
+      new Notification({
+        title: '사기꾼 탐지 AI',
+        body: `분석이 ${session.consecutiveFailures}회 연속 실패했습니다. 탐지기에서 서버 상태를 확인해주세요.`,
+      }).show();
+      session.consecutiveFailures = 0; // 알림 후 리셋 (반복 스팸 방지)
+    }
   } finally {
     session.analyzing = false;
     broadcastSessionUpdate();
@@ -902,6 +991,8 @@ function startSession(filePath: string, isTest = false): void {
     analyzing: false,
     lastVerdict: 'UNKNOWN',
     closed: false,
+    consecutiveFailures: 0,
+    displayName: '',
   };
 
   tail.on('line', (data: string) => {

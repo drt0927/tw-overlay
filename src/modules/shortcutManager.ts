@@ -45,6 +45,10 @@ export function unregisterAll(): void {
  * @param isFocused 게임 창 또는 앱 창이 포커스되었는지 여부
  */
 export function updateFocusState(isFocused: boolean): void {
+  // 풀스크린 모드 중에는 fullscreen 단축키(Alt+Shift+F, Alt+Shift+O)를 보호하기 위해
+  // unregisterAll을 실행하지 않는다. fullscreen 종료 시 setFullscreenMode(false)가
+  // 해당 단축키를 직접 해제하므로 shortcutManager가 개입할 필요 없음.
+  if (wm.isFullscreenMode()) return;
   if (_isFocused === isFocused) return;
   _isFocused = isFocused;
 
@@ -60,6 +64,7 @@ export function updateFocusState(isFocused: boolean): void {
  * 설정 변경 시 단축키 갱신 (설정 페이지에서 호출 예정)
  */
 export function reloadShortcuts(): void {
+  if (wm.isFullscreenMode()) return;
   if (_isFocused) {
     unregisterAll();
     registerAll();

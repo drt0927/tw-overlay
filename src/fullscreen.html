@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>풀스크린 업스케일링</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <style>
+    body { color: white; overflow: hidden; }
+
+    .mode-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .mode-btn:hover {
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #c4b5fd;
+      background: rgba(168, 85, 247, 0.08);
+    }
+    .mode-btn.active {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.5);
+      color: #c4b5fd;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .status-row:last-child { border-bottom: none; }
+
+    #mainBtn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      letter-spacing: -0.01em;
+    }
+    #mainBtn.idle {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
+    }
+    #mainBtn.idle:hover {
+      background: linear-gradient(135deg, #6d28d9, #9333ea);
+      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.45);
+      transform: translateY(-1px);
+    }
+    #mainBtn.running {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+    #mainBtn.running:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.55);
+    }
+    #mainBtn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body class="panel-glass p-0 h-screen flex flex-col">
+
+  <!-- Header -->
+  <div class="win-header">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-purple-500/10 border-purple-500/20">
+        <i data-lucide="maximize-2" class="w-5 h-5 text-purple-400"></i>
+      </div>
+      <div class="win-title-text">
+        <div class="flex items-center gap-2">
+          <span class="win-title-main">풀스크린 업스케일링</span>
+          <span id="statusBadge"
+            class="text-[9px] bg-white/8 text-white/35 px-1.5 py-0.5 rounded-full font-black border border-white/10 transition-all">OFF</span>
+        </div>
+        <span class="win-title-sub">Fullscreen Upscaling</span>
+      </div>
+    </div>
+    <div class="win-controls">
+      <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 overflow-y-auto p-4 space-y-3 no-drag">
+
+    <!-- 캡처 모드 -->
+    <div id="captureModeSection" class="p-3 rounded-xl border border-white/5 bg-white/[0.025] space-y-2.5">
+      <div class="text-[10px] font-black uppercase tracking-widest text-purple-400/60">캡처 모드</div>
+      <div class="flex gap-2 flex-wrap" id="captureModeGroup">
+        <button class="mode-btn" data-value="dxgi">DXGI</button>
+        <button class="mode-btn active" data-value="wgc">
+          WGC <span class="text-[10px] opacity-50 font-normal">(권장)</span>
+        </button>
+      </div>
+      <div class="space-y-1.5">
+        <div class="flex items-start gap-2.5">
+          <span class="text-[12px] font-black text-white/60 w-10 shrink-0 mt-0.5">WGC</span>
+          <span class="text-[12px] text-white/55 leading-relaxed">대부분의 PC에서 잘 동작합니다. 문제가 없다면 이걸 쓰세요.</span>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="text-[12px] font-black text-white/60 w-10 shrink-0 mt-0.5">DXGI</span>
+          <span class="text-[12px] text-white/55 leading-relaxed">WGC로 화면이 안 잡힐 때 시도해 보세요.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 업스케일 모드 -->
+    <div class="p-3 rounded-xl border border-white/5 bg-white/[0.025] space-y-2.5">
+      <div class="text-[10px] font-black uppercase tracking-widest text-purple-400/60">업스케일 모드</div>
+      <div class="flex gap-2 flex-wrap" id="upscaleModeGroup">
+        <button class="mode-btn" data-value="passthrough">패스스루</button>
+        <button class="mode-btn active" data-value="anime4k-s">Anime4K-S</button>
+        <button class="mode-btn" data-value="anime4k-l">Anime4K-L</button>
+      </div>
+      <div class="space-y-1.5">
+        <div class="flex items-start gap-2.5">
+          <span class="text-[12px] font-black text-white/60 w-16 shrink-0 mt-0.5">패스스루</span>
+          <span class="text-[12px] text-white/55 leading-relaxed">화면을 그대로 전체화면으로 늘립니다. 화질 보정 없이 PC 부담이 가장 적습니다.</span>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="text-[12px] font-black text-purple-400 w-16 shrink-0 mt-0.5">Anime4K-S</span>
+          <span class="text-[12px] text-white/55 leading-relaxed">화질을 개선하면서 PC 부담도 적습니다. 처음이라면 이걸 추천합니다.</span>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <span class="text-[12px] font-black text-white/60 w-16 shrink-0 mt-0.5">Anime4K-L</span>
+          <span class="text-[12px] text-white/55 leading-relaxed">S보다 화질이 더 선명하지만 PC 사양을 더 많이 사용합니다. 버벅임이 있다면 S를 사용하세요.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실시간 상태 (실행 중에만 표시) -->
+    <div id="statusSection" class="p-3 rounded-xl border border-purple-500/20 bg-purple-500/[0.06]" style="display:none">
+      <div class="text-[10px] font-black uppercase tracking-widest text-purple-400/60 mb-2.5">실시간 상태</div>
+      <div>
+        <div class="status-row">
+          <span class="text-[12px] text-white/45">FPS</span>
+          <span class="text-[12px] font-bold text-green-400" id="fpsVal">—</span>
+        </div>
+        <div class="status-row">
+          <span class="text-[12px] text-white/45">캡처 방식</span>
+          <span class="text-[12px] font-bold text-white/80" id="captureModeVal">—</span>
+        </div>
+        <div class="status-row">
+          <span class="text-[12px] text-white/45">프레임 시간</span>
+          <span class="text-[12px] font-bold text-white/80" id="frameTimeVal">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 시작 / 종료 버튼 -->
+    <button id="mainBtn" class="idle">전체화면 시작</button>
+
+    <!-- 에러 메시지 -->
+    <div id="errMsg"
+      class="text-[12px] text-red-400 text-center p-2.5 bg-red-500/10 rounded-xl border border-red-500/20"
+      style="display:none"></div>
+
+    <!-- 경고 메시지 (앰버, 비오류 상황용) -->
+    <div id="warningMsg"
+      class="text-[12px] text-amber-400 text-center p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20"
+      style="display:none"></div>
+
+    <!-- 실행 중 안내 -->
+    <p id="runningNotice" class="text-center" style="display:none; font-size:11px; color:rgba(255,255,255,0.25);">
+      이 창을 닫아도 전체화면은 계속 실행됩니다
+    </p>
+
+    <!-- 단축키 힌트 -->
+    <div class="p-3 rounded-xl border border-white/5 bg-white/[0.025] space-y-1.5">
+      <div class="text-[10px] font-black uppercase tracking-widest text-purple-400/60 mb-2">단축키</div>
+      <div class="flex items-center justify-between">
+        <span class="text-[12px] text-white/55">전체화면 종료</span>
+        <kbd class="px-2 py-0.5 rounded bg-white/8 border border-white/10 text-white/50 text-[11px] font-black">Alt + Shift + F</kbd>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[12px] text-white/55">오버레이 독 열기 / 닫기</span>
+        <kbd class="px-2 py-0.5 rounded bg-white/8 border border-white/10 text-white/50 text-[11px] font-black">Alt + Shift + O</kbd>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[12px] text-white/55">이 창 닫기</span>
+        <kbd class="px-2 py-0.5 rounded bg-white/8 border border-white/10 text-white/50 text-[11px] font-black">ESC</kbd>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const api = window.electronAPI;
+    let isRunning = false;
+    let statusTimer = null;
+    let _stopping = false;
+
+    const mainBtn   = document.getElementById('mainBtn');
+    const statusSection = document.getElementById('statusSection');
+    const statusBadge   = document.getElementById('statusBadge');
+    const errMsg    = document.getElementById('errMsg');
+    const warningMsg = document.getElementById('warningMsg');
+
+    function getSelected(groupId) {
+      const el = document.querySelector(`#${groupId} .mode-btn.active`);
+      return el ? el.dataset.value : null;
+    }
+
+    const runningNotice = document.getElementById('runningNotice');
+
+    function resetToIdleState() {
+      if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
+      isRunning = false;
+      mainBtn.textContent = '전체화면 시작';
+      mainBtn.className = 'idle';
+      document.getElementById('captureModeSection').style.display = '';
+      statusSection.style.display = 'none';
+      statusBadge.textContent = 'OFF';
+      statusBadge.className = 'text-[9px] bg-white/8 text-white/35 px-1.5 py-0.5 rounded-full font-black border border-white/10 transition-all';
+      runningNotice.style.display = 'none';
+    }
+
+    // 라디오 버튼 (mode-btn) 토글
+    document.querySelectorAll('#captureModeGroup, #upscaleModeGroup').forEach(group => {
+      group.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (isRunning && group.id === 'upscaleModeGroup') {
+            api.fullscreenSetUpscaleMode(btn.dataset.value);
+          }
+          if (group.id === 'captureModeGroup') {
+            localStorage.setItem('fullscreen-captureMode', btn.dataset.value);
+          }
+        });
+      });
+    });
+
+    // 저장된 캡처 모드 복원
+    const savedCaptureMode = localStorage.getItem('fullscreen-captureMode');
+    if (savedCaptureMode) {
+      document.querySelectorAll('#captureModeGroup .mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === savedCaptureMode);
+      });
+    }
+
+    async function updateStatus() {
+      if (_stopping) return;
+      const s = await api.fullscreenGetStatus();
+      if (!s.isActive && isRunning) {
+        // 네이티브 렌더 스레드가 스스로 종료됨 (캡처 백엔드 사망 등)
+        _stopping = true;
+        try {
+          resetToIdleState();
+          await api.fullscreenStop();
+          errMsg.textContent = '캡처가 중단되었습니다. 캡처 모드를 변경하거나 재시작해보세요.';
+          errMsg.style.display = '';
+          document.getElementById('captureModeSection').style.display = '';
+        } finally {
+          _stopping = false;
+        }
+        return;
+      }
+      document.getElementById('fpsVal').textContent        = s.fps + ' fps';
+      document.getElementById('captureModeVal').textContent = s.captureMode.toUpperCase();
+      document.getElementById('frameTimeVal').textContent   = s.frameTimeMs.toFixed(1) + ' ms';
+    }
+
+    mainBtn.addEventListener('click', async () => {
+      if (mainBtn.disabled) return;
+      mainBtn.disabled = true;
+      errMsg.style.display = 'none';
+
+      try {
+        if (!isRunning) {
+          mainBtn.textContent = '시작 중...';
+          warningMsg.style.display = 'none';
+          const result = await api.fullscreenStart({
+            captureMode: getSelected('captureModeGroup'),
+            upscaleMode: getSelected('upscaleModeGroup')
+          });
+          if (result.success) {
+            isRunning = true;
+            runningNotice.style.display = '';
+            mainBtn.textContent = '전체화면 종료';
+            mainBtn.className = 'running';
+            document.getElementById('captureModeSection').style.display = 'none';
+            statusSection.style.display = '';
+            statusBadge.textContent = 'ON';
+            statusBadge.className = 'text-[9px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full font-black border border-green-500/30 transition-all';
+            statusTimer = setInterval(updateStatus, 1000);
+            updateStatus();
+          } else {
+            mainBtn.textContent = '전체화면 시작';
+            errMsg.textContent = result.error || '시작 실패';
+            errMsg.style.display = '';
+          }
+        } else {
+          resetToIdleState();
+          await api.fullscreenStop();
+        }
+      } catch (e) {
+        mainBtn.textContent = '전체화면 시작';
+        errMsg.textContent = '오류: ' + (e?.message ?? String(e));
+        errMsg.style.display = '';
+        resetToIdleState();
+      } finally {
+        mainBtn.disabled = false;
+      }
+    });
+
+    (async () => {
+      const available = await api.fullscreenIsAvailable();
+      if (!available) {
+        mainBtn.disabled = true;
+        errMsg.textContent = 'Native addon을 로드할 수 없습니다. 빌드를 확인하세요.';
+        errMsg.style.display = '';
+        return;
+      }
+      // 창을 닫았다가 다시 열었을 때 실행 중인 상태 복원
+      const status = await api.fullscreenGetStatus();
+      if (status.isActive) {
+        isRunning = true;
+        runningNotice.style.display = '';
+        mainBtn.textContent = '전체화면 종료';
+        mainBtn.className = 'running';
+        document.getElementById('captureModeSection').style.display = 'none';
+        statusSection.style.display = '';
+        statusBadge.textContent = 'ON';
+        statusBadge.className = 'text-[9px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full font-black border border-green-500/30 transition-all';
+        if (status.upscaleMode) {
+          document.querySelectorAll('#upscaleModeGroup .mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === status.upscaleMode);
+          });
+        }
+        statusTimer = setInterval(updateStatus, 1000);
+        updateStatus();
+      } else {
+        // 게임 실행 여부 사전 감지
+        try {
+          const gameRunning = await api.isGameRunning();
+          if (!gameRunning) {
+            warningMsg.textContent = '⚠️ 게임이 실행 중이지 않습니다. 게임을 먼저 실행해 주세요.';
+            warningMsg.style.display = '';
+            mainBtn.disabled = true;
+          }
+        } catch (_) {}
+      }
+    })();
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') window.close();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
+    });
+  </script>
+</body>
+</html>

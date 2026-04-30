@@ -5,6 +5,8 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && node scripts/copy-resources.js",
+    "build:native": "node-gyp configure build --directory native",
+    "rebuild:native": "electron-rebuild -f -w tw_native --module-dir native",
     "start": "npm run build && electron .",
     "only-dev": "electron . --dev",
     "dev": "npm run build && electron . --dev",
@@ -27,7 +29,8 @@
     "asar": true,
     "asarUnpack": [
       "node_modules/better-sqlite3/**",
-      "node_modules/koffi/**"
+      "node_modules/koffi/**",
+      "native/build/Release/**"
     ],
     "win": {
       "target": [
@@ -46,12 +49,13 @@
       "dist/**/*",
       "dist/assets/**/*",
       "package.json",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "native/build/Release/**"
     ]
   },
   "keywords": [],
   "author": "filbertlab",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "adm-zip": "^0.5.16",
     "better-sqlite3": "^12.8.0",
@@ -68,6 +72,14 @@
     "@types/tail": "^2.2.3",
     "electron": "^40.4.0",
     "electron-builder": "^26.7.0",
+    "electron-rebuild": "^3.2.9",
+    "node-addon-api": "^8.7.0",
+    "node-gyp": "^11.5.0",
     "typescript": "^5.7.3"
+  },
+  "binary": {
+    "module_name": "tw_native",
+    "module_path": "./native/build/Release/",
+    "host": "https://github.com/drt0927/tw-overlay/releases/download/"
   }
 }

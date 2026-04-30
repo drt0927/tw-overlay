@@ -18,6 +18,7 @@ import {
 import { log } from './logger';
 import * as tracker from './tracker';
 import * as wm from './windowManager';
+import * as fullscreenManager from './fullscreenManager';
 
 let pollingTimer: NodeJS.Timeout | null = null;
 let gameWasEverFound = false;
@@ -73,6 +74,7 @@ export function start(): void {
         // 1. 게임 미실행 상태
         if (currentRect && 'notRunning' in currentRect) {
             if (_currentStatus !== 'not-running') {
+                wm.stopFullscreenForCleanup();
                 if (gameWasEverFound) {
                     gameWasEverFound = false;
                     wm.hideAll(); // 종료 리마인더를 위해 한 번만 hideAll
@@ -115,10 +117,15 @@ export function start(): void {
         const mainWin = wm.getMainWindow();
         const isVisible = mainWin && !mainWin.isDestroyed() && mainWin.isVisible();
 
-        // Z-Order 관리
-        if (currentRect && 'gameHwnd' in currentRect) {
+        // Z-Order 관리 (풀스크린 모드에서는 C++ 창이 Z-order 관리)
+        if (currentRect && 'gameHwnd' in currentRect && !wm.isFullscreenMode()) {
             const windowHwnds = wm.getAllWindowHwnds();
-            const { isGameOrAppFocused } = tracker.promoteWindows(currentRect.gameHwnd, windowHwnds);
+            tracker.promoteWindows(currentRect.gameHwnd, windowHwnds);
+        }
+
+        // 풀스크린 모드 자가 종료 감지: fullscreen.html이 닫혀 있을 때 native가 멈춰도 정리
+        if (wm.isFullscreenMode() && !fullscreenManager.getStatus().isActive) {
+            wm.stopFullscreenForCleanup();
         }
 
         if (_currentStatus !== 'running' || !rectEquals(currentRect, lastRect) || !isVisible) {

@@ -288,6 +288,7 @@ export interface SessionState {
   lastVerdict: 'SCAM' | 'SUSPICIOUS' | 'SAFE' | 'UNKNOWN';
   lastMessageTime: number;
   lastAnalysisAt: number;
+  displayName?: string;
 }
 
 export type LlamaServerVariant = 'cuda-13.1' | 'cuda-12.4' | 'vulkan' | 'cpu';

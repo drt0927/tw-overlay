@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>풀스크린 독</title>
+  <script src="assets/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f0e1a;
+      --surface: rgba(15, 14, 26, 0.92);
+      --border: rgba(99, 179, 237, 0.2);
+      --accent: #63b3ed;
+      --accent-dim: rgba(99, 179, 237, 0.15);
+      --accent-glow: rgba(99, 179, 237, 0.35);
+      --text-muted: #90cdf4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* 반투명 어두운 배경 — 게임 클릭 불가 상태임을 시각적으로 표현 */
+    .overlay-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.48);
+      animation: bg-fade-in 0.2s ease forwards;
+      cursor: pointer;
+      z-index: 0;
+    }
+    @keyframes bg-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* 독 바 — 하단 고정 */
+    .dock-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      max-width: calc(100vw - 32px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(99, 179, 237, 0.08);
+      animation: dock-slide-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes dock-slide-up {
+      from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+      to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+    }
+
+    /* 힌트 라벨 — 독 바 위에 표시 */
+    .overlay-hint {
+      position: fixed;
+      bottom: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      font-size: 11px;
+      font-family: 'Malgun Gothic', sans-serif;
+      color: rgba(144, 205, 244, 0.45);
+      white-space: nowrap;
+      animation: bg-fade-in 0.3s ease 0.1s both;
+      pointer-events: none;
+    }
+
+    .dock-items {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dock-sep {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .dock-btn {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .dock-btn:hover {
+      background: var(--accent-dim);
+      border-color: rgba(99, 179, 237, 0.4);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .dock-btn.active {
+      background: rgba(99, 179, 237, 0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* 툴팁 */
+    .dock-btn::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 14, 26, 0.95);
+      border: 1px solid var(--border);
+      color: #ebf8ff;
+      font-size: 11px;
+      font-family: 'Malgun Gothic', sans-serif;
+      white-space: nowrap;
+      padding: 4px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.12s;
+      z-index: 10;
+    }
+    .dock-btn:hover::before {
+      opacity: 1;
+    }
+
+    /* 종료/닫기 버튼 공통 */
+    .close-btn, .stop-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    /* 독 닫기 버튼 */
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(248, 113, 113, 0.25);
+      background: rgba(248, 113, 113, 0.08);
+      color: #f87171;
+      transition: background 0.12s, border-color 0.12s;
+      margin-left: 4px;
+    }
+    .close-btn:hover {
+      background: rgba(248, 113, 113, 0.2);
+      border-color: rgba(248, 113, 113, 0.5);
+    }
+
+    /* 풀스크린 종료 버튼 */
+    .stop-btn {
+      width: 52px;
+      height: 52px;
+      border: 1px solid rgba(251, 146, 60, 0.25);
+      background: rgba(251, 146, 60, 0.08);
+      color: #fb923c;
+      transition: background 0.12s, border-color 0.12s, transform 0.1s;
+    }
+    .stop-btn:hover {
+      background: rgba(251, 146, 60, 0.2);
+      border-color: rgba(251, 146, 60, 0.5);
+      transform: translateY(-2px);
+    }
+    .stop-btn::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 14, 26, 0.95);
+      border: 1px solid var(--border);
+      color: #ebf8ff;
+      font-size: 11px;
+      font-family: 'Malgun Gothic', sans-serif;
+      white-space: nowrap;
+      padding: 4px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.12s;
+      z-index: 10;
+    }
+    .stop-btn:hover::before {
+      opacity: 1;
+    }
+
+    /* 단축키 힌트 */
+    .hint {
+      font-size: 10px;
+      font-family: 'Malgun Gothic', sans-serif;
+      color: rgba(144, 205, 244, 0.4);
+      white-space: nowrap;
+      margin-left: 2px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 반투명 배경 — 클릭 시 독 닫기 -->
+  <div class="overlay-bg" id="overlayBg"></div>
+
+  <!-- 독 바 -->
+  <div class="dock-bar">
+    <div class="dock-items" id="dockItems"></div>
+    <div class="dock-sep"></div>
+    <div class="stop-btn" id="stopBtn" data-tooltip="풀스크린 종료 (Alt+Shift+F)">
+      <i data-lucide="power-off" style="width:22px;height:22px;"></i>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="close-btn" id="closeBtn" title="독 닫기 (ESC)">
+      <i data-lucide="x" style="width:16px;height:16px;"></i>
+    </div>
+    <span class="hint">Alt+Shift+O</span>
+  </div>
+
+  <!-- 배경 클릭 유도 힌트 -->
+  <div class="overlay-hint">배경 클릭 또는 ESC로 닫기</div>
+
+  <script>
+    const api = window.electronAPI;
+    const container = document.getElementById('dockItems');
+
+    function menuToKey(m) {
+      const fn = m.api ?? m.action;
+      if (!fn) return null;
+      return fn.replace(/^(toggle|open)/, '').replace(/^./, c => c.toLowerCase());
+    }
+
+    async function buildDock() {
+      const res = await fetch('./assets/data/sidebar_menus.json');
+      const menus = await res.json();
+      // 시스템 버튼(home, overlay-toggle, click-through)과 fullscreen-btn은 dock에서 제외
+      const features = menus
+        .filter(m => !m.isSystem && m.id !== 'fullscreen-btn')
+        .map(m => ({ key: menuToKey(m), icon: m.icon, label: m.label }))
+        .filter(m => m.key);
+
+      features.forEach(({ key, icon, label }) => {
+        const btn = document.createElement('div');
+        btn.className = 'dock-btn';
+        btn.dataset.key = key;
+        btn.setAttribute('data-tooltip', label);
+        btn.innerHTML = `<i data-lucide="${icon}" style="width:22px;height:22px;"></i>`;
+        btn.addEventListener('click', () => api.dockOpenFeature(key));
+        container.appendChild(btn);
+      });
+
+      lucide.createIcons();
+    }
+
+    buildDock();
+
+    // 배경 클릭 → 독 닫기
+    document.getElementById('overlayBg').addEventListener('click', () => api.dockClose());
+
+    // 풀스크린 종료 버튼
+    document.getElementById('stopBtn').addEventListener('click', () => api.fullscreenStop());
+
+    // 닫기 버튼
+    document.getElementById('closeBtn').addEventListener('click', () => api.dockClose());
+
+    // ESC 키
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') api.dockClose();
+    });
+
+    // 피처 창 활성화 상태 동기화
+    api.onDockFeatureOpened((key) => {
+      const btn = container.querySelector(`[data-key="${key}"]`);
+      if (btn) btn.classList.add('active');
+    });
+
+    api.onDockFeatureClosed((key) => {
+      const btn = container.querySelector(`[data-key="${key}"]`);
+      if (btn) btn.classList.remove('active');
+    });
+  </script>
+</body>
+</html>

@@ -16,6 +16,7 @@ let lastProcessId: number | null = null;
 let hEventHook: bigint | null = null;
 let onWindowEventCallback: (() => void) | null = null;
 let onForegroundChangeCallback: ((isGameFocused: boolean, focusedHwnd: string) => void) | null = null;
+let onGameForegroundCallback: ((gameHwndStr: string) => void) | null = null;
 
 // --- 메모리 최적화를 위한 재사용 버퍼 ---
 const titleBuffer = Buffer.alloc(TITLE_BUFFER_LENGTH * 2);
@@ -75,9 +76,14 @@ const winEventProcInstance = koffi.register((_hWinEventHook: bigint, event: numb
         if (onWindowEventCallback) onWindowEventCallback();
     }
     // 포그라운드 변경 이벤트: 즉각적인 포커스 감지
-    if (event === win32.EVENT_SYSTEM_FOREGROUND && onForegroundChangeCallback) {
-        const isGameFocused = cachedHwnd !== null && hwnd === cachedHwnd;
-        onForegroundChangeCallback(isGameFocused, hwnd.toString());
+    if (event === win32.EVENT_SYSTEM_FOREGROUND) {
+        if (onForegroundChangeCallback) {
+            const isGameFocused = cachedHwnd !== null && hwnd === cachedHwnd;
+            onForegroundChangeCallback(isGameFocused, hwnd.toString());
+        }
+        if (onGameForegroundCallback && cachedHwnd !== null && hwnd === cachedHwnd) {
+            onGameForegroundCallback(hwnd.toString());
+        }
     }
 }, WinEventProcPtr);
 
@@ -137,6 +143,10 @@ export function setWindowEventListener(callback: () => void): void {
 
 export function setForegroundChangeListener(callback: (isGameFocused: boolean, focusedHwnd: string) => void): void {
     onForegroundChangeCallback = callback;
+}
+
+export function setGameForegroundListener(callback: (gameHwndStr: string) => void): void {
+    onGameForegroundCallback = callback;
 }
 
 export async function queryGameRect(): Promise<GameQueryResult> {

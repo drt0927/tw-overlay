@@ -114,6 +114,9 @@ export const DEFAULT_CONFIG: AppConfig = {
     'stat_exorcist': true,
   },
   buffTimerHudPos: { left: 350, bottom: 0 },
+  essenceAlertEnabled: true,
+  essenceAlertSound: 'orb.mp3',
+  essenceAlertVolume: 70,
 
 };
 

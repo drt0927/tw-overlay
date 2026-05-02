@@ -176,6 +176,11 @@ export interface AppConfig {
     buffTimerBuffs?: { [buffId: string]: boolean }; // buffId → 감지 활성화 여부
     buffTimerHudPos?: { left: number; bottom: number };
 
+    // --- Essence Alert Settings ---
+    essenceAlertEnabled?: boolean;
+    essenceAlertSound?: string;
+    essenceAlertVolume?: number;
+
     // --- Scam Detector Settings ---
     scamDetectorEnabled?: boolean;
     msgerLogPath?: string;

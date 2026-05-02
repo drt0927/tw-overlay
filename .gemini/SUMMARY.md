@@ -1,6 +1,6 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.0)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.2)
 
-이 문서는 v1.12.0 버전을 기준으로 작성되었습니다.
+이 문서는 v1.12.2 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 실시간 게임 데이터 시각화 분석기.
@@ -16,6 +16,9 @@
 - **[XP Visualization HUD](./docs/experience-hud.md):** 최근 30분 사냥 리듬을 표시하고 시간당 기대 정수(100억 XP) 생산량을 실시간 예측.
 - **Integer Safety:** 모든 숫자 처리 로직을 `Number` 기반으로 전환하여 21억(32비트) 오버플로 버그 원천 차단.
 - **[Buff Timer HUD](./docs/intelligent-buff-timer.md):** 핵심 3종 버프(심장 2종, 퇴마사)를 자동 감지하여 뱃지 및 프로그레스 링으로 남은 시간 시각화.
+
+- **업데이트 히스토리 (v1.12.2)**
+- **경험의 정수 알림:** 100억 XP 달성 후 자동 교환 미감지 시 오버레이 경고 + 사운드. XP HUD에 세션 교환 횟수 및 프로그레스바 추가.
 
 - **업데이트 히스토리 (v1.12.0)**
 - **사기꾼 탐지 AI (BETA):** MsgerLog 폴더 실시간 감시 → Gemma 4 E2B 로컬 LLM 추론 → SCAM/SUSPICIOUS/SAFE 판정 및 시청각 경보. GPU 자동 감지(NVIDIA CUDA/AMD-Intel Vulkan/CPU), 디바운스+60초 배치, LLM 직렬화 큐, 테스트 케이스 5종 내장.

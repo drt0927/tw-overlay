@@ -332,6 +332,10 @@
             class="bg-purple-500 h-full transition-all duration-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
             style="width: 0%"></div>
         </div>
+        <div style="margin-top:8px;display:flex;justify-content:flex-end;align-items:center;gap:4px;">
+          <span style="font-size:10px;font-weight:700;color:#c084fc;opacity:0.75;">세션 교환</span>
+          <span id="stat-essence-count" style="font-size:13px;font-weight:900;color:#e9d5ff;">0개</span>
+        </div>
       </div>
 
       <!-- 마릿수 + 마리당 평균 경험치 (2단) -->
@@ -394,7 +398,46 @@
 
     <hr class="divider">
 
-    <!-- ④ 표시 설정 -->
+    <!-- ④ 정수 알림 설정 -->
+    <div>
+      <div class="section-label">
+        <i data-lucide="bell-ring" style="width:11px;height:11px"></i>
+        경험의 정수 버프 알림
+      </div>
+      <!-- 활성화 토글 -->
+      <div class="setting-row">
+        <div>
+          <div class="setting-row-label">경험의 정수 버프 미감지 알림 활성화</div>
+          <div class="setting-row-sub">100억 달성 후 교환 미감지 시 경고</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="toggle-essence-alert" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <!-- 사운드 + 미리듣기 -->
+      <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+        <select id="essence-alert-sound"
+          style="flex:1;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;font-weight:600;outline:none;">
+        </select>
+        <button id="btn-essence-preview"
+          style="padding:6px 10px;background:var(--accent-dim);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0;">
+          ▶ 미리듣기
+        </button>
+      </div>
+      <!-- 볼륨 -->
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;color:var(--text-muted);font-weight:700;white-space:nowrap;">볼륨</span>
+        <input type="range" id="essence-alert-volume" min="0" max="100" value="70"
+          style="flex:1;accent-color:var(--accent);">
+        <span id="essence-alert-volume-label"
+          style="font-size:11px;font-weight:700;color:var(--text);min-width:28px;text-align:right;">70</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ⑤ 표시 설정 -->
     <div>
       <div class="section-label">
         <i data-lucide="monitor" style="width:11px;height:11px"></i>
@@ -565,11 +608,10 @@
       const hourlyEssence = hourlyXP / ESSENCE_XP;
       if (document.getElementById('stat-essence-per-hour')) document.getElementById('stat-essence-per-hour').textContent = hourlyEssence.toFixed(2) + '개';
 
-      // 다음 정수까지 남은 시간
-      const totalXP = data.total || 0;
-      const currentEssenceProgress = totalXP % ESSENCE_XP;
-      const remainingForEssence = ESSENCE_XP - currentEssenceProgress;
-      const progressPercent = (currentEssenceProgress / ESSENCE_XP) * 100;
+      // 다음 정수까지 남은 시간 (마지막 교환 이후 누적 기준)
+      const xpSinceExchange = data.xpSinceLastExchange || 0;
+      const remainingForEssence = ESSENCE_XP - xpSinceExchange;
+      const progressPercent = Math.min(xpSinceExchange / ESSENCE_XP * 100, 100);
       if (document.getElementById('essence-progress')) document.getElementById('essence-progress').style.width = progressPercent + '%';
 
       if (movingEpm > 0) {
@@ -578,6 +620,10 @@
       } else {
         if (document.getElementById('stat-essence-eta')) document.getElementById('stat-essence-eta').textContent = '--분 남음';
       }
+
+      // 세션 정수 교환 횟수
+      if (document.getElementById('stat-essence-count'))
+        document.getElementById('stat-essence-count').textContent = (data.essenceCount || 0) + '개';
 
       // 마릿수 및 마리당 평균 경험치
       const kills = data.kills || 0;
@@ -603,7 +649,7 @@
 
     window.electronAPI.onXpResetDone((data) => {
       _startTime = data.startTime;
-      updateStats({ total: 0, epm: 0, movingEpm: 0, history: [], kills: 0 }, true);
+      updateStats({ total: 0, epm: 0, movingEpm: 0, history: [], kills: 0, essenceCount: 0, xpSinceLastExchange: 0 }, true);
       document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
     });
 
@@ -619,6 +665,26 @@
       window.electronAPI.applySettings({ ignoreNegativeXp: e.target.checked });
     });
 
+    document.getElementById('toggle-essence-alert').addEventListener('change', (e) => {
+      window.electronAPI.applySettings({ essenceAlertEnabled: e.target.checked });
+    });
+
+    document.getElementById('essence-alert-sound').addEventListener('change', (e) => {
+      window.electronAPI.applySettings({ essenceAlertSound: e.target.value });
+    });
+
+    document.getElementById('essence-alert-volume').addEventListener('input', (e) => {
+      const vol = parseInt(e.target.value);
+      document.getElementById('essence-alert-volume-label').textContent = vol;
+      window.electronAPI.applySettings({ essenceAlertVolume: vol });
+    });
+
+    document.getElementById('btn-essence-preview').addEventListener('click', () => {
+      const sound = document.getElementById('essence-alert-sound').value || 'orb.mp3';
+      const vol = parseInt(document.getElementById('essence-alert-volume').value) || 70;
+      window.electronAPI.previewBossSound(sound, vol, '경험의 정수 버프 확인');
+    });
+
     document.getElementById('btn-apply-pos').addEventListener('click', () => {
       const left = parseInt(document.getElementById('pos-left').value) || 0;
       const bottom = parseInt(document.getElementById('pos-bottom').value) || 0;
@@ -632,13 +698,32 @@
         document.getElementById('pos-left').value = config.xpWidgetPos.left;
         document.getElementById('pos-bottom').value = config.xpWidgetPos.bottom;
       }
+      if (config.essenceAlertEnabled !== undefined)
+        document.getElementById('toggle-essence-alert').checked = config.essenceAlertEnabled;
+      if (config.essenceAlertSound) {
+        const sel = document.getElementById('essence-alert-sound');
+        if (sel) sel.value = config.essenceAlertSound;
+      }
+      if (config.essenceAlertVolume !== undefined) {
+        document.getElementById('essence-alert-volume').value = config.essenceAlertVolume;
+        document.getElementById('essence-alert-volume-label').textContent = config.essenceAlertVolume;
+      }
     });
 
-    window.onload = () => {
+    window.onload = async () => {
       refreshIcons();
       initChart();
       startElapsedTimer();
       if (window.bindEscapeClose) window.bindEscapeClose();
+
+      // 사운드 목록 로드
+      if (window.loadSoundList) {
+        const sounds = await window.loadSoundList();
+        const sel = document.getElementById('essence-alert-sound');
+        if (sel && sounds) {
+          sel.innerHTML = sounds.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+        }
+      }
 
       // 초기 데이터 요청 (약간의 지연을 주어 차트 캔버스가 완전히 준비되도록 함)
       setTimeout(() => {

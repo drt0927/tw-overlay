@@ -1,6 +1,6 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.0)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.2)
 
-이 문서는 v1.12.0 버전을 기준으로 작성되었습니다.
+이 문서는 v1.12.2 버전을 기준으로 작성되었습니다.
  상세한 프로젝트 요약은 [SUMMARY.md](./SUMMARY.md)를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요. UI 일관성을 위한 디자인 가이드는 [DESIGN_TOKENS.md](./DESIGN_TOKENS.md)에서 확인하실 수 있습니다.
 
 ## 📌 프로젝트 소개
@@ -46,7 +46,12 @@ TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드
 
 ### 4. 업데이트 히스토리
 
-#### v1.12.0 (최신)
+#### v1.12.2 (최신)
+- **추가:** 경험의 정수 버프 미감지 알림 — 마지막 교환(-100억) 이후 110억(100억+10억 버퍼) XP가 누적되어도 교환이 감지되지 않으면 게임 오버레이에 빨간 경고 알람 + 사운드 출력. `_xpSinceLastExchange` 단일 카운터 기반 이벤트 드리븐 구조. 활성화 토글/사운드/볼륨 설정 지원.
+- **추가:** XP HUD 세션 교환 횟수(`essenceCount`) 실시간 표시 — -100억 로그 감지마다 카운트.
+- **추가:** XP HUD 경험의 정수 프로그레스바 — 마지막 교환 이후 누적 XP 기준으로 0→100% 표시.
+
+#### v1.12.0
 - **추가:** 사기꾼 탐지 AI (BETA) — MsgerLog 폴더를 실시간 감시하여 신규 1:1 대화 발생 시 자동으로 세션을 생성하고, Gemma 4 E2B GGUF 모델을 llama-server(llama.cpp)로 로컬 추론합니다. SCAM·SUSPICIOUS·SAFE·UNKNOWN 4단계 판정, SSE 스트리밍 출력, 시청각 알람, GPU 자동 감지(NVIDIA CUDA 12.4/AMD-Intel Vulkan/CPU 폴백), LLM 직렬화 큐, 테스트 케이스 5종 내장.
 
 #### v1.11.10

@@ -203,7 +203,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('diary-updated');
     ipcRenderer.on('diary-updated', () => callback());
   },
-  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[], kills?: number }) => void) => {
+  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[], kills?: number, essenceCount?: number, xpSinceLastExchange?: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-update');
     ipcRenderer.on('xp-update', (_event, data) => callback(data));
   },
@@ -225,6 +225,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onXpResetDone: (callback: (data: { startTime: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-reset-done');
     ipcRenderer.on('xp-reset-done', (_event, data) => callback(data));
+  },
+  onEssenceAlert: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('essence-alert');
+    ipcRenderer.on('essence-alert', () => callback());
   },
   onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
     ipcRenderer.removeAllListeners('scam-alert');

@@ -239,6 +239,85 @@
       opacity: 1;
     }
 
+    /* ── 경험의 정수 버프 경고 알람 ── */
+    .essence-alert-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+      padding: 28px 44px;
+      background: rgba(10, 3, 3, 0.86);
+      border: 2px solid rgba(239, 68, 68, 0.65);
+      border-radius: 18px;
+      box-shadow:
+        0 0 48px rgba(239, 68, 68, 0.4),
+        0 0 96px rgba(239, 68, 68, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px);
+    }
+
+    .essence-alert-overlay.show {
+      animation: essence-alert-anim 8s forwards;
+    }
+
+    @keyframes essence-alert-anim {
+      0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.88); }
+      4%   { opacity: 1;   transform: translate(-50%, -50%) scale(1.04); }
+      8%   { opacity: 1;   transform: translate(-50%, -50%) scale(1); }
+      /* 빠른 깜빡임 (0.35s 주기 × 8회) */
+      12%  { opacity: 0.05; }
+      16.5%{ opacity: 1; }
+      21%  { opacity: 0.05; }
+      25.5%{ opacity: 1; }
+      30%  { opacity: 0.05; }
+      34.5%{ opacity: 1; }
+      39%  { opacity: 0.05; }
+      43.5%{ opacity: 1; }
+      48%  { opacity: 0.05; }
+      52.5%{ opacity: 1; }
+      57%  { opacity: 0.05; }
+      61.5%{ opacity: 1; }
+      /* 잠시 유지 후 페이드 아웃 */
+      78%  { opacity: 1; }
+      100% { opacity: 0;   transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .essence-alert-icon {
+      filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.9));
+    }
+
+    .essence-alert-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #fca5a5;
+      text-shadow:
+        0 0 24px rgba(239, 68, 68, 1),
+        0 0 48px rgba(239, 68, 68, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.95);
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .essence-alert-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fecaca;
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.55);
+      padding: 6px 22px;
+      border-radius: 20px;
+      backdrop-filter: blur(6px);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+    }
+
     @keyframes badge-danger-pulse {
       0%, 100% {
         box-shadow:
@@ -268,6 +347,17 @@
       <span class="text-[9px] text-emerald-400 font-black uppercase">분당 경험치</span>
       <span id="xp-epm" class="text-xs font-bold text-white">0</span>
     </div>
+  </div>
+
+  <!-- 경험의 정수 버프 경고 알람 -->
+  <div id="essence-alert" class="essence-alert-overlay">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+      stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="essence-alert-icon">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+      <path d="M12 9v4"/><path d="M12 17h.01"/>
+    </svg>
+    <div class="essence-alert-title">경험의 정수 버프 확인!</div>
+    <div class="essence-alert-sub">경험치 100억 달성 — 자동 교환 버프가 꺼져 있을 수 있습니다</div>
   </div>
 
   <!-- 버프 타이머 HUD -->
@@ -438,6 +528,15 @@
         setTimeout(() => { badge.style.opacity = '0.25'; }, 210);
         setTimeout(() => { badge.style.opacity = '1'; }, 320);
       }
+    });
+
+    // 경험의 정수 버프 경고 알람
+    window.electronAPI.onEssenceAlert(() => {
+      const alertEl = document.getElementById('essence-alert');
+      if (!alertEl) return;
+      alertEl.classList.remove('show');
+      void alertEl.offsetWidth; // reflow 트리거
+      alertEl.classList.add('show');
     });
 
     window.onload = refreshIcons;

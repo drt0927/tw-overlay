@@ -334,6 +334,18 @@
         </div>
       </div>
 
+      <!-- 마릿수 + 마리당 평균 경험치 (2단) -->
+      <div class="stat-grid-sub">
+        <div class="stat-card">
+          <div class="stat-label">잡은 몬스터</div>
+          <div class="stat-value !text-[17px] text-emerald-300" id="stat-kills">0마리</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">마리당 평균 경험치</div>
+          <div class="stat-value !text-[17px]" id="stat-xp-per-kill">0</div>
+        </div>
+      </div>
+
       <div class="stat-card">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
@@ -567,6 +579,15 @@
         if (document.getElementById('stat-essence-eta')) document.getElementById('stat-essence-eta').textContent = '--분 남음';
       }
 
+      // 마릿수 및 마리당 평균 경험치
+      const kills = data.kills || 0;
+      if (document.getElementById('stat-kills'))
+        document.getElementById('stat-kills').textContent = kills.toLocaleString() + '마리';
+      if (document.getElementById('stat-xp-per-kill')) {
+        const xpPerKill = kills > 0 ? Math.floor((data.total || 0) / kills) : 0;
+        document.getElementById('stat-xp-per-kill').innerHTML = formatXP(xpPerKill);
+      }
+
       // 차트 업데이트 (y축 callback에서 단위 변환을 수행하므로 여기서는 원본 전달)
       if (xpChart && data.history) {
         const displayData = data.history.slice(-30);
@@ -582,7 +603,7 @@
 
     window.electronAPI.onXpResetDone((data) => {
       _startTime = data.startTime;
-      updateStats({ total: 0, epm: 0, movingEpm: 0, history: [] }, true);
+      updateStats({ total: 0, epm: 0, movingEpm: 0, history: [], kills: 0 }, true);
       document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
     });
 

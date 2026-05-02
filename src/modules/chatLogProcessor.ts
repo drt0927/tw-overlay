@@ -10,6 +10,7 @@ import { buffTimerManager } from './buffTimerManager';
  */
 class ChatLogProcessor {
   private _sessionXP: number = 0;
+  private _sessionKills: number = 0;
   private _startTime: number = Date.now();
   private _xpHistory: { timestamp: number, amount: number }[] = [];
   private _minuteHistory: number[] = []; // 최근 30분간의 분당 획득량
@@ -74,6 +75,7 @@ class ChatLogProcessor {
       this.checkMinuteRollover();
       this._sessionXP += data.amount;
       this._currentMinuteXP += data.amount;
+      if (data.amount > 0) this._sessionKills++;
 
       const allWindows = BrowserWindow.getAllWindows();
       const elapsedMins = (Date.now() - this._startTime) / 60000;
@@ -87,12 +89,13 @@ class ChatLogProcessor {
         movingEpm = Math.floor(recentSum / (recentMins + (Date.now() % 60000 / 60000)));
       }
 
-      const xpPayload = { 
-        total: this._sessionXP, 
-        epm, 
+      const xpPayload = {
+        total: this._sessionXP,
+        epm,
         movingEpm,
         lastGain: data.amount,
-        history: [...this._minuteHistory, this._currentMinuteXP]
+        history: [...this._minuteHistory, this._currentMinuteXP],
+        kills: this._sessionKills
       };
 
       const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
@@ -152,6 +155,7 @@ class ChatLogProcessor {
 
   public resetXp(): void {
     this._sessionXP = 0;
+    this._sessionKills = 0;
     this._startTime = Date.now();
     this._minuteHistory = [];
     this._currentMinuteXP = 0;
@@ -161,7 +165,7 @@ class ChatLogProcessor {
     const allWindows = BrowserWindow.getAllWindows();
     const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
     if (gameOverlay) {
-      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [] });
+      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0 });
     }
     const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
     if (xpHud) {
@@ -186,7 +190,8 @@ class ChatLogProcessor {
       epm,
       movingEpm,
       startTime: this._startTime,
-      history: [...this._minuteHistory, this._currentMinuteXP]
+      history: [...this._minuteHistory, this._currentMinuteXP],
+      kills: this._sessionKills
     };
   }
 

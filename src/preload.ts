@@ -203,7 +203,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('diary-updated');
     ipcRenderer.on('diary-updated', () => callback());
   },
-  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[] }) => void) => {
+  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[], kills?: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-update');
     ipcRenderer.on('xp-update', (_event, data) => callback(data));
   },

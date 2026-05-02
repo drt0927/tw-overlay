@@ -30,6 +30,7 @@ const ALLOWED_DOCK_FEATURES = new Set([
   'abbreviation', 'buffs', 'coefficientCalculator', 'etaRanking',
   'evolutionCalculator', 'magicStoneCalculator', 'diary',
   'scamDetector', 'uniformColor',
+  'overlay', 'clickThrough',
 ]);
 
 export function register(): void {
@@ -312,13 +313,11 @@ export function register(): void {
     if (opts.upscaleMode !== undefined && !VALID_UPSCALE_MODES.has(opts.upscaleMode))
       return { success: false, error: `Invalid upscaleMode: ${opts.upscaleMode}` };
 
-    const mainWin = wm.getMainWindow();
-    if (!mainWin) return { success: false, error: 'No main window' };
+    const gameOverlayHwnd = wm.getGameOverlayHwnd();
+    if (!gameOverlayHwnd) return { success: false, error: 'Game overlay window not ready' };
     const gameHwnd = tracker.getGameHwnd();
     if (!gameHwnd) return { success: false, error: '게임이 실행 중이지 않습니다' };
-    const hwndBuf = mainWin.getNativeWindowHandle();
-    const electronHwnd = (hwndBuf.length >= 8 ? hwndBuf.readBigUInt64LE(0) : BigInt(hwndBuf.readUInt32LE(0))).toString();
-    const result = fullscreenManager.startFullscreen(electronHwnd, gameHwnd, opts);
+    const result = fullscreenManager.startFullscreen(gameOverlayHwnd, gameHwnd, opts);
     if (result.success) {
       wm.setFullscreenMode(true);
     }
@@ -352,6 +351,13 @@ export function register(): void {
   ipcMain.on('dock:close', () => {
     wm.closeDock();
   });
+
+  ipcMain.handle('dock:get-initial-state', () => ({
+    overlayVisible: wm.getIsOverlayVisible(),
+    overlayInteractive: !wm.isOverlayMouseThrough(),
+    hiddenMenuIds: config.load().hiddenMenuIds || [],
+    shortcutWarning: wm.getFullscreenShortcutWarning(),
+  }));
 
   // --- 사기꾼 탐지 ---
   ipcMain.on('scam-set-enabled', (_e, enabled: boolean) => {

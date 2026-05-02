@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include "scaling_window.h"
+#include "input_forwarder.h"
 #include "native_log.h"
 
 static const wchar_t* k_ClassName       = L"TW_ScalingWindow";
@@ -12,6 +13,16 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return 0;
     case WM_ERASEBKGND:
         return 1;
+    case WM_MOUSEACTIVATE:
+        // C++ 창을 non-topmost 최상단으로 올리고, 게임에 포커스를 넘김
+        // tw-overlay 창들(TOPMOST)은 여전히 위에 있고, 브라우저 등 일반 창은 아래로 내려감
+        SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        {
+            HWND gh = InputForwarder::GetGameHwnd();
+            if (gh) SetForegroundWindow(gh);
+        }
+        return MA_NOACTIVATE;
     default:
         return DefWindowProcW(hwnd, msg, wp, lp);
     }

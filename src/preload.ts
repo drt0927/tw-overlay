@@ -257,6 +257,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 풀스크린 독
   dockOpenFeature: (featureKey: string) => ipcRenderer.send('dock:open-feature', featureKey),
   dockClose: () => ipcRenderer.send('dock:close'),
+  dockGetInitialState: () => ipcRenderer.invoke('dock:get-initial-state'),
   onDockFeatureOpened: (callback: (featureKey: string) => void) => {
     ipcRenderer.removeAllListeners('dock:feature-opened');
     ipcRenderer.on('dock:feature-opened', (_event, featureKey) => callback(featureKey));

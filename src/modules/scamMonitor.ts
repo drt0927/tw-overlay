@@ -262,6 +262,7 @@ export async function downloadModel(onProgress: (pct: number, label?: string) =>
       const tmpPath = modelPath + '.tmp';
       const doModelDownload = (skipSSLVerify: boolean) => new Promise<void>((resolve, reject) => {
         const file = fs.createWriteStream(tmpPath);
+        let _aborted = false;
 
         const doGet = (url: string, redirectCount = 0) => {
           if (redirectCount > 10) { reject(new Error('Too many redirects')); return; }
@@ -281,9 +282,9 @@ export async function downloadModel(onProgress: (pct: number, label?: string) =>
 
             res.on('data', (chunk: Buffer) => {
               if (_downloadAbortFlag) {
+                _aborted = true;
                 res.destroy();
-                file.close();
-                fs.unlink(tmpPath, () => {});
+                file.close(() => fs.unlink(tmpPath, () => {}));
                 _modelDownloading = false;
                 reject(new Error('ABORTED'));
                 return;
@@ -308,6 +309,7 @@ export async function downloadModel(onProgress: (pct: number, label?: string) =>
               });
             });
             file.on('error', (err) => {
+              if (_aborted) return;
               file.close(); fs.unlink(tmpPath, () => { });
               _modelDownloading = false; reject(err);
             });

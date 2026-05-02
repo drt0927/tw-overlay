@@ -60,21 +60,39 @@ export function isFullscreenMode(): boolean {
   return _isFullscreenMode;
 }
 
+export function getFullscreenShortcutWarning(): string | null { return _fullscreenShortcutWarning; }
+
 export function setFullscreenMode(active: boolean): void {
   _isFullscreenMode = active;
   if (active) {
-    if (!globalShortcut.isRegistered('Alt+Shift+F')) {
-      const ok = globalShortcut.register('Alt+Shift+F', stopFullscreenForCleanup);
-      if (!ok) log('[WM] Alt+Shift+F 단축키 등록 실패 (다른 앱이 선점 중일 수 있음)');
+    const failedKeys: string[] = [];
+    if (!globalShortcut.isRegistered('Ctrl+Shift+F')) {
+      if (!globalShortcut.register('Ctrl+Shift+F', stopFullscreenForCleanup)) {
+        log('[WM] Ctrl+Shift+F 단축키 등록 실패 (다른 앱이 선점 중일 수 있음)');
+        failedKeys.push('Ctrl+Shift+F');
+      }
     }
-    if (!globalShortcut.isRegistered('Alt+Shift+O')) {
-      const okDock = globalShortcut.register('Alt+Shift+O', toggleFullscreenDock);
-      if (!okDock) log('[WM] Alt+Shift+O 단축키 등록 실패 (다른 앱이 선점 중일 수 있음)');
+    if (!globalShortcut.isRegistered('Ctrl+Shift+D')) {
+      if (!globalShortcut.register('Ctrl+Shift+D', toggleFullscreenDock)) {
+        log('[WM] Ctrl+Shift+D 단축키 등록 실패 (다른 앱이 선점 중일 수 있음)');
+        failedKeys.push('Ctrl+Shift+D');
+      }
     }
+    _fullscreenShortcutWarning = failedKeys.length > 0
+      ? `단축키 등록 실패 (${failedKeys.join(', ')}). 전체화면 종료는 독의 종료 버튼을 사용하세요.`
+      : null;
     _prevMainAlwaysOnTop = mainWindow && !mainWindow.isDestroyed() ? mainWindow.isAlwaysOnTop() : false;
     _prevOverlayAlwaysOnTop = overlayWindow && !overlayWindow.isDestroyed() ? overlayWindow.isAlwaysOnTop() : false;
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
-    if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.setAlwaysOnTop(true);
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.setAlwaysOnTop(true, 'screen-saver');           // screen-saver band: TOPMOST보다 상위
+      overlayWindow.setIgnoreMouseEvents(true, { forward: true }); // 기본: 마우스 투과
+      tracker.setWindowCaptureExclusion(overlayWindow.getNativeWindowHandle(), true);
+      // cppHwnd를 owner로 설정 → TOPMOST 그룹 내에서 cppHwnd 위 보장 (gameOverlayWindow와 동일)
+      const scalingHwnd = fullscreenManager.getScalingHwnd();
+      if (scalingHwnd) tracker.setWindowOwner(overlayWindow.getNativeWindowHandle(), scalingHwnd);
+    }
+    _overlayMouseThrough = true;
     // 열려있는 피처 창 처리: fullscreen 창은 onClose 부작용 방지를 위해 hide, 나머지는 close
     Object.entries(windowRegistry).forEach(([key, winCfg]) => {
       if (key === 'gameOverlay' || !winCfg.ref || winCfg.ref.isDestroyed()) return;
@@ -85,15 +103,17 @@ export function setFullscreenMode(active: boolean): void {
       }
     });
   } else {
-    globalShortcut.unregister('Alt+Shift+F');
-    globalShortcut.unregister('Alt+Shift+O');
-    // 기능창을 먼저 닫아야 alwaysOnTop 창이 풀스크린 종료 후 잔류하지 않음
-    _dockOpenedWindows.forEach(key => {
+    globalShortcut.unregister('Ctrl+Shift+F');
+    globalShortcut.unregister('Ctrl+Shift+D');
+    _fullscreenShortcutWarning = null;
+    // _dockOpenedWindows를 먼저 스냅샷 후 비워야 onClose 콜백에서 closeDock() 재진입 방지
+    const keysToClose = [..._dockOpenedWindows];
+    _dockOpenedWindows.clear();
+    _dockCascadeCounter = 0;
+    keysToClose.forEach(key => {
       const winCfg = windowRegistry[key];
       if (winCfg?.ref && !winCfg.ref.isDestroyed()) winCfg.ref.close();
     });
-    _dockOpenedWindows.clear();
-    _dockCascadeCounter = 0;
     if (fullscreenDockWindow && !fullscreenDockWindow.isDestroyed()) {
       fullscreenDockWindow.close();
     }
@@ -101,7 +121,14 @@ export function setFullscreenMode(active: boolean): void {
       mainWindow.setAlwaysOnTop(_prevMainAlwaysOnTop);
       mainWindow.show();
     }
-    if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.setAlwaysOnTop(_prevOverlayAlwaysOnTop);
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      if (_prevOverlayAlwaysOnTop) overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+      else overlayWindow.setAlwaysOnTop(false);
+      overlayWindow.setIgnoreMouseEvents(false);
+      tracker.setWindowCaptureExclusion(overlayWindow.getNativeWindowHandle(), false);
+    }
+    // _overlayMouseThrough는 다음 풀스크린 진입의 초기 상태. 여기서는 true(투과)로 리셋만.
+    _overlayMouseThrough = true;
     // 풀스크린 진입 시 숨겨뒀던 fullscreen 컨트롤 창 복원
     const hiddenFsWin = windowRegistry['fullscreen']?.ref;
     if (hiddenFsWin && !hiddenFsWin.isDestroyed()) {
@@ -111,11 +138,14 @@ export function setFullscreenMode(active: boolean): void {
   }
   // 풀스크린 컨트롤 창도 항상 위에 유지 (종료 버튼 접근 가능하게)
   const fsWin = windowRegistry['fullscreen']?.ref;
-  if (fsWin && !fsWin.isDestroyed()) fsWin.setAlwaysOnTop(active);
-  // gameOverlayWindow는 평소 stack 기반 Z-order 관리 (v1.11.10), 풀스크린 중에는 C++ 창 위에 올려야 하므로 TOPMOST로 전환
+  if (fsWin && !fsWin.isDestroyed()) {
+    if (active) fsWin.setAlwaysOnTop(true, 'screen-saver'); else fsWin.setAlwaysOnTop(false);
+  }
+  // gameOverlayWindow는 평소 stack 기반 Z-order 관리 (v1.11.10), 풀스크린 중에는 C++ 창 위에 올려야 하므로 screen-saver band로 전환
   if (gameOverlayWindow && !gameOverlayWindow.isDestroyed()) {
-    gameOverlayWindow.setAlwaysOnTop(active);
+    if (active) gameOverlayWindow.setAlwaysOnTop(true, 'screen-saver'); else gameOverlayWindow.setAlwaysOnTop(false);
     gameOverlayWindow.webContents.send('fullscreen:active', active);
+    tracker.setWindowCaptureExclusion(gameOverlayWindow.getNativeWindowHandle(), active);
   }
   if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && physicalGameRect) {
     const dipRect = screen.screenToDipRect(null, physicalGameRect);
@@ -130,6 +160,10 @@ export function setFullscreenMode(active: boolean): void {
 
 export function stopFullscreenForCleanup(): void {
   if (!fullscreenManager.isFullscreenActive()) return;
+  // cppHwnd(owner) 파괴 전에 overlayWindow ownership 해제 — owner 파괴 시 owned 창 자동 소멸 방지
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    tracker.clearWindowOwner(overlayWindow.getNativeWindowHandle());
+  }
   fullscreenManager.stopFullscreen();
   setFullscreenMode(false);
 }
@@ -158,21 +192,26 @@ function createFullscreenDockWindow(): void {
     focusable: true,
     hasShadow: false,
   }));
+  fullscreenDockWindow.setContentProtection(true);
   fullscreenDockWindow.setIgnoreMouseEvents(false);
+  attachStackListeners(fullscreenDockWindow);
   fullscreenDockWindow.loadFile(path.join(__dirname, '..', 'fullscreen-dock.html'));
   fullscreenDockWindow.webContents.once('did-fail-load', () => {
     fullscreenDockWindow?.close();
   });
   fullscreenDockWindow.once('ready-to-show', () => {
     _positionDockOnDisplay();
-    fullscreenDockWindow?.showInactive();
-    fullscreenDockWindow?.focus();
+    fullscreenDockWindow?.show();
+    fullscreenDockWindow?.setAlwaysOnTop(true, 'screen-saver');
   });
   fullscreenDockWindow.on('closed', () => {
     fullscreenDockWindow = null;
     _dockOpenedWindows.clear();
     _dockCascadeCounter = 0;
-    fullscreenManager.setOverlayActive(false);
+    // 오버레이가 투과 상태일 때만 C++ 입력 포워딩 복원 (interactive 상태 유지)
+    if (_overlayMouseThrough) {
+      fullscreenManager.setOverlayActive(false);
+    }
   });
 }
 
@@ -187,24 +226,50 @@ export function toggleFullscreenDock(): void {
 }
 
 export function closeDock(): void {
-  fullscreenManager.setOverlayActive(false);
-  _dockOpenedWindows.forEach(key => {
+  // 오버레이가 투과 상태일 때만 C++ 입력 포워딩 복원 — interactive 상태면 유지
+  if (_overlayMouseThrough) {
+    fullscreenManager.setOverlayActive(false);
+  }
+  // 스냅샷 후 비워야 closed 이벤트 핸들러에서 재진입 방지
+  const keysToClose = [..._dockOpenedWindows];
+  _dockOpenedWindows.clear();
+  _dockCascadeCounter = 0;
+  keysToClose.forEach(key => {
     const winCfg = windowRegistry[key];
     if (winCfg?.ref && !winCfg.ref.isDestroyed()) winCfg.ref.close();
   });
-  _dockOpenedWindows.clear();
-  _dockCascadeCounter = 0;
   if (fullscreenDockWindow && !fullscreenDockWindow.isDestroyed()) {
     fullscreenDockWindow.close();
   }
 }
 
+
 export function openFeatureFromDock(featureKey: string): void {
   if (!_isFullscreenMode) return;
+
+  if (featureKey === 'overlay') {
+    const newVisible = toggleOverlay();
+    // 독을 닫지 않고 버튼 상태만 갱신 — 오버레이는 기본적으로 투과 상태이므로 Z-order 충돌 없음
+    fullscreenDockWindow?.webContents.send(
+      newVisible ? 'dock:feature-opened' : 'dock:feature-closed', 'overlay'
+    );
+    return;
+  }
+  if (featureKey === 'clickThrough') {
+    toggleClickThrough();
+    // _overlayMouseThrough가 true = 투과 ON = "마우스 투과" 버튼 active 상태
+    fullscreenDockWindow?.webContents.send(
+      _overlayMouseThrough ? 'dock:feature-opened' : 'dock:feature-closed', 'clickThrough'
+    );
+    return;
+  }
+
   const winCfg = windowRegistry[featureKey];
   if (!winCfg) return;
 
   if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+    // 이미 열려있어도 추적 목록에 등록 — 풀스크린 종료 시 반드시 닫히게 보장
+    _dockOpenedWindows.add(featureKey);
     winCfg.ref.focus();
     return;
   }
@@ -219,7 +284,7 @@ export function openFeatureFromDock(featureKey: string): void {
   _dockCascadeCounter++;
 
   const specialOnReady = (win: BrowserWindow) => {
-    win.setAlwaysOnTop(true);
+    win.setAlwaysOnTop(true, 'screen-saver');
     fullscreenDockWindow?.webContents.send('dock:feature-opened', featureKey);
     if (featureKey === 'gallery') {
       gallery.updateWindows(null, win, null);
@@ -285,8 +350,9 @@ function createGameOverlayWindow(): void {
     skipTaskbar: true,
     alwaysOnTop: false,
     focusable: false,
-    hasShadow: false
+    hasShadow: false,
   }));
+  gameOverlayWindow.setContentProtection(true);
   gameOverlayWindow.setIgnoreMouseEvents(true);
   gameOverlayWindow.loadFile(path.join(__dirname, '..', 'game-overlay.html'));
   attachStackListeners(gameOverlayWindow);
@@ -359,8 +425,10 @@ let _prevOverlayAlwaysOnTop = false;
 let fullscreenDockWindow: BrowserWindow | null = null;
 let _dockOpenedWindows: Set<string> = new Set();
 let _dockCascadeCounter = 0;
+let _fullscreenShortcutWarning: string | null = null;
 const isProgrammaticMoveMap: Record<string, boolean> = {};
 let isClickThrough = false;
+let _overlayMouseThrough = true; // 전체화면 중 overlay 마우스 투과 상태
 let isApplyingSize = false;
 let isToolbarShown = true;
 let isSidebarCollapsed = false;
@@ -410,6 +478,7 @@ export const getUniformColorWindow = () => windowRegistry.uniformColor.ref;
 export const getScamDetectorWindow = () => windowRegistry.scamDetector.ref;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
+export const isOverlayMouseThrough = () => _overlayMouseThrough;
 export const getGameRect = () => gameRect;
 
 export function onOverlayWindowReady(callback: () => void): void { onOverlayReady = callback; }
@@ -435,7 +504,7 @@ export function setMandatoryUpdateLock(lock: boolean): void {
   mandatoryUpdateLock = lock;
   if (splashWindow && !splashWindow.isDestroyed()) {
     splashWindow.setIgnoreMouseEvents(false);
-    splashWindow.setAlwaysOnTop(lock);
+    if (lock) splashWindow.setAlwaysOnTop(true, 'screen-saver'); else splashWindow.setAlwaysOnTop(false);
     if (lock) splashWindow.focus();
   }
   if (lock) {
@@ -468,6 +537,7 @@ function createOverlayWindow(targetUrl?: string): void {
   if (overlayWindow) return;
   const cfg = config.load();
   overlayWindow = new BrowserWindow(getStandardOptions(cfg.width, cfg.height, { minWidth: MIN_W, minHeight: MIN_H, skipTaskbar: true }));
+  overlayWindow.setContentProtection(true);
   overlayWindow.setOpacity(cfg.opacity);
   overlayWindow.loadFile(path.join(__dirname, '..', 'overlay.html'));
   view = new WebContentsView({ webPreferences: { backgroundThrottling: false, preload: path.join(__dirname, '..', 'overlay-view-preload.js') } });
@@ -524,6 +594,15 @@ function createOverlayWindow(targetUrl?: string): void {
   overlayWindow.webContents.ipc.on('toolbar-mouse-leave', () => { mouseInToolbar = false; if (!mouseInWcv) scheduleHide(); });
 
   overlayWindow.once('ready-to-show', () => {
+    if (_isFullscreenMode && overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.setAlwaysOnTop(true, 'screen-saver');           // screen-saver band: TOPMOST보다 상위
+      overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+      tracker.setWindowCaptureExclusion(overlayWindow.getNativeWindowHandle(), true);
+      _overlayMouseThrough = true;
+      // cppHwnd를 owner로 설정 → TOPMOST 그룹 내에서 cppHwnd 위 보장 (gameOverlayWindow와 동일)
+      const scalingHwnd = fullscreenManager.getScalingHwnd();
+      if (scalingHwnd) tracker.setWindowOwner(overlayWindow.getNativeWindowHandle(), scalingHwnd);
+    }
     updateViewBounds();
     if (isOverlayVisible) {
       overlayWindow?.show();
@@ -536,6 +615,11 @@ function createOverlayWindow(targetUrl?: string): void {
   overlayWindow.on('closed', () => {
     if (toolbarHideTimeout) { clearTimeout(toolbarHideTimeout); toolbarHideTimeout = null; }
     if (view) { try { view.webContents.close(); } catch (e) { } view = null; }
+    // 전체화면 interactive 상태에서 닫힌 경우 → setOverlayActive 해제해야 C++ 창에 WS_EX_TRANSPARENT 복원
+    if (_isFullscreenMode && !_overlayMouseThrough) {
+      fullscreenManager.setOverlayActive(false);
+      _overlayMouseThrough = true;
+    }
     overlayWindow = null; isTracking = false; isClickThrough = false;
   });
   attachStackListeners(overlayWindow);
@@ -748,6 +832,17 @@ export function getAllWindowHwnds(): string[] {
   }
   return results;
 }
+
+export function isAnyElectronWindowFocused(hwnd: string): boolean {
+  return BrowserWindow.getAllWindows().some(win => {
+    if (win.isDestroyed()) return false;
+    try {
+      const buf = win.getNativeWindowHandle();
+      return (buf.length >= 8 ? buf.readBigUInt64LE(0) : BigInt(buf.readUInt32LE(0))).toString() === hwnd;
+    } catch { return false; }
+  });
+}
+
 export function updateViewBounds(): void {
   if (!overlayWindow || !view) return;
   const b = overlayWindow.getBounds();
@@ -778,7 +873,7 @@ export function syncOverlay(currentRect: GameRect): void {
   if (mandatoryUpdateLock) return; // 필수 업데이트 중에는 창 동기화 중지
   if (currentRect && currentRect.x > -10000) {
     if (!mainWindow.isVisible() && !_isFullscreenMode) mainWindow.show();
-    if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
+    if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible() && !_overlaysTemporarilyHidden) overlayWindow.show();
     // 물리 좌표를 보존 — applySettings에서 syncOverlay 재호출 시 이중 DIP 변환 방지
     physicalGameRect = { x: currentRect.x, y: currentRect.y, width: currentRect.width, height: currentRect.height, isForeground: currentRect.isForeground };
     // Win32 물리 좌표를 Electron 논리 좌표(DIP)로 변환
@@ -811,8 +906,8 @@ export function syncOverlay(currentRect: GameRect): void {
       if (Math.abs(b.x - targetBounds.x) > POSITION_THRESHOLD || Math.abs(b.y - targetBounds.y) > POSITION_THRESHOLD || Math.abs(b.width - targetBounds.width) > POSITION_THRESHOLD || Math.abs(b.height - targetBounds.height) > POSITION_THRESHOLD) {
         gameOverlayWindow.setBounds(targetBounds);
       }
-      // 게임 복귀 시 숨겨진 상태면 다시 표시 (isDestroyed 재확인 후 처리)
-      if (!gameOverlayWindow.isDestroyed() && !gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
+      // 게임 복귀 시 숨겨진 상태면 다시 표시 (isDestroyed 재확인 후 처리, Alt+Tab 임시숨김 중에는 복원 금지)
+      if (!gameOverlayWindow.isDestroyed() && !gameOverlayWindow.isVisible() && !_overlaysTemporarilyHidden) gameOverlayWindow.showInactive();
     }
 
     const currentSidebarB = mainWindow.getBounds();
@@ -912,9 +1007,25 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
 
 export function toggleClickThrough(): boolean {
   if (!overlayWindow) return false;
-  isClickThrough = !isClickThrough;
-  overlayWindow.setIgnoreMouseEvents(isClickThrough);
-  if (isClickThrough && isToolbarShown) { isToolbarShown = false; updateViewBounds(); }
+  if (_isFullscreenMode) {
+    _overlayMouseThrough = !_overlayMouseThrough;
+    isClickThrough = _overlayMouseThrough;
+    if (_overlayMouseThrough) {
+      overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+      fullscreenManager.setOverlayActive(false);
+    } else {
+      overlayWindow.setIgnoreMouseEvents(false);
+      fullscreenManager.setOverlayActive(true);
+      // moveTop()은 HWND_TOP을 사용해 TOPMOST 창을 강등시키므로 사용 금지.
+      // setAlwaysOnTop(true, 'screen-saver')로 screen-saver band 최상단 보장 후 focus.
+      overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+      overlayWindow.focus();
+    }
+  } else {
+    isClickThrough = !isClickThrough;
+    overlayWindow.setIgnoreMouseEvents(isClickThrough);
+    if (isClickThrough && isToolbarShown) { isToolbarShown = false; updateViewBounds(); }
+  }
   overlayWindow.webContents.send('click-through-status', isClickThrough);
   if (mainWindow) mainWindow.webContents.send('click-through-status', isClickThrough);
   return isClickThrough;
@@ -959,6 +1070,64 @@ export function hideAll(): void {
 
 export function getMainWindow(): BrowserWindow | null {
   return (mainWindow && !mainWindow.isDestroyed()) ? mainWindow : null;
+}
+
+export function getGameOverlayHwnd(): string | null {
+  if (!gameOverlayWindow || gameOverlayWindow.isDestroyed()) return null;
+  try {
+    const buf = gameOverlayWindow.getNativeWindowHandle();
+    return (buf.length >= 8 ? buf.readBigUInt64LE(0) : BigInt(buf.readUInt32LE(0))).toString();
+  } catch { return null; }
+}
+
+let _tempHiddenForAltTab: BrowserWindow[] = [];
+let _overlaysTemporarilyHidden = false;
+let _hideDebounceTimer: NodeJS.Timeout | null = null;
+
+export function isOverlaysTemporarilyHidden(): boolean { return _overlaysTemporarilyHidden; }
+
+export function temporarilyHideOverlays(): void {
+  if (!_isFullscreenMode) return;
+  if (_overlaysTemporarilyHidden) return;
+  // 400ms 디바운스: 렌더러 프로세스 창의 일시적 포그라운드 활성화(<50ms)를 걸러냄
+  if (_hideDebounceTimer) clearTimeout(_hideDebounceTimer);
+  _hideDebounceTimer = setTimeout(() => {
+    _hideDebounceTimer = null;
+    if (!_isFullscreenMode || _overlaysTemporarilyHidden) return;
+    _overlaysTemporarilyHidden = true;
+    _tempHiddenForAltTab = [];
+    const candidates: (BrowserWindow | null | undefined)[] = [
+      overlayWindow,
+      gameOverlayWindow,
+      fullscreenDockWindow,
+    ];
+    for (const key of _dockOpenedWindows) {
+      candidates.push(windowRegistry[key]?.ref ?? null);
+    }
+    for (const win of candidates) {
+      if (win && !win.isDestroyed() && win.isVisible()) {
+        win.hide();
+        _tempHiddenForAltTab.push(win);
+      }
+    }
+  }, 400);
+}
+
+export function restoreOverlays(): void {
+  // 대기 중인 숨김 타이머 취소 (일시적 포그라운드 변경 후 게임/앱이 복귀한 경우)
+  if (_hideDebounceTimer) {
+    clearTimeout(_hideDebounceTimer);
+    _hideDebounceTimer = null;
+  }
+  if (!_overlaysTemporarilyHidden) return;
+  _overlaysTemporarilyHidden = false;
+  for (const win of _tempHiddenForAltTab) {
+    if (!win.isDestroyed()) {
+      win.show();
+      if (win.isAlwaysOnTop()) win.setAlwaysOnTop(true, 'screen-saver');
+    }
+  }
+  _tempHiddenForAltTab = [];
 }
 
 export function hideOverlayWindows(): void {

@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <magnification.h>
 
 namespace {
     HWND    g_gameHwnd      = nullptr;
@@ -21,47 +20,11 @@ namespace {
     int     g_clientH       = 0;
     std::atomic<bool> g_overlayActive{ false };
     bool    g_isCapturing    = false;
-    bool    g_magInitialized = false;
-    bool    g_cursorHidden   = false;
     INT     g_originSpeed    = 0;   // saved mouse speed for restore
-
-    // ── Coordinate mapping ──────────────────────────────────────────────────
-
-    POINT OverlayToGameScreen(LONG x, LONG y) {
-        float relX = (float)(x - g_monitorX) / g_monitorW;
-        float relY = (float)(y - g_monitorY) / g_monitorH;
-        POINT pt;
-        pt.x = g_clientOriginX + (int)(relX * g_clientW);
-        pt.y = g_clientOriginY + (int)(relY * g_clientH);
-        return pt;
-    }
-
-    POINT GameScreenToOverlay(LONG x, LONG y) {
-        float relX = (float)(x - g_clientOriginX) / g_clientW;
-        float relY = (float)(y - g_clientOriginY) / g_clientH;
-        POINT pt;
-        pt.x = g_monitorX + (int)(relX * g_monitorW);
-        pt.y = g_monitorY + (int)(relY * g_monitorH);
-        return pt;
-    }
 
     bool IsOnMonitor(LONG x, LONG y) {
         return x >= g_monitorX && x < g_monitorX + g_monitorW &&
                y >= g_monitorY && y < g_monitorY + g_monitorH;
-    }
-
-    // ── Cursor visibility ───────────────────────────────────────────────────
-
-    void HideCursor() {
-        if (g_cursorHidden || !g_magInitialized) return;
-        MagShowSystemCursor(FALSE);
-        g_cursorHidden = true;
-    }
-
-    void ShowCursorRestore() {
-        if (!g_cursorHidden || !g_magInitialized) return;
-        MagShowSystemCursor(TRUE);
-        g_cursorHidden = false;
     }
 
     // ── Cursor speed adjustment (Magpie 동일 공식) ──────────────────────────
@@ -69,7 +32,7 @@ namespace {
     // 물리 마우스 이동이 업스케일된 화면에서 자연스럽게 느껴지도록
     // 시스템 커서 속도를 스케일 비율만큼 낮춥니다.
     void AdjustCursorSpeed() {
-        if (g_monitorW <= 0 || g_clientW <= 0) return;
+        if (g_monitorW <= 0 || g_monitorH <= 0 || g_clientW <= 0 || g_clientH <= 0) return;
 
         if (!SystemParametersInfo(SPI_GETMOUSESPEED, 0, &g_originSpeed, 0)) return;
 
@@ -121,51 +84,32 @@ namespace {
     }
 
     // ── Capture state ───────────────────────────────────────────────────────
+    // "Capturing" = 게임이 포그라운드 상태. C++ 창을 WS_EX_TRANSPARENT로 설정하여
+    // 마우스 이벤트가 게임으로 직접 전달되도록 한다.
+    // 커서 숨김/ClipCursor는 사용하지 않음 — overlay는 항상 보이고 마우스 투과는
+    // Electron 레벨(setIgnoreMouseEvents)에서 제어한다.
 
-    void StartCapture(POINT overlayPt) {
+    void StartCapture() {
         if (g_isCapturing) return;
 
-        POINT gamePt = OverlayToGameScreen(overlayPt.x, overlayPt.y);
-
-        HideCursor();
         AdjustCursorSpeed();
 
-        // Confine cursor to game client screen rect
-        RECT gameRect = {
-            g_clientOriginX, g_clientOriginY,
-            g_clientOriginX + g_clientW, g_clientOriginY + g_clientH
-        };
-        ClipCursor(&gameRect);
-        SetCursorPos(gamePt.x, gamePt.y);
-
-        // Make overlay transparent → OS routes all events directly to game window
+        // C++ 창을 투명하게 → 마우스 이벤트가 게임으로 전달
         LONG_PTR exStyle = GetWindowLongPtrW(g_scalingHwnd, GWL_EXSTYLE);
         SetWindowLongPtrW(g_scalingHwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT);
 
         g_isCapturing = true;
-        NativeLog("InputForwarder: StartCapture overlayPt=(%ld,%ld) gamePt=(%d,%d)",
-                  overlayPt.x, overlayPt.y, gamePt.x, gamePt.y);
+        NativeLog("InputForwarder: StartCapture");
     }
 
     void StopCapture() {
         if (!g_isCapturing) return;
 
-        // Remove transparency so overlay can receive events again
+        // C++ 창 투명 해제
         LONG_PTR exStyle = GetWindowLongPtrW(g_scalingHwnd, GWL_EXSTYLE);
         SetWindowLongPtrW(g_scalingHwnd, GWL_EXSTYLE, exStyle & ~WS_EX_TRANSPARENT);
 
-        // Map cursor back from game position to overlay position
-        POINT cursorPos;
-        if (GetCursorPos(&cursorPos)) {
-            POINT overlayPt = GameScreenToOverlay(cursorPos.x, cursorPos.y);
-            ClipCursor(nullptr);
-            SetCursorPos(overlayPt.x, overlayPt.y);
-        } else {
-            ClipCursor(nullptr);
-        }
-
         RestoreCursorSpeed();
-        ShowCursorRestore();
 
         g_isCapturing = false;
         NativeLog("InputForwarder: StopCapture");
@@ -189,11 +133,6 @@ bool Start(HWND gameHwnd, HWND scalingHwnd, const RECT& monitorRect,
     g_overlayActive = false;
     g_isCapturing   = false;
 
-    if (!g_magInitialized) {
-        g_magInitialized = MagInitialize();
-        NativeLog("InputForwarder: MagInitialize %s", g_magInitialized ? "OK" : "FAILED");
-    }
-
     NativeLog("InputForwarder: monitor=(%d,%d %dx%d) clientOrigin=(%d,%d) client=%dx%d",
               g_monitorX, g_monitorY, g_monitorW, g_monitorH,
               g_clientOriginX, g_clientOriginY, g_clientW, g_clientH);
@@ -202,35 +141,51 @@ bool Start(HWND gameHwnd, HWND scalingHwnd, const RECT& monitorRect,
 
 void Stop() {
     StopCapture();
-    if (g_magInitialized) {
-        MagUninitialize();
-        g_magInitialized = false;
-    }
     g_gameHwnd    = nullptr;
     g_scalingHwnd = nullptr;
 }
 
+HWND GetGameHwnd() {
+    return g_gameHwnd;
+}
+
 void SetOverlayActive(bool active) {
     g_overlayActive.store(active, std::memory_order_relaxed);
-    if (active) StopCapture();
+    // StopCapture()를 여기서 직접 호출하지 않는다.
+    // 이 함수는 N-API 콜백(메인 스레드)에서 호출되지만, StopCapture()가 접근하는
+    // g_isCapturing / g_originSpeed / g_scalingHwnd 는 비원자 변수이며
+    // 렌더 스레드의 UpdateFrame()도 동시에 접근할 수 있어 data race가 된다.
+    // g_overlayActive를 true로 세팅하면 렌더 스레드의 UpdateFrame()이
+    // 다음 프레임에서 즉시 감지해 StopCapture()를 안전하게 호출한다.
+}
+
+bool IsOverlayActive() {
+    return g_overlayActive.load(std::memory_order_relaxed);
 }
 
 void UpdateFrame() {
     if (!g_scalingHwnd || !g_gameHwnd) return;
     if (g_monitorW <= 0 || g_monitorH <= 0 || g_clientW <= 0 || g_clientH <= 0) return;
-    if (g_overlayActive.load(std::memory_order_relaxed)) return;
+    if (g_overlayActive.load(std::memory_order_relaxed)) {
+        // overlay가 active로 전환된 경우 capture 상태를 렌더 스레드 안에서 정리
+        if (g_isCapturing) StopCapture();
+        return;
+    }
+
+    // 게임이 포그라운드를 잃으면 캡처 해제
+    if (g_isCapturing && GetForegroundWindow() != g_gameHwnd) {
+        StopCapture();
+        return;
+    }
 
     POINT cursor;
     if (!GetCursorPos(&cursor)) return;
 
     if (!g_isCapturing) {
-        if (IsOnMonitor(cursor.x, cursor.y)) {
-            StartCapture(cursor);
+        if (IsOnMonitor(cursor.x, cursor.y) && GetForegroundWindow() == g_gameHwnd) {
+            StartCapture();
         }
     }
-    // When capturing: cursor moves naturally inside ClipCursor(gameRect).
-    // WS_EX_TRANSPARENT delivers all mouse events directly to the game window.
-    // Keyboard events go to the game window naturally (it retains focus via WS_EX_NOACTIVATE).
 }
 
 }  // namespace InputForwarder

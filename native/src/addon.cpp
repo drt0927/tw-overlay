@@ -188,11 +188,13 @@ static void RenderThreadFunc(HWND electronHwnd, HWND gameHwnd,
         // Capture + render
         CapturedFrame frame;
         if (capture->TryAcquireFrame(frame)) {
-            renderer.RenderFrame(frame.texture, frame.sourceRect);
+            // overlay 상호작용 중이거나 게임이 포그라운드일 때 렌더 — alt-tab 시 다른 창이 그려지는 것 방지
+            if (GetForegroundWindow() == gameHwnd || InputForwarder::IsOverlayActive()) {
+                renderer.RenderFrame(frame.texture, frame.sourceRect);
+                g_fps.store(renderer.GetFPS(),         std::memory_order_relaxed);
+                g_frameTimeMs.store(renderer.GetFrameTimeMs(), std::memory_order_relaxed);
+            }
             capture->ReleaseFrame();
-
-            g_fps.store(renderer.GetFPS(),         std::memory_order_relaxed);
-            g_frameTimeMs.store(renderer.GetFrameTimeMs(), std::memory_order_relaxed);
         } else if (capture->IsDead()) {
             NativeLog("RenderThread: capture backend died, exiting render loop");
             g_running.store(false);

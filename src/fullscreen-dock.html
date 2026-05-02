@@ -22,7 +22,7 @@
       user-select: none;
     }
 
-    /* 반투명 어두운 배경 — 게임 클릭 불가 상태임을 시각적으로 표현 */
+    /* 반투명 어두운 배경 */
     .overlay-bg {
       position: fixed;
       inset: 0;
@@ -36,7 +36,7 @@
       to   { opacity: 1; }
     }
 
-    /* 독 바 — 하단 고정 */
+    /* 독 바 — 2행 column 레이아웃 */
     .dock-bar {
       position: fixed;
       bottom: 0;
@@ -44,11 +44,9 @@
       transform: translateX(-50%);
       z-index: 1;
       display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px 14px;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 10px 16px;
       max-width: calc(100vw - 32px);
       background: var(--surface);
       border: 1px solid var(--border);
@@ -63,10 +61,28 @@
       to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
     }
 
-    /* 힌트 라벨 — 독 바 위에 표시 */
+    /* 행 컨테이너 */
+    .dock-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      padding: 4px 0;
+    }
+
+    /* 행 구분선 */
+    .row-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+      flex-shrink: 0;
+    }
+
+    /* 힌트 라벨 */
     .overlay-hint {
       position: fixed;
-      bottom: 76px;
+      bottom: 148px; /* JS에서 독 높이에 맞게 갱신됨 */
       left: 50%;
       transform: translateX(-50%);
       z-index: 1;
@@ -78,9 +94,31 @@
       pointer-events: none;
     }
 
+    /* 단축키 경고 */
+    .shortcut-warn {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      width: max-content;
+      max-width: calc(100vw - 32px);
+      font-size: 11px;
+      font-family: 'Malgun Gothic', sans-serif;
+      color: #fbbf24;
+      background: rgba(120, 80, 0, 0.85);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      border-radius: 8px 8px 0 0;
+      padding: 6px 14px;
+      text-align: center;
+      pointer-events: none;
+    }
+
     .dock-items {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 4px;
     }
 
@@ -215,6 +253,16 @@
       white-space: nowrap;
       margin-left: 2px;
     }
+
+    /* 행 레이블 */
+    .row-label {
+      font-size: 9px;
+      font-family: 'Malgun Gothic', sans-serif;
+      color: rgba(144, 205, 244, 0.3);
+      white-space: nowrap;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -223,24 +271,36 @@
 
   <!-- 독 바 -->
   <div class="dock-bar">
-    <div class="dock-items" id="dockItems"></div>
-    <div class="dock-sep"></div>
-    <div class="stop-btn" id="stopBtn" data-tooltip="풀스크린 종료 (Alt+Shift+F)">
-      <i data-lucide="power-off" style="width:22px;height:22px;"></i>
+    <!-- 1행: 기능 메뉴 -->
+    <div class="dock-row">
+      <div class="dock-items" id="featureItems"></div>
     </div>
-    <div class="dock-sep"></div>
-    <div class="close-btn" id="closeBtn" title="독 닫기 (ESC)">
-      <i data-lucide="x" style="width:16px;height:16px;"></i>
+
+    <div class="row-sep"></div>
+
+    <!-- 2행: 시스템 메뉴 + 제어 버튼 -->
+    <div class="dock-row">
+      <div class="dock-items" id="systemItems"></div>
+      <div class="dock-sep"></div>
+      <div class="stop-btn" id="stopBtn" data-tooltip="풀스크린 종료 (Ctrl+Shift+F)">
+        <i data-lucide="power-off" style="width:22px;height:22px;"></i>
+      </div>
+      <div class="dock-sep"></div>
+      <div class="close-btn" id="closeBtn" title="독 닫기 (ESC)">
+        <i data-lucide="x" style="width:16px;height:16px;"></i>
+      </div>
+      <span class="hint">Ctrl+Shift+D</span>
     </div>
-    <span class="hint">Alt+Shift+O</span>
   </div>
 
   <!-- 배경 클릭 유도 힌트 -->
-  <div class="overlay-hint">배경 클릭 또는 ESC로 닫기</div>
+  <div class="overlay-hint" id="overlayHint">배경 클릭 또는 ESC로 닫기</div>
+
+  <!-- 단축키 등록 실패 경고 (있을 때만 표시) -->
+  <div class="shortcut-warn" id="shortcutWarn" style="display:none"></div>
 
   <script>
     const api = window.electronAPI;
-    const container = document.getElementById('dockItems');
 
     function menuToKey(m) {
       const fn = m.api ?? m.action;
@@ -248,26 +308,78 @@
       return fn.replace(/^(toggle|open)/, '').replace(/^./, c => c.toLowerCase());
     }
 
-    async function buildDock() {
-      const res = await fetch('./assets/data/sidebar_menus.json');
-      const menus = await res.json();
-      // 시스템 버튼(home, overlay-toggle, click-through)과 fullscreen-btn은 dock에서 제외
-      const features = menus
-        .filter(m => !m.isSystem && m.id !== 'fullscreen-btn')
-        .map(m => ({ key: menuToKey(m), icon: m.icon, label: m.label }))
-        .filter(m => m.key);
+    function makeDockBtn(key, icon, label) {
+      const btn = document.createElement('div');
+      btn.className = 'dock-btn';
+      btn.dataset.key = key;
+      btn.setAttribute('data-tooltip', label);
+      btn.innerHTML = `<i data-lucide="${icon}" style="width:22px;height:22px;"></i>`;
+      return btn;
+    }
 
-      features.forEach(({ key, icon, label }) => {
-        const btn = document.createElement('div');
-        btn.className = 'dock-btn';
-        btn.dataset.key = key;
-        btn.setAttribute('data-tooltip', label);
-        btn.innerHTML = `<i data-lucide="${icon}" style="width:22px;height:22px;"></i>`;
-        btn.addEventListener('click', () => api.dockOpenFeature(key));
-        container.appendChild(btn);
-      });
+    function getDockBtn(key) {
+      return document.querySelector(`.dock-btn[data-key="${key}"]`);
+    }
+
+    function updateHintPosition() {
+      const dockBar = document.querySelector('.dock-bar');
+      const hint = document.getElementById('overlayHint');
+      if (dockBar && hint) {
+        hint.style.bottom = (dockBar.getBoundingClientRect().height + 12) + 'px';
+      }
+    }
+
+    async function buildDock() {
+      const [menus, state] = await Promise.all([
+        fetch('./assets/data/sidebar_menus.json').then(r => r.json()),
+        api.dockGetInitialState()
+      ]);
+
+      const hidden = new Set(state.hiddenMenuIds || []);
+
+      // 1행: 기능 메뉴 (비시스템, fullscreen 제외, 숨김 제외)
+      const featureEl = document.getElementById('featureItems');
+      menus
+        .filter(m => !m.isSystem && m.id !== 'fullscreen-btn' && !hidden.has(m.id))
+        .forEach(m => {
+          const key = menuToKey(m);
+          if (!key) return;
+          const btn = makeDockBtn(key, m.icon, m.label);
+          btn.addEventListener('click', () => api.dockOpenFeature(key));
+          featureEl.appendChild(btn);
+        });
+
+      // 2행: 시스템 메뉴 (home 제외, 숨김 제외)
+      const systemEl = document.getElementById('systemItems');
+      menus
+        .filter(m => m.isSystem && m.id !== 'home-btn' && !hidden.has(m.id))
+        .forEach(m => {
+          const key = menuToKey(m);
+          if (!key) return;
+          const btn = makeDockBtn(key, m.icon, m.label);
+          btn.addEventListener('click', () => api.dockOpenFeature(key));
+          systemEl.appendChild(btn);
+        });
 
       lucide.createIcons();
+
+      // 초기 active 상태 동기화
+      // overlay: active = 오버레이 표시 중
+      if (state.overlayVisible) getDockBtn('overlay')?.classList.add('active');
+      // clickThrough: active = 마우스 투과 ON (overlayInteractive가 false일 때)
+      if (!state.overlayInteractive) getDockBtn('clickThrough')?.classList.add('active');
+
+      // 단축키 등록 실패 경고
+      if (state.shortcutWarning) {
+        const warnEl = document.getElementById('shortcutWarn');
+        if (warnEl) {
+          warnEl.textContent = '⚠ ' + state.shortcutWarning;
+          warnEl.style.display = '';
+        }
+      }
+
+      // 독 높이가 확정된 후 hint 위치 갱신
+      requestAnimationFrame(updateHintPosition);
     }
 
     buildDock();
@@ -286,15 +398,13 @@
       if (e.key === 'Escape') api.dockClose();
     });
 
-    // 피처 창 활성화 상태 동기화
+    // 피처 창 활성화 상태 동기화 (모든 행의 버튼 대상)
     api.onDockFeatureOpened((key) => {
-      const btn = container.querySelector(`[data-key="${key}"]`);
-      if (btn) btn.classList.add('active');
+      getDockBtn(key)?.classList.add('active');
     });
 
     api.onDockFeatureClosed((key) => {
-      const btn = container.querySelector(`[data-key="${key}"]`);
-      if (btn) btn.classList.remove('active');
+      getDockBtn(key)?.classList.remove('active');
     });
   </script>
 </body>

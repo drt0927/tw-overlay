@@ -10,6 +10,7 @@ import { buffTimerManager } from './buffTimerManager';
  */
 class ChatLogProcessor {
   private _sessionXP: number = 0;
+  private _killCount: number = 0;
   private _startTime: number = Date.now();
   private _xpHistory: { timestamp: number, amount: number }[] = [];
   private _minuteHistory: number[] = []; // 최근 30분간의 분당 획득량
@@ -74,11 +75,12 @@ class ChatLogProcessor {
       this.checkMinuteRollover();
       this._sessionXP += data.amount;
       this._currentMinuteXP += data.amount;
+      if (data.amount > 0) this._killCount += 1;
 
       const allWindows = BrowserWindow.getAllWindows();
       const elapsedMins = (Date.now() - this._startTime) / 60000;
       const epm = Math.floor(this._sessionXP / Math.max(1, elapsedMins));
-      
+
       // 최근 5분 이동 평균 계산 (더 민감한 지표용)
       const recentMins = Math.min(5, this._minuteHistory.length);
       let movingEpm = epm;
@@ -87,10 +89,11 @@ class ChatLogProcessor {
         movingEpm = Math.floor(recentSum / (recentMins + (Date.now() % 60000 / 60000)));
       }
 
-      const xpPayload = { 
-        total: this._sessionXP, 
-        epm, 
+      const xpPayload = {
+        total: this._sessionXP,
+        epm,
         movingEpm,
+        killCount: this._killCount,
         lastGain: data.amount,
         history: [...this._minuteHistory, this._currentMinuteXP]
       };
@@ -152,6 +155,7 @@ class ChatLogProcessor {
 
   public resetXp(): void {
     this._sessionXP = 0;
+    this._killCount = 0;
     this._startTime = Date.now();
     this._minuteHistory = [];
     this._currentMinuteXP = 0;
@@ -185,6 +189,7 @@ class ChatLogProcessor {
       total: this._sessionXP,
       epm,
       movingEpm,
+      killCount: this._killCount,
       startTime: this._startTime,
       history: [...this._minuteHistory, this._currentMinuteXP]
     };

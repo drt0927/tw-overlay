@@ -315,6 +315,18 @@
         </div>
       </div>
 
+      <!-- 처치 수 및 마리당 경험치 (2단) -->
+      <div class="stat-grid-sub">
+        <div class="stat-card">
+          <div class="stat-label">총 처치 수</div>
+          <div class="stat-value !text-[17px] text-amber-300" id="stat-kill-count">0<span class="unit-sm">마리</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">마리당 경험치</div>
+          <div class="stat-value !text-[17px] text-amber-200" id="stat-xp-per-kill">—</div>
+        </div>
+      </div>
+
       <!-- 정수 기대값 카드 -->
       <div class="stat-card essence-card">
         <div class="flex justify-between items-center">
@@ -545,6 +557,12 @@
       if (document.getElementById('stat-total')) document.getElementById('stat-total').innerHTML = formatXP(data.total || 0);
       if (document.getElementById('stat-epm')) document.getElementById('stat-epm').innerHTML = formatXP(data.epm || 0);
       if (document.getElementById('stat-moving-epm')) document.getElementById('stat-moving-epm').innerHTML = formatXP(data.movingEpm || 0);
+
+      const killCount = data.killCount || 0;
+      if (document.getElementById('stat-kill-count'))
+        document.getElementById('stat-kill-count').innerHTML = killCount.toLocaleString() + '<span class="unit-sm">마리</span>';
+      if (document.getElementById('stat-xp-per-kill'))
+        document.getElementById('stat-xp-per-kill').innerHTML = killCount > 0 ? formatXP(Math.floor((data.total || 0) / killCount)) : '—';
 
       // 정수 계산 (100억 = 1정수)
       const ESSENCE_XP = 10000000000;

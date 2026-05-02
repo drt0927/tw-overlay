@@ -62,15 +62,25 @@ app.whenReady().then(() => {
   ipcHandlers.register();
   tracker.start();
   tracker.setForegroundChangeListener((isGameFocused, focusedHwndStr) => {
-    const electronHwnds = wm.getAllWindowHwnds();
-    const isAppFocused = electronHwnds.includes(focusedHwndStr);
+    const isAppFocused = wm.isAnyElectronWindowFocused(focusedHwndStr);
     sm.updateFocusState(isGameFocused || isAppFocused);
+    if (!isGameFocused && !isAppFocused) {
+      wm.temporarilyHideOverlays();
+    } else if (isGameFocused) {
+      wm.restoreOverlays();
+    }
   });
 
   tracker.setGameForegroundListener((_gameHwndStr) => {
     if (fullscreenManager.isFullscreenActive()) {
+      // BringToTop(C++)의 SetForegroundWindow(game) 부작용으로 게임이 cppHwnd 위로 올라오는 것 방어.
+      // bringWindowToTop(HWND_TOP)은 cppHwnd를 TOPMOST에서 강등시키므로 사용 금지.
       const scalingHwnd = fullscreenManager.getScalingHwnd();
       if (scalingHwnd) tracker.placeGameBelowWindow(scalingHwnd);
+      const ow = wm.getOverlayWindow();
+      if (ow && !ow.isDestroyed() && ow.isVisible()) {
+        ow.setAlwaysOnTop(true, 'screen-saver');
+      }
     }
   });
 

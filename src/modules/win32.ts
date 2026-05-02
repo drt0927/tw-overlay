@@ -38,7 +38,9 @@ export const GetWindowThreadProcessId = user32.func('__stdcall', 'GetWindowThrea
 export const EnumWindows = user32.func('__stdcall', 'EnumWindows', 'bool', ['void *', 'intptr']);
 export const GetWindowTextW = user32.func('__stdcall', 'GetWindowTextW', 'int', ['intptr', koffi.out(koffi.pointer('char16')), 'int']);
 export const GetWindowLongW = user32.func('__stdcall', 'GetWindowLongW', 'long', ['intptr', 'int']);
+export const SetWindowLongPtrW = user32.func('__stdcall', 'SetWindowLongPtrW', 'intptr', ['intptr', 'int', 'intptr']);
 export const GetAsyncKeyState = user32.func('__stdcall', 'GetAsyncKeyState', 'short', ['int']);
+export const SetWindowDisplayAffinity = user32.func('__stdcall', 'SetWindowDisplayAffinity', 'bool', ['intptr', 'uint32']);
 
 // --- DWM API ---
 export const DwmGetWindowAttribute = dwmapi.func('__stdcall', 'DwmGetWindowAttribute', 'int', ['intptr', 'uint32', koffi.out(koffi.pointer(RECT)), 'uint32']);
@@ -80,9 +82,13 @@ export const SWP_DEFERERASE = 0x2000;
 export const SWP_NOCOPYBITS = 0x0100;
 export const SWP_NOREDRAW = 0x0008;
 
+export const WDA_NONE = 0x00000000;
+export const WDA_EXCLUDEFROMCAPTURE = 0x00000011;
+
 export const GW_HWNDPREV = 3;
 
 export const GWL_EXSTYLE = -20;
+export const GWLP_HWNDPARENT = -8; // top-level 창의 owner HWND
 export const WS_EX_TOPMOST = 0x00000008;
 
 export const DWMWA_EXTENDED_FRAME_BOUNDS = 9;

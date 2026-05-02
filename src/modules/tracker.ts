@@ -258,6 +258,60 @@ export function placeGameBelowWindow(insertAfterHwndStr: string): void {
     }
 }
 
+/** Electron BrowserWindow를 WGC/DXGI 캡처에서 제외 — duplication 방지 */
+export function setWindowCaptureExclusion(hwndBuf: Buffer, exclude: boolean): void {
+    try {
+        const hwnd = hwndBuf.readBigUInt64LE();
+        const affinity = exclude ? win32.WDA_EXCLUDEFROMCAPTURE : win32.WDA_NONE;
+        win32.SetWindowDisplayAffinity(hwnd, affinity);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log(`[TRACKER] setWindowCaptureExclusion failed: ${msg}`);
+    }
+}
+
+/** C++ 스케일링 창을 non-TOPMOST Z-order 최상단(HWND_TOP)으로 올림 */
+export function bringWindowToTop(hwndStr: string): void {
+    try {
+        const hwnd = BigInt(hwndStr);
+        const flags = win32.SWP_NOMOVE | win32.SWP_NOSIZE | win32.SWP_NOACTIVATE | win32.SWP_NOOWNERZORDER;
+        win32.SetWindowPos(hwnd, win32.HWND_TOP, 0, 0, 0, 0, flags);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log(`[TRACKER] bringWindowToTop failed: ${msg}`);
+    }
+}
+
+/**
+ * hwndBuf 창의 Win32 owner를 ownerHwndStr로 설정.
+ * top-level 창의 owner가 TOPMOST이면 owned 창도 항상 owner 위에 표시됨 (시스템 레벨 Z-order 보장).
+ * ownerHwndStr = '0' 이면 ownership 해제.
+ *
+ * 주의: owner 창이 파괴되면 owned 창도 자동 소멸하므로,
+ *       owner 파괴 전에 반드시 clearWindowOwner를 호출해야 한다.
+ */
+export function setWindowOwner(hwndBuf: Buffer, ownerHwndStr: string): void {
+    try {
+        const hwnd = hwndBuf.readBigUInt64LE();
+        const ownerHwnd = BigInt(ownerHwndStr);
+        win32.SetWindowLongPtrW(hwnd, win32.GWLP_HWNDPARENT, ownerHwnd);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log(`[TRACKER] setWindowOwner failed: ${msg}`);
+    }
+}
+
+/** hwndBuf 창의 Win32 owner 해제 (파괴 전 반드시 호출) */
+export function clearWindowOwner(hwndBuf: Buffer): void {
+    try {
+        const hwnd = hwndBuf.readBigUInt64LE();
+        win32.SetWindowLongPtrW(hwnd, win32.GWLP_HWNDPARENT, 0n);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log(`[TRACKER] clearWindowOwner failed: ${msg}`);
+    }
+}
+
 export function focusGameWindow(): void {
     if (!cachedHwnd || !isHwndValid(cachedHwnd)) return;
     try {

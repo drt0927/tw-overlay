@@ -7,5 +7,7 @@ namespace InputForwarder {
                int clientOriginX, int clientOriginY, int clientW, int clientH);
     void Stop();
     void SetOverlayActive(bool active);
+    bool IsOverlayActive();
     void UpdateFrame();
+    HWND GetGameHwnd();
 }

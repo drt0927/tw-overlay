@@ -4,19 +4,17 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.12.3-violet.svg)
+![Version](https://img.shields.io/badge/version-1.12.4-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.12.3 (2026.05.10)
-이번 업데이트는 **어벤던로드 및 팔색조 언덕 전용 트래커**를 추가하고 모듈 구조를 대규모로 리팩토링했습니다.
+## 🚀 최신 버전: v1.12.4 (2026.05.10)
+이번 업데이트는 **어벤던로드 트래커의 안정성 및 구조적 분리**를 주요 목표로 합니다.
 
-- **🔮 어벤던로드 트래커**: 어벤던로드 입장 횟수, 비용, 마정석 획득을 실시간으로 추적하고 10회 도달 시 화면 플래시와 대형 알림을 표시합니다.
-- **🦅 팔색조 언덕 5회 알림**: 팔색조 언덕에서 5회 클리어 시 오버레이 화면에 알림을 띄웁니다. 남은 에너지를 계산해 누락 없는 동기화를 지원합니다.
-- **🛠 리팩토링 및 안정성 강화**: Scam Monitor 및 XP Tracker의 모듈 아키텍처를 세분화(Facade 패턴 적용)하여 유지보수성을 극대화했습니다.
-- **📊 통계 및 로그 최적화**: Google Analytics 4(GA4) 연동을 개선해 하트비트 세션 트래킹 및 에러 수집을 추가하였고, 프로덕션 환경의 로그를 간소화했습니다.
+- **🔮 한글/띄어쓰기 패턴 완벽 대응**: "1억 40만 Seed" 및 "횟 수" 등 게임 내 다양하게 나타나는 한글 입장료 로그 정규식을 고도화하여 인식 오류를 해결했습니다.
+- **🏗 상태 관리 아키텍처 개편**: 어벤던로드 트래커의 전역 ON/OFF(`isEnabled`)와 화면 표시(`isActive`) 계층을 명확하게 분리하여, 영구적인 제어와 즉각적인 화면 숨김(임시 제어)이 충돌하지 않도록 리팩토링했습니다.
 
 ---
 

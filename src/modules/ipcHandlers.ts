@@ -300,6 +300,12 @@ export function register(): void {
     chatLogProcessor.forceAbandonedVisible(visible);
   });
 
+  // 어벤던로드 추적기능 활성/비활성
+  ipcMain.on('abandoned-set-enabled', async (_e, enabled: boolean) => {
+    const { abandonedTracker } = await import('./abandonedTracker');
+    abandonedTracker.setEnabled(enabled);
+  });
+
   // 어벤던로드 즉시 숨김 (isActive 유지, 다음 입장 로그 시 재표시)
   ipcMain.on('abandoned-hide-now', () => {
     BrowserWindow.getAllWindows().forEach(win => {

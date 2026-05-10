@@ -270,7 +270,7 @@
 
     const SEED_PER_POUCH = 500000;
     let config = null;
-    let currentOverlayVisible = false;
+    let currentOverlayEnabled = true;
 
     const GRADE_IMGS = {
       '하급': 'assets/items/magic_stone/하급마정석.png',
@@ -372,8 +372,8 @@
         profitEl.className = `font-black font-mono text-[11px] ${state.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
       }
 
-      currentOverlayVisible = state.isActive;
-      updateOverlayToggleBtn(state.isActive);
+      currentOverlayEnabled = state.isEnabled;
+      updateOverlayToggleBtn(state.isEnabled);
     }
 
     function updateOverlayToggleBtn(visible) {
@@ -395,9 +395,9 @@
     }
 
     function toggleOverlay() {
-      const next = !currentOverlayVisible;
-      if (window.electronAPI && window.electronAPI.abandonedForceVisible) {
-        window.electronAPI.abandonedForceVisible(next);
+      const next = !currentOverlayEnabled;
+      if (window.electronAPI && window.electronAPI.abandonedSetEnabled) {
+        window.electronAPI.abandonedSetEnabled(next);
       }
     }
 

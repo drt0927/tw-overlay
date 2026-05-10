@@ -146,64 +146,12 @@ class ChatParser extends EventEmitter {
     const timestamp = timeMatch[1];
     const cleanMsg = this.stripHtml(rawLine.replace(/\[.*?\]/, '')); // 시간 부분 제외하고 HTML 제거
 
-    // A. SEED 획득 (콘텐츠 보상 및 일반 습득 모두 대응)
-    if (cleanMsg.includes('SEED를') || cleanMsg.includes('Seed를') || cleanMsg.includes('시드를')) {
-        // "보상으로 1500만 SEED", "[300000]SEED", "1500만 SEED를 획득" 등
-        const amountMatch = cleanMsg.match(/(?:보상으로\s+)?([\[\]\d,억만\s]+)(?:SEED|Seed|시드)/i);
-        if (amountMatch) {
-            const amount = this.parseKoreanNumber(amountMatch[1]);
-            if (amount > 0) {
-                this.emit('SEED_GAINED', { date: this._currentDate, timestamp, amount, message: cleanMsg });
-                return;
-            }
-        }
-    }
-
-    // B. 경험치 변동
-    if (cleanMsg.includes('경험치가')) {
-        const xpMatch = cleanMsg.match(/경험치가\s+([\[\]\d,억만\s]+)\s*(올랐|상승|감소|차감)/);
-        if (xpMatch) {
-            const amount = this.parseKoreanNumber(xpMatch[1]);
-            const isGain = xpMatch[2] === '올랐' || xpMatch[2] === '상승';
-            this.emit('XP_CHANGED', { date: this._currentDate, timestamp, amount: isGain ? amount : -amount, message: cleanMsg });
-            return;
-        }
-    }
-
-    // D. 외치기
-    if (rawLine.includes('color="#c896c8"') && cleanMsg.includes('외치기 :')) {
-        const shoutContent = cleanMsg.replace('외치기 :', '').trim();
-        const userShoutSuffixRegex = /\[([^\]]+)\]$/;
-        const userMatch = shoutContent.match(userShoutSuffixRegex);
-
-        if (userMatch) {
-            const sender = userMatch[1];
-            const pureMessage = shoutContent.replace(userShoutSuffixRegex, '').trim();
-            this.emit('TRADE_SHOUT', { date: this._currentDate, timestamp, sender, message: pureMessage });
-        }
-        return;
-    }
-
-    // E. 아이템 획득
-    if (cleanMsg.includes('획득 하였습니다') || cleanMsg.includes('획득하였습니다')) {
-        // 어벤던로드 마정석 획득 특화 (예: "하급 마정석 1개를 획득 하였습니다.")
-        const magicStoneGainMatch = cleanMsg.match(/(하급|중급|상급|최상급)\s+마정석\s+(\d+)개를\s+획득\s+하였습니다/);
-        if (magicStoneGainMatch) {
-            const grade = magicStoneGainMatch[1].trim();
-            const count = parseInt(magicStoneGainMatch[2], 10);
-            this.emit('MAGIC_STONE_GAIN', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });
-            return;
-        }
-        this.emit('ITEM_LOOTED', { date: this._currentDate, timestamp, message: cleanMsg });
-        return;
-    }
-
     // G. 어벤던로드 특화 패턴
-    // 1. 입장료 (예: "입장료 5680만 Seed를 지불 하였습니다.")
+    // 1. 입장료 (예: "입장료 5680만 Seed를 지불 하였습니다.", "입장료 1억 40만 Seed를 지불 하였습니다.")
     if (cleanMsg.includes('입장료') && (cleanMsg.toLowerCase().includes('seed') || cleanMsg.includes('시드'))) {
-        const feeMatch = cleanMsg.match(/입장료\s+([\d,]+)만\s+Seed를\s+지불\s+하였습니다/i);
+        const feeMatch = cleanMsg.match(/입장료\s+([\d,\s억만]+?)\s*Seed를\s+지불\s+하였습니다/i);
         if (feeMatch) {
-            const amount = this.parseKoreanNumber(feeMatch[1] + '만');
+            const amount = this.parseKoreanNumber(feeMatch[1]);
             this.emit('ABANDONED_FEE', { date: this._currentDate, timestamp, amount, message: cleanMsg });
             return;
         }
@@ -211,7 +159,7 @@ class ChatParser extends EventEmitter {
 
     // 2. 도전 횟수 (예: "이번 주 어밴던로드 카디프 지역의 도전 횟수는 5번 입니다.")
     if (cleanMsg.includes('어벤던로드') || cleanMsg.includes('어밴던로드')) {
-        const entryMatch = cleanMsg.match(/이번\s+주\s+어[벤밴]던로드\s+(.*?)\s+지역의\s+도전\s+횟수는\s+(\d+)번\s+입니다/);
+        const entryMatch = cleanMsg.match(/이번\s+주\s+어[벤밴]던로드\s+(.*?)\s+지역의\s+도전\s+횟\s*수\s*는\s+(\d+)\s*번\s*입니다/);
         if (entryMatch) {
             const region = entryMatch[1].trim();
             const count = parseInt(entryMatch[2], 10);
@@ -263,6 +211,58 @@ class ChatParser extends EventEmitter {
             this.emit('MAGIC_STONE_LOSS', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });
             return;
         }
+    }
+
+    // A. SEED 획득 (콘텐츠 보상 및 일반 습득 모두 대응)
+    if (cleanMsg.includes('SEED를') || cleanMsg.includes('Seed를') || cleanMsg.includes('시드를')) {
+        // "보상으로 1500만 SEED", "[300000]SEED", "1500만 SEED를 획득" 등
+        const amountMatch = cleanMsg.match(/(?:보상으로\s+)?([\[\]\d,억만\s]+)(?:SEED|Seed|시드)/i);
+        if (amountMatch) {
+            const amount = this.parseKoreanNumber(amountMatch[1]);
+            if (amount > 0) {
+                this.emit('SEED_GAINED', { date: this._currentDate, timestamp, amount, message: cleanMsg });
+                return;
+            }
+        }
+    }
+
+    // B. 경험치 변동
+    if (cleanMsg.includes('경험치가')) {
+        const xpMatch = cleanMsg.match(/경험치가\s+([\[\]\d,억만\s]+)\s*(올랐|상승|감소|차감)/);
+        if (xpMatch) {
+            const amount = this.parseKoreanNumber(xpMatch[1]);
+            const isGain = xpMatch[2] === '올랐' || xpMatch[2] === '상승';
+            this.emit('XP_CHANGED', { date: this._currentDate, timestamp, amount: isGain ? amount : -amount, message: cleanMsg });
+            return;
+        }
+    }
+
+    // D. 외치기
+    if (rawLine.includes('color="#c896c8"') && cleanMsg.includes('외치기 :')) {
+        const shoutContent = cleanMsg.replace('외치기 :', '').trim();
+        const userShoutSuffixRegex = /\[([^\]]+)\]$/;
+        const userMatch = shoutContent.match(userShoutSuffixRegex);
+
+        if (userMatch) {
+            const sender = userMatch[1];
+            const pureMessage = shoutContent.replace(userShoutSuffixRegex, '').trim();
+            this.emit('TRADE_SHOUT', { date: this._currentDate, timestamp, sender, message: pureMessage });
+        }
+        return;
+    }
+
+    // E. 아이템 획득
+    if (cleanMsg.includes('획득 하였습니다') || cleanMsg.includes('획득하였습니다')) {
+        // 어벤던로드 마정석 획득 특화 (예: "하급 마정석 1개를 획득 하였습니다.")
+        const magicStoneGainMatch = cleanMsg.match(/(하급|중급|상급|최상급)\s+마정석\s+(\d+)개를\s+획득\s+하였습니다/);
+        if (magicStoneGainMatch) {
+            const grade = magicStoneGainMatch[1].trim();
+            const count = parseInt(magicStoneGainMatch[2], 10);
+            this.emit('MAGIC_STONE_GAIN', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });
+            return;
+        }
+        this.emit('ITEM_LOOTED', { date: this._currentDate, timestamp, message: cleanMsg });
+        return;
     }
 
     // F. 버프 사용 감지

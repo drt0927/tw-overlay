@@ -268,6 +268,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   abandonedGetState: () => ipcRenderer.invoke('abandoned-get-state'),
   abandonedForceVisible: (visible: boolean) => ipcRenderer.send('abandoned-force-visible', visible),
+  abandonedSetEnabled: (enabled: boolean) => ipcRenderer.send('abandoned-set-enabled', enabled),
   abandonedHideNow: () => ipcRenderer.send('abandoned-hide-now'),
   setAbandonedAutoHide: (minutes: number) => ipcRenderer.send('set-abandoned-autohide', minutes),
 

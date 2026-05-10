@@ -12,6 +12,7 @@ class AbandonedTracker {
     regions: {},
     profit: 0,
     isActive: false,
+    isEnabled: true,
     stoneGains: {},
     stoneLosses: {},
     totalFee: 0,
@@ -31,13 +32,19 @@ class AbandonedTracker {
   };
 
   public start(): void {
+    const currentConfig = config.load();
+    this._abandonedState.isEnabled = currentConfig.abandonedEnabled ?? true;
+
     // 입장료 임시 저장
     chatParser.on('ABANDONED_FEE', (data) => {
+      if (!this._abandonedState.isEnabled) return;
       this._pendingAbandonedFee = data.amount;
     });
 
     // 도전 횟수 감지
     chatParser.on('ABANDONED_ENTRY', (data) => {
+      if (!this._abandonedState.isEnabled) return;
+
       const fee = this._pendingAbandonedFee;
       this._pendingAbandonedFee = 0;
       if (fee > 0) {
@@ -65,6 +72,8 @@ class AbandonedTracker {
 
     // 마정석 획득
     chatParser.on('MAGIC_STONE_GAIN', (data) => {
+      if (!this._abandonedState.isEnabled) return;
+
       const gradeKey = data.grade.trim();
       const unitValue = this.MAGIC_STONE_VALUES[gradeKey] || 0;
       this._abandonedState.profit += (unitValue * data.count);
@@ -80,6 +89,8 @@ class AbandonedTracker {
 
     // 마정석 소실
     chatParser.on('MAGIC_STONE_LOSS', (data) => {
+      if (!this._abandonedState.isEnabled) return;
+
       const gradeKey = data.grade.trim();
       const unitValue = this.MAGIC_STONE_VALUES[gradeKey] || 0;
       this._abandonedState.profit -= (unitValue * data.count);
@@ -128,9 +139,21 @@ class AbandonedTracker {
     this.notifyAbandonedUpdate();
   }
 
+  public setEnabled(enabled: boolean): void {
+    this._abandonedState.isEnabled = enabled;
+    config.save({ abandonedEnabled: enabled });
+    if (!enabled) {
+      this.forceVisible(false);
+      this._pendingAbandonedFee = 0;
+    } else {
+      this.notifyAbandonedUpdate();
+    }
+  }
+
   public reset(): void {
     this._abandonedState = {
       regions: {}, profit: 0, isActive: false,
+      isEnabled: this._abandonedState.isEnabled,
       stoneGains: {}, stoneLosses: {}, totalFee: 0,
       currentRegion: '', regionDetails: {},
     };

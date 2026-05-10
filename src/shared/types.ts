@@ -25,6 +25,7 @@ export interface AbandonedRoadState {
     regions: Record<string, number>;
     profit: number;
     isActive: boolean;
+    isEnabled: boolean;
     stoneGains: Record<string, number>;
     stoneLosses: Record<string, number>;
     totalFee: number;
@@ -219,6 +220,7 @@ export interface AppConfig {
 
     // --- Abandoned Road Settings ---
     abandonedAutoHideMinutes?: number;
+    abandonedEnabled?: boolean;
 
     // --- Scam Detector Settings ---
     scamDetectorEnabled?: boolean;

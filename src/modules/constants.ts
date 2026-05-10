@@ -119,6 +119,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   essenceAlertSound: 'orb.mp3',
   essenceAlertVolume: 70,
   abandonedAutoHideMinutes: 10,
+  abandonedEnabled: true,
 
 };
 

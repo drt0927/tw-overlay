@@ -230,6 +230,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('essence-alert');
     ipcRenderer.on('essence-alert', () => callback());
   },
+  onPittaHillAlert: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('pitta-alert');
+    ipcRenderer.on('pitta-alert', () => callback());
+  },
   onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
     ipcRenderer.removeAllListeners('scam-alert');
     ipcRenderer.on('scam-alert', (_event, result) => callback(result));
@@ -250,6 +254,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('scam-analysis-token');
     ipcRenderer.on('scam-analysis-token', (_event, data) => callback(data));
   },
+  onAbandonedUpdate: (callback: (state: any) => void) => {
+    ipcRenderer.removeAllListeners('abandoned-update');
+    ipcRenderer.on('abandoned-update', (_event, state) => callback(state));
+  },
+  onAbandonedAlert: (callback: (data: { region: string, count: number }) => void) => {
+    ipcRenderer.removeAllListeners('abandoned-alert');
+    ipcRenderer.on('abandoned-alert', (_event, data) => callback(data));
+  },
+  onAbandonedHideNow: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('abandoned-hide-now');
+    ipcRenderer.on('abandoned-hide-now', () => callback());
+  },
+  abandonedGetState: () => ipcRenderer.invoke('abandoned-get-state'),
+  abandonedForceVisible: (visible: boolean) => ipcRenderer.send('abandoned-force-visible', visible),
+  abandonedHideNow: () => ipcRenderer.send('abandoned-hide-now'),
+  setAbandonedAutoHide: (minutes: number) => ipcRenderer.send('set-abandoned-autohide', minutes),
 
   cleanupAllListeners: () => {
     const events = [
@@ -259,7 +279,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'boss-times-data', 'play-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
-      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done',
+      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));

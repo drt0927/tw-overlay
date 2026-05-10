@@ -31,7 +31,240 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .xp-hud.hidden { display: none; }
+    .xp-hud.hidden {
+      display: none;
+    }
+
+    /* ── 어벤던로드 위젯 ── */
+    .abandoned-widget {
+      position: fixed;
+      padding: 10px 16px;
+      background: rgba(15, 18, 30, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      min-width: 160px;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      z-index: 50;
+      /* 초기 위치는 스크립트에서 설정됨 */
+    }
+
+    .abandoned-widget.active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .abandoned-widget.hidden {
+      display: none !important;
+    }
+
+    .region-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profit-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+    }
+
+    /* ── 어벤던로드 10회 화면 플래시 ── */
+    .abandoned-flash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.28) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 99;
+      opacity: 0;
+    }
+
+    .abandoned-flash.show {
+      animation: ar-flash 0.9s ease-out forwards;
+    }
+
+    @keyframes ar-flash {
+      0%   { opacity: 0; }
+      20%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* ── 어벤던로드 10회 대형 알림 ── */
+    .abandoned-alert-overlay {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      pointer-events: none;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(20, 14, 4, 0.97) 0%, rgba(10, 8, 20, 0.97) 100%);
+      border: 1.5px solid rgba(251, 191, 36, 0.65);
+      border-radius: 24px;
+      padding: 28px 52px 24px;
+      box-shadow:
+        0 0 0 1px rgba(251, 191, 36, 0.12) inset,
+        0 0 36px rgba(251, 191, 36, 0.4),
+        0 0 80px rgba(251, 191, 36, 0.14),
+        0 24px 64px rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(20px);
+      white-space: nowrap;
+    }
+
+    .abandoned-alert-overlay.show {
+      animation: ar-alert-show 4.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* ── 팔색조 언덕 5회 대형 알림 ── */
+    .pitta-alert-overlay {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      pointer-events: none;
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(14, 20, 4, 0.97) 0%, rgba(8, 20, 10, 0.97) 100%);
+      border: 1.5px solid rgba(74, 222, 128, 0.65);
+      border-radius: 24px;
+      padding: 28px 52px 24px;
+      box-shadow:
+        0 0 0 1px rgba(74, 222, 128, 0.12) inset,
+        0 0 36px rgba(74, 222, 128, 0.4),
+        0 0 80px rgba(74, 222, 128, 0.14),
+        0 24px 64px rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(20px);
+      white-space: nowrap;
+    }
+
+    .pitta-alert-overlay.show {
+      animation: ar-alert-show 5.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .pitta-bird-wrap {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(74, 222, 128, 0.1);
+      border: 1.5px solid rgba(74, 222, 128, 0.35);
+      border-radius: 18px;
+      margin-bottom: 4px;
+    }
+
+    .pitta-bird-icon {
+      width: 34px;
+      height: 34px;
+      color: #4ade80;
+      filter:
+        drop-shadow(0 0 10px rgba(74, 222, 128, 1))
+        drop-shadow(0 0 24px rgba(74, 222, 128, 0.55));
+    }
+
+    .pitta-title {
+      font-size: 38px;
+      font-weight: 900;
+      color: #f0fdf4;
+      text-shadow:
+        0 0 18px rgba(74, 222, 128, 1),
+        0 0 40px rgba(74, 222, 128, 0.55),
+        0 2px 4px rgba(0, 0, 0, 0.95);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .pitta-badge {
+      font-size: 13px;
+      font-weight: 900;
+      color: #4ade80;
+      background: rgba(74, 222, 128, 0.14);
+      border: 1px solid rgba(74, 222, 128, 0.32);
+      padding: 3px 18px;
+      border-radius: 20px;
+      letter-spacing: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 4px;
+    }
+
+    @keyframes ar-alert-show {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.35); }
+      12%  { opacity: 1; transform: translate(-50%, -50%) scale(1.07); }
+      20%  { transform: translate(-50%, -50%) scale(0.97); }
+      27%  { transform: translate(-50%, -50%) scale(1.02); }
+      34%  { transform: translate(-50%, -50%) scale(1.0); }
+      74%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+      90%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.06); }
+    }
+
+    .alert-gem-wrap {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1.5px solid rgba(251, 191, 36, 0.35);
+      border-radius: 18px;
+      margin-bottom: 4px;
+    }
+
+    .alert-gem-icon {
+      width: 34px;
+      height: 34px;
+      color: #fbbf24;
+      filter:
+        drop-shadow(0 0 10px rgba(251, 191, 36, 1))
+        drop-shadow(0 0 24px rgba(251, 191, 36, 0.55));
+    }
+
+    .alert-crown-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: rgba(251, 191, 36, 0.65);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .alert-region-name {
+      font-size: 38px;
+      font-weight: 900;
+      color: #fef3c7;
+      text-shadow:
+        0 0 18px rgba(251, 191, 36, 1),
+        0 0 40px rgba(251, 191, 36, 0.55),
+        0 2px 4px rgba(0, 0, 0, 0.95);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .alert-count-badge {
+      font-size: 13px;
+      font-weight: 900;
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.14);
+      border: 1px solid rgba(251, 191, 36, 0.32);
+      padding: 3px 18px;
+      border-radius: 20px;
+      letter-spacing: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 4px;
+    }
 
     /* ── 버프 타이머 HUD ── */
     .buff-hud {
@@ -66,8 +299,15 @@
     }
 
     @keyframes badge-enter {
-      from { opacity: 0; transform: translateY(10px) scale(0.75); }
-      to   { opacity: 1; transform: translateY(0)    scale(1); }
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.75);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .buff-badge.leaving {
@@ -75,8 +315,15 @@
     }
 
     @keyframes badge-exit {
-      from { opacity: 1; transform: translateY(0)   scale(1); }
-      to   { opacity: 0; transform: translateY(-8px) scale(0.82); }
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.82);
+      }
     }
 
     /* ── 아이콘 ── */
@@ -99,22 +346,41 @@
     }
 
     /* 카테고리별 폴백 */
-    .buff-badge-icon.cat-exp      { background: rgba(34,197,94,0.22);   color: #4ade80; }
-    .buff-badge-icon.cat-drop     { background: rgba(168,85,247,0.22);  color: #c084fc; }
-    .buff-badge-icon.cat-stats    { background: rgba(59,130,246,0.22);  color: #60a5fa; }
-    .buff-badge-icon.cat-damage   { background: rgba(249,115,22,0.22);  color: #fb923c; }
-    .buff-badge-icon.cat-utility  { background: rgba(20,184,166,0.22);  color: #2dd4bf; }
+    .buff-badge-icon.cat-exp {
+      background: rgba(34, 197, 94, 0.22);
+      color: #4ade80;
+    }
+
+    .buff-badge-icon.cat-drop {
+      background: rgba(168, 85, 247, 0.22);
+      color: #c084fc;
+    }
+
+    .buff-badge-icon.cat-stats {
+      background: rgba(59, 130, 246, 0.22);
+      color: #60a5fa;
+    }
+
+    .buff-badge-icon.cat-damage {
+      background: rgba(249, 115, 22, 0.22);
+      color: #fb923c;
+    }
+
+    .buff-badge-icon.cat-utility {
+      background: rgba(20, 184, 166, 0.22);
+      color: #2dd4bf;
+    }
 
     /* ── 하단 그라디언트 스크림 + 시간 ── */
     .buff-badge-scrim {
       position: absolute;
-      bottom: 0; left: 0; right: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
       height: 50%;
-      background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        rgba(5, 5, 15, 0.85) 100%
-      );
+      background: linear-gradient(to bottom,
+          transparent 0%,
+          rgba(5, 5, 15, 0.85) 100%);
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -129,7 +395,7 @@
       color: #e2e8f0;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.3px;
-      text-shadow: 0 1px 2px rgba(0,0,0,1);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 1);
       line-height: 1;
     }
 
@@ -187,7 +453,7 @@
       opacity: 0;
       transition: opacity 0.15s ease, transform 0.15s ease;
       z-index: 10;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
     .buff-badge:hover .buff-tooltip {
@@ -206,9 +472,18 @@
         0 0 0 1px rgba(168, 85, 247, 0.15) inset,
         0 4px 12px rgba(0, 0, 0, 0.35);
     }
-    .buff-badge.phase-normal .ring-fill      { stroke: rgba(168, 85, 247, 0.75); }
-    .buff-badge.phase-normal .buff-badge-time { color: #e2e8f0; }
-    .buff-badge.phase-normal .buff-badge-tint { opacity: 0; }
+
+    .buff-badge.phase-normal .ring-fill {
+      stroke: rgba(168, 85, 247, 0.75);
+    }
+
+    .buff-badge.phase-normal .buff-badge-time {
+      color: #e2e8f0;
+    }
+
+    .buff-badge.phase-normal .buff-badge-tint {
+      opacity: 0;
+    }
 
     /* WARN1: 노란색 */
     .buff-badge.phase-warn1 {
@@ -218,9 +493,16 @@
         0 0 14px rgba(234, 179, 8, 0.25),
         0 4px 12px rgba(0, 0, 0, 0.35);
     }
-    .buff-badge.phase-warn1 .ring-fill       { stroke: rgba(234, 179, 8, 0.9); }
-    .buff-badge.phase-warn1 .buff-badge-time  { color: #fbbf24; }
-    .buff-badge.phase-warn1 .buff-badge-tint  {
+
+    .buff-badge.phase-warn1 .ring-fill {
+      stroke: rgba(234, 179, 8, 0.9);
+    }
+
+    .buff-badge.phase-warn1 .buff-badge-time {
+      color: #fbbf24;
+    }
+
+    .buff-badge.phase-warn1 .buff-badge-tint {
       background: rgba(234, 179, 8, 0.07);
       opacity: 1;
     }
@@ -232,9 +514,16 @@
         badge-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both,
         badge-danger-pulse 0.65s ease-in-out infinite;
     }
-    .buff-badge.phase-warn2 .ring-fill       { stroke: rgba(239, 68, 68, 1.0); }
-    .buff-badge.phase-warn2 .buff-badge-time  { color: #f87171; }
-    .buff-badge.phase-warn2 .buff-badge-tint  {
+
+    .buff-badge.phase-warn2 .ring-fill {
+      stroke: rgba(239, 68, 68, 1.0);
+    }
+
+    .buff-badge.phase-warn2 .buff-badge-time {
+      color: #f87171;
+    }
+
+    .buff-badge.phase-warn2 .buff-badge-tint {
       background: rgba(239, 68, 68, 0.1);
       opacity: 1;
     }
@@ -268,25 +557,79 @@
     }
 
     @keyframes essence-alert-anim {
-      0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.88); }
-      4%   { opacity: 1;   transform: translate(-50%, -50%) scale(1.04); }
-      8%   { opacity: 1;   transform: translate(-50%, -50%) scale(1); }
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.88);
+      }
+
+      4% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.04);
+      }
+
+      8% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
       /* 빠른 깜빡임 (0.35s 주기 × 8회) */
-      12%  { opacity: 0.05; }
-      16.5%{ opacity: 1; }
-      21%  { opacity: 0.05; }
-      25.5%{ opacity: 1; }
-      30%  { opacity: 0.05; }
-      34.5%{ opacity: 1; }
-      39%  { opacity: 0.05; }
-      43.5%{ opacity: 1; }
-      48%  { opacity: 0.05; }
-      52.5%{ opacity: 1; }
-      57%  { opacity: 0.05; }
-      61.5%{ opacity: 1; }
+      12% {
+        opacity: 0.05;
+      }
+
+      16.5% {
+        opacity: 1;
+      }
+
+      21% {
+        opacity: 0.05;
+      }
+
+      25.5% {
+        opacity: 1;
+      }
+
+      30% {
+        opacity: 0.05;
+      }
+
+      34.5% {
+        opacity: 1;
+      }
+
+      39% {
+        opacity: 0.05;
+      }
+
+      43.5% {
+        opacity: 1;
+      }
+
+      48% {
+        opacity: 0.05;
+      }
+
+      52.5% {
+        opacity: 1;
+      }
+
+      57% {
+        opacity: 0.05;
+      }
+
+      61.5% {
+        opacity: 1;
+      }
+
       /* 잠시 유지 후 페이드 아웃 */
-      78%  { opacity: 1; }
-      100% { opacity: 0;   transform: translate(-50%, -50%) scale(1); }
+      78% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+      }
     }
 
     .essence-alert-icon {
@@ -319,15 +662,18 @@
     }
 
     @keyframes badge-danger-pulse {
-      0%, 100% {
+
+      0%,
+      100% {
         box-shadow:
-          0 0 0 1px rgba(239,68,68,0.2) inset,
-          0 0 8px  rgba(239, 68, 68, 0.35);
+          0 0 0 1px rgba(239, 68, 68, 0.2) inset,
+          0 0 8px rgba(239, 68, 68, 0.35);
         border-color: rgba(239, 68, 68, 0.55);
       }
+
       50% {
         box-shadow:
-          0 0 0 1px rgba(239,68,68,0.3) inset,
+          0 0 0 1px rgba(239, 68, 68, 0.3) inset,
           0 0 22px rgba(239, 68, 68, 0.75);
         border-color: rgba(239, 68, 68, 1.0);
       }
@@ -349,12 +695,57 @@
     </div>
   </div>
 
+  <!-- 어벤던로드 위젯 -->
+  <div id="abandoned-widget" class="abandoned-widget hidden">
+    <div class="flex items-center gap-1.5 mb-1">
+      <i data-lucide="gem" class="w-3 h-3 text-amber-400"></i>
+      <span class="text-[10px] font-black text-amber-400 uppercase tracking-tighter">어벤던로드</span>
+    </div>
+    <div id="abandoned-regions" class="flex flex-col gap-0.5">
+      <!-- 지역별 횟수 동적 추가 -->
+    </div>
+    <div id="abandoned-stones" class="hidden flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
+      <!-- 마정석 순획득 수량 동적 추가 -->
+    </div>
+    <div class="h-px bg-white/10 my-1"></div>
+    <div class="flex justify-between items-center">
+      <span class="text-[9px] text-slate-400 font-bold">실시간 수익</span>
+      <span id="abandoned-profit" class="profit-text text-[11px] text-white">+0</span>
+    </div>
+  </div>
+
+  <!-- 어벤던로드 10회 화면 플래시 -->
+  <div id="abandoned-flash" class="abandoned-flash"></div>
+
+  <!-- 어벤던로드 10회 알림 카드 -->
+  <div id="abandoned-alert" class="abandoned-alert-overlay">
+    <div class="alert-gem-wrap">
+      <svg class="alert-gem-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/>
+      </svg>
+    </div>
+    <div class="alert-crown-label">✦ 최고 효율 구간 ✦</div>
+    <div id="abandoned-alert-region" class="alert-region-name">카디프</div>
+    <div class="alert-count-badge">10 / 10</div>
+  </div>
+
+  <!-- 팔색조 언덕 5회 알림 카드 -->
+  <div id="pitta-alert" class="pitta-alert-overlay">
+    <div class="pitta-bird-wrap">
+      <i data-lucide="bird" class="pitta-bird-icon"></i>
+    </div>
+    <div class="alert-crown-label">✦ 효율 플레이 완료 ✦</div>
+    <div class="pitta-title">팔색조 언덕</div>
+    <div class="pitta-badge">SS 등급 보상 5회 획득</div>
+  </div>
+
   <!-- 경험의 정수 버프 경고 알람 -->
   <div id="essence-alert" class="essence-alert-overlay">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-      stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="essence-alert-icon">
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-      <path d="M12 9v4"/><path d="M12 17h.01"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="essence-alert-icon">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
     </svg>
     <div class="essence-alert-title">경험의 정수 버프 확인!</div>
     <div class="essence-alert-sub">경험치 100억 달성 — 자동 교환 버프가 꺼져 있을 수 있습니다</div>
@@ -368,12 +759,19 @@
 
     function formatXP(num) {
       const n = Number(num);
-      if (isNaN(n) || n <= 0) return '0';
-      
-      if (n >= 1000000000000) return (n / 1000000000000).toFixed(2) + '조';
-      if (n >= 100000000) return (n / 100000000).toFixed(1) + '억';
-      if (n >= 10000) return Math.floor(n / 10000).toLocaleString() + '만';
-      return Math.floor(n).toLocaleString();
+      if (isNaN(n)) return '0';
+      if (n === 0) return '0';
+
+      const isNegative = n < 0;
+      const absN = Math.abs(n);
+      let result = '';
+
+      if (absN >= 1000000000000) result = (absN / 1000000000000).toFixed(2) + '조';
+      else if (absN >= 100000000) result = (absN / 100000000).toFixed(1) + '억';
+      else if (absN >= 10000) result = Math.floor(absN / 10000).toLocaleString() + '만';
+      else result = Math.floor(absN).toLocaleString();
+
+      return (isNegative ? '-' : '') + result;
     }
 
     // 남은 시간 포맷: 1분 이상 m:ss, 미만 ss초
@@ -386,30 +784,30 @@
     }
 
     function getCatClass(buffId) {
-      if (buffId.startsWith('exp_'))  return 'cat-exp';
+      if (buffId.startsWith('exp_')) return 'cat-exp';
       if (buffId.startsWith('rare_')) return 'cat-drop';
       if (buffId.startsWith('stat_')) return 'cat-stats';
-      if (buffId.startsWith('dmg_'))  return 'cat-damage';
+      if (buffId.startsWith('dmg_')) return 'cat-damage';
       return 'cat-utility';
     }
 
     function getCatLabel(buffId) {
-      if (buffId.startsWith('exp_'))  return 'E';
+      if (buffId.startsWith('exp_')) return 'E';
       if (buffId.startsWith('rare_')) return 'R';
       if (buffId.startsWith('stat_')) return 'S';
-      if (buffId.startsWith('dmg_'))  return 'D';
+      if (buffId.startsWith('dmg_')) return 'D';
       return 'U';
     }
 
     // SVG 링: 뱃지 36px + inset -3px 양쪽 → viewBox 42×42, center 21, r 18
-    const RING_R    = 18;
-    const RING_C    = 21;
+    const RING_R = 18;
+    const RING_C = 21;
     const RING_CIRC = 2 * Math.PI * RING_R; // ≈ 113.1
 
     function buildBadgeHtml(state) {
-      const pct      = state.durationMs > 0 ? state.remainingMs / state.durationMs : 0;
-      const offset   = (RING_CIRC * (1 - pct)).toFixed(2);
-      const timeStr  = formatMs(state.remainingMs);
+      const pct = state.durationMs > 0 ? state.remainingMs / state.durationMs : 0;
+      const offset = (RING_CIRC * (1 - pct)).toFixed(2);
+      const timeStr = formatMs(state.remainingMs);
       const catClass = getCatClass(state.buffId);
       const catLabel = getCatLabel(state.buffId);
 
@@ -441,7 +839,7 @@
     let _currentBuffIds = new Set();
 
     function renderBuffHud(states) {
-      const hud    = document.getElementById('buff-hud');
+      const hud = document.getElementById('buff-hud');
       const newIds = new Set(states.map(s => s.buffId));
 
       // 만료된 뱃지 퇴장 애니메이션
@@ -456,15 +854,15 @@
       });
 
       states.forEach(state => {
-        const pct        = state.durationMs > 0 ? state.remainingMs / state.durationMs : 0;
-        const offset     = (RING_CIRC * (1 - pct)).toFixed(2);
-        const timeStr    = formatMs(state.remainingMs);
+        const pct = state.durationMs > 0 ? state.remainingMs / state.durationMs : 0;
+        const offset = (RING_CIRC * (1 - pct)).toFixed(2);
+        const timeStr = formatMs(state.remainingMs);
         const phaseClass = `phase-${state.phase}`;
 
         let badge = document.getElementById(`buff-badge-${state.buffId}`);
         if (!badge) {
           badge = document.createElement('div');
-          badge.id        = `buff-badge-${state.buffId}`;
+          badge.id = `buff-badge-${state.buffId}`;
           badge.className = `buff-badge ${phaseClass}`;
           badge.innerHTML = buildBadgeHtml(state);
           hud.appendChild(badge);
@@ -487,23 +885,38 @@
     window.electronAPI.onConfigData((config) => {
       showXpWidget = config.showXpWidget !== false;
       const hud = document.getElementById('xp-hud');
-      if (!showXpWidget) hud.classList.add('hidden');
-      else               hud.classList.remove('hidden');
+      const arWidget = document.getElementById('abandoned-widget');
+
+      if (hud) {
+        if (!showXpWidget) hud.classList.add('hidden');
+        else hud.classList.remove('hidden');
+
+        if (config.xpWidgetPos) {
+          const left = config.xpWidgetPos.left;
+          const bottom = config.xpWidgetPos.bottom;
+
+          hud.style.left = `${left}px`;
+          hud.style.bottom = `${bottom}px`;
+
+          // 어벤던로드 위젯 위치를 XP HUD 위로 연동
+          if (arWidget) {
+            arWidget.style.left = `${left}px`;
+            // XP HUD 높이(약 55px) + 간격(8px) 적용
+            arWidget.style.bottom = `${bottom + 63}px`;
+          }
+        }
+      }
 
       // 버프 HUD 표시 여부 제어
       const buffHud = document.getElementById('buff-hud');
-      if (config.showBuffHud === false) buffHud.classList.add('hidden');
-      else                              buffHud.classList.remove('hidden');
+      if (buffHud) {
+        if (config.showBuffHud === false) buffHud.classList.add('hidden');
+        else buffHud.classList.remove('hidden');
 
-      if (config.xpWidgetPos) {
-        hud.style.left   = `${config.xpWidgetPos.left}px`;
-        hud.style.bottom = `${config.xpWidgetPos.bottom}px`;
-      }
-
-      if (config.buffTimerHudPos) {
-        const buffHud = document.getElementById('buff-hud');
-        buffHud.style.left   = `${config.buffTimerHudPos.left}px`;
-        buffHud.style.bottom = `${config.buffTimerHudPos.bottom}px`;
+        if (config.buffTimerHudPos) {
+          buffHud.style.left = `${config.buffTimerHudPos.left}px`;
+          buffHud.style.bottom = `${config.buffTimerHudPos.bottom}px`;
+        }
       }
     });
 
@@ -511,7 +924,7 @@
     window.electronAPI.onXpUpdate((data) => {
       if (!showXpWidget) return;
       document.getElementById('xp-total').innerText = formatXP(data.total);
-      document.getElementById('xp-epm').innerText   = formatXP(data.epm);
+      document.getElementById('xp-epm').innerText = formatXP(data.epm);
     });
 
     // 버프 타이머 HUD 업데이트
@@ -530,16 +943,143 @@
       }
     });
 
+    // ── 어벤던로드 실시간 업데이트 ──
+    function updateAbandonedUI(state) {
+      const widget = document.getElementById('abandoned-widget');
+      if (!widget) return;
+
+      if (!state || !state.isActive) {
+        widget.classList.add('hidden');
+        return;
+      }
+
+      widget.classList.remove('hidden');
+      setTimeout(() => {
+        if (widget) widget.classList.add('active');
+      }, 50);
+
+      // 지역별 횟수 렌더링
+      const regionContainer = document.getElementById('abandoned-regions');
+      if (regionContainer) {
+        regionContainer.innerHTML = '';
+        Object.entries(state.regions).forEach(([region, count]) => {
+          const item = document.createElement('div');
+          item.className = 'region-item';
+          const isMax = count >= 10;
+          item.innerHTML = `
+            <span class="text-[10px] font-bold ${isMax ? 'text-amber-400' : 'text-slate-300'}">${region}</span>
+            <span class="text-[10px] font-black ${isMax ? 'text-amber-400' : 'text-white'}">${count}/10</span>
+          `;
+          regionContainer.appendChild(item);
+        });
+      }
+
+      // 마정석 순획득 수량 렌더링
+      const stonesEl = document.getElementById('abandoned-stones');
+      if (stonesEl) {
+        const grades = ['하급', '중급', '상급', '최상급'];
+        const gradeImgs = {
+          '하급': 'assets/items/magic_stone/하급마정석.png',
+          '중급': 'assets/items/magic_stone/중급마정석.png',
+          '상급': 'assets/items/magic_stone/상급마정석.png',
+          '최상급': 'assets/items/magic_stone/최상급마정석.png',
+        };
+        const gains = state.stoneGains || {};
+        const losses = state.stoneLosses || {};
+        const items = grades
+          .map(g => ({ grade: g, net: (gains[g] || 0) - (losses[g] || 0) }))
+          .filter(x => x.net !== 0);
+
+        if (items.length > 0) {
+          stonesEl.classList.remove('hidden');
+          stonesEl.innerHTML = items.map(({ grade, net }) => {
+            const color = net > 0 ? 'text-emerald-400' : 'text-rose-400';
+            const sign = net > 0 ? '+' : '';
+            return `<span class="flex items-center gap-0.5">
+              <img src="${gradeImgs[grade]}" class="w-3 h-3 object-contain" alt="${grade}">
+              <span class="text-[9px] font-bold ${color}">${sign}${net}</span>
+            </span>`;
+          }).join('');
+        } else {
+          stonesEl.classList.add('hidden');
+          stonesEl.innerHTML = '';
+        }
+      }
+
+      // 실시간 수익 업데이트
+      const profitEl = document.getElementById('abandoned-profit');
+      if (profitEl) {
+        const isPositive = state.profit >= 0;
+        profitEl.innerText = (isPositive ? '+' : '') + formatXP(state.profit);
+        profitEl.className = `profit-text text-[11px] font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`;
+      }
+    }
+
+    window.electronAPI.onAbandonedUpdate((state) => {
+      updateAbandonedUI(state);
+    });
+
+    // 어벤던로드 즉시 숨김 (isActive 유지)
+    if (window.electronAPI.onAbandonedHideNow) {
+      window.electronAPI.onAbandonedHideNow(() => {
+        document.getElementById('abandoned-widget')?.classList.add('hidden');
+      });
+    }
+
+    // 어벤던로드 10회 알림
+    window.electronAPI.onAbandonedAlert((data) => {
+      const alertOverlay = document.getElementById('abandoned-alert');
+      const regionEl = document.getElementById('abandoned-alert-region');
+      const flashEl = document.getElementById('abandoned-flash');
+      if (!alertOverlay || !regionEl) return;
+
+      regionEl.innerText = data.region;
+
+      if (flashEl) {
+        flashEl.classList.remove('show');
+        void flashEl.offsetWidth;
+        flashEl.classList.add('show');
+      }
+
+      alertOverlay.classList.remove('show');
+      void alertOverlay.offsetWidth;
+      alertOverlay.classList.add('show');
+    });
+
     // 경험의 정수 버프 경고 알람
     window.electronAPI.onEssenceAlert(() => {
       const alertEl = document.getElementById('essence-alert');
       if (!alertEl) return;
       alertEl.classList.remove('show');
-      void alertEl.offsetWidth; // reflow 트리거
+      void alertEl.offsetWidth;
       alertEl.classList.add('show');
     });
 
-    window.onload = refreshIcons;
+    // 팔색조 언덕 5회 알림
+    window.electronAPI.onPittaHillAlert(() => {
+      const alertEl = document.getElementById('pitta-alert');
+      if (!alertEl) return;
+      alertEl.classList.remove('show');
+      void alertEl.offsetWidth;
+      alertEl.classList.add('show');
+    });
+
+    // ── 테스트 가이드 (Console) ──
+    console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
+    console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`const el = document.getElementById('pitta-alert'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');`);
+    console.log('%c2. 실제 로그 시뮬레이션 테스트 (터미널 실행):', 'color: #facc15; font-weight: bold;');
+    console.log('node test-pitta.js');
+    console.log('----------------------------------------------------');
+
+    window.onload = () => {
+      refreshIcons();
+      if (window.electronAPI && window.electronAPI.abandonedGetState) {
+        window.electronAPI.abandonedGetState().then(state => {
+          updateAbandonedUI(state);
+        }).catch(err => console.error('Failed to get abandoned state:', err));
+      }
+    };
   </script>
 </body>
 

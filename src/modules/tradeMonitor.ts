@@ -75,14 +75,18 @@ function getBackoffMs(): number {
 }
 
 // ─── HTTP 요청 ───
-function fetchPage(url: string, skipSSLVerify = false): Promise<string> {
+function fetchPage(url: string, skipSSLVerify = false, maxRedirects = 5): Promise<string> {
     return new Promise((resolve, reject) => {
+        if (maxRedirects <= 0) {
+            reject(new Error('Max redirects exceeded'));
+            return;
+        }
         const options: https.RequestOptions = { headers: HEADERS, timeout: 15000 };
         if (skipSSLVerify) options.rejectUnauthorized = false;
 
         const req = https.get(url, options, (res) => {
             if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                fetchPage(res.headers.location, skipSSLVerify).then(resolve).catch(reject);
+                fetchPage(res.headers.location, skipSSLVerify, maxRedirects - 1).then(resolve).catch(reject);
                 return;
             }
             if (res.statusCode !== 200) {
@@ -98,7 +102,7 @@ function fetchPage(url: string, skipSSLVerify = false): Promise<string> {
         req.on('error', (err) => {
             if (!skipSSLVerify && (err.message.includes('certificate') || err.message.includes('SSL') || err.message.includes('CERT'))) {
                 log(`[TRADE] SSL 검증 실패, 재시도: ${err.message}`);
-                fetchPage(url, true).then(resolve).catch(reject);
+                fetchPage(url, true, maxRedirects).then(resolve).catch(reject);
                 return;
             }
             reject(err);
@@ -450,8 +454,8 @@ export function stop(): void {
 }
 
 export function updateWindows(sidebarWin: BrowserWindow | null, tradeWin: BrowserWindow | null = null): void {
-    if (sidebarWin) sidebarWindowRef = sidebarWin;
-    if (tradeWin) tradeWindowRef = tradeWin;
+    sidebarWindowRef = sidebarWin;
+    tradeWindowRef = tradeWin;
 
     const cfg = config.load();
     tradeKeywords = cfg.tradeKeywords || [];

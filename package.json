@@ -1,6 +1,6 @@
 {
   "name": "tw-overlay",
-  "version": "1.12.2",
+  "version": "1.12.3",
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {
@@ -51,7 +51,7 @@
   },
   "keywords": [],
   "author": "filbertlab",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "adm-zip": "^0.5.16",
     "better-sqlite3": "^12.8.0",

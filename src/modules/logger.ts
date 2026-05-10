@@ -11,9 +11,25 @@ const SIZE_CHECK_INTERVAL = 100;
 let writeCount = 0;
 let isRotating = false;
 
-export function log(message: string): void {
-  const logMessage = `[${new Date().toISOString()}] ${message}\n`;
-  if (IS_DEV) console.log(logMessage);
+export function log(message: string, forceInProd: boolean = false): void {
+  const envString = IS_DEV ? 'DEV' : 'PROD';
+  const timestamp = new Date().toISOString();
+
+  // 개발 환경에서는 콘솔에 항상 출력
+  if (IS_DEV) {
+    console.log(`[${timestamp}][${envString}] ${message}`);
+  }
+
+  // 프로덕션 환경(실제 빌드)에서는 불필요한 반복 로그 필터링
+  if (!IS_DEV && !forceInProd) {
+    const isErrorOrImportant = /(fail|error|err|실패|오류|경고|critical|exception|시작|종료|초기화|완료|준비)/i.test(message);
+    if (!isErrorOrImportant) {
+      return; // 에러나 중요 상태 변경이 아니면 파일에 쓰지 않음
+    }
+  }
+
+  const logMessage = `[${timestamp}][${envString}] ${message}\n`;
+
   try {
     const logPath = get_LOG_PATH();
 

@@ -90,11 +90,23 @@ function createGameOverlayWindow(): void {
   gameOverlayWindow.setIgnoreMouseEvents(true);
   gameOverlayWindow.loadFile(path.join(__dirname, '..', 'game-overlay.html'));
   attachStackListeners(gameOverlayWindow);
+  
+  // 개발 환경에서만 테스트 편의를 위해 개발자 도구 자동 활성화
+  if (IS_DEV) {
+    gameOverlayWindow.webContents.openDevTools({ mode: 'detach' });
+  }
+
   gameOverlayWindow.once('ready-to-show', () => {
     gameOverlayWindow?.showInactive();
     // 생성 직후 최신 설정 전송 (경험치 HUD 위치 등 반영용)
     gameOverlayWindow?.webContents.send('config-data', config.load());
   });
+
+  // HTML 파싱 및 스크립트 로드 완료 후 확실하게 한 번 더 전송 (Race Condition 방지)
+  gameOverlayWindow.webContents.on('did-finish-load', () => {
+    gameOverlayWindow?.webContents.send('config-data', config.load());
+  });
+
   gameOverlayWindow.on('closed', () => {
     gameOverlayWindow = null;
   });

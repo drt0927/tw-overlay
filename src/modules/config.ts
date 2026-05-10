@@ -17,7 +17,11 @@ export function load(): AppConfig {
     const configPath = get_CONFIG_PATH();
     if (fs.existsSync(configPath)) {
       const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Partial<AppConfig>;
-      _cachedConfig = { ...DEFAULT_CONFIG, ...parsed };
+      _cachedConfig = {
+        ...DEFAULT_CONFIG,
+        ...parsed,
+        shortcuts: { ...DEFAULT_CONFIG.shortcuts, ...(parsed.shortcuts || {}) },
+      } as AppConfig;
       return { ..._cachedConfig };
     }
   } catch (e: unknown) {

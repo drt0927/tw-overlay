@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { log } from './logger';
 
 // ========== GA4 SETTINGS ==========
 let MEASUREMENT_ID = '';
@@ -37,7 +38,9 @@ export class Analytics {
   private clientId: string;
   private sessionId: number = 0;
   private sessionNumber: number = 1;
-
+  
+  private heartbeatTimer: NodeJS.Timeout | null = null;
+  private lastEngagementTime: number = Date.now();
 
   constructor() {
     // 1. Client ID persistence
@@ -58,31 +61,53 @@ export class Analytics {
     store.set('ga_session_id', this.sessionId);
     store.set('ga_session_number', this.sessionNumber);
     store.set('ga_last_active_time', now);
+    
+    this.lastEngagementTime = now;
 
-    console.log(`[Analytics] ClientID: ${this.clientId}, SessionID: ${this.sessionId}, Session#: ${this.sessionNumber}`);
+    log(`[Analytics] 시작됨 (ClientID: ${this.clientId.split('-')[0]}..., Session#: ${this.sessionNumber})`, true);
+
+    // 시작 시 하트비트 타이머 등록 (10분 주기)
+    this.startHeartbeat();
+  }
+
+  private startHeartbeat() {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    // 10분 = 600,000 ms
+    this.heartbeatTimer = setInterval(() => {
+      this.trackEvent('app_heartbeat');
+    }, 600 * 1000);
   }
 
   public trackEvent(eventName: string, params: Record<string, any> = {}): void {
     if (!MEASUREMENT_ID || !API_SECRET || MEASUREMENT_ID === 'G-XXXXXXXXXX' || API_SECRET === 'XXXXXXXXXXXXXXXXXXX') {
-      console.warn('[Analytics] GA4 키가 설정되지 않아 이벤트 전송을 건너뜁니다.');
-      return;
+      return; // 설정되지 않은 경우 조용히 무시
     }
 
-    if (!net.isOnline()) return;
+    if (!net.isOnline()) {
+      return; // 오프라인인 경우 조용히 무시 (게임 컴패니언 앱 특성상 재시도 큐 생략)
+    }
+
+    const now = Date.now();
+    const engagementTimeMsec = now - this.lastEngagementTime;
+    this.lastEngagementTime = now;
+
+    // 1-depth 보장을 위해 params 복사 후 기본값 덮어쓰기
+    const flatParams = { ...params };
+    
+    // GA4 필수 예약 파라미터 추가
+    flatParams.app_version = app.getVersion();
+    flatParams.ga_session_id = this.sessionId;
+    flatParams.ga_session_number = this.sessionNumber;
+    // 1ms 이상이어야 GA4가 유효한 체류 시간으로 인식
+    flatParams.engagement_time_msec = Math.max(1, engagementTimeMsec);
 
     const payload = {
       client_id: this.clientId,
       events: [
         {
           name: eventName,
-          params: {
-            app_version: app.getVersion(),
-            ga_session_id: this.sessionId,
-            ga_session_number: this.sessionNumber,
-            engagement_time_msec: 1,
-            ...params,
-          },
-        },
+          params: flatParams,
+        }
       ],
     };
 
@@ -92,18 +117,31 @@ export class Analytics {
         url: `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
       });
 
-
-
       request.on('error', (err) => {
-        console.error(`[Analytics] Request error:`, err);
+        log(`[Analytics] 전송 에러(Request error): ${err.message}`);
+      });
+      
+      request.on('response', (response) => {
+        if (response.statusCode === 200 || response.statusCode === 204) {
+          log(`[Analytics] 이벤트 '${eventName}' 전송 완료`);
+        } else {
+          log(`[Analytics] 전송 실패 (상태 코드: ${response.statusCode})`);
+        }
       });
 
       request.setHeader('Content-Type', 'application/json');
       request.write(JSON.stringify(payload));
       request.end();
     } catch (error) {
-      console.error('[Analytics] Error sending event:', error);
+      log(`[Analytics] Error sending events: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  public trackError(errorName: string, errorMessage: string): void {
+    this.trackEvent('app_error', {
+      error_name: errorName.substring(0, 100),
+      error_message: errorMessage.substring(0, 500) // GA4 파라미터 길이 제한 고려
+    });
   }
 }
 

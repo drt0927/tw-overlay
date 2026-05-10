@@ -17,7 +17,7 @@ export function registerAll(): void {
 
   // 1. 창 투과 토글
   if (shortcuts.toggleClickThrough) {
-    globalShortcut.register(shortcuts.toggleClickThrough, () => {
+    const registered = globalShortcut.register(shortcuts.toggleClickThrough, () => {
       log('[SHORTCUT] Toggle Click-Through');
       const isClickThrough = wm.toggleClickThrough();
       if (isClickThrough) {
@@ -27,6 +27,20 @@ export function registerAll(): void {
         }, FOCUS_DELAY_MS);
       }
     });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleClickThrough}`);
+    }
+  }
+
+  // 2. 숙제 체크 리스트 창 토글
+  if (shortcuts.toggleContentsChecker) {
+    const registered = globalShortcut.register(shortcuts.toggleContentsChecker, () => {
+      log('[SHORTCUT] Toggle Contents Checker');
+      wm.toggleContentsCheckerWindow();
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleContentsChecker}`);
+    }
   }
 
   log('[SHORTCUT] All shortcuts registered');

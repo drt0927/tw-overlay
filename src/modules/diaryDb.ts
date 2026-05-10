@@ -17,7 +17,7 @@ const POINTS = {
 /** 일지 창에 갱신 신호를 보냅니다. */
 function notifyUpdate(): void {
   BrowserWindow.getAllWindows().forEach(win => {
-    win.webContents.send('diary-updated');
+    if (!win.isDestroyed()) win.webContents.send('diary-updated');
   });
 }
 

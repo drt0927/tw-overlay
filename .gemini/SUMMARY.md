@@ -1,11 +1,11 @@
-# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.2)
+# TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.12.3)
 
-이 문서는 v1.12.2 버전을 기준으로 작성되었습니다.
+이 문서는 v1.12.3 버전을 기준으로 작성되었습니다.
 
 ## 1. 개요 및 최종 상태
 - **목적:** 테일즈위버 전용 지능형 오버레이 브라우저 및 실시간 게임 데이터 시각화 분석기.
 - **최종 빌드:** **TypeScript**, Electron, **Chart.js**, **tail**, **SQLite**, **llama-server(llama.cpp)** 기반.
-- **최신 고도화:** Gemma 4 E2B 로컬 LLM 기반 1:1 채팅 실시간 사기꾼 탐지 기능 추가 (BETA).
+- **최신 고도화:** 어벤던로드/팔색조 언덕 트래커 추가 및 실시간 분석 모듈 아키텍처 리팩토링.
 
 ## 2. 주요 기능 명세
 - **[Real-time Log Engine](./docs/realtime-log-engine.md):** 테일즈위버 채팅 로그를 실시간 분석하여 경험치, 아이템, 외치기 이벤트를 추출 및 시각화.
@@ -16,6 +16,9 @@
 - **[XP Visualization HUD](./docs/experience-hud.md):** 최근 30분 사냥 리듬을 표시하고 시간당 기대 정수(100억 XP) 생산량을 실시간 예측.
 - **Integer Safety:** 모든 숫자 처리 로직을 `Number` 기반으로 전환하여 21억(32비트) 오버플로 버그 원천 차단.
 - **[Buff Timer HUD](./docs/intelligent-buff-timer.md):** 핵심 3종 버프(심장 2종, 퇴마사)를 자동 감지하여 뱃지 및 프로그레스 링으로 남은 시간 시각화.
+
+- **업데이트 히스토리 (v1.12.3)**
+- **기능 추가 및 최적화:** 어벤던로드 및 팔색조 언덕 트래커 추가, Scam Monitor 모듈 분리, 구글 애널리틱스 최적화(하트비트 및 에러 트래킹).
 
 - **업데이트 히스토리 (v1.12.2)**
 - **경험의 정수 알림:** 100억 XP 달성 후 자동 교환 미감지 시 오버레이 경고 + 사운드. XP HUD에 세션 교환 횟수 및 프로그레스바 추가.

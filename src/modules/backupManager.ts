@@ -80,6 +80,14 @@ export async function importBackup(parentWindow: BrowserWindow): Promise<boolean
     // 3. 압축 해제
     zip.extractAllTo(userDataPath, true);
 
+    // 4. 성공 시 .old 임시 파일 삭제
+    try {
+      if (fs.existsSync(configPath + '.old')) fs.unlinkSync(configPath + '.old');
+      if (fs.existsSync(dbPath + '.old')) fs.unlinkSync(dbPath + '.old');
+    } catch (cleanupErr) {
+      log(`[BACKUP] .old cleanup warning: ${cleanupErr}`);
+    }
+
     log(`[BACKUP] Data restored from: ${zipPath}`);
 
     // 4. 앱 재시작 안내 및 실행

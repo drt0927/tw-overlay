@@ -91,7 +91,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   contentsCheckerItems: [],
   lastContentsResetCheck: 0,
   shortcuts: {
-    toggleClickThrough: 'CommandOrControl+Shift+T'
+    toggleClickThrough: 'CommandOrControl+Shift+T',
+    toggleContentsChecker: 'CommandOrControl+Shift+C'
   },
   volumeContentsChecker: 50,
   volumeCalculators: 50,
@@ -117,6 +118,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   essenceAlertEnabled: true,
   essenceAlertSound: 'orb.mp3',
   essenceAlertVolume: 70,
+  abandonedAutoHideMinutes: 10,
 
 };
 

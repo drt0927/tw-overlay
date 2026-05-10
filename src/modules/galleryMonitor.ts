@@ -76,15 +76,19 @@ function getBackoffMs(): number {
 }
 
 // ─── HTTP 요청 유틸 ───
-function fetchPage(url: string, skipSSLVerify = false): Promise<string> {
+function fetchPage(url: string, skipSSLVerify = false, maxRedirects = 5): Promise<string> {
   return new Promise((resolve, reject) => {
+    if (maxRedirects <= 0) {
+      reject(new Error('Max redirects exceeded'));
+      return;
+    }
     const options: https.RequestOptions = { headers: HEADERS, timeout: 10000 };
     if (skipSSLVerify) options.rejectUnauthorized = false;
 
     const req = https.get(url, options, (res) => {
       // 리다이렉트 처리
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        fetchPage(res.headers.location, skipSSLVerify).then(resolve).catch(reject);
+        fetchPage(res.headers.location, skipSSLVerify, maxRedirects - 1).then(resolve).catch(reject);
         return;
       }
       if (res.statusCode !== 200) {
@@ -103,7 +107,7 @@ function fetchPage(url: string, skipSSLVerify = false): Promise<string> {
       // SSL 검증 실패 시 rejectUnauthorized: false로 재시도
       if (!skipSSLVerify && (err.message.includes('certificate') || err.message.includes('SSL') || err.message.includes('CERT'))) {
         log(`[GALLERY] SSL 검증 실패, 재시도: ${err.message}`);
-        fetchPage(url, true).then(resolve).catch(reject);
+        fetchPage(url, true, maxRedirects).then(resolve).catch(reject);
         return;
       }
       reject(err);

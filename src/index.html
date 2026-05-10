@@ -421,7 +421,10 @@
     });
 
     initDynamicMenus();
-    window.electronAPI.onGalleryNewActivity(() => { document.getElementById('noti-badge').classList.remove('hidden'); });
+    window.electronAPI.onGalleryNewActivity(() => { 
+      const badge = document.getElementById('noti-badge');
+      if (badge) badge.classList.remove('hidden'); 
+    });
     window.electronAPI.onUpdateStatus((data) => {
       const badge = document.getElementById('update-badge');
       if (badge) {

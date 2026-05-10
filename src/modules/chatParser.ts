@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { log } from './logger';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { ChatTrigger, ChatPatternType } from '../shared/types';
+import type { ChatTrigger, ChatPatternType, ChatParserEventMap } from '../shared/types';
 
 /**
  * 테일즈위버 채팅 로그 파싱 결과 타입 정의
@@ -12,6 +12,16 @@ export interface ParsedChatData {
   originalTime: string; // [HH시 mm분 ss초]
   message: string;      // HTML 제거된 순수 메시지
   data?: any;           // 가공된 숫자나 객체 데이터
+}
+
+/**
+ * Type-safe EventEmitter 선언 병합
+ * chatParser.on('EVENT_NAME', ...) 호출 시 이벤트명과 페이로드를 컴파일 타임에 검증
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface ChatParser {
+  on<K extends keyof ChatParserEventMap>(event: K, listener: (data: ChatParserEventMap[K]) => void): this;
+  emit<K extends keyof ChatParserEventMap>(event: K, data: ChatParserEventMap[K]): boolean;
 }
 
 /**
@@ -175,9 +185,84 @@ class ChatParser extends EventEmitter {
     }
 
     // E. 아이템 획득
-    if (cleanMsg.includes('획득하였습니다') || cleanMsg.includes('습득했습니다') || cleanMsg.includes('획득했습니다')) {
+    if (cleanMsg.includes('획득 하였습니다') || cleanMsg.includes('획득하였습니다')) {
+        // 어벤던로드 마정석 획득 특화 (예: "하급 마정석 1개를 획득 하였습니다.")
+        const magicStoneGainMatch = cleanMsg.match(/(하급|중급|상급|최상급)\s+마정석\s+(\d+)개를\s+획득\s+하였습니다/);
+        if (magicStoneGainMatch) {
+            const grade = magicStoneGainMatch[1].trim();
+            const count = parseInt(magicStoneGainMatch[2], 10);
+            this.emit('MAGIC_STONE_GAIN', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });
+            return;
+        }
         this.emit('ITEM_LOOTED', { date: this._currentDate, timestamp, message: cleanMsg });
         return;
+    }
+
+    // G. 어벤던로드 특화 패턴
+    // 1. 입장료 (예: "입장료 5680만 Seed를 지불 하였습니다.")
+    if (cleanMsg.includes('입장료') && (cleanMsg.toLowerCase().includes('seed') || cleanMsg.includes('시드'))) {
+        const feeMatch = cleanMsg.match(/입장료\s+([\d,]+)만\s+Seed를\s+지불\s+하였습니다/i);
+        if (feeMatch) {
+            const amount = this.parseKoreanNumber(feeMatch[1] + '만');
+            this.emit('ABANDONED_FEE', { date: this._currentDate, timestamp, amount, message: cleanMsg });
+            return;
+        }
+    }
+
+    // 2. 도전 횟수 (예: "이번 주 어밴던로드 카디프 지역의 도전 횟수는 5번 입니다.")
+    if (cleanMsg.includes('어벤던로드') || cleanMsg.includes('어밴던로드')) {
+        const entryMatch = cleanMsg.match(/이번\s+주\s+어[벤밴]던로드\s+(.*?)\s+지역의\s+도전\s+횟수는\s+(\d+)번\s+입니다/);
+        if (entryMatch) {
+            const region = entryMatch[1].trim();
+            const count = parseInt(entryMatch[2], 10);
+            this.emit('ABANDONED_ENTRY', { date: this._currentDate, timestamp, region, count, message: cleanMsg });
+            return;
+        }
+    }
+
+    // H. 팔색조 언덕 특화 패턴
+    // 1. 보스 진입 (예: "현재 남은 에너지는 [15]이고, 보스 퇴치 시 획득 가능한 보상 등급은 [S]입니다.")
+    if (cleanMsg.includes('남은 에너지는') && cleanMsg.includes('보상 등급은')) {
+        const pittaEntryMatch = cleanMsg.match(/현재\s+남은\s+에너지는\s+\[(\d+)\]이고,\s+보스\s+퇴치\s+시\s+획득\s+가능한\s+보상\s+등급은\s+\[(.*?)\]입니다/);
+        if (pittaEntryMatch) {
+            const energy = parseInt(pittaEntryMatch[1], 10);
+            const grade = pittaEntryMatch[2].trim();
+            this.emit('PITTA_ENTRY', { date: this._currentDate, timestamp, energy, grade, message: cleanMsg });
+            return;
+        }
+    }
+
+    // 2. 보상 획득 (예: "[S]등급 보상으로 [봉인된 페어리 피타 암릿] 아이템을 획득 하였습니다.")
+    if (cleanMsg.includes('등급 보상으로') && cleanMsg.includes('획득')) {
+        const pittaClearMatch = cleanMsg.match(/\[(.*?)\]등급\s+보상으로\s+\[(.*?)\]\s*아이템을\s*획득\s*하였습니다/);
+        if (pittaClearMatch) {
+            const grade = pittaClearMatch[1].trim();
+            const itemName = pittaClearMatch[2].trim();
+            this.emit('PITTA_CLEAR', { date: this._currentDate, timestamp, grade, itemName, message: cleanMsg });
+            // return하지 않음 (일반 ITEM_LOOTED로도 흐르게 두거나, 필요에 따라 return)
+        }
+    }
+
+    // 3. 마정석 입수 (예: "[중급 마정석] 1개를 입수했습니다.")
+    if (cleanMsg.includes('마정석') && cleanMsg.includes('입수했습니다')) {
+        const stonePickupMatch = cleanMsg.match(/\[(하급|중급|상급|최상급)\s*마정석\]\s*(\d+)개를\s*입수했습니다/);
+        if (stonePickupMatch) {
+            const grade = stonePickupMatch[1].trim();
+            const count = parseInt(stonePickupMatch[2], 10);
+            this.emit('MAGIC_STONE_GAIN', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });
+            return;
+        }
+    }
+
+    // 4. 마정석 소실 (예: "누에게 하급 마정석 20개를 빼앗겼습니다.")
+    if (cleanMsg.includes('마정석') && cleanMsg.includes('빼앗겼습니다')) {
+        const lossMatch = cleanMsg.match(/누에게\s+(하급|중급|상급|최상급)\s+마정석\s+(\d+)개를\s+빼앗겼습니다/);
+        if (lossMatch) {
+            const grade = lossMatch[1].trim();
+            const count = parseInt(lossMatch[2], 10);
+            this.emit('MAGIC_STONE_LOSS', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });
+            return;
+        }
     }
 
     // F. 버프 사용 감지

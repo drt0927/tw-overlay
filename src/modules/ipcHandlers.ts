@@ -288,6 +288,30 @@ export function register(): void {
     return result.filePaths[0];
   });
 
+  // 어벤던로드 상태 요청
+  ipcMain.handle('abandoned-get-state', async () => {
+    const { chatLogProcessor } = await import('./chatLogProcessor');
+    return chatLogProcessor.getAbandonedState();
+  });
+
+  // 어벤던로드 오버레이 강제 표시/숨김
+  ipcMain.on('abandoned-force-visible', async (_e, visible: boolean) => {
+    const { chatLogProcessor } = await import('./chatLogProcessor');
+    chatLogProcessor.forceAbandonedVisible(visible);
+  });
+
+  // 어벤던로드 즉시 숨김 (isActive 유지, 다음 입장 로그 시 재표시)
+  ipcMain.on('abandoned-hide-now', () => {
+    BrowserWindow.getAllWindows().forEach(win => {
+      if (!win.isDestroyed()) win.webContents.send('abandoned-hide-now');
+    });
+  });
+
+  // 어벤던로드 자동 숨김 시간 설정
+  ipcMain.on('set-abandoned-autohide', (_e, minutes: number) => {
+    config.save({ abandonedAutoHideMinutes: minutes });
+  });
+
   ipcMain.on('close-app', () => { app.quit(); });
 
   // --- 사기꾼 탐지 ---

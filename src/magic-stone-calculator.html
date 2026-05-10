@@ -84,7 +84,13 @@
         <span class="win-title-sub">Magic Stone Calc</span>
       </div>
     </div>
-    <div class="win-controls">
+    <div class="win-controls flex items-center gap-2">
+      <div class="flex items-center gap-1.5 no-drag cursor-pointer" onclick="toggleOverlay()" title="어벤던로드 오버레이 표시/숨김">
+        <div id="overlay-toggle-track" class="relative w-8 h-4 rounded-full transition-colors duration-200 bg-slate-600">
+          <div id="overlay-toggle-thumb" class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-200"></div>
+        </div>
+        <span id="overlay-toggle-label" class="text-[10px] font-bold text-slate-400">OFF</span>
+      </div>
       <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
@@ -93,6 +99,64 @@
 
   <!-- Content -->
   <div class="p-4 flex flex-col gap-4 h-[calc(100vh-56px)] overflow-y-auto no-drag">
+
+    <!-- 어벤던로드 세션 섹션 -->
+    <div id="session-section" class="p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl text-[11px] leading-relaxed">
+      <div class="flex items-center gap-1.5 mb-2">
+        <i data-lucide="swords" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span class="text-[11px] font-black text-amber-400 uppercase tracking-tight">어벤던로드 세션</span>
+      </div>
+
+      <!-- 마을별 내역 -->
+      <div id="session-regions" class="flex flex-col gap-1.5 mb-1">
+        <div class="text-slate-500 text-[10px]">세션 데이터 없음</div>
+      </div>
+
+      <!-- 총계 (마을 데이터 있을 때만 표시) -->
+      <div id="session-totals" class="hidden">
+        <div class="h-px bg-white/10 my-1.5"></div>
+        <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">총계</div>
+        <div id="session-stones" class="flex flex-col gap-1 mb-1.5"></div>
+        <div class="flex flex-col gap-0.5 mb-2">
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400">입장료</span>
+            <span id="session-fee" class="font-bold text-rose-400 font-mono">-0</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400">최종수익</span>
+            <span id="session-profit" class="font-black font-mono text-white">+0</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mb-2">
+          <button onclick="abandonedHideNow()"
+            class="flex items-center gap-1 px-2 py-0.5 bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 rounded-lg text-[10px] font-bold transition-all active:scale-95">
+            <i data-lucide="eye-off" class="w-3 h-3"></i>
+            즉시 숨김
+          </button>
+          <button onclick="fillFromSession()"
+            class="flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold transition-all active:scale-95">
+            <i data-lucide="download" class="w-3 h-3"></i>
+            입력란 자동 채우기
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400 text-[10px]">자동 숨김</span>
+          <select id="autohide-select" onchange="setAutoHide(this.value)"
+            class="no-drag bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded px-1.5 py-0.5 cursor-pointer">
+            <option value="5">5분</option>
+            <option value="10" selected>10분</option>
+            <option value="15">15분</option>
+            <option value="20">20분</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 오버레이 위치 안내 -->
+      <div class="mt-2 flex items-center gap-1 text-[9px] text-slate-500">
+        <i data-lucide="map-pin" class="w-2.5 h-2.5 shrink-0"></i>
+        오버레이 위치: 경험치 HUD 상단 고정
+      </div>
+    </div>
 
     <!-- Info -->
     <div class="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl text-[11px] text-slate-400 leading-relaxed">
@@ -206,11 +270,181 @@
 
     const SEED_PER_POUCH = 500000;
     let config = null;
+    let currentOverlayVisible = false;
 
-    if (window.electronAPI && window.electronAPI.onConfigData) {
-        window.electronAPI.onConfigData((data) => {
-            config = data;
+    const GRADE_IMGS = {
+      '하급': 'assets/items/magic_stone/하급마정석.png',
+      '중급': 'assets/items/magic_stone/중급마정석.png',
+      '상급': 'assets/items/magic_stone/상급마정석.png',
+      '최상급': 'assets/items/magic_stone/최상급마정석.png',
+    };
+    const GRADES = ['하급', '중급', '상급', '최상급'];
+
+    function formatSeedShort(seed) {
+      if (seed === 0) return '0';
+      const abs = Math.abs(seed);
+      const sign = seed < 0 ? '-' : '+';
+      const units = [
+        { label: '조', value: 1000000000000 },
+        { label: '억', value: 100000000 },
+        { label: '만', value: 10000 }
+      ];
+      let result = '';
+      let rem = abs;
+      for (const u of units) {
+        if (rem >= u.value) {
+          result += Math.floor(rem / u.value) + u.label + ' ';
+          rem %= u.value;
+        }
+      }
+      return sign + (result.trim() || abs.toLocaleString());
+    }
+
+    function updateSessionUI(state) {
+      if (!state) return;
+
+      const gains = state.stoneGains || {};
+      const losses = state.stoneLosses || {};
+      const regionDetails = state.regionDetails || {};
+      const regionsEl = document.getElementById('session-regions');
+      const totalsEl = document.getElementById('session-totals');
+      const regionKeys = Object.keys(regionDetails);
+
+      if (regionKeys.length === 0) {
+        if (regionsEl) regionsEl.innerHTML = '<div class="text-slate-500 text-[10px]">세션 데이터 없음</div>';
+        if (totalsEl) totalsEl.classList.add('hidden');
+      } else {
+        if (regionsEl) {
+          regionsEl.innerHTML = regionKeys.map(region => {
+            const rd = regionDetails[region];
+            const rdGains = rd.stoneGains || {};
+            const rdLosses = rd.stoneLosses || {};
+            const stoneItems = GRADES
+              .map(g => ({ grade: g, net: (rdGains[g] || 0) - (rdLosses[g] || 0) }))
+              .filter(x => x.net !== 0);
+            const stonesHtml = stoneItems.length > 0
+              ? `<div class="flex flex-wrap gap-x-2 mt-0.5 ml-1">${stoneItems.map(({ grade, net }) => {
+                  const color = net > 0 ? 'text-emerald-400' : 'text-rose-400';
+                  const sign = net > 0 ? '+' : '';
+                  return `<span class="flex items-center gap-0.5">
+                    <img src="${GRADE_IMGS[grade]}" class="w-3 h-3 object-contain" alt="${grade}">
+                    <span class="text-[9px] font-bold ${color}">${sign}${net}</span>
+                  </span>`;
+                }).join('')}</div>`
+              : '';
+            return `<div class="mb-0.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-black text-amber-300">${region}</span>
+                <span class="text-[10px] text-slate-400">${rd.count}회 | ${formatSeedShort(-rd.totalFee)}</span>
+              </div>
+              ${stonesHtml}
+            </div>`;
+          }).join('');
+        }
+
+        if (totalsEl) totalsEl.classList.remove('hidden');
+
+        const stonesEl = document.getElementById('session-stones');
+        if (stonesEl) {
+          const rows = GRADES.map(g => {
+            const gain = gains[g] || 0;
+            const loss = losses[g] || 0;
+            if (gain === 0 && loss === 0) return null;
+            return { grade: g, gain, loss };
+          }).filter(Boolean);
+          stonesEl.innerHTML = rows.length > 0
+            ? rows.map(({ grade, gain, loss }) => `
+              <div class="flex items-center gap-2">
+                <img src="${GRADE_IMGS[grade]}" class="w-4 h-4 object-contain" alt="${grade}">
+                <span class="text-slate-300 text-[10px] font-bold w-10">${grade}</span>
+                <span class="text-emerald-400 text-[10px] font-bold">획득 ${gain}</span>
+                ${loss > 0 ? `<span class="text-rose-400 text-[10px] font-bold">뺏김 ${loss}</span>` : ''}
+              </div>`).join('')
+            : '';
+        }
+      }
+
+      const feeEl = document.getElementById('session-fee');
+      const profitEl = document.getElementById('session-profit');
+      if (feeEl) feeEl.textContent = formatSeedShort(-state.totalFee);
+      if (profitEl) {
+        profitEl.textContent = formatSeedShort(state.profit);
+        profitEl.className = `font-black font-mono text-[11px] ${state.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      }
+
+      currentOverlayVisible = state.isActive;
+      updateOverlayToggleBtn(state.isActive);
+    }
+
+    function updateOverlayToggleBtn(visible) {
+      const track = document.getElementById('overlay-toggle-track');
+      const thumb = document.getElementById('overlay-toggle-thumb');
+      const label = document.getElementById('overlay-toggle-label');
+      if (!track || !thumb || !label) return;
+      if (visible) {
+        track.className = 'relative w-8 h-4 rounded-full transition-colors duration-200 bg-emerald-500';
+        thumb.className = 'absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-200 translate-x-4';
+        label.className = 'text-[10px] font-bold text-emerald-400';
+        label.textContent = 'ON';
+      } else {
+        track.className = 'relative w-8 h-4 rounded-full transition-colors duration-200 bg-slate-600';
+        thumb.className = 'absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-200';
+        label.className = 'text-[10px] font-bold text-slate-400';
+        label.textContent = 'OFF';
+      }
+    }
+
+    function toggleOverlay() {
+      const next = !currentOverlayVisible;
+      if (window.electronAPI && window.electronAPI.abandonedForceVisible) {
+        window.electronAPI.abandonedForceVisible(next);
+      }
+    }
+
+    function abandonedHideNow() {
+      if (window.electronAPI && window.electronAPI.abandonedHideNow) {
+        window.electronAPI.abandonedHideNow();
+      }
+    }
+
+    function setAutoHide(value) {
+      const minutes = parseInt(value, 10);
+      if (window.electronAPI && window.electronAPI.setAbandonedAutoHide) {
+        window.electronAPI.setAbandonedAutoHide(minutes);
+      }
+    }
+
+    function fillFromSession() {
+      if (window.electronAPI && window.electronAPI.abandonedGetState) {
+        window.electronAPI.abandonedGetState().then(state => {
+          if (!state) return;
+          const gains = state.stoneGains || {};
+          const losses = state.stoneLosses || {};
+          document.getElementById('lower-count').value = Math.max(0, (gains['하급'] || 0) - (losses['하급'] || 0)) || '';
+          document.getElementById('middle-count').value = Math.max(0, (gains['중급'] || 0) - (losses['중급'] || 0)) || '';
+          document.getElementById('upper-count').value = Math.max(0, (gains['상급'] || 0) - (losses['상급'] || 0)) || '';
+          document.getElementById('highest-count').value = Math.max(0, (gains['최상급'] || 0) - (losses['최상급'] || 0)) || '';
+          calculate();
         });
+      }
+    }
+
+    if (window.electronAPI) {
+      if (window.electronAPI.onConfigData) {
+        window.electronAPI.onConfigData((data) => {
+          config = data;
+          const select = document.getElementById('autohide-select');
+          if (select && data.abandonedAutoHideMinutes) {
+            select.value = String(data.abandonedAutoHideMinutes);
+          }
+        });
+      }
+      if (window.electronAPI.abandonedGetState) {
+        window.electronAPI.abandonedGetState().then(state => updateSessionUI(state)).catch(() => {});
+      }
+      if (window.electronAPI.onAbandonedUpdate) {
+        window.electronAPI.onAbandonedUpdate((state) => updateSessionUI(state));
+      }
     }
 
     function formatSeed(seed) {

@@ -25,6 +25,18 @@ import { chatLogProcessor } from './modules/chatLogProcessor';
 import { buffTimerManager } from './modules/buffTimerManager';
 import * as scamMonitor from './modules/scamMonitor';
 
+// ── 에러 트래킹 세팅 ──
+process.on('uncaughtException', (error) => {
+  log(`[MAIN] Uncaught Exception: ${error.message}\n${error.stack}`);
+  analytics.trackError('uncaughtException', error.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  log(`[MAIN] Unhandled Rejection: ${message}`);
+  analytics.trackError('unhandledRejection', message);
+});
+
 log(`[BOOT] Application process started at ${new Date().toISOString()}`);
 
 app.setAppUserModelId('com.filbertlab.twoverlay');

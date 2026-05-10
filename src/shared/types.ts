@@ -3,6 +3,40 @@
  * constants.ts와 preload.ts 모두 여기서 import합니다.
  */
 
+// ── ChatParser 이벤트 타입 맵 ──
+// chatParser.emit() / chatParser.on() 에서 컴파일 타임 타입 검증에 사용
+
+export interface ChatParserEventMap {
+    SEED_GAINED: { date: string; timestamp: string; amount: number; message: string };
+    ABANDONED_FEE: { date: string; timestamp: string; amount: number; message: string };
+    ABANDONED_ENTRY: { date: string; timestamp: string; region: string; count: number; message: string };
+    MAGIC_STONE_GAIN: { date: string; timestamp: string; grade: string; count: number; message: string };
+    MAGIC_STONE_LOSS: { date: string; timestamp: string; grade: string; count: number; message: string };
+    ITEM_LOOTED: { date: string; timestamp: string; message: string };
+    XP_CHANGED: { date: string; timestamp: string; amount: number; message: string };
+    TRADE_SHOUT: { date: string; timestamp: string; sender: string; message: string };
+    BUFF_USED: { date: string; timestamp: string; buffId: string; usedBy: string; message: string };
+    PITTA_ENTRY: { date: string; timestamp: string; energy: number; grade: string; message: string };
+    PITTA_CLEAR: { date: string; timestamp: string; grade: string; itemName: string; message: string };
+}
+
+// ── 어벤던로드 상태 타입 ──
+export interface AbandonedRoadState {
+    regions: Record<string, number>;
+    profit: number;
+    isActive: boolean;
+    stoneGains: Record<string, number>;
+    stoneLosses: Record<string, number>;
+    totalFee: number;
+    currentRegion: string;
+    regionDetails: Record<string, {
+        count: number;
+        totalFee: number;
+        stoneGains: Record<string, number>;
+        stoneLosses: Record<string, number>;
+    }>;
+}
+
 export interface QuickSlotItem {
     label: string;
     icon: string;
@@ -62,6 +96,8 @@ export interface CustomAlert {
 export interface ShortcutsConfig {
     /** 창 투과(Click-through) 토글 */
     toggleClickThrough: string;
+    /** 숙제 체크 리스트 창 토글 */
+    toggleContentsChecker?: string;
 }
 
 /** 채팅 로그 버프 감지 트리거 */
@@ -180,6 +216,9 @@ export interface AppConfig {
     essenceAlertEnabled?: boolean;
     essenceAlertSound?: string;
     essenceAlertVolume?: number;
+
+    // --- Abandoned Road Settings ---
+    abandonedAutoHideMinutes?: number;
 
     // --- Scam Detector Settings ---
     scamDetectorEnabled?: boolean;
@@ -340,4 +379,20 @@ export interface DiaryData {
     diary: DiaryEntry | null;
     homeworkLogs: HomeworkLog[];
     activityLogs: ActivityLog[];
+}
+
+export interface AbandonedRoadState {
+    regions: Record<string, number>;
+    profit: number;
+    isActive: boolean;
+    stoneGains: Record<string, number>;
+    stoneLosses: Record<string, number>;
+    totalFee: number;
+    currentRegion: string;
+    regionDetails: Record<string, {
+        count: number;
+        totalFee: number;
+        stoneGains: Record<string, number>;
+        stoneLosses: Record<string, number>;
+    }>;
 }

@@ -19,7 +19,8 @@ export function setupAutoStart(enable: boolean): void {
 
     if (enable) {
         // 1. 실행 전용 VBScript 생성
-        const vbsContent = 'Set UAC = CreateObject("Shell.Application")\r\nUAC.ShellExecute "' + exePath + '", "", "", "runas", 1';
+        const safeExePath = exePath.replace(/"/g, '""');
+        const vbsContent = 'Set UAC = CreateObject("Shell.Application")\r\nUAC.ShellExecute "' + safeExePath + '", "", "", "runas", 1';
         try {
             fs.writeFileSync(vbsPath, vbsContent, 'utf8');
         } catch (err) {

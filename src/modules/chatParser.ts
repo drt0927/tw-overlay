@@ -256,6 +256,10 @@ class ChatParser extends EventEmitter {
         // 어벤던로드 마정석 획득 특화 (예: "하급 마정석 1개를 획득 하였습니다.")
         const magicStoneGainMatch = cleanMsg.match(/(하급|중급|상급|최상급)\s+마정석\s+(\d+)개를\s+획득\s+하였습니다/);
         if (magicStoneGainMatch) {
+            // 타인 획득 메시지 (시스템 브로드캐스트)는 제외
+            if (cleanMsg.startsWith('누군가')) {
+                return;
+            }
             const grade = magicStoneGainMatch[1].trim();
             const count = parseInt(magicStoneGainMatch[2], 10);
             this.emit('MAGIC_STONE_GAIN', { date: this._currentDate, timestamp, grade, count, message: cleanMsg });

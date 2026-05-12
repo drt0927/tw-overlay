@@ -4,17 +4,17 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.12.4-violet.svg)
+![Version](https://img.shields.io/badge/version-1.12.5-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.12.4 (2026.05.10)
-이번 업데이트는 **어벤던로드 트래커의 안정성 및 구조적 분리**를 주요 목표로 합니다.
+## 🚀 최신 버전: v1.12.5 (2026.05.12)
+이번 업데이트는 **어밴던로드 수익 집계 정확도 향상 및 포커스 복구 안정화**를 주요 목표로 합니다.
 
-- **🔮 한글/띄어쓰기 패턴 완벽 대응**: "1억 40만 Seed" 및 "횟 수" 등 게임 내 다양하게 나타나는 한글 입장료 로그 정규식을 고도화하여 인식 오류를 해결했습니다.
-- **🏗 상태 관리 아키텍처 개편**: 어벤던로드 트래커의 전역 ON/OFF(`isEnabled`)와 화면 표시(`isActive`) 계층을 명확하게 분리하여, 영구적인 제어와 즉각적인 화면 숨김(임시 제어)이 충돌하지 않도록 리팩토링했습니다.
+- **💎 마정석 중복 집계 필터링**: 타 사용자의 마정석 획득 시스템 알림("누군가...")이 본인의 수익으로 오인되어 중복 합산되는 버그를 수정했습니다.
+- **🎯 창 닫기 시 포커스 자동 복구**: 설정, 갤러리 등 오버레이 창을 닫을 때 게임 화면으로 포커스를 즉시 돌려주는 로직을 강화하여 조작 편의성을 높였습니다.
 
 ---
 

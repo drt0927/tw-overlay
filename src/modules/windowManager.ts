@@ -3,7 +3,7 @@
  */
 import { BrowserWindow, WebContentsView, screen } from 'electron';
 import * as path from 'path';
-import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig } from './constants';
+import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig, appState, FOCUS_RESTORE_DELAY_MS } from './constants';
 import * as config from './config';
 import * as bossNotifier from './bossNotifier';
 import * as gallery from './galleryMonitor';
@@ -41,6 +41,8 @@ function removeFromStack(win: BrowserWindow | null): void {
 }
 
 let focusDebounceTimer: NodeJS.Timeout | null = null;
+let focusRestoreTimer: NodeJS.Timeout | null = null;
+let suppressFocusRestore = false;
 
 function attachStackListeners(win: BrowserWindow): void {
   win.on('focus', () => {
@@ -346,9 +348,20 @@ function createOverlayWindow(targetUrl?: string): void {
 function createToggleableWindow(key: string, callbacks?: {
   onReady?: (win: BrowserWindow) => void,
   calcPosition?: (gr: GameRect, pos: WindowPosition) => { x: number, y: number }
-}): void {
+}): boolean {
   const winCfg = windowRegistry[key];
-  if (!winCfg || winCfg.ref) { if (winCfg?.ref) winCfg.ref.close(); return; }
+  if (!winCfg || winCfg.ref) {
+    if (winCfg?.ref) {
+      winCfg.ref.close();
+    }
+    return false; // 닫힘
+  }
+
+  // 새 창이 열리므로 예약된 포커스 복구 취소 (레이스 컨디션 방지)
+  if (focusRestoreTimer) {
+    clearTimeout(focusRestoreTimer);
+    focusRestoreTimer = null;
+  }
 
   // 현재 게임 창이 있는 모니터(없으면 주 모니터)의 작업 영역 높이 확인
   const display = gameRect 
@@ -385,7 +398,23 @@ function createToggleableWindow(key: string, callbacks?: {
     winCfg.pos = { offsetX: b.x - (gameRect.x + gameRect.width), offsetY: b.y - gameRect.y };
     savePosition(key, winCfg.pos);
   });
-  win.on('closed', () => { if (winCfg.onClose) winCfg.onClose(); winCfg.ref = null; });
+  win.on('closed', () => {
+    if (winCfg.onClose) winCfg.onClose();
+    winCfg.ref = null;
+
+    // 창이 닫힐 때(사용자가 X를 누르거나, ESC로 닫거나 등) 게임으로 포커스 복구
+    // 3단계 방어: isQuitting(앱 종료) → suppressFocusRestore(hideAll) → gameRect(게임 미추적)
+    if (!appState.isQuitting && !suppressFocusRestore) {
+      if (focusRestoreTimer) clearTimeout(focusRestoreTimer);
+      focusRestoreTimer = setTimeout(() => {
+        focusRestoreTimer = null;
+        if (gameRect) {
+          tracker.focusGameWindow();
+        }
+      }, FOCUS_RESTORE_DELAY_MS);
+    }
+  });
+  return true; // 열림
 }
 
 export function toggleSettingsWindow(tabId?: string): void {
@@ -403,15 +432,15 @@ export function toggleSettingsWindow(tabId?: string): void {
     }
   });
 }
-export function toggleGalleryWindow(): void {
-  createToggleableWindow('gallery', {
+export function toggleGalleryWindow(): boolean {
+  return createToggleableWindow('gallery', {
     onReady: (win) => { gallery.updateWindows(null, win, null); if (onOverlayReady) onOverlayReady(); }
   });
 }
-export function toggleAbbreviationWindow(): void { createToggleableWindow('abbreviation'); }
-export function toggleBuffsWindow(): void { createToggleableWindow('buffs'); }
-export function toggleBossSettingsWindow(): void {
-  createToggleableWindow('bossSettings', {
+export function toggleAbbreviationWindow(): boolean { return createToggleableWindow('abbreviation'); }
+export function toggleBuffsWindow(): boolean { return createToggleableWindow('buffs'); }
+export function toggleBossSettingsWindow(): boolean {
+  return createToggleableWindow('bossSettings', {
     onReady: (win) => {
       const bossTimes: Record<string, string[]> = {};
       const bosses = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
@@ -420,16 +449,16 @@ export function toggleBossSettingsWindow(): void {
     }
   });
 }
-export function toggleEtaRankingWindow(): void { createToggleableWindow('etaRanking'); }
-export function toggleTradeWindow(): void {
-  createToggleableWindow('trade', {
+export function toggleEtaRankingWindow(): boolean { return createToggleableWindow('etaRanking'); }
+export function toggleTradeWindow(): boolean {
+  return createToggleableWindow('trade', {
     onReady: (win) => { trade.updateWindows(null, win); }
   });
 }
-export function toggleCoefficientCalculatorWindow(): void { createToggleableWindow('coefficientCalculator'); }
-export function toggleEvolutionCalculatorWindow(): void { createToggleableWindow('evolutionCalculator'); }
-export function toggleMagicStoneCalculatorWindow(): void { createToggleableWindow('magicStoneCalculator'); }
-export function toggleCustomAlertWindow(): void { createToggleableWindow('customAlert'); }
+export function toggleCoefficientCalculatorWindow(): boolean { return createToggleableWindow('coefficientCalculator'); }
+export function toggleEvolutionCalculatorWindow(): boolean { return createToggleableWindow('evolutionCalculator'); }
+export function toggleMagicStoneCalculatorWindow(): boolean { return createToggleableWindow('magicStoneCalculator'); }
+export function toggleCustomAlertWindow(): boolean { return createToggleableWindow('customAlert'); }
 export function toggleUniformColorWindow(): void {
   const winCfg = windowRegistry['uniformColor'];
   if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
@@ -491,16 +520,27 @@ export function toggleUniformColorWindow(): void {
       uniformColorView = null;
     }
     winCfg.ref = null;
+
+    // 창이 닫힐 때 게임으로 포커스 복구 (createToggleableWindow과 동일한 패턴)
+    if (!appState.isQuitting && !suppressFocusRestore) {
+      if (focusRestoreTimer) clearTimeout(focusRestoreTimer);
+      focusRestoreTimer = setTimeout(() => {
+        focusRestoreTimer = null;
+        if (gameRect) {
+          tracker.focusGameWindow();
+        }
+      }, FOCUS_RESTORE_DELAY_MS);
+    }
   });
 }
 
-export function toggleShoutHistoryWindow(): void { createToggleableWindow('shoutHistory'); }
-export function toggleDiaryWindow(): void { createToggleableWindow('diary'); }
-export function toggleScamDetectorWindow(): void { createToggleableWindow('scamDetector'); }
-export function toggleBuffTimerWindow(): void { createToggleableWindow('buffTimer'); }
-export function toggleXpHudWindow(): void { createToggleableWindow('xpHud'); }
-export function toggleContentsCheckerWindow(): void {
-  createToggleableWindow('contentsChecker', {
+export function toggleShoutHistoryWindow(): boolean { return createToggleableWindow('shoutHistory'); }
+export function toggleDiaryWindow(): boolean { return createToggleableWindow('diary'); }
+export function toggleScamDetectorWindow(): boolean { return createToggleableWindow('scamDetector'); }
+export function toggleBuffTimerWindow(): boolean { return createToggleableWindow('buffTimer'); }
+export function toggleXpHudWindow(): boolean { return createToggleableWindow('xpHud'); }
+export function toggleContentsCheckerWindow(): boolean {
+  return createToggleableWindow('contentsChecker', {
     onReady: (win) => {
       // 1. 데이터 초기화 수행
       import('./contentsChecker').then(mod => {
@@ -711,6 +751,9 @@ export function toggleSidebar(): boolean {
 }
 
 export function hideAll(): void {
+  // 게임 종료/최소화 시 포커스 복구 억제 (closed 이벤트가 동기 발생하는 경우 방어)
+  suppressFocusRestore = true;
+
   // 오버레이 창 종료 (Close)
   if (overlayWindow) {
     savePosition('overlay', overlayPos, true);
@@ -736,8 +779,19 @@ export function hideAll(): void {
     }
   });
 
+  suppressFocusRestore = false;
+
+  // closed 이벤트가 비동기 발생하는 경우를 대비하여 gameRect를 먼저 null 처리
+  // → 타이머 콜백의 gameRect 체크가 최종 방어선 역할
   isTracking = false;
   gameRect = null; // 게임 상태 초기화
+
+  // 동기 closed에서 설정된 타이머도 정리
+  if (focusRestoreTimer) {
+    clearTimeout(focusRestoreTimer);
+    focusRestoreTimer = null;
+  }
+
   closeSplashWindow();
 }
 

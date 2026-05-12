@@ -13,6 +13,8 @@ import type { EtaRankingParams } from '../shared/types';
 import { setupAutoStart } from './autoStart';
 import * as sm from './shortcutManager';
 import { analytics } from './analytics';
+import * as tracker from './tracker';
+import { FOCUS_RESTORE_DELAY_MS } from './constants';
 import * as diaryDb from './diaryDb';
 import * as backup from './backupManager';
 import { buffTimerManager } from './buffTimerManager';
@@ -388,5 +390,11 @@ export function register(): void {
   });
   ipcMain.on('xp-reset', () => {
     import('./chatLogProcessor').then(mod => mod.chatLogProcessor.resetXp());
+  });
+
+  ipcMain.on('request-game-focus', () => {
+    setTimeout(() => {
+      tracker.focusGameWindow();
+    }, FOCUS_RESTORE_DELAY_MS);
   });
 }

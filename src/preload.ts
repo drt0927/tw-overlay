@@ -90,6 +90,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   shortcutsUnregister: () => ipcRenderer.send('shortcuts-unregister'),
   shortcutsRegister: () => ipcRenderer.send('shortcuts-register'),
+  requestGameFocus: () => ipcRenderer.send('request-game-focus'),
 
   // 백업 및 복구
   backupExport: () => ipcRenderer.invoke('backup-export'),

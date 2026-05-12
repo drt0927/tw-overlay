@@ -33,6 +33,8 @@ export const EVENT_DEBOUNCE_MS = 16;
 export const POSITION_THRESHOLD = 2;
 /** 마우스 투과 전환 후 게임 포커스까지 지연시간(ms) */
 export const FOCUS_DELAY_MS = 50;
+/** 창 닫기 후 게임 포커스 복구까지 지연시간(ms) — OS 포커스 재배치 완료 대기 */
+export const FOCUS_RESTORE_DELAY_MS = 100;
 /** GetWindowTextW 호출용 타이틀 버퍼 길이 */
 export const TITLE_BUFFER_LENGTH = 256;
 

@@ -291,8 +291,11 @@
             <div id="detail-monster" class="detail-monster-box"></div>
           </div>
 
+          <!-- Weekly Summary Area -->
+          <div id="weekly-summary-area" class="px-5 py-3 border-b border-slate-800/50 bg-purple-500/5 hidden flex justify-between items-center"></div>
+
           <!-- Add Record Area -->
-          <div class="p-4 border-b border-slate-800/50 flex flex-col gap-3">
+          <div id="add-record-area" class="p-4 border-b border-slate-800/50 flex flex-col gap-3">
             <div>
               <div class="flex items-center gap-2 mb-1.5 text-[13px] font-bold text-amber-400/80">
                 <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> 득템 기록
@@ -383,6 +386,10 @@
           <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
             <h3 class="text-sm font-black text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> 요일별 활동 리듬</h3>
             <div id="stats-weekly-rhythm" class="flex items-end justify-between h-24 px-2"></div>
+          </div>
+          <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-sm font-black text-slate-300 mb-4 flex items-center gap-2"><i data-lucide="gem" class="w-4 h-4 text-orange-500"></i> 주차별 수익 요약</h3>
+            <div id="stats-weekly-seed" class="flex flex-col gap-2"></div>
           </div>
         </div>
       </div>
@@ -531,6 +538,22 @@
         rhythmEl.innerHTML += `<div class="w-6 ${color} rounded-t-md transition-all duration-500" style="height: ${height}%" title="${val}개"></div>`;
       });
 
+      // 주차별 수익 요약 렌더링
+      const weeklySeedEl = document.getElementById('stats-weekly-seed');
+      weeklySeedEl.innerHTML = '';
+      if (stats.weeklySeedList && stats.weeklySeedList.some(s => s > 0)) {
+        stats.weeklySeedList.forEach((amount, idx) => {
+          if (amount === 0) return;
+          weeklySeedEl.innerHTML += `
+            <div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
+              <span class="text-xs font-bold text-slate-400">${idx + 1}주차 수익</span>
+              <span class="text-sm font-black text-orange-300">${formatSeed(amount)}</span>
+            </div>`;
+        });
+      } else {
+        weeklySeedEl.innerHTML = '<div class="text-xs text-slate-600 italic py-2">수익 기록이 없습니다.</div>';
+      }
+
       renderRevenueChart(await window.electronAPI.diaryGetMonthlyRevenue(yearMonth));
       lucide.createIcons();
     }
@@ -626,10 +649,13 @@
       const prevMonthLastDate = new Date(year, month, 0).getDate();
       const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
       let weekWDone = 0, weekWTotal = 0;
+      let currentWeekDates = [];
+      let weekIndex = 1;
 
       const addCell = (d, mOffset, isOther) => {
         const targetDate = new Date(year, month + mOffset, d);
         const dStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+        currentWeekDates.push(dStr);
         const data = monthlyData.find(m => m.date === dStr);
         if (data) { weekWDone = Math.max(weekWDone, data.weekly_done); weekWTotal = Math.max(weekWTotal, data.weekly_total); }
         const score = data ? data.total_score : 0, level = getLevel(score);
@@ -644,13 +670,139 @@
       for (let d = 1; d <= daysInMonth; d++) {
         addCell(d, 0, false);
         if ((firstDay + d) % 7 === 0 || d === daysInMonth) {
-          if (d === daysInMonth && (firstDay + d) % 7 !== 0) for (let n = 1; n <= (7 - ((firstDay + d) % 7)); n++) addCell(n, 1, true);
+          if (d === daysInMonth && (firstDay + d) % 7 !== 0) {
+             for (let n = 1; n <= (7 - ((firstDay + d) % 7)); n++) addCell(n, 1, true);
+          }
           const wDiv = document.createElement('div');
-          wDiv.className = 'calendar-cell empty flex items-center justify-center'; wDiv.style.background = 'rgba(168, 85, 247, 0.05)'; wDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
-          wDiv.innerHTML = weekWTotal > 0 ? `<div class="text-[10px] font-black text-center ${weekWDone === weekWTotal ? 'text-purple-400' : 'text-slate-400'}">주간<br/><span class="text-xs">${weekWDone}/${weekWTotal}</span></div>` : `<div class="text-[10px] font-bold text-slate-600">-</div>`;
-          grid.appendChild(wDiv); weekWDone = 0; weekWTotal = 0;
+          const myWeekDates = [...currentWeekDates];
+          const myWeekIdx = weekIndex++;
+          const myHwDone = weekWDone, myHwTotal = weekWTotal;
+          wDiv.className = 'calendar-cell empty flex flex-col items-center justify-center cursor-pointer hover:bg-purple-500/10 transition-colors'; 
+          wDiv.style.background = 'rgba(168, 85, 247, 0.05)'; wDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
+          wDiv.innerHTML = myHwTotal > 0 ? `<div class="text-[10px] font-black text-center ${myHwDone === myHwTotal ? 'text-purple-400' : 'text-slate-400'}">주간<br/><span class="text-xs">${myHwDone}/${myHwTotal}</span></div>` : `<div class="text-[10px] font-bold text-slate-600">주간<br/>상세</div>`;
+          wDiv.onclick = (e) => { e.stopPropagation(); selectWeek(myWeekIdx, myWeekDates, wDiv, myHwDone, myHwTotal); };
+          grid.appendChild(wDiv); 
+          weekWDone = 0; weekWTotal = 0; currentWeekDates = [];
         }
       }
+    }
+
+    async function selectWeek(weekIndex, dates, cellElement, hwDone, hwTotal) {
+      selectedDateStr = null; 
+      document.querySelectorAll('.calendar-cell').forEach(c => c.classList.remove('active'));
+      if (cellElement) cellElement.classList.add('active');
+      document.getElementById('empty-state').classList.add('hidden');
+      document.getElementById('detail-view').classList.remove('hidden');
+      document.getElementById('add-record-area').classList.add('hidden');
+      
+      let allHomework = [];
+      let allActivity = [];
+      let totalScore = 0;
+      let totalWeekSeed = 0;
+      let totalBossKills = 0;
+      
+      for (const d of dates) {
+        try {
+          const res = await window.electronAPI.diaryGetByDate(d);
+          if (res) {
+             if (res.diary) totalScore += res.diary.total_score;
+             res.homeworkLogs.forEach(h => allHomework.push({...h, date: d}));
+             res.activityLogs.forEach(a => {
+               allActivity.push({...a, date: d});
+               if (a.type === 'boss') totalBossKills++;
+               else if (a.type === 'calc') totalWeekSeed += a.amount || 0;
+             });
+          }
+        } catch(e){}
+      }
+      
+      // 요약 패널 표시
+      const summaryArea = document.getElementById('weekly-summary-area');
+      summaryArea.innerHTML = `
+        <div class="flex flex-col items-center flex-1 border-r border-slate-800/50">
+          <span class="text-[10px] text-slate-500 font-bold">주간 숙제</span>
+          <span class="text-sm font-black text-blue-400">${hwDone}/${hwTotal}</span>
+        </div>
+        <div class="flex flex-col items-center flex-1 border-r border-slate-800/50">
+          <span class="text-[10px] text-slate-500 font-bold">보스 처치</span>
+          <span class="text-sm font-black text-red-400">${totalBossKills}회</span>
+        </div>
+        <div class="flex flex-col items-center flex-1">
+          <span class="text-[10px] text-slate-500 font-bold">총 획득 시드</span>
+          <span class="text-sm font-black text-orange-400">${formatSeedShort(totalWeekSeed)}</span>
+        </div>
+      `;
+      summaryArea.classList.remove('hidden');
+
+      const startDate = dates[0].split('-').slice(1).join('.');
+      const endDate = dates[dates.length-1].split('-').slice(1).join('.');
+      
+      document.getElementById('detail-date').innerText = `${weekIndex}주차 (${startDate} ~ ${endDate})`;
+      document.getElementById('detail-score').innerText = `${totalScore} pt`;
+      document.getElementById('detail-hw').innerText = `주간 숙제 ${hwDone}/${hwTotal}`;
+      document.getElementById('detail-monster').innerHTML = `<i data-lucide="calendar-range" class="w-8 h-8 text-purple-400"></i>`; 
+
+      const list = document.getElementById('timeline-list'); list.innerHTML = '';
+      let logs = [];
+      allHomework.forEach(h => logs.push({ 
+        displayTime: `${h.date.slice(5)} ${new Date(h.completed_at).toLocaleTimeString('ko-KR', {hour12:false, hour:'2-digit', minute:'2-digit'})}`, 
+        sortTime: `${h.date} ${h.completed_at}`,
+        type: 'homework', content: `[숙제 완료] ${h.content_name}` 
+      }));
+      allActivity.forEach(a => {
+        const parts = (a.time || '').split(':');
+        const hh = (parts[0] || '00').padStart(2, '0');
+        const mm = (parts[1] || '00').padStart(2, '0');
+        logs.push({ 
+          displayTime: `${a.date.slice(5)} ${hh}:${mm}`, 
+          sortTime: `${a.date} ${a.time}`,
+          type: a.type, content: a.content 
+        });
+      });
+      logs.sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+
+      if (logs.length === 0) { list.innerHTML = `<div class="text-xs text-slate-500 italic text-center py-10">기록된 활동이 없습니다.</div>`; lucide.createIcons(); return; }
+
+      const groupedLogs = [];
+      logs.forEach(log => {
+        const last = groupedLogs[groupedLogs.length - 1];
+        if (log.content.includes('[자동]') && last && last.isAutoGroup && last.date === log.sortTime.split(' ')[0]) {
+          last.items.push(log); last.endTime = log.displayTime.split(' ')[1];
+          const m = log.content.match(/\(([^)]+)\)/);
+          if (m) {
+            let val = 0; const s = m[1]; const raw = s.match(/([\d,]+)/);
+            if (raw) val = parseInt(raw[1].replace(/,/g, ''), 10);
+            if (s.includes('조')) val *= 1000000000000;
+            if (s.includes('억')) val *= 100000000; else if (s.includes('만')) val *= 10000;
+            last.totalAmount += val;
+          }
+        } else if (log.content.includes('[자동]')) {
+          let val = 0; const m = log.content.match(/\(([^)]+)\)/);
+          if (m) {
+            const s = m[1]; const raw = s.match(/([\d,]+)/);
+            if (raw) val = parseInt(raw[1].replace(/,/g, ''), 10);
+            if (s.includes('조')) val *= 1000000000000;
+            if (s.includes('억')) val *= 100000000; else if (s.includes('만')) val *= 10000;
+          }
+          groupedLogs.push({ 
+            isAutoGroup: true, date: log.sortTime.split(' ')[0],
+            startTime: log.displayTime, endTime: log.displayTime.split(' ')[1], 
+            items: [log], totalAmount: val, type: 'calc' 
+          });
+        } else { groupedLogs.push(log); }
+      });
+
+      groupedLogs.forEach((log, gIdx) => {
+        if (log.isAutoGroup) {
+          const gid = `timeline-auto-week-${gIdx}`;
+          list.innerHTML += `<div class="timeline-item flex flex-col pr-2"><i data-lucide="gem" class="w-3 h-3 text-orange-400/50 absolute -left-0.5 top-[5px]"></i><div onclick="toggleAutoGroup('${gid}')" class="flex items-baseline gap-2 pl-1 pt-[2px] cursor-pointer hover:bg-white/5 rounded px-1 transition-colors"><span class="text-[10px] font-bold text-slate-600 font-mono w-24 shrink-0">${log.startTime}~${log.endTime}</span><span class="text-[11px] font-bold text-slate-500 shrink-0">[Auto]</span><span class="text-[11px] font-medium text-slate-400 flex-1">수익 합계 (${log.items.length}건)</span><span class="text-[11px] font-black text-orange-400/70">${formatSeed(log.totalAmount).replace(' 시드', '')}</span><i data-lucide="chevron-down" id="${gid}-icon" class="w-2.5 h-2.5 text-slate-600 rotate-icon"></i></div><div id="${gid}" class="auto-group-content ml-6 mt-1 bg-black/20 rounded border-l border-orange-500/20">${log.items.map(it => `<div class="flex justify-between py-1 px-2 text-[10px]"><span class="text-slate-500">${it.displayTime.split(' ')[1]}</span><span class="text-slate-400 truncate flex-1 px-2">${it.content.split('(')[0].replace('[자동] ', '').trim()}</span><span class="text-orange-300/50 font-mono">${(it.content.match(/\(([^)]+)\)/) || [])[1] || ''}</span></div>`).join('')}</div></div>`;
+        } else {
+          let icon = log.type === 'boss' ? 'sword' : (log.type === 'calc' ? 'gem' : (log.type === 'homework' ? 'check-square' : 'sparkles'));
+          let color = log.type === 'boss' ? 'red-400' : (log.type === 'calc' ? 'orange-400' : (log.type === 'homework' ? 'blue-400' : 'amber-400'));
+          list.innerHTML += `<div class="timeline-item flex items-start pr-2"><i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i><div class="flex items-baseline gap-2 pl-1 flex-1 pt-[2px]"><span class="text-[10px] font-bold text-slate-500 font-mono w-24 shrink-0">${log.displayTime}</span><span class="text-xs font-medium text-slate-200 leading-snug">${log.content}</span></div></div>`;
+        }
+      });
+      lucide.createIcons();
     }
 
     async function selectDate(dateStr, cellElement) {
@@ -659,6 +811,8 @@
       if (cellElement) cellElement.classList.add('active');
       document.getElementById('empty-state').classList.add('hidden');
       document.getElementById('detail-view').classList.remove('hidden');
+      document.getElementById('add-record-area').classList.remove('hidden');
+      document.getElementById('weekly-summary-area').classList.add('hidden');
       try { renderDetail(dateStr, await window.electronAPI.diaryGetByDate(dateStr)); } catch (e) { console.error(e); }
     }
 
@@ -673,7 +827,12 @@
       const list = document.getElementById('timeline-list'); list.innerHTML = '';
       let logs = [];
       data.homeworkLogs.forEach(h => logs.push({ time: new Date(h.completed_at).toLocaleTimeString('ko-KR', {hour12:false, hour:'2-digit', minute:'2-digit'}), type: 'homework', content: `[숙제 완료] ${h.content_name}` }));
-      data.activityLogs.forEach(a => logs.push({ time: a.time.substring(0, 5), type: a.type, content: a.content }));
+      data.activityLogs.forEach(a => {
+        const parts = (a.time || '').split(':');
+        const hh = (parts[0] || '00').padStart(2, '0');
+        const mm = (parts[1] || '00').padStart(2, '0');
+        logs.push({ time: `${hh}:${mm}`, type: a.type, content: a.content });
+      });
       logs.sort((a, b) => a.time.localeCompare(b.time));
 
       if (logs.length === 0) { list.innerHTML = `<div class="text-xs text-slate-500 italic text-center py-10">기록된 활동이 없습니다.</div>`; return; }

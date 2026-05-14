@@ -376,6 +376,8 @@ export function getMonthlyStatistics(yearMonth: string): any {
   const bossCounts: Record<string, number> = {};
   const weeklyActivity = [0, 0, 0, 0, 0, 0, 0]; // 월~일 (0~6)
   const heatmap: Record<string, number> = {};
+  const weeklySeedList = [0, 0, 0, 0, 0, 0]; // 최대 6주
+  const firstDay = (new Date(year, month - 1, 1).getDay() + 6) % 7; // 1일의 요일 (0: 월요일)
 
   logs.forEach(log => {
     // 요일별 활동량 계산
@@ -395,6 +397,11 @@ export function getMonthlyStatistics(yearMonth: string): any {
       totalLoots += log.amount || 1;
     } else if (log.type === 'calc') {
       totalSeed += log.amount || 0;
+      const dateNum = parseInt(log.date.split('-')[2], 10);
+      const weekIdx = Math.floor((dateNum + firstDay - 1) / 7);
+      if (weekIdx >= 0 && weekIdx < 6) {
+        weeklySeedList[weekIdx] += log.amount || 0;
+      }
     }
   });
 
@@ -422,6 +429,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
     totalSeed,
     topBosses,
     weeklyActivity,
+    weeklySeedList,
     heatmap: heatmapList,
     grade
   };

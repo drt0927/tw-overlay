@@ -692,7 +692,9 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     }
     // X(right 방향)와 Y/H는 syncOverlay가 관리 — stale gameRect 사용 금지
     setProgrammaticMove('main');
-    mainWindow.setBounds({ x: Math.round(newX), y: b.y, width: newSettings.width, height: b.height });
+    if (mainWindow.isVisible()) {
+      mainWindow.setBounds({ x: Math.round(newX), y: b.y, width: newSettings.width, height: b.height });
+    }
 
     // 열려있는 자식 창들도 재배치 (사이드바 X 변경에 따른 오프셋 보정)
     if (gameRect) {
@@ -785,6 +787,7 @@ export function hideAll(): void {
   // → 타이머 콜백의 gameRect 체크가 최종 방어선 역할
   isTracking = false;
   gameRect = null; // 게임 상태 초기화
+  physicalGameRect = null;
 
   // 동기 closed에서 설정된 타이머도 정리
   if (focusRestoreTimer) {
@@ -820,6 +823,7 @@ export function hideOverlayWindows(): void {
 
   isTracking = false;
   gameRect = null; // 게임 상태 초기화
+  physicalGameRect = null;
   closeSplashWindow();
 }
 export function showGameExitReminder(): void {

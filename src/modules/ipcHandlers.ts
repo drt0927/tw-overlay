@@ -114,6 +114,9 @@ export function register(): void {
   ipcMain.on('contents-update-name', (_e, id: string, name: string) => {
     import('./contentsChecker').then(mod => mod.updateName(id, name));
   });
+  ipcMain.on('contents-update-item', (_e, id: string, name: string, category: string, rule: any) => {
+    import('./contentsChecker').then(mod => mod.updateItem(id, name, category, rule));
+  });
   ipcMain.on('contents-add-custom', (_e, name: string, category: string, rule: any) => {
     import('./contentsChecker').then(mod => mod.addCustomItem(name, category, rule));
   });

@@ -434,6 +434,23 @@ export function toggleVisibility(id: string): void {
   }
 }
 
+/** 항목 수정 (이름, 카테고리, 초기화 규칙) */
+export function updateItem(id: string, name: string, category: string, rule: ResetRule): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const item = items.find(i => i.id === id);
+  if (item) {
+    item.name = name;
+    item.category = category;
+    item.resetRule = rule;
+    
+    // 규칙이 변경되었을 수 있으므로 초기화 체크 수행
+    config.saveImmediate({ contentsCheckerItems: items });
+    checkReset(); 
+    refreshUI();
+  }
+}
+
 /** 카테고리 수정 */
 export function updateCategory(id: string, newCategory: string): void {
   const cfg = config.load();

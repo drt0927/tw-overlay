@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
   contentsUpdateName: (id: string, name: string) => ipcRenderer.send('contents-update-name', id, name),
+  contentsUpdateItem: (id: string, name: string, category: string, rule: any) => ipcRenderer.send('contents-update-item', id, name, category, rule),
   contentsAddCustom: (name: string, category: string, rule: any) => ipcRenderer.send('contents-add-custom', name, category, rule),
   contentsRemoveItem: (id: string) => ipcRenderer.send('contents-remove-item', id),
   contentsReorderItem: (id: string, direction: 'up' | 'down') => ipcRenderer.send('contents-reorder-item', id, direction),

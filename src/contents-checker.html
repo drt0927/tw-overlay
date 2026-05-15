@@ -12,321 +12,324 @@
             color: white;
             overflow: hidden;
             height: 100vh;
-        }
-
-        .custom-scroll::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .custom-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .drag-handle {
-            padding: 16px 20px;
-            /* cursor: move; */
-            -webkit-app-region: drag;
-            background: linear-gradient(to bottom, rgba(34, 211, 238, 0.15), transparent);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .no-drag {
-            -webkit-app-region: no-drag !important;
-        }
-
-        .item-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 12px 16px;
             display: flex;
-            align-items: center;
-            gap: 14px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-direction: column;
+            background: #0f172a;
+        }
+
+        /* 스크롤바 크기 확대 (더 크게) */
+        .custom-scroll::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(34, 211, 238, 0.4);
+            border-radius: 12px;
+            border: 2px solid #0f172a;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 211, 238, 0.6);
+        }
+
+        /* 매트릭스 레이아웃 */
+        .matrix-wrapper {
+            flex: 1;
+            overflow: auto;
             position: relative;
-            -webkit-app-region: no-drag !important;
-            /* 이 영역에서 창 드래그가 발생하지 않도록 함 */
+            background: rgba(0, 0, 0, 0.1);
+            -webkit-app-region: no-drag;
         }
 
-        .item-card.dragging {
-            opacity: 0.1;
-            /* 드래그 중인 원본 요소는 거의 투명하게 */
+        .matrix-table {
+            display: grid;
+            grid-template-columns: minmax(180px, 1.5fr) repeat(var(--char-count, 1), 72px);
+            min-width: 100%;
         }
 
-        .drag-placeholder {
-            background: rgba(34, 211, 238, 0.1);
-            border: 2px dashed rgba(34, 211, 238, 0.4);
-            border-radius: 14px;
-            margin: 4px 0;
-            pointer-events: none;
+        /* 십자 틀 고정 */
+        .sticky-corner {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 60;
+            background: #1e293b;
+            border-bottom: 2px solid rgba(34, 211, 238, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 52px;
         }
 
-        /* 일일 숙제 특화 색상 (Blue) */
-        .item-card.daily:hover {
-            border-color: rgba(59, 130, 246, 0.4);
+        .sticky-row {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: #1e293b;
+            border-bottom: 2px solid rgba(34, 211, 238, 0.3);
+            height: 52px;
         }
 
-        .item-card.daily .category-badge {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-            border-color: rgba(59, 130, 246, 0.2);
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 40;
+            background: rgba(15, 23, 42, 0.98);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
         }
 
-        /* 주간 숙제 특화 색상 (Cyan) */
-        .item-card.weekly:hover {
-            border-color: rgba(34, 211, 238, 0.4);
-        }
-
-        .item-card.weekly .category-badge {
-            background: rgba(34, 211, 238, 0.15);
-            color: #22d3ee;
-            border-color: rgba(34, 211, 238, 0.2);
-        }
-
-        /* 조회모드 전용 완료 스타일 */
-        body:not(.edit-mode) .item-card.completed {
-            opacity: 0.45;
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        body:not(.edit-mode) .item-card.completed .check-box {
-            background: #22c55e;
-            border-color: #22c55e;
-            box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
-        }
-
-        /* 편집모드 전용 스타일: 딤드 해제 및 체크박스 숨김 */
-        .edit-mode .item-card {
-            opacity: 1 !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            border-color: rgba(245, 158, 11, 0.2);
-            cursor: var(--cursor-grab) !important;
-        }
-
-        .edit-mode .check-box {
-            display: none;
-        }
-
-        .check-box {
-            width: 22px;
-            height: 22px;
-            border-radius: 7px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
+        .matrix-cell {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            flex-shrink: 0;
+            min-height: 48px;
         }
 
-        .category-badge {
+        .matrix-cell.item-info {
+            justify-content: flex-start;
+            gap: 10px;
+        }
+
+        /* 대분류 헤더 (일일/주간/완료) */
+        .section-row {
+            grid-column: 1 / -1;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 52px;
+            z-index: 45;
+        }
+
+        .section-row.daily { color: #60a5fa; border-left: 4px solid #3b82f6; }
+        .section-row.weekly { color: #c084fc; border-left: 4px solid #a855f7; }
+        .section-row.completed { color: #10b981; border-left: 4px solid #10b981; }
+
+        /* 소분류 아코디언 (Dungeon, Currency 등) */
+        .category-row {
+            grid-column: 1 / -1;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 8px 14px 8px 32px;
             font-size: 10px;
             font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 6px;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 91px; /* section-row 높이(약 39px) + 52px */
+            z-index: 44;
         }
 
-        .edit-mode .category-badge {
-            background: rgba(245, 158, 11, 0.1) !important;
-            color: #fbbf24 !important;
-            border-color: rgba(245, 158, 11, 0.2) !important;
+        .category-row:hover {
+            background: rgba(34, 211, 238, 0.1);
+            color: #f1f5f9;
         }
 
-        .edit-mode .item-card.hidden-item {
-            opacity: 0.4 !important;
-            border-style: dashed;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.01) 10px, rgba(255, 255, 255, 0.01) 20px);
+        /* 캐릭터 열 헤더 */
+        .char-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
         }
 
-        .hidden-item:not(.edit-mode *) {
+        .char-name {
+            font-size: 13px;
+            font-weight: 900;
+            max-width: 64px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #22d3ee; /* 하늘색으로 강조 */
+            text-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+            margin-bottom: 2px;
+        }
+
+        .char-progress {
+            font-size: 10px;
+            font-weight: 800;
+            color: #94a3b8; /* 진행도는 차분하게 조정 */
+        }
+
+        /* 체크박스 커스텀 */
+        .check-box {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .check-box.checked {
+            background: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .check-box.excluded {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .check-box.excluded::after {
+            content: '-';
+            color: #475569;
+            font-weight: 900;
+            font-size: 16px;
+        }
+
+        /* 대분류 헤더 (일일/주간/완료) */
+        .type-badge {
+            font-size: 8px;
+            font-weight: 900;
+            padding: 2px 5px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .type-badge.cat { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.2); }
+
+        /* 가시성/편집 관련 */
+        .hidden-row {
+            display: none !important;
+        }
+
+        .edit-mode .hidden-row {
+            display: flex !important;
+            opacity: 0.4;
+            background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.02) 10px, rgba(255, 255, 255, 0.02) 20px);
+        }
+
+        .edit-mode .check-box {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        /* 폼 및 모달 스타일 */
+        .add-form-container {
+            background: rgba(15, 23, 42, 0.98);
+            border-top: 1px solid rgba(34, 211, 238, 0.3);
+            padding: 20px;
             display: none;
+            z-index: 100;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .add-form-container.show {
+            display: block;
+            animation: slideUp 0.25s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* input/select 스타일 통합 */
+        .form-input {
+            background: rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            color: white !important;
+            padding: 10px 12px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            outline: none !important;
+            width: 100%;
+            height: 42px;
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        .form-input:focus {
+            border-color: #22d3ee !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
         }
 
         .manage-tag {
             background: #f59e0b;
             color: white;
-            font-size: 9px;
+            font-size: 8px; /* 폰트 크기 약간 축소 */
             font-weight: 900;
-            padding: 2px 6px;
+            padding: 1px 4px;
             border-radius: 4px;
-            margin-left: 8px;
+            margin-left: 6px;
+            white-space: nowrap; /* 줄바꿈 방지 */
+            flex-shrink: 0; /* 배지 크기 유지 */
         }
 
-        .section-header {
+        .win-title-main {
+            white-space: nowrap; /* 제목 줄바꿈 방지 */
+        }
+
+        /* 캐릭터 관리 메뉴 전용 */
+        .char-item-row {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin: 24px 4px 12px 4px;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .progress-container {
-            padding: 0 20px;
-            margin-top: 10px;
+        .char-item-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(34, 211, 238, 0.2);
         }
 
-        .progress-bar-bg {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 100px;
-            overflow: hidden;
+        /* 캐릭터 관리 버튼 전용 강조 스타일 (Purple) */
+        .btn-mgmt-accent {
+            background: rgba(168, 85, 247, 0.15) !important;
+            border: 1px solid rgba(168, 85, 247, 0.3) !important;
+            color: #c084fc !important;
+        }
+        .btn-mgmt-accent:hover {
+            background: rgba(168, 85, 247, 0.25) !important;
+            border-color: #c084fc !important;
+            transform: translateY(-1px);
         }
 
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #22d3ee, #06b6d4);
-            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        /* 도움말 모달 전용 스타일 */
+        .guide-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
         }
 
-        /* 컨트롤 버튼 스타일 */
-        .control-btn {
-            width: 30px;
-            height: 30px;
+        .guide-icon-box {
+            width: 32px;
+            height: 32px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .control-btn.active {
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.15);
-        }
-
-        .add-form-container {
-            background: rgba(15, 18, 30, 0.98);
-            border-top: 1px solid rgba(34, 211, 238, 0.2);
-            padding: 20px;
-            display: none;
-            /* 기본적으로 숨김 */
-            z-index: 50;
-        }
-
-        .add-form-container.show {
-            display: block;
-            animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-
-        input,
-        select {
-            background: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 10px !important;
-            color: white !important;
-            font-weight: 600 !important;
-            outline: none !important;
-        }
-
-        input:focus,
-        select:focus {
-            border-color: #a855f7 !important;
-        }
-
-        /* 검색 영역 스타일 */
-        .search-container {
-            padding: 0 16px;
-            margin-top: 12px;
-        }
-
-        .search-box {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            transition: all 0.2s;
-        }
-
-        .search-box:focus-within {
-            border-color: rgba(34, 211, 238, 0.4);
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .search-input {
-            background: transparent !important;
-            border: none !important;
-            font-size: 12px !important;
-            padding: 8px 4px !important;
-            width: 100%;
-        }
-
-        /* 드래그 앤 드롭 스타일 */
-        .item-card {
-            -webkit-app-region: no-drag !important;
-            user-select: none !important;
-            /* 텍스트 선택 방지 */
-        }
-
-        .item-card.dragging {
-            opacity: 0.2;
-            transform: scale(0.98);
-            border: 1px dashed rgba(34, 211, 238, 0.5) !important;
-        }
-
-        .drag-placeholder {
-            background: rgba(34, 211, 238, 0.05);
-            border: 2px dashed rgba(34, 211, 238, 0.2);
-            border-radius: 14px;
-            margin: 4px 0;
-            pointer-events: none;
-        }
-
-        .drag-handle-icon {
-            display: none;
-            color: rgba(255, 255, 255, 0.2);
-            /* cursor: grab; */
-            padding: 8px;
-            margin: -8px;
-            margin-right: 4px;
-            border-radius: 6px;
-            transition: all 0.2s;
-            -webkit-app-region: no-drag !important;
-            pointer-events: auto !important;
-        }
-
-        .drag-handle-icon:hover {
-            color: #22d3ee;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .edit-mode .drag-handle-icon {
-            display: block;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -343,14 +346,20 @@
                     <span class="win-title-main">숙제 체크리스트</span>
                     <span id="mode-badge" class="manage-tag hidden">관리 모드</span>
                 </div>
-                <span id="progress-percent-text" class="win-title-sub">불러오는 중...</span>
+                <span id="progress-percent-text" class="win-title-sub">데이터를 불러오는 중...</span>
             </div>
         </div>
         <div class="win-controls">
-            <button id="btn-reset" class="win-btn" title="상태 동기화">
+            <button id="btn-help" class="win-btn mr-1" title="사용 가이드">
+                <i data-lucide="help-circle" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-char-mgmt" class="win-btn btn-mgmt-accent mr-1.5" title="캐릭터 관리">
+                <i data-lucide="users" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-reset" class="win-btn" title="전체 상태 동기화">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             </button>
-            <button id="btn-edit" class="win-btn" title="관리 모드 토글">
+            <button id="btn-edit" class="win-btn" title="가시성 설정">
                 <i id="edit-icon" data-lucide="settings-2" class="w-4 h-4"></i>
             </button>
             <button onclick="window.electronAPI.toggleContentsChecker()" class="win-btn win-close-btn" title="닫기">
@@ -359,47 +368,47 @@
         </div>
     </div>
 
+    <!-- Global Progress Bar -->
+    <div class="progress-bar-container">
+        <div id="global-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+    </div>
+
     <!-- Search Box -->
-    <div class="search-container no-drag">
-        <div class="search-box">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500"></i>
-            <input id="search-input" type="text" placeholder="숙제 이름이나 카테고리 검색..." class="search-input"
-                oninput="render()">
+    <div class="px-4 py-3 no-drag bg-slate-900/50">
+        <div class="bg-black/30 border border-white/10 rounded-xl flex items-center px-3 focus-within:border-cyan-500/50 transition-colors">
+            <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
+            <input id="search-input" type="text" placeholder="숙제 이름이나 카테고리 검색..." 
+                class="bg-transparent border-none text-xs p-2.5 w-full outline-none font-semibold" oninput="render()">
         </div>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="progress-container">
-        <div class="progress-bar-bg">
-            <div id="progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+    <!-- Matrix Layout -->
+    <div class="matrix-wrapper custom-scroll">
+        <div id="matrix-table" class="matrix-table">
+            <!-- Rendered by JS -->
         </div>
-    </div>
-
-    <!-- Content List -->
-    <div id="content-list" class="flex-1 overflow-y-auto custom-scroll p-4 pt-0 no-drag">
-        <!-- Rendered items -->
     </div>
 
     <!-- Add Form (Edit Mode Only) -->
-    <div id="add-form" class="add-form-container no-drag shadow-2xl">
+    <div id="add-form" class="add-form-container no-drag">
         <div class="flex items-center justify-between mb-4">
-            <span class="text-[10px] font-black text-cyan-400 uppercase tracking-widest">새로운 숙제 추가</span>
-            <button onclick="toggleEditMode()" class="text-[10px] text-slate-500 hover:text-white font-bold">닫기</button>
+            <span class="text-[11px] font-black text-cyan-400 uppercase tracking-widest">새로운 숙제 추가</span>
+            <button onclick="toggleEditMode()" class="text-[10px] text-slate-500 hover:text-white font-bold">취소</button>
         </div>
         <div class="space-y-3">
             <div class="grid grid-cols-2 gap-2">
-                <input id="new-item-name" type="text" placeholder="숙제 이름" class="w-full text-xs px-3 py-2.5">
-                <input id="new-item-category" type="text" placeholder="카테고리" class="w-full text-xs px-3 py-2.5">
+                <input id="new-item-name" type="text" placeholder="숙제 이름" class="form-input">
+                <input id="new-item-category" type="text" placeholder="카테고리" class="form-input">
             </div>
             <div class="flex gap-2">
-                <select id="new-item-type" class="flex-1 text-xs px-3 py-2.5" onchange="updateFormVisibility()">
+                <select id="new-item-type" class="form-input flex-1" onchange="updateFormVisibility()">
                     <option value="daily">매일 초기화</option>
                     <option value="weekly">매주 초기화</option>
                 </select>
-                <select id="new-item-hour" class="w-24 text-xs px-3 py-2.5"></select>
+                <select id="new-item-hour" class="form-input w-24"></select>
             </div>
             <div id="weekly-only-fields" class="hidden">
-                <select id="new-item-day" class="w-full text-xs px-3 py-2.5">
+                <select id="new-item-day" class="form-input">
                     <option value="1">월요일 (기본)</option>
                     <option value="2">화요일</option>
                     <option value="3">수요일</option>
@@ -410,22 +419,111 @@
                 </select>
             </div>
             <button id="btn-add-item"
-                class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black py-3 rounded-xl shadow-lg shadow-cyan-900/30 transition-all active:scale-[0.98]">
+                class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black py-3.5 rounded-xl shadow-lg transition-all active:scale-[0.98]">
                 목록에 추가하기
             </button>
         </div>
     </div>
 
-    <!-- Custom Prompt Modal (Replacement for window.prompt) -->
-    <div id="custom-prompt" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden no-drag">
+    <!-- Character Management Modal -->
+    <div id="char-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] hidden no-drag">
+        <div class="bg-slate-900 border border-cyan-500/30 p-6 rounded-2xl w-[360px] shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[11px] font-black text-cyan-400 uppercase tracking-widest">캐릭터 관리</span>
+                <button onclick="document.getElementById('char-modal').classList.add('hidden')" class="text-slate-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <div id="char-list" class="flex-1 overflow-y-auto space-y-2 mb-6 pr-2 custom-scroll">
+                <!-- Rendered by JS -->
+            </div>
+
+            <div class="pt-4 border-t border-white/10">
+                <div class="flex gap-2">
+                    <input id="new-char-name" type="text" placeholder="새 캐릭터 이름..." class="form-input flex-1">
+                    <button id="btn-add-char-action" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 rounded-xl font-bold text-xs">추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Guide Modal -->
+    <div id="help-modal" class="fixed inset-0 bg-black/85 flex items-center justify-center z-[130] hidden no-drag">
+        <div class="bg-slate-900 border border-cyan-500/30 p-7 rounded-2xl w-[420px] shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="help-circle" class="w-5 h-5 text-cyan-400"></i>
+                    <span class="text-sm font-black text-white uppercase tracking-widest">체크리스트 활용 가이드</span>
+                </div>
+                <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="text-slate-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto space-y-5 pr-2 custom-scroll">
+                <!-- Guide Item 1 -->
+                <div class="guide-card">
+                    <div class="guide-icon-box bg-blue-500/20 text-blue-400">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-blue-100 mb-1">다캐릭 매트릭스 UI</h4>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">숙제(좌측)와 캐릭터(상단) 이름이 고정됩니다. 부캐가 많으면 <b>Shift + 휠 스크롤</b>을 이용해 가로로 편리하게 이동할 수 있습니다.</p>
+                    </div>
+                </div>
+
+                <!-- Guide Item 2 -->
+                <div class="guide-card">
+                    <div class="guide-icon-box bg-purple-500/20 text-purple-400">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-purple-100 mb-1">캐릭터 관리</h4>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">상단 보라색 버튼을 클릭해 캐릭터를 추가하거나 이름을 수정할 수 있습니다. (본캐 삭제 방지 적용)</p>
+                    </div>
+                </div>
+
+                <!-- Guide Item 3 -->
+                <div class="guide-card">
+                    <div class="guide-icon-box bg-amber-500/20 text-amber-400">
+                        <i data-lucide="minus-circle" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-amber-100 mb-1">숙제 제외 (N/A 설정)</h4>
+                        <p class="text-[11px] text-slate-400 leading-relaxed"><b>관리 모드(톱니바퀴)</b> 활성 후 체크박스를 클릭하면 해당 캐릭터를 해당 숙제에서 제외할 수 있습니다.</p>
+                    </div>
+                </div>
+
+                <!-- Guide Item 4 -->
+                <div class="guide-card">
+                    <div class="guide-icon-box bg-green-500/20 text-green-400">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-green-100 mb-1">지능형 완료 정렬</h4>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">제외되지 않은 <b>모든 참여 캐릭터</b>가 숙제를 끝내야 '완료됨' 섹션으로 이동합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="document.getElementById('help-modal').classList.add('hidden')" 
+                class="w-full mt-6 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-3 rounded-xl transition-colors">
+                확인했습니다
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div id="custom-prompt" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[120] hidden no-drag">
         <div class="bg-slate-900 border border-cyan-500/30 p-6 rounded-2xl w-80 shadow-2xl">
-            <div id="prompt-title" class="text-[10px] font-black text-cyan-400 uppercase mb-4 tracking-widest">수정</div>
-            <input id="prompt-input" type="text" class="w-full text-xs px-3 py-2.5 mb-4 focus:border-cyan-500">
+            <div id="prompt-title" class="text-[11px] font-black text-cyan-400 uppercase mb-4 tracking-widest">수정</div>
+            <input id="prompt-input" type="text" class="form-input mb-5">
             <div class="flex gap-2">
                 <button id="prompt-cancel"
-                    class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">취소</button>
+                    class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">취소</button>
                 <button id="prompt-ok"
-                    class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold py-2 rounded-lg transition-colors">확인</button>
+                    class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2.5 rounded-lg transition-colors">확인</button>
             </div>
         </div>
     </div>
@@ -433,403 +531,287 @@
     <script>
         let isEditMode = false;
         let configData = null;
-        let dragSrcId = null;
-        let isDragging = false; // 드래그 진행 여부 플래그
-        let autoScrollTimer = null;
-        let placeholder = null; // 플레이스홀더 엘리먼트
-        let dragClone = null; // 드래그 중 시각 피드백용 클론
-        let dragOffsetX = 0, dragOffsetY = 0;
-        let dragStartX = 0, dragStartY = 0;
-        let dragStarted = false; // 실제 드래그 시작 여부 (클릭과 구분)
-        let promptCallback = null; // 커스텀 프롬프트 콜백
+        let collapsedSections = new Set(); // 일일/주간/완료
+        let collapsedCategories = new Set(); // 던전/재화 등
+        let promptCallback = null;
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // 시간 셀렉트박스 초기화
         const hourSelect = document.getElementById('new-item-hour');
-        for (let i = 0; i < 24; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = `${String(i).padStart(2, '0')}:00`;
-            hourSelect.appendChild(opt);
+        if (hourSelect) {
+            for (let i = 0; i < 24; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `${String(i).padStart(2, '0')}:00`;
+                hourSelect.appendChild(opt);
+            }
         }
 
         function updateFormVisibility() {
             const type = document.getElementById('new-item-type').value;
-            document.getElementById('weekly-only-fields').classList.toggle('hidden', type === 'daily');
+            const weeklyFields = document.getElementById('weekly-only-fields');
+            if (weeklyFields) weeklyFields.classList.toggle('hidden', type === 'daily');
         }
 
-        let prevDailyPercent = -1;
-        let prevWeeklyPercent = -1;
-
         function render() {
-            // 드래그 중에는 화면을 다시 그리지 않음 (드래그 끊김 방지)
-            if (isDragging) return;
             if (!configData || !configData.contentsCheckerItems) return;
 
-            const container = document.getElementById('content-list');
+            const table = document.getElementById('matrix-table');
+            if (!table) return;
+            
             const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
-            container.innerHTML = '';
-
+            const presets = configData.characterPresets || [{ id: 'char-main', name: '본캐' }];
             const items = configData.contentsCheckerItems;
 
-            // 검색 필터링
-            const filteredItems = items.filter(item => {
-                const matchesSearch = item.name.toLowerCase().includes(searchQuery) ||
-                    item.category.toLowerCase().includes(searchQuery);
-                return matchesSearch;
+            table.style.setProperty('--char-count', presets.length);
+            table.innerHTML = '';
+
+            // --- 1. 헤더 렌더링 ---
+            const corner = document.createElement('div');
+            corner.className = 'sticky-corner flex items-center justify-center';
+            corner.innerHTML = `<i data-lucide="layout-grid" class="w-4 h-4 text-slate-400"></i>`;
+            table.appendChild(corner);
+
+            presets.forEach(char => {
+                const header = document.createElement('div');
+                header.className = 'sticky-row char-header';
+
+                // 해당 캐릭터가 제외하지 않은 숙제들만 모수로 계산
+                const charItems = items.filter(i => i.isVisible && !i.completedState?.[char.id]?.isExcluded);
+                const charDone = charItems.filter(i => i.completedState?.[char.id]?.isCompleted).length;
+                const charPercent = charItems.length > 0 ? Math.round((charDone / charItems.length) * 100) : 0;
+
+                header.innerHTML = `
+                    <span class="char-name" title="${char.name}">${char.name}</span>
+                    <span class="char-progress">${charPercent}%</span>
+                `;
+                table.appendChild(header);
             });
 
-            // 진척도 계산 (전체 아이템 기준)
+            // --- 2. 데이터 그룹화 (Section > Category) ---
+            const grouped = {
+                '일일 숙제': {},
+                '주간 숙제': {},
+                '완료됨': { '전체': [] }
+            };
+
+            items.forEach(item => {
+                if (searchQuery && !item.name.toLowerCase().includes(searchQuery) && !item.category.toLowerCase().includes(searchQuery)) return;
+
+                // 제외되지 않은 캐릭터들 중 모두 완료했는지 확인
+                let activeCharCount = 0;
+                let completedCount = 0;
+                presets.forEach(char => {
+                    const state = item.completedState?.[char.id];
+                    if (!state?.isExcluded) {
+                        activeCharCount++;
+                        if (state?.isCompleted) completedCount++;
+                    }
+                });
+
+                // 관리 모드가 아닐 때, 참여 중인 모든 캐릭터가 체크했으면 '완료됨'으로 이동
+                if (!isEditMode && activeCharCount > 0 && completedCount === activeCharCount) {
+                    grouped['완료됨']['전체'].push(item);
+                } else {
+                    const sectionName = item.resetRule.type === 'daily' ? '일일 숙제' : '주간 숙제';
+                    const catName = item.category || '기타';
+                    if (!grouped[sectionName][catName]) grouped[sectionName][catName] = [];
+                    grouped[sectionName][catName].push(item);
+                }
+            });
+
+            // --- 3. 렌더링 헬퍼 ---
+            const renderCategory = (sectionKey, catName, catItems) => {
+                const catKey = `${sectionKey}-${catName}`;
+                const isCatCollapsed = collapsedCategories.has(catKey);
+                const visibleItems = isEditMode ? catItems : catItems.filter(i => i.isVisible);
+                if (visibleItems.length === 0) return;
+
+                // Category Header
+                const catRow = document.createElement('div');
+                catRow.className = `category-row ${isCatCollapsed ? 'collapsed' : ''}`;
+                catRow.innerHTML = `
+                    <i data-lucide="${isCatCollapsed ? 'chevron-right' : 'chevron-down'}" class="w-3.5 h-3.5"></i>
+                    <span>${catName} (${visibleItems.length})</span>
+                `;
+                catRow.onclick = () => {
+                    if (collapsedCategories.has(catKey)) collapsedCategories.delete(catKey);
+                    else collapsedCategories.add(catKey);
+                    render();
+                };
+                table.appendChild(catRow);
+
+                if (!isCatCollapsed) {
+                    visibleItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).forEach(item => {
+                        const infoCell = document.createElement('div');
+                        infoCell.title = `[${item.category}] ${item.name}`;
+                        infoCell.className = `matrix-cell item-info sticky-col ${!item.isVisible ? 'hidden-row' : ''}`;
+
+                        const timeStr = String(item.resetRule.hour || 0).padStart(2, '0') + ':00';
+                        const resetInfo = item.resetRule.type === 'daily' ? `매일 ${timeStr}` : `${DAYS[item.resetRule.dayOfWeek || 1]} ${timeStr}`;
+
+                        infoCell.innerHTML = `
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="text-xs font-bold truncate text-slate-100">${item.name}</span>
+                                <span class="text-[9px] text-slate-500 font-medium">${resetInfo}</span>
+                            </div>
+                            ${isEditMode ? `
+                                <div class="flex gap-0.5 ml-1">
+                                    <button class="p-1 hover:text-cyan-400 transition-colors" onclick="event.stopPropagation(); window.electronAPI.contentsToggleVisibility('${item.id}')">
+                                        <i data-lucide="${item.isVisible ? 'eye' : 'eye-off'}" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    ${item.isCustom ? `
+                                        <button class="p-1 hover:text-red-400 transition-colors" onclick="event.stopPropagation(); removeItem('${item.id}')">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                        `;
+                        table.appendChild(infoCell);
+
+                        presets.forEach(char => {
+                            const checkCell = document.createElement('div');
+                            const state = item.completedState?.[char.id];
+                            const isCompleted = state?.isCompleted || false;
+                            const isExcluded = state?.isExcluded || false;
+                            checkCell.className = `matrix-cell ${!item.isVisible ? 'hidden-row' : ''}`;
+
+                            checkCell.innerHTML = `
+                                <div class="check-box ${isExcluded ? 'excluded' : (isCompleted ? 'checked' : '')}" 
+                                     onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})">
+                                    ${isExcluded ? '' : `<i data-lucide="check" class="w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}"></i>`}
+                                </div>
+                            `;
+                            table.appendChild(checkCell);
+                        });
+                    });
+                }
+            };
+
+            const renderSection = (title, categoriesObj, icon, typeClass) => {
+                const isSecCollapsed = collapsedSections.has(title);
+                const hasVisibleContent = Object.values(categoriesObj).some(arr => isEditMode ? arr.length > 0 : arr.some(i => i.isVisible));
+                if (!hasVisibleContent) return;
+
+                // Section Header
+                const secRow = document.createElement('div');
+                secRow.className = `section-row ${typeClass} ${isSecCollapsed ? 'collapsed' : ''}`;
+                secRow.innerHTML = `
+                    <i data-lucide="${icon}" class="w-4 h-4"></i>
+                    <span class="flex-1">${title}</span>
+                    <i data-lucide="${isSecCollapsed ? 'chevron-right' : 'chevron-down'}" class="w-4 h-4 ml-auto"></i>
+                `;
+                secRow.onclick = () => {
+                    if (collapsedSections.has(title)) collapsedSections.delete(title);
+                    else collapsedSections.add(title);
+                    render();
+                };
+                table.appendChild(secRow);
+
+                if (!isSecCollapsed) {
+                    Object.keys(categoriesObj).sort().forEach(catName => {
+                        renderCategory(title, catName, categoriesObj[catName]);
+                    });
+                }
+            };
+
+            renderSection('일일 숙제', grouped['일일 숙제'], 'sun', 'daily');
+            renderSection('주간 숙제', grouped['주간 숙제'], 'calendar', 'weekly');
+            renderSection('완료됨', grouped['완료됨'], 'check-circle-2', 'completed');
+
+            // --- 4. 통계 갱신 ---
             const activeItems = items.filter(i => i.isVisible);
-            const completedCount = activeItems.filter(i => i.isCompleted).length;
-            const totalCount = activeItems.length;
-            const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-            document.getElementById('progress-fill').style.width = percent + '%';
-            document.getElementById('progress-percent-text').textContent = `PROGRESS: ${percent}% (${completedCount}/${totalCount})`;
-
-            // 그룹별 100% 달성 축하 효과음 재생 로직
-            const vol = (configData.volumeContentsChecker !== undefined ? configData.volumeContentsChecker : 50) / 100;
-            if (vol > 0) {
-                // 일일 숙제 완료 체크
-                const dailyItems = activeItems.filter(i => i.resetRule.type === 'daily');
-                const dailyCompleted = dailyItems.filter(i => i.isCompleted).length;
-                const dailyPercent = dailyItems.length > 0 ? Math.round((dailyCompleted / dailyItems.length) * 100) : 0;
-
-                if (dailyPercent === 100 && prevDailyPercent !== -1 && prevDailyPercent < 100) {
-                    const audio = new Audio('assets/sound/voice_wow.wav');
-                    audio.volume = vol;
-                    audio.play().catch(e => { });
-                }
-                prevDailyPercent = dailyPercent;
-
-                // 주간 숙제 완료 체크
-                const weeklyItems = activeItems.filter(i => i.resetRule.type === 'weekly');
-                const weeklyCompleted = weeklyItems.filter(i => i.isCompleted).length;
-                const weeklyPercent = weeklyItems.length > 0 ? Math.round((weeklyCompleted / weeklyItems.length) * 100) : 0;
-
-                if (weeklyPercent === 100 && prevWeeklyPercent !== -1 && prevWeeklyPercent < 100) {
-                    const audio = new Audio('assets/sound/max_affection.wav');
-                    audio.volume = vol;
-                    audio.play().catch(e => { });
-                }
-                prevWeeklyPercent = weeklyPercent;
-            }
-
-            // 편집(관리) 모드와 조회 모드의 섹션 구성 분리
-            if (isEditMode) {
-                const dailyItems = filteredItems.filter(i => i.resetRule.type === 'daily');
-                const weeklyItems = filteredItems.filter(i => i.resetRule.type === 'weekly');
-
-                if (dailyItems.length > 0) {
-                    renderSection(container, '일일 숙제 (전체)', 'sun', dailyItems, 'daily');
-                }
-                if (weeklyItems.length > 0) {
-                    renderSection(container, '주간 숙제 (전체)', 'calendar', weeklyItems, 'weekly');
-                }
-            } else {
-                const incompleteDaily = filteredItems.filter(i => !i.isCompleted && i.resetRule.type === 'daily');
-                const incompleteWeekly = filteredItems.filter(i => !i.isCompleted && i.resetRule.type === 'weekly');
-                const completedItems = filteredItems.filter(i => i.isCompleted);
-
-                if (incompleteDaily.some(i => i.isVisible)) {
-                    renderSection(container, '일일 숙제', 'sun', incompleteDaily, 'daily');
-                }
-                if (incompleteWeekly.some(i => i.isVisible)) {
-                    renderSection(container, '주간 숙제', 'calendar', incompleteWeekly, 'weekly');
-                }
-                if (completedItems.some(i => i.isVisible)) {
-                    renderSection(container, '완료됨', 'check-circle-2', completedItems, 'completed');
-                }
-            }
+            let totalPossible = 0;
+            let totalDone = 0;
+            activeItems.forEach(i => {
+                presets.forEach(p => { 
+                    const state = i.completedState?.[p.id];
+                    if (!state?.isExcluded) {
+                        totalPossible++;
+                        if (state?.isCompleted) totalDone++; 
+                    }
+                });
+            });
+            const totalPercent = totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
+            const progressFill = document.getElementById('global-progress-fill');
+            if (progressFill) progressFill.style.width = totalPercent + '%';
+            const progressText = document.getElementById('progress-percent-text');
+            if (progressText) progressText.textContent = `ROSTER PROGRESS: ${totalPercent}% (${totalDone}/${totalPossible})`;
 
             lucide.createIcons();
         }
 
-        function renderSection(container, title, icon, items, sectionType) {
-            const isWeeklySection = sectionType === 'weekly';
-            const isCompletedSection = sectionType === 'completed';
-
-            let accentColorClass = 'text-blue-400';
-            if (isWeeklySection) accentColorClass = 'text-purple-400';
-            if (isCompletedSection) accentColorClass = 'text-green-400';
-
-            const header = document.createElement('div');
-            header.className = 'section-header';
-            header.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5 ${accentColorClass}"></i><span class="${accentColorClass}">${title}</span>`;
-            container.appendChild(header);
-
-            const sortedItems = [...items].sort((a, b) => {
-                const aOrder = a.sortOrder ?? 0;
-                const bOrder = b.sortOrder ?? 0;
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                return a.name.localeCompare(b.name);
-            });
-
-            const listDiv = document.createElement('div');
-            listDiv.className = 'space-y-2 item-group-container';
-            listDiv.dataset.type = sectionType;
-
-            sortedItems.forEach((item) => {
-                if (!item.isVisible && !isEditMode) return;
-
-                const card = document.createElement('div');
-                const itemType = item.resetRule.type;
-                card.className = `item-card ${itemType} ${item.isCompleted ? 'completed' : ''} ${!item.isVisible ? 'hidden-item' : ''}`;
-                card.dataset.id = item.id;
-
-                // 드래그는 마우스 이벤트 기반으로 처리 (네이티브 DnD 비활성화)
-                card.draggable = false;
-
-                const timeStr = String(item.resetRule.hour || 0).padStart(2, '0') + ':00';
-                const resetInfo = item.resetRule.type === 'daily' ? `매일 ${timeStr}` : `${DAYS[item.resetRule.dayOfWeek || 1]} ${timeStr}`;
-
-                const periodBadge = isCompletedSection
-                    ? `<span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${itemType === 'daily' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}">${itemType === 'daily' ? 'DAILY' : 'WEEKLY'}</span>`
-                    : '';
-
-                card.innerHTML = `
-                    <i data-lucide="grip-vertical" class="drag-handle-icon w-4 h-4 mr-1"></i>
-                    <div class="check-box ${item.isCompleted ? 'checked' : ''}">
-                        <i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>
-                    </div>
-                    <div class="flex-1 min-w-0 pointer-events-none">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <span class="category-badge">${item.category}</span>
-                            <span class="text-sm font-bold truncate">${item.name}</span>
-                            ${periodBadge}
-                        </div>
-                        <div class="text-[10px] text-slate-500 font-bold flex items-center gap-1">
-                            <i data-lucide="clock" class="w-2.5 h-2.5"></i>
-                            초기화: ${resetInfo}
-                            ${isEditMode && !item.isVisible ? '<span class="ml-2 text-red-400 text-[9px] border border-red-400/30 px-1 rounded-sm">숨김 상태</span>' : ''}
-                        </div>
-                    </div>
-                    ${isEditMode ? `
-                        <div class="flex items-center gap-1 no-drag relative z-10">
-                            <button class="control-btn btn-toggle-visibility ${item.isVisible ? 'active' : ''}" onclick="event.stopPropagation(); window.electronAPI.contentsToggleVisibility('${item.id}')">
-                                <i data-lucide="${item.isVisible ? 'eye' : 'eye-off'}" class="w-4 h-4"></i>
-                            </button>
-                            ${item.isCustom ? `
-                                <button class="control-btn btn-edit-name hover:text-amber-400" onclick="event.stopPropagation(); editName('${item.id}', \`${item.name.replace(/'/g, "\\'")}\`)">
-                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
-                                </button>
-                                <button class="control-btn btn-remove-item hover:text-red-400" onclick="event.stopPropagation(); removeItem('${item.id}')">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    ` : ''}
-                `;
-
-                if (!isEditMode) {
-                    card.onclick = () => {
-                        if (!item.isCompleted) {
-                            // 이번 클릭으로 해당 그룹이 100%가 되는지 미리 계산
-                            const sameTypeItems = configData.contentsCheckerItems.filter(i => i.isVisible && i.resetRule.type === item.resetRule.type);
-                            const completedCount = sameTypeItems.filter(i => i.isCompleted).length;
-                            const isLastOne = (completedCount + 1 === sameTypeItems.length);
-
-                            // 100% 완료가 아닐 때만 일반 체크 소리 재생 (100%일 때는 render의 축하음이 담당)
-                            if (!isLastOne) {
-                                const vol = (configData.volumeContentsChecker !== undefined ? configData.volumeContentsChecker : 50) / 100;
-                                if (vol > 0) {
-                                    const audio = new Audio('assets/sound/item_get.wav');
-                                    audio.volume = vol;
-                                    audio.play().catch(e => { });
-                                }
-                            }
-                        }
-                        window.electronAPI.contentsToggleItem(item.id);
-                    };
-                }
-
-                listDiv.appendChild(card);
-            });
-            container.appendChild(listDiv);
-        }
-
-        // 마우스 이벤트 기반 드래그 구현 (커스텀 커서 유지를 위해 네이티브 DnD 대신 사용)
-        const contentList = document.getElementById('content-list');
-
-        contentList.addEventListener('mousedown', (e) => {
-            // 편집모드 + 검색 비어있을 때만 + 컨트롤 버튼 제외
-            if (!isEditMode || document.getElementById('search-input').value.trim()) return;
-            if (e.target.closest('.control-btn')) return;
-
-            const card = e.target.closest('.item-card');
-            if (!card || e.button !== 0) return;
-
-            e.preventDefault();
-
-            dragSrcId = card.dataset.id;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-
-            const rect = card.getBoundingClientRect();
-            dragOffsetX = e.clientX - rect.left;
-            dragOffsetY = e.clientY - rect.top;
-
-            dragStarted = false;
-            isDragging = true;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging || !dragSrcId) return;
-
-            // 5px 이상 움직여야 드래그 시작 (클릭과 구분)
-            if (!dragStarted) {
-                if (Math.abs(e.clientX - dragStartX) < 5 && Math.abs(e.clientY - dragStartY) < 5) return;
-                dragStarted = true;
-
-                const card = Array.from(document.querySelectorAll('.item-card')).find(c => c.dataset.id === dragSrcId);
-                if (!card) { isDragging = false; return; }
-
-                document.body.classList.add('is-dragging');
-
-                // 클론 생성 (드래그 시각 피드백)
-                const rect = card.getBoundingClientRect();
-                dragClone = card.cloneNode(true);
-                dragClone.style.cssText = `position:fixed; width:${rect.width}px; left:${rect.left}px; top:${rect.top}px; opacity:0.85; pointer-events:none; z-index:10000; transition:none; border:1px solid rgba(34,211,238,0.5); border-radius:14px; cursor:var(--cursor-grab);`;
-                document.body.appendChild(dragClone);
-
-                // 플레이스홀더 생성
-                placeholder = document.createElement('div');
-                placeholder.className = 'drag-placeholder';
-                placeholder.style.height = rect.height + 'px';
-                card.parentNode.insertBefore(placeholder, card.nextSibling);
-
-                card.classList.add('dragging');
-                card.style.display = 'none';
+        function handleToggle(itemId, charId, currentState, isExcluded) {
+            if (isEditMode) {
+                // 관리 모드에서는 제외(N/A) 상태 토글
+                window.electronAPI.contentsToggleExclude(itemId, charId);
+                return;
             }
+            if (isExcluded) return; // 제외된 항목은 일반 모드에서 체크 불가
 
-            if (!dragClone) return;
+            const vol = (configData?.volumeContentsChecker !== undefined ? configData.volumeContentsChecker : 50) / 100;
 
-            // 클론 위치 업데이트
-            dragClone.style.left = (e.clientX - dragOffsetX) + 'px';
-            dragClone.style.top = (e.clientY - dragOffsetY) + 'px';
+            if (!currentState && vol > 0) { // 체크하는 순간 (isCompleted: false -> true)
+                const item = configData.contentsCheckerItems.find(i => i.id === itemId);
+                const type = item?.resetRule?.type;
 
-            // 자동 스크롤
-            const container = document.getElementById('content-list');
-            const rect = container.getBoundingClientRect();
-            if (e.clientY < rect.top + 50) startAutoScroll('up');
-            else if (e.clientY > rect.bottom - 50) startAutoScroll('down');
-            else stopAutoScroll();
+                // 해당 캐릭터의 같은 타입(일일/주간) 숙제들 중 현재 보이고 제외되지 않은 것만 필터링
+                const sameTypeItems = configData.contentsCheckerItems.filter(i => 
+                    i.isVisible && i.resetRule.type === type && !i.completedState?.[charId]?.isExcluded
+                );
 
-            // 드롭 위치 계산 (클론 숨기고 elementFromPoint 사용)
-            dragClone.style.display = 'none';
-            const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
-            dragClone.style.display = '';
+                // 현재 해당 캐릭터가 완료한 개수 (클릭 전 기준)
+                const doneCount = sameTypeItems.filter(i => 
+                    i.completedState?.[charId]?.isCompleted
+                ).length;
 
-            const targetCard = elemBelow?.closest('.item-card');
-            if (targetCard && targetCard.dataset.id !== dragSrcId) {
-                const targetRect = targetCard.getBoundingClientRect();
-                const midpoint = targetRect.top + targetRect.height / 2;
-                const isAfter = e.clientY > midpoint;
-                const nextSibling = isAfter ? targetCard.nextSibling : targetCard;
+                // 이번 클릭으로 100%가 되는지 확인
+                const isLastOne = (doneCount + 1 === sameTypeItems.length);
 
-                if (placeholder.nextSibling !== nextSibling || placeholder.parentNode !== targetCard.parentNode) {
-                    targetCard.parentNode.insertBefore(placeholder, nextSibling);
-                }
-            } else if (elemBelow) {
-                const group = elemBelow.closest('.item-group-container');
-                if (group && placeholder.parentNode !== group) {
-                    group.appendChild(placeholder);
-                }
-            }
-        });
-
-        window.addEventListener('mouseup', (e) => {
-            if (!isDragging) return;
-
-            stopAutoScroll();
-            const wasDragging = dragStarted;
-
-            if (dragClone) {
-                dragClone.remove();
-                dragClone = null;
-            }
-
-            if (wasDragging) {
-                const card = Array.from(document.querySelectorAll('.item-card')).find(c => c.dataset.id === dragSrcId);
-                if (card) {
-                    card.classList.remove('dragging');
-                    card.style.display = 'flex';
-
-                    if (placeholder && placeholder.parentNode) {
-                        placeholder.parentNode.replaceChild(card, placeholder);
-                        const finalOrder = Array.from(document.querySelectorAll('.item-card')).map(c => c.dataset.id);
-                        window.electronAPI.contentsReorderList(finalOrder);
-                    }
+                if (isLastOne) {
+                    const soundFile = type === 'daily' ? 'assets/sound/voice_wow.wav' : 'assets/sound/max_affection.wav';
+                    const audio = new Audio(soundFile);
+                    audio.volume = vol;
+                    audio.play().catch(() => {});
+                } else {
+                    const audio = new Audio('assets/sound/item_get.wav');
+                    audio.volume = vol;
+                    audio.play().catch(() => {});
                 }
             }
 
-            isDragging = false;
-            dragStarted = false;
-            document.body.classList.remove('is-dragging');
-            placeholder = null;
-            dragSrcId = null;
-            if (wasDragging) render();
-        });
-
-        function startAutoScroll(direction) {
-            if (autoScrollTimer) return;
-            const container = document.getElementById('content-list');
-            const speed = 10;
-            autoScrollTimer = setInterval(() => {
-                container.scrollTop += (direction === 'up' ? -speed : speed);
-            }, 16);
-        }
-
-        function stopAutoScroll() {
-            if (autoScrollTimer) {
-                clearInterval(autoScrollTimer);
-                autoScrollTimer = null;
-            }
+            window.electronAPI.contentsToggleItem(itemId, charId);
         }
 
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            const body = document.body;
-            const headerBox = document.getElementById('header-icon-box');
-            const headerIcon = document.getElementById('header-icon');
+            document.body.classList.toggle('edit-mode', isEditMode);
             const editIcon = document.getElementById('edit-icon');
-            const modeBadge = document.getElementById('mode-badge');
-            const addForm = document.getElementById('add-form');
-
-            if (isEditMode) {
-                body.classList.add('edit-mode');
-                headerBox.classList.replace('bg-purple-500/20', 'bg-amber-500/20');
-                headerBox.classList.replace('border-purple-500/30', 'border-amber-500/30');
-                headerIcon.classList.replace('text-purple-400', 'text-amber-400');
-                headerIcon.setAttribute('data-lucide', 'sliders-horizontal');
-                editIcon.setAttribute('data-lucide', 'check');
-                editIcon.classList.replace('text-slate-400', 'text-green-400');
-                modeBadge.classList.remove('hidden');
-                addForm.classList.add('show');
-            } else {
-                body.classList.remove('edit-mode');
-                headerBox.classList.replace('bg-amber-500/20', 'bg-purple-500/20');
-                headerBox.classList.replace('border-amber-500/30', 'border-purple-500/30');
-                headerIcon.classList.replace('text-amber-400', 'text-purple-400');
-                headerIcon.setAttribute('data-lucide', 'check-square');
-                editIcon.setAttribute('data-lucide', 'settings-2');
-                editIcon.classList.replace('text-green-400', 'text-slate-400');
-                modeBadge.classList.add('hidden');
-                addForm.classList.remove('show');
+            if (editIcon) {
+                editIcon.setAttribute('data-lucide', isEditMode ? 'check' : 'settings-2');
+                editIcon.classList.toggle('text-green-400', isEditMode);
             }
+            document.getElementById('mode-badge')?.classList.toggle('hidden', !isEditMode);
+            document.getElementById('add-form')?.classList.toggle('show', isEditMode);
             lucide.createIcons();
             render();
         }
 
         function showCustomPrompt(title, defaultValue, callback) {
-            document.getElementById('prompt-title').textContent = title;
-            const input = document.getElementById('prompt-input');
-            input.value = defaultValue;
-            document.getElementById('custom-prompt').classList.remove('hidden');
-            input.focus();
-            input.select();
-
+            const promptModal = document.getElementById('custom-prompt');
+            const promptTitle = document.getElementById('prompt-title');
+            const promptInput = document.getElementById('prompt-input');
+            if (!promptModal || !promptTitle || !promptInput) {
+                const res = prompt(title, defaultValue);
+                if (res !== null) callback(res);
+                return;
+            }
+            promptTitle.textContent = title;
+            promptInput.value = defaultValue;
+            promptModal.classList.remove('hidden');
+            promptInput.focus();
+            promptInput.select();
             promptCallback = callback;
         }
 
@@ -850,30 +832,66 @@
             if (e.key === 'Escape') document.getElementById('prompt-cancel').click();
         };
 
-        function editCategory(id, current) {
-            showCustomPrompt('카테고리 변경', current, (next) => {
-                if (next) window.electronAPI.contentsUpdateCategory(id, next);
+        // 캐릭터 관리 모달 렌더링
+        function renderCharList() {
+            const list = document.getElementById('char-list');
+            const presets = configData?.characterPresets || [];
+            list.innerHTML = '';
+
+            presets.forEach((char, idx) => {
+                const row = document.createElement('div');
+                row.className = 'char-item-row';
+                row.innerHTML = `
+                    <span class="text-xs font-bold text-slate-300 flex-1 truncate">${idx + 1}. ${char.name}</span>
+                    <button class="p-1.5 hover:text-cyan-400 transition-colors" onclick="renameChar('${char.id}', '${char.name}')">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    </button>
+                    ${char.id !== 'char-main' && presets.length > 1 ? `
+                        <button class="p-1.5 hover:text-red-400 transition-colors" onclick="removeChar('${char.id}', '${char.name}')">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                `;
+                list.appendChild(row);
             });
+            lucide.createIcons();
         }
 
-        function editName(id, current) {
-            showCustomPrompt('숙제 이름 변경', current, (next) => {
-                if (next) window.electronAPI.contentsUpdateName(id, next);
+        window.renameChar = (id, oldName) => {
+            showCustomPrompt('캐릭터 이름 변경', oldName, (newName) => {
+                if (newName && newName !== oldName) window.electronAPI.contentsRenameCharacter(id, newName);
             });
-        }
+        };
+
+        window.removeChar = (id, name) => {
+            if (confirm(`'${name}' 캐릭터와 모든 숙제 완료 데이터를 삭제할까요?`)) {
+                window.electronAPI.contentsRemoveCharacter(id);
+            }
+        };
+
+        document.getElementById('btn-char-mgmt').onclick = () => {
+            document.getElementById('char-modal').classList.remove('hidden');
+            renderCharList();
+        };
+
+        document.getElementById('btn-help').onclick = () => {
+            document.getElementById('help-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('btn-add-char-action').onclick = () => {
+            const name = document.getElementById('new-char-name').value.trim();
+            if (!name) return alert('이름을 입력하세요.');
+            window.electronAPI.contentsAddCharacter(name);
+            document.getElementById('new-char-name').value = '';
+        };
 
         function removeItem(id) {
-            if (confirm('이 숙제를 삭제할까요?')) {
-                window.electronAPI.contentsRemoveItem(id);
-            }
+            if (confirm('이 숙제를 삭제할까요?')) window.electronAPI.contentsRemoveItem(id);
         }
 
-        // 이벤트 리스너 등록
         document.getElementById('btn-edit').onclick = toggleEditMode;
         document.getElementById('btn-reset').onclick = () => {
-            if (confirm('모든 숙제의 초기화 시간을 다시 체크할까요?')) {
-                window.electronAPI.contentsManualReset();
-            }
+            if (confirm('모든 캐릭터의 숙제 초기화 시간을 다시 체크할까요?')) window.electronAPI.contentsManualReset();
         };
 
         document.getElementById('btn-add-item').onclick = () => {
@@ -882,31 +900,37 @@
             const type = document.getElementById('new-item-type').value;
             const hour = parseInt(document.getElementById('new-item-hour').value);
             const dayOfWeek = parseInt(document.getElementById('new-item-day').value);
-
             if (!name) return alert('숙제 이름을 입력하세요.');
             const rule = { type, hour };
             if (type === 'weekly') rule.dayOfWeek = dayOfWeek;
-
             window.electronAPI.contentsAddCustom(name, category, rule);
             document.getElementById('new-item-name').value = '';
         };
 
-        if (window.electronAPI && window.electronAPI.onConfigData) {
+        if (window.electronAPI?.onConfigData) {
             window.electronAPI.onConfigData((data) => {
                 configData = data;
                 render();
+                if (!document.getElementById('char-modal').classList.contains('hidden')) renderCharList();
             });
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+            updateFormVisibility();
         });
 
-        // ESC 키 닫기 지원 (편집 모드 시 편집 모드만 해제)
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                if (isEditMode) toggleEditMode();
-                else window.close();
+                if (!document.getElementById('char-modal').classList.contains('hidden')) {
+                    document.getElementById('char-modal').classList.add('hidden');
+                } else if (!document.getElementById('help-modal').classList.contains('hidden')) {
+                    document.getElementById('help-modal').classList.add('hidden');
+                } else if (isEditMode) {
+                    toggleEditMode();
+                } else {
+                    window.electronAPI.toggleContentsChecker();
+                }
             }
         });
     </script>

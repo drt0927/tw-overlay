@@ -6,6 +6,9 @@
 // ── ChatParser 이벤트 타입 맵 ──
 // chatParser.emit() / chatParser.on() 에서 컴파일 타임 타입 검증에 사용
 
+export const MAIN_CHAR_ID = 'char-main';
+export const DEFAULT_CHAR_NAME = '본캐';
+
 export interface ChatParserEventMap {
     SEED_GAINED: { date: string; timestamp: string; amount: number; message: string };
     ABANDONED_FEE: { date: string; timestamp: string; amount: number; message: string };
@@ -135,13 +138,25 @@ export interface ResetRule {
 export interface ContentsCheckerItem {
     id: string;
     name: string;
-    isCompleted: boolean;
-    isVisible: boolean;
-    isCustom: boolean;
     category: string;
+    isVisible: boolean;
+    isCustom?: boolean;
     resetRule: ResetRule;
-    lastCompletedAt?: number;
     sortOrder?: number;
+
+    /** 캐릭터별 완료 상태 (다중 캐릭터 지원) */
+    completedState: {
+        [characterId: string]: {
+            isCompleted: boolean;
+            lastCompletedAt?: number;
+            isExcluded?: boolean; // 캐릭터별 참여 제외 여부
+        }
+    };
+}
+
+export interface CharacterPreset {
+    id: string;   // 고유 ID (예: 'char-1')
+    name: string; // 사용자 지정 이름 (예: '본캐', '티치엘')
 }
 
 export interface AppConfig {
@@ -189,6 +204,8 @@ export interface AppConfig {
     gameExitReminderEnabled?: boolean;
     gameExitReminderMessage?: string;
     contentsCheckerItems?: ContentsCheckerItem[];
+    characterPresets?: CharacterPreset[];
+    selectedCharacterId?: string;
     lastContentsResetCheck?: number;
     shortcuts?: ShortcutsConfig;
     customAlerts?: CustomAlert[];

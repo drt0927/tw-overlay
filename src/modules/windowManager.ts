@@ -3,7 +3,7 @@
  */
 import { BrowserWindow, WebContentsView, screen } from 'electron';
 import * as path from 'path';
-import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig, appState, FOCUS_RESTORE_DELAY_MS } from './constants';
+import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig, appState, FOCUS_RESTORE_DELAY_MS, MAIN_CHAR_ID, DEFAULT_CHAR_NAME } from './constants';
 import * as config from './config';
 import * as bossNotifier from './bossNotifier';
 import * as gallery from './galleryMonitor';
@@ -830,13 +830,26 @@ export function showGameExitReminder(): void {
   const cfg = config.load();
   if (!cfg.gameExitReminderEnabled || !cfg.gameExitReminderMessage?.trim()) return;
 
-  const incompleteItems = (cfg.contentsCheckerItems || [])
-    .filter(item => item.isVisible && !item.isCompleted)
-    .map(item => ({
-      name: item.name,
-      category: item.category,
-      type: item.resetRule.type
-    }));
+  const presets = cfg.characterPresets || [{ id: MAIN_CHAR_ID, name: DEFAULT_CHAR_NAME }];
+  const items = cfg.contentsCheckerItems || [];
+  
+  const incompleteItems: any[] = [];
+
+  // 모든 캐릭터를 순회하며 미완료 숙제 수집
+  presets.forEach(char => {
+    items.forEach(item => {
+      const state = item.completedState?.[char.id];
+      // 가시성이 있고, 해당 캐릭터가 제외되지 않았으며, 아직 완료하지 않은 항목
+      if (item.isVisible && !state?.isExcluded && !state?.isCompleted) {
+        incompleteItems.push({
+          charName: char.name,
+          name: item.name,
+          category: item.category,
+          type: item.resetRule.type
+        });
+      }
+    });
+  });
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const winWidth = 500, winHeight = 560;

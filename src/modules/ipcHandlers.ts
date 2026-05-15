@@ -99,8 +99,11 @@ export function register(): void {
   });
 
   // 컨텐츠 체크 리스트 조작 핸들러
-  ipcMain.on('contents-toggle-item', (_e, id: string) => {
-    import('./contentsChecker').then(mod => mod.toggleItem(id));
+  ipcMain.on('contents-toggle-item', (_e, id: string, characterId?: string) => {
+    import('./contentsChecker').then(mod => mod.toggleItem(id, characterId));
+  });
+  ipcMain.on('contents-toggle-exclude', (_e, id: string, characterId: string) => {
+    import('./contentsChecker').then(mod => mod.toggleExcludeItem(id, characterId));
   });
   ipcMain.on('contents-toggle-visibility', (_e, id: string) => {
     import('./contentsChecker').then(mod => mod.toggleVisibility(id));
@@ -125,6 +128,18 @@ export function register(): void {
   });
   ipcMain.on('contents-manual-reset', () => {
     import('./contentsChecker').then(mod => mod.checkReset());
+  });
+  ipcMain.on('contents-add-character', (_e, name: string) => {
+    import('./contentsChecker').then(mod => mod.addCharacter(name));
+  });
+  ipcMain.on('contents-remove-character', (_e, id: string) => {
+    import('./contentsChecker').then(mod => mod.removeCharacter(id));
+  });
+  ipcMain.on('contents-rename-character', (_e, id: string, name: string) => {
+    import('./contentsChecker').then(mod => mod.renameCharacter(id, name));
+  });
+  ipcMain.on('contents-select-character', (_e, id: string) => {
+    import('./contentsChecker').then(mod => mod.selectCharacter(id));
   });
 
   // 특별 인수가 필요한 토글 핸들러 개별 등록

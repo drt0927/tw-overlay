@@ -138,6 +138,23 @@ input[type="color"] {
   cursor: var(--cursor-grab) !important;
 }
 
+/* 대화형 UI 요소 (체크박스, 아코디언 등) 전역 커서 정책 */
+.check-box,
+.section-row,
+.category-row,
+.clickable-row,
+.interactive-item {
+  cursor: var(--cursor-hover) !important;
+}
+
+.check-box:active,
+.section-row:active,
+.category-row:active,
+.clickable-row:active,
+.interactive-item:active {
+  cursor: var(--cursor-hover-click) !important;
+}
+
 .drag-handle:active,
 .drag-handle-icon:active,
 .cursor-move:active,

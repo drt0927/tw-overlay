@@ -230,9 +230,14 @@
                             <div class="task-card" style="background: ${bgColor}; border-color: ${borderColor};">
                                 <div class="cat-dot" style="background: ${accentColor}; box-shadow: 0 0 8px ${accentColor}44;"></div>
                                 <div class="flex flex-col min-w-0">
-                                    <span class="text-[8px] font-black uppercase tracking-tight opacity-70" style="color: ${accentColor};">
-                                        ${isWeekly ? '주간' : '일일'} • ${item.category}
-                                    </span>
+                                    <div class="flex items-center gap-1.5 mb-0.5">
+                                        <span class="px-1 py-0.5 bg-white/10 rounded text-[7px] font-black text-white/60 uppercase">
+                                            ${item.charName}
+                                        </span>
+                                        <span class="text-[8px] font-black uppercase tracking-tight opacity-70" style="color: ${accentColor};">
+                                            ${isWeekly ? '주간' : '일일'} • ${item.category}
+                                        </span>
+                                    </div>
                                     <span class="text-[11px] font-bold text-white/90 truncate">${item.name}</span>
                                 </div>
                             </div>

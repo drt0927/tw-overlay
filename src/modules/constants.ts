@@ -5,7 +5,7 @@ import { app } from 'electron';
 import * as path from 'path';
 
 // 타입은 shared/types.ts에서 통합 관리 (preload.ts와 공유)
-export { QuickSlotItem, WatchedPost, WindowPosition, GameRect, GameNotRunning, GameError, GameQueryResult, BossSetting, AppConfig, GalleryPost, GalleryActivity, UpdateStatusInfo, TradePost, TradeActivity } from '../shared/types';
+export { QuickSlotItem, WatchedPost, WindowPosition, GameRect, GameNotRunning, GameError, GameQueryResult, BossSetting, AppConfig, GalleryPost, GalleryActivity, UpdateStatusInfo, TradePost, TradeActivity, MAIN_CHAR_ID, DEFAULT_CHAR_NAME } from '../shared/types';
 import type { AppConfig } from '../shared/types';
 
 // 테일즈위버 실제 프로세스 명 (확장자 제외)

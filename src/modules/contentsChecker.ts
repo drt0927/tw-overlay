@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import * as config from './config';
-import { ContentsCheckerItem, ResetRule } from '../shared/types';
+import { ContentsCheckerItem, ResetRule, MAIN_CHAR_ID, DEFAULT_CHAR_NAME } from '../shared/types';
 import { log } from './logger';
 import * as diaryDb from './diaryDb';
 
@@ -34,20 +34,51 @@ export function init(): void {
   let currentItems = cfg.contentsCheckerItems || [];
   let changed = false;
 
-  // 기본 아이템 중 신규 추가된 항목이 있으면 병합
+  // 1. 캐릭터 프리셋 초기화
+  let characterPresets = cfg.characterPresets || [];
+  if (characterPresets.length === 0) {
+    characterPresets = [{ id: MAIN_CHAR_ID, name: DEFAULT_CHAR_NAME }];
+    changed = true;
+  }
+  const selectedCharacterId = cfg.selectedCharacterId || characterPresets[0].id;
+  if (!cfg.selectedCharacterId) {
+    changed = true;
+  }
+
+  // 2. 데이터 마이그레이션 및 구조 일원화
+  currentItems.forEach((item: any) => {
+    if (!item.completedState) {
+      item.completedState = {};
+      changed = true;
+    }
+
+    // [v1.12.7 일원화] 기존 단일 필드가 존재한다면 마이그레이션 후 삭제
+    if (item.isCompleted !== undefined) {
+      if (!item.completedState[MAIN_CHAR_ID]) {
+        item.completedState[MAIN_CHAR_ID] = {
+          isCompleted: !!item.isCompleted,
+          lastCompletedAt: item.lastCompletedAt
+        };
+      }
+      // 마이그레이션 완료 후 구버전 필드 제거 (중복 관리 배제)
+      delete item.isCompleted;
+      delete item.lastCompletedAt;
+      changed = true;
+      log(`[Contents] 마이그레이션 완료: ${item.name}의 상태를 completedState로 통합`);
+    }
+  });
+
+  // 3. 기본 아이템 병합 및 업데이트
   defaultItems.forEach(def => {
     const exists = currentItems.find(item => item.id === def.id);
     if (!exists) {
-      // 신규 항목은 클론하여 안전하게 추가 (isCompleted 강제 false)
       currentItems.push({ 
         ...def, 
-        isCompleted: false, 
-        lastCompletedAt: undefined,
+        completedState: {}, 
         sortOrder: currentItems.length 
       });
       changed = true;
     } else {
-      // 이름이나 초기화 규칙이 변경되었을 수 있으므로 업데이트
       if (exists.name !== def.name || JSON.stringify(exists.resetRule) !== JSON.stringify(def.resetRule)) {
         exists.name = def.name;
         exists.resetRule = def.resetRule;
@@ -64,15 +95,12 @@ export function init(): void {
     }
   });
 
-  // 혹시라도 비정상적으로 모든 항목이 체크되어 있다면 (사용자 보고 대응)
-  // 단, 실제로 다 했을 수도 있으므로 최초 1회만 수행되도록 lastContentsResetCheck 활용 가능
-  if (!cfg.lastContentsResetCheck && currentItems.some(i => i.isCompleted)) {
-    currentItems.forEach(i => { i.isCompleted = false; i.lastCompletedAt = undefined; });
-    changed = true;
-  }
-
   if (changed || !cfg.contentsCheckerItems) {
-    config.saveImmediate({ contentsCheckerItems: currentItems });
+    config.saveImmediate({ 
+      contentsCheckerItems: currentItems,
+      characterPresets,
+      selectedCharacterId
+    });
     import('./windowManager').then(wm => wm.applySettings({}));
   }
   
@@ -142,14 +170,20 @@ export function checkReset(): boolean {
   let changed = false;
 
   items.forEach(item => {
-    if (!item.isCompleted || !item.lastCompletedAt) return;
-
-    const lastCompleted = new Date(item.lastCompletedAt);
-    if (shouldReset(item.resetRule, lastCompleted, now)) {
-      item.isCompleted = false;
-      item.lastCompletedAt = undefined;
-      changed = true;
-      log(`[Contents] 초기화됨: ${item.name} (${item.resetRule.type})`);
+    // 캐릭터별 상태 초기화
+    if (item.completedState) {
+      Object.keys(item.completedState).forEach(charId => {
+        const state = item.completedState[charId];
+        if (state.isCompleted && state.lastCompletedAt) {
+          const lastCompleted = new Date(state.lastCompletedAt);
+          if (shouldReset(item.resetRule, lastCompleted, now)) {
+            state.isCompleted = false;
+            state.lastCompletedAt = undefined;
+            changed = true;
+            log(`[Contents] 초기화됨: ${item.name} (캐릭터: ${charId}, ${item.resetRule.type})`);
+          }
+        }
+      });
     }
   });
 
@@ -158,6 +192,8 @@ export function checkReset(): boolean {
       contentsCheckerItems: items,
       lastContentsResetCheck: nowTs 
     });
+    syncDiaryStats(items);
+    refreshUI();
   }
 
   return changed;
@@ -180,8 +216,6 @@ function shouldReset(rule: ResetRule, lastCompleted: Date, now: Date): boolean {
     const resetDay = rule.dayOfWeek ?? 1; // 기본 월요일
     
     // 마지막 완료 시점 이후로 초기화 시점이 지났는지 확인
-    // 더 간단하고 확실한 방법: 마지막 완료일과 현재일 사이의 "초기화 시점" 존재 여부 체크
-    // 1. 마지막 완료일 이후 가장 가까운 초기화 날짜를 구함
     const nextReset = new Date(lastCompleted);
     nextReset.setHours(resetHour, 0, 0, 0);
     
@@ -201,11 +235,34 @@ function shouldReset(rule: ResetRule, lastCompleted: Date, now: Date): boolean {
 
 /** 일지(다이어리) 통계 동기화 */
 function syncDiaryStats(items: ContentsCheckerItem[]) {
-  const visibleItems = items.filter(i => i.isVisible);
-  const dailyTotal = visibleItems.filter(i => i.resetRule.type === 'daily').length;
-  const dailyDone = visibleItems.filter(i => i.resetRule.type === 'daily' && i.isCompleted).length;
-  const weeklyTotal = visibleItems.filter(i => i.resetRule.type === 'weekly').length;
-  const weeklyDone = visibleItems.filter(i => i.resetRule.type === 'weekly' && i.isCompleted).length;
+  const cfg = config.load();
+  const presets = cfg.characterPresets || [{ id: MAIN_CHAR_ID, name: DEFAULT_CHAR_NAME }];
+  
+  let dailyTotal = 0;
+  let dailyDone = 0;
+  let weeklyTotal = 0;
+  let weeklyDone = 0;
+
+  // 모든 캐릭터의 숙제 현황을 합산
+  presets.forEach(char => {
+    const charId = char.id;
+    // 해당 캐릭터에 대해 가시성이 있고 제외되지 않은 아이템만 필터링
+    const visibleItems = items.filter(i => {
+      const state = i.completedState?.[charId];
+      return i.isVisible && !state?.isExcluded;
+    });
+    
+    dailyTotal += visibleItems.filter(i => i.resetRule.type === 'daily').length;
+    weeklyTotal += visibleItems.filter(i => i.resetRule.type === 'weekly').length;
+
+    dailyDone += visibleItems.filter(i => {
+      return i.resetRule.type === 'daily' && (i.completedState?.[charId]?.isCompleted);
+    }).length;
+
+    weeklyDone += visibleItems.filter(i => {
+      return i.resetRule.type === 'weekly' && (i.completedState?.[charId]?.isCompleted);
+    }).length;
+  });
   
   const now = new Date();
   const year = now.getFullYear();
@@ -222,13 +279,25 @@ function refreshUI() {
 }
 
 /** 항목 토글 */
-export function toggleItem(id: string): void {
+export function toggleItem(id: string, characterId?: string): void {
   const cfg = config.load();
   const items = cfg.contentsCheckerItems || [];
+  const targetCharId = characterId || cfg.selectedCharacterId || MAIN_CHAR_ID;
+  
   const item = items.find(i => i.id === id);
   if (item) {
-    item.isCompleted = !item.isCompleted;
-    item.lastCompletedAt = item.isCompleted ? Date.now() : undefined;
+    if (!item.completedState) item.completedState = {};
+    if (!item.completedState[targetCharId]) {
+      item.completedState[targetCharId] = { isCompleted: false };
+    }
+
+    // 제외된 항목은 체크 불가 (방어 로직)
+    if (item.completedState[targetCharId].isExcluded) return;
+
+    const state = item.completedState[targetCharId];
+    state.isCompleted = !state.isCompleted;
+    state.lastCompletedAt = state.isCompleted ? Date.now() : undefined;
+
     config.saveImmediate({ contentsCheckerItems: items });
 
     // 일지 연동 로직
@@ -238,15 +307,119 @@ export function toggleItem(id: string): void {
     const dateStr = String(now.getDate()).padStart(2, '0');
     const date = `${year}-${month}-${dateStr}`;
 
-    if (item.isCompleted) {
-      diaryDb.addHomeworkLog(date, item.id, item.name, item.category, item.resetRule.type, Date.now());
+    const charName = cfg.characterPresets?.find(p => p.id === targetCharId)?.name || '알수없음';
+    const diaryContentId = `${item.id}_${targetCharId}`;
+    const diaryContentName = `[${charName}] ${item.name}`;
+
+    if (state.isCompleted) {
+      diaryDb.addHomeworkLog(date, diaryContentId, diaryContentName, item.category, item.resetRule.type, Date.now());
     } else {
-      diaryDb.removeHomeworkLog(date, item.id);
+      diaryDb.removeHomeworkLog(date, diaryContentId);
     }
+
+    // 전 캐릭터 통합 다이어리 통계 동기화
     syncDiaryStats(items);
 
     refreshUI();
   }
+}
+
+/** 캐릭터별 숙제 제외(N/A) 토글 */
+export function toggleExcludeItem(id: string, characterId: string): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const item = items.find(i => i.id === id);
+  
+  if (item) {
+    if (!item.completedState) item.completedState = {};
+    if (!item.completedState[characterId]) {
+      item.completedState[characterId] = { isCompleted: false };
+    }
+
+    const state = item.completedState[characterId];
+    state.isExcluded = !state.isExcluded;
+    
+    // 제외 처리 시 완료 상태는 해제
+    if (state.isExcluded) {
+      state.isCompleted = false;
+      state.lastCompletedAt = undefined;
+      
+      // 일지에서도 제거
+      const now = new Date();
+      const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const diaryContentId = `${item.id}_${characterId}`;
+      diaryDb.removeHomeworkLog(date, diaryContentId);
+    }
+
+    config.saveImmediate({ contentsCheckerItems: items });
+    
+    // 전 캐릭터 통합 다이어리 통계 동기화
+    syncDiaryStats(items);
+    
+    refreshUI();
+  }
+}
+
+/** 캐릭터 관리: 추가 */
+export function addCharacter(name: string): void {
+  const cfg = config.load();
+  const presets = cfg.characterPresets || [];
+  // 더 안전한 고유 ID 생성 (시간 기반 36진수 + 랜덤 36진수)
+  const newId = `char-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
+  presets.push({ id: newId, name });
+  
+  config.saveImmediate({ 
+    characterPresets: presets,
+    selectedCharacterId: newId // 추가하면 바로 선택
+  });
+  refreshUI();
+}
+
+/** 캐릭터 관리: 삭제 */
+export function removeCharacter(id: string): void {
+  const cfg = config.load();
+  let presets = cfg.characterPresets || [];
+  if (presets.length <= 1) return; // 최소 1개는 유지
+
+  presets = presets.filter(p => p.id !== id);
+  let selectedId = cfg.selectedCharacterId;
+  if (selectedId === id) {
+    selectedId = presets[0].id;
+  }
+
+  // 모든 아이템에서 해당 캐릭터의 상태 삭제
+  const items = cfg.contentsCheckerItems || [];
+  items.forEach(item => {
+    if (item.completedState) {
+      delete item.completedState[id];
+    }
+  });
+
+  config.saveImmediate({ 
+    characterPresets: presets, 
+    selectedCharacterId: selectedId,
+    contentsCheckerItems: items
+  });
+  syncDiaryStats(items);
+  refreshUI();
+}
+
+/** 캐릭터 관리: 이름 변경 */
+export function renameCharacter(id: string, newName: string): void {
+  const cfg = config.load();
+  const presets = cfg.characterPresets || [];
+  const char = presets.find(p => p.id === id);
+  if (char) {
+    char.name = newName;
+    config.saveImmediate({ characterPresets: presets });
+    refreshUI();
+  }
+}
+
+/** 캐릭터 선택 */
+export function selectCharacter(id: string): void {
+  config.saveImmediate({ selectedCharacterId: id });
+  refreshUI();
 }
 
 /** 가시성 토글 */
@@ -290,14 +463,14 @@ export function addCustomItem(name: string, category: string, rule: ResetRule): 
   const cfg = config.load();
   const items = cfg.contentsCheckerItems || [];
   const newItem: ContentsCheckerItem = {
-    id: `custom-${Date.now()}`,
+    id: `custom-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`,
     name,
     category,
-    isCompleted: false,
     isVisible: true,
     isCustom: true,
     resetRule: rule,
-    sortOrder: items.length
+    sortOrder: items.length,
+    completedState: {}
   };
   items.push(newItem);
   config.saveImmediate({ contentsCheckerItems: items });

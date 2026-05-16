@@ -26,18 +26,30 @@
           <button onclick="switchTab('amplify')" id="tab-amplify" class="tab-btn active px-5 rounded-lg text-xs font-black transition-all relative">증폭</button>
           <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn px-5 rounded-lg text-xs font-black transition-all relative">능력치</button>
           <button onclick="switchTab('extra')" id="tab-extra" class="tab-btn px-5 rounded-lg text-xs font-black transition-all relative">추가 옵션</button>
+          <button onclick="switchTab('summary')" id="tab-summary" class="tab-btn px-5 rounded-lg text-xs font-black transition-all relative">통계</button>
         </nav>
       </div>
       
       <div class="win-controls flex items-center">
-        <button onclick="resetSimulator()" id="btn-reset-all" class="px-3 py-1.5 mr-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl flex items-center gap-2 transition-all active:scale-95 text-[11px] font-bold">
+        <div class="flex items-center mr-4 bg-purple-500/10 rounded-xl border border-purple-500/20 p-0.5" style="-webkit-app-region: no-drag;">
+          <select id="instant-rank-select" class="bg-transparent border-none text-sm font-bold px-2 py-1 text-purple-300 focus:outline-none">
+            <option value="3" class="bg-slate-900">3단계로</option>
+            <option value="7" class="bg-slate-900">7단계로</option>
+            <option value="10" class="bg-slate-900" selected>10단계로</option>
+          </select>
+          <button onclick="instantSetRank()" id="btn-instant-rank" class="px-2 py-1 hover:bg-purple-500/30 text-purple-200 rounded-lg flex items-center transition-all active:scale-95 text-xs font-black">
+            즉시 설정
+          </button>
+        </div>
+
+        <button onclick="resetSimulator()" id="btn-reset-all" class="px-3 py-1.5 mr-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl flex items-center gap-2 transition-all active:scale-95 text-sm font-bold">
           <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
           초기화
         </button>
 
         <div class="bg-black/40 p-1 rounded-xl flex gap-1 mr-4 border border-white/5" style="-webkit-app-region: no-drag;">
-          <button onclick="setEquipType('weapon')" id="btn-weapon" class="px-4 py-1.5 text-[11px] font-black rounded-lg transition-all bg-purple-600 text-white shadow-lg">무기·손목</button>
-          <button onclick="setEquipType('armor')" id="btn-armor" class="px-4 py-1.5 text-[11px] font-black rounded-lg transition-all hover:bg-white/5 text-slate-500">방어구</button>
+          <button onclick="setEquipType('weapon')" id="btn-weapon" class="px-4 py-1.5 text-sm font-black rounded-lg transition-all bg-purple-600 text-white shadow-lg">무기·손목</button>
+          <button onclick="setEquipType('armor')" id="btn-armor" class="px-4 py-1.5 text-sm font-black rounded-lg transition-all hover:bg-white/5 text-slate-500">방어구</button>
         </div>
         <button onclick="window.electronAPI.toggleSienaAura()" class="win-btn win-close-btn" title="닫기">
           <i data-lucide="x" class="w-6 h-6"></i>
@@ -66,7 +78,7 @@
               <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-500"></i>
               <span class="text-xs font-black text-slate-400 uppercase tracking-wider">부여된 능력치</span>
             </div>
-            <span class="text-[11px] text-slate-600 font-mono font-bold" id="stat-count">0 / 10</span>
+            <span class="text-sm text-slate-600 font-mono font-bold" id="stat-count">0 / 10</span>
           </div>
           <div id="stat-slots" class="flex flex-col gap-1 bg-black/10 p-1 rounded-2xl border border-white/5 flex-1 overflow-hidden"></div>
         </div>
@@ -77,7 +89,7 @@
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-slate-500"></i>
               <span class="text-xs font-black text-slate-400 uppercase tracking-wider">추가 옵션</span>
             </div>
-            <span class="text-[11px] text-slate-600 font-mono font-bold" id="extra-count">0 / 3</span>
+            <span class="text-sm text-slate-600 font-mono font-bold" id="extra-count">0 / 3</span>
           </div>
           <div id="extra-slots" class="flex flex-col gap-1 bg-black/10 p-1.5 rounded-2xl border border-white/5"></div>
         </div>
@@ -101,13 +113,13 @@
                 <div class="flex flex-col w-[100px]">
                   <div class="flex items-center gap-1.5">
                     <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">성공 확률</span>
+                    <span class="text-xs font-black text-slate-500 uppercase tracking-widest">성공 확률</span>
                   </div>
                   <span id="success-rate" class="text-3xl font-black text-purple-400 tracking-tighter mt-0.5">100%</span>
                 </div>
                 <div class="h-8 w-px bg-white/10"></div>
                 <div class="flex flex-col gap-1.5">
-                  <span class="text-[10px] font-black text-slate-500 uppercase">자동 강화 목표</span>
+                  <span class="text-xs font-black text-slate-500 uppercase">자동 강화 목표</span>
                   <select id="target-rank" onchange="updateUI()" class="bg-slate-900 border border-slate-700 text-xs font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 min-w-[80px]">
                     <option value="1">1단계</option>
                     <option value="2">2단계</option>
@@ -136,18 +148,18 @@
                 <div class="flex items-center gap-3 w-[90px]">
                   <img src="assets/img/siena/에이라의망치.png" class="w-8 h-8">
                   <div class="flex flex-col">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">잠금</span>
+                    <span class="text-xs font-black text-slate-500 uppercase tracking-widest">잠금</span>
                     <span id="lock-count-display" class="text-lg font-black text-amber-400 tracking-tighter mt-0.5">0 / 9</span>
                   </div>
                 </div>
                 <div class="h-8 w-px bg-white/10"></div>
                 <div class="flex flex-col gap-1.5">
-                  <span class="text-[10px] font-black text-slate-500 uppercase">자동 설정 목표</span>
+                  <span class="text-xs font-black text-slate-500 uppercase">자동 설정 목표</span>
                   <div class="flex gap-1.5">
-                    <select id="auto-stat-name" class="bg-slate-900 border border-slate-700 text-[10px] font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 max-w-[95px]">
+                    <select id="auto-stat-name" onchange="updateUI()" class="bg-slate-900 border border-slate-700 text-xs font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 max-w-[95px]">
                       <!-- JS handles options -->
                     </select>
-                    <select id="auto-stat-grade" class="bg-slate-900 border border-slate-700 text-[10px] font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 w-[65px]">
+                    <select id="auto-stat-grade" onchange="updateUI()" class="bg-slate-900 border border-slate-700 text-xs font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 w-[65px]">
                       <option value="하">하 이상</option>
                       <option value="중">중 이상</option>
                       <option value="상">상</option>
@@ -184,12 +196,12 @@
                 </div>
                 <div class="h-10 w-px bg-white/10"></div>
                 <div class="flex flex-col gap-1.5">
-                  <span class="text-[10px] font-black text-slate-500 uppercase">자동 설정 목표</span>
+                  <span class="text-xs font-black text-slate-500 uppercase">자동 설정 목표</span>
                   <div class="flex gap-1.5">
-                    <select id="auto-extra-name" class="bg-slate-900 border border-slate-700 text-[10px] font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 max-w-[95px]">
+                    <select id="auto-extra-name" onchange="updateUI()" class="bg-slate-900 border border-slate-700 text-xs font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 max-w-[95px]">
                       <!-- JS handles options -->
                     </select>
-                    <select id="auto-extra-grade" class="bg-slate-900 border border-slate-700 text-[10px] font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 w-[65px]">
+                    <select id="auto-extra-grade" onchange="updateUI()" class="bg-slate-900 border border-slate-700 text-xs font-bold rounded-lg px-2 py-1 text-slate-100 focus:outline-none focus:border-purple-500 w-[65px]">
                       <option value="하">하 이상</option>
                       <option value="중">중 이상</option>
                       <option value="상">상</option>
@@ -203,6 +215,13 @@
               </div>
             </div>
           </div>
+
+          <!-- Tab 4: Summary -->
+          <div id="view-summary" class="tab-view hidden">
+            <div class="bg-slate-800/30 border border-white/10 rounded-2xl p-4 flex items-center justify-center shadow-xl backdrop-blur-md h-[74px]">
+              <span class="text-xs font-black text-slate-400 uppercase tracking-widest">전체 강화 통계를 확인합니다</span>
+            </div>
+          </div>
         </div>
 
         <!-- [Lower Area: Stats Dashboard] -->
@@ -211,12 +230,12 @@
           <!-- Dashboard Header -->
           <div class="flex items-center justify-between shrink-0 mb-1">
             <div class="flex items-center gap-2.5">
-              <div class="p-1.5 bg-amber-500/10 rounded-lg"><i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i></div>
-              <span class="text-xs font-black text-slate-400 uppercase tracking-widest">실시간 강화 대시보드</span>
+              <div class="p-1.5 bg-amber-500/10 rounded-lg" id="dashboard-icon-box"><i data-lucide="layout-dashboard" id="dashboard-icon" class="w-4 h-4 text-amber-400"></i></div>
+              <span id="dashboard-title" class="text-xs font-black text-slate-400 uppercase tracking-widest">실시간 강화 대시보드</span>
             </div>
-            <div class="flex bg-black/50 p-0.5 rounded-lg border border-white/5 shrink-0" style="-webkit-app-region: no-drag;">
-              <button onclick="setCurrency('seed')" id="cur-seed" class="px-4 py-1 text-[10px] font-black rounded transition-all bg-emerald-600 text-white">SEED</button>
-              <button onclick="setCurrency('elso')" id="cur-elso" class="px-4 py-1 text-[10px] font-black rounded transition-all hover:bg-white/5 text-slate-500">ELSO</button>
+            <div id="currency-toggle-container" class="flex bg-black/50 p-0.5 rounded-lg border border-white/5 shrink-0" style="-webkit-app-region: no-drag;">
+              <button onclick="setCurrency('seed')" id="cur-seed" class="px-4 py-1 text-xs font-black rounded transition-all bg-emerald-600 text-white">SEED</button>
+              <button onclick="setCurrency('elso')" id="cur-elso" class="px-4 py-1 text-xs font-black rounded transition-all hover:bg-white/5 text-slate-500">ELSO</button>
             </div>
           </div>
 
@@ -224,83 +243,9 @@
           <div id="current-action-cost" class="shrink-0"></div>
 
           <!-- Cumulative Data (Slim Rows) -->
-          <div class="flex-1 border-t border-white/5 pt-3 flex flex-col gap-2 min-h-0">
-            <div class="flex items-center gap-2 px-1 mb-1">
-              <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-slate-600"></i>
-              <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">누적 통계</span>
-            </div>
-            
-            <div class="flex flex-col gap-2 flex-1 overflow-y-auto custom-scroll p-1 mr-[-4px] pr-[4px]">
-              
-              <!-- 누적 재화 (Categorized) -->
-              <div class="flex flex-col bg-black/30 p-3 rounded-2xl border border-white/5 gap-3 transition-all hover:bg-black/50">
-                <div class="flex items-center gap-3">
-                  <i data-lucide="coins" class="w-4 h-4 text-emerald-500"></i>
-                  <span class="text-xs font-black text-slate-500 uppercase tracking-widest">누적 소비 재화 내역</span>
-                </div>
-                <div id="total-wealth-container">
-                  <!-- JS handles categorizing -->
-                </div>
-              </div>
-
-
-              <!-- 강화 재료 상세 (Compact 2-Row) -->
-              <div class="flex flex-col bg-black/30 p-3 rounded-2xl border border-white/5 gap-3 transition-all hover:bg-black/50">
-                <div class="flex items-center gap-3">
-                  <i data-lucide="package" class="w-4 h-4 text-blue-500"></i>
-                  <span class="text-xs font-black text-slate-500 uppercase tracking-widest">강화 아이템 상세</span>
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <!-- Row 1: 힌덴, 장인 (2 Cols) -->
-                  <div class="grid grid-cols-2 gap-1.5">
-                    <div class="flex items-center justify-between px-3 py-1.5 bg-black/40 rounded-xl border border-white/5">
-                      <span class="text-[10px] text-slate-600 font-black uppercase">힌덴의 가루</span>
-                      <span id="mat-powder" class="text-[13px] font-black text-slate-200">0</span>
-                    </div>
-                    <div class="flex items-center justify-between px-3 py-1.5 bg-black/40 rounded-xl border border-white/5">
-                      <span class="text-[10px] text-slate-600 font-black uppercase">장인의 혼</span>
-                      <span id="mat-soul" class="text-[13px] font-black text-slate-200">0</span>
-                    </div>
-                  </div>
-                  <!-- Row 2: 망치, 환류, 정환 (3 Cols) -->
-                  <div class="grid grid-cols-3 gap-1.5">
-                    <div class="flex flex-col items-center py-1.5 bg-black/40 rounded-xl border border-white/5">
-                      <span class="text-[10px] text-slate-600 font-black uppercase mb-0.5">에이라의 망치</span>
-                      <span id="mat-hammer" class="text-sm font-black text-slate-200">0</span>
-                    </div>
-                    <div class="flex flex-col items-center py-1.5 bg-black/40 rounded-xl border border-white/5">
-                      <span class="text-[10px] text-slate-600 font-black uppercase mb-0.5">환류의 서</span>
-                      <span id="mat-all" class="text-sm font-black text-slate-200">0</span>
-                    </div>
-                    <div class="flex flex-col items-center py-1.5 bg-black/40 rounded-xl border border-white/5">
-                      <span class="text-[10px] text-slate-600 font-black uppercase mb-0.5">정환의 서</span>
-                      <span id="mat-single" class="text-sm font-black text-slate-200">0</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 실행 카운트 (Compact 1-Row 3-Cols) -->
-              <div class="flex flex-col bg-black/30 p-3 rounded-2xl border border-white/5 gap-3 transition-all hover:bg-black/50">
-                <div class="flex items-center gap-3">
-                  <i data-lucide="refresh-cw" class="w-4 h-4 text-purple-500"></i>
-                  <span class="text-xs font-black text-slate-500 uppercase tracking-widest">강화 시도 횟수</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2 bg-black/20 p-2 rounded-xl border border-white/5">
-                  <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-slate-600 font-black uppercase mb-0.5">증폭 시도</span>
-                    <span id="cnt-amplify" class="text-[15px] font-black text-purple-400">0</span>
-                  </div>
-                  <div class="flex flex-col items-center border-x border-white/5">
-                    <span class="text-[10px] text-slate-600 font-black uppercase mb-0.5">능력치 재설정</span>
-                    <span id="cnt-stats" class="text-[15px] font-black text-emerald-400">0</span>
-                  </div>
-                  <div class="flex flex-col items-center">
-                    <span class="text-[10px] text-slate-600 font-black uppercase mb-0.5">추옵 변경</span>
-                    <span id="cnt-extra" class="text-[15px] font-black text-indigo-400">0</span>
-                  </div>
-                </div>
-              </div>
+          <div class="flex-1 border-t border-white/5 pt-2 mt-2 flex flex-col min-h-0">
+            <div id="dashboard-content" class="flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scroll pr-1">
+              <!-- JS handles dynamic dashboard content based on current tab -->
             </div>
           </div>
         </div>
@@ -324,8 +269,8 @@
         <!-- Math Expectation -->
         <div class="p-6 bg-purple-500/5 border-t border-purple-500/10 shrink-0">
           <div class="flex items-center gap-3 mb-4">
-            <div class="p-1.5 bg-purple-500/20 rounded-lg"><i data-lucide="calculator" class="w-4 h-4 text-purple-400"></i></div>
-            <span class="text-[11px] font-black text-purple-200 uppercase tracking-widest">증폭 기댓값</span>
+            <div id="expectation-icon-box" class="p-1.5 bg-purple-500/20 rounded-lg"><i id="expectation-icon" data-lucide="calculator" class="w-4 h-4 text-purple-400"></i></div>
+            <span id="expectation-title" class="text-sm font-black text-purple-200 uppercase tracking-widest">증폭 기댓값</span>
           </div>
           <div id="expectation-view" class="flex flex-col gap-2.5"></div>
         </div>

@@ -38,14 +38,6 @@
       border-color: rgba(168, 85, 247, 0.5);
     }
 
-    .drag-handle {
-      padding: 18px 20px;
-      /* cursor: move removed */
-      -webkit-app-region: drag;
-      background: linear-gradient(to bottom, rgba(168, 85, 247, 0.15), transparent);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
     .no-drag {
       -webkit-app-region: no-drag;
     }
@@ -131,20 +123,22 @@
     </div>
   </div>
 
-  <div class="flex-1 overflow-hidden flex flex-col p-4 space-y-4 no-drag">
+  <div class="flex-1 overflow-hidden flex flex-col p-6 space-y-4 no-drag">
     <!-- 키워드 가이드 배너 (항상 노출) -->
     <div id="keyword-guide"
-      class="shrink-0 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-between transition-all">
-      <div id="guide-text-container" class="flex items-center gap-2 text-purple-400">
-        <i id="guide-icon" data-lucide="info" class="w-4 h-4 shrink-0"></i>
+      class="shrink-0 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-between transition-all mb-2">
+      <div id="guide-text-container" class="flex items-center gap-3 text-purple-400">
+        <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+          <i id="guide-icon" data-lucide="bell-ring" class="w-4 h-4"></i>
+        </div>
         <div class="flex flex-col">
-          <span id="guide-title" class="text-[10px] font-black tracking-tight">모든 새 글 알림을 수신 중입니다</span>
+          <span id="guide-title" class="text-[11px] font-black tracking-tight">모든 새 글 알림을 수신 중입니다</span>
           <span id="guide-subtext"
-            class="text-[9px] font-medium empty:hidden mt-0.5 opacity-80 break-words line-clamp-2"></span>
+            class="text-[10px] font-bold empty:hidden mt-0.5 opacity-80 break-words line-clamp-2"></span>
         </div>
       </div>
       <button id="guide-btn" onclick="window.electronAPI.toggleSettings('gallery')"
-        class="shrink-0 ml-2 text-[9px] bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 px-3 py-1.5 rounded-lg font-bold transition-colors">설정
+        class="shrink-0 ml-2 text-[10px] bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 px-3 py-1.5 rounded-lg font-black transition-colors">설정
         열기</button>
     </div>
 

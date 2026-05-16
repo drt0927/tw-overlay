@@ -18,7 +18,6 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            /* cursor: default removed */
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -27,14 +26,6 @@
         .post-item:hover {
             background: rgba(255, 255, 255, 0.05);
             transform: translateY(-2px);
-        }
-
-        .drag-handle {
-            padding: 18px 20px;
-            /* cursor: move removed */
-            -webkit-app-region: drag;
-            background: linear-gradient(to bottom, rgba(236, 72, 153, 0.15), transparent);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .no-drag {
@@ -73,11 +64,11 @@
         </div>
     </div>
 
-    <div class="flex-1 overflow-hidden flex flex-col p-4 space-y-4 no-drag">
+    <div class="flex-1 overflow-hidden flex flex-col p-6 space-y-5 no-drag">
         <!-- 검색 영역 -->
-        <div class="flex flex-col gap-2">
-            <div class="flex gap-3 bg-black/40 px-3 py-2 rounded-xl border border-white/5 items-center">
-                <span class="text-xs font-bold text-slate-500 mr-2">서버</span>
+        <div class="flex flex-col gap-2.5">
+            <div class="flex gap-3 bg-black/40 px-4 py-2.5 rounded-xl border border-white/5 items-center">
+                <span class="text-xs font-bold text-slate-400 mr-2">서버</span>
                 <label class="flex items-center gap-1.5 cursor-pointer group">
                     <input type="radio" name="server" value="7" checked class="accent-amber-600 w-3.5 h-3.5"
                         onchange="fetchRanking()">
@@ -91,8 +82,9 @@
             </div>
             <div
                 class="flex gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5 focus-within:border-yellow-500/50 transition-colors">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 ml-3 mt-3"></i>
                 <input id="search-input"
-                    class="bg-transparent flex-1 px-3 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-700 font-bold"
+                    class="bg-transparent flex-1 py-2 text-sm text-slate-200 outline-none placeholder:text-slate-700 font-bold"
                     placeholder="캐릭터명 검색..." onkeypress="if(event.key==='Enter')fetchRanking(true)">
                 <button onclick="fetchRanking(true)"
                     class="text-xs bg-amber-600 hover:bg-yellow-500 text-white px-5 py-2 rounded-lg font-black transition-all active:scale-95 shadow-lg flex items-center justify-center w-16"

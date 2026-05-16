@@ -26,13 +26,6 @@
             transform: translateX(4px);
         }
 
-        .drag-handle {
-            padding: 18px 20px;
-            -webkit-app-region: drag;
-            background: linear-gradient(to bottom, rgba(16, 185, 129, 0.15), transparent);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
         .no-drag {
             -webkit-app-region: no-drag;
         }
@@ -121,20 +114,22 @@
         </div>
     </div>
 
-    <div class="flex-1 overflow-hidden flex flex-col p-4 space-y-4 no-drag">
+    <div class="flex-1 overflow-hidden flex flex-col p-6 space-y-4 no-drag">
         <!-- 키워드 가이드 배너 (항상 노출) -->
         <div id="keyword-guide"
-            class="shrink-0 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-between transition-all">
-            <div id="guide-text-container" class="flex items-center gap-2 text-red-400">
-                <i id="guide-icon" data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            class="shrink-0 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-between transition-all mb-2">
+            <div id="guide-text-container" class="flex items-center gap-3 text-red-400">
+                <div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400">
+                    <i id="guide-icon" data-lucide="alert-circle" class="w-4 h-4"></i>
+                </div>
                 <div class="flex flex-col">
-                    <span id="guide-title" class="text-[10px] font-black tracking-tight">키워드를 등록해야 모니터링이 시작됩니다</span>
+                    <span id="guide-title" class="text-[11px] font-black tracking-tight">키워드를 등록해야 모니터링이 시작됩니다</span>
                     <span id="guide-subtext"
-                        class="text-[9px] font-medium empty:hidden mt-0.5 opacity-80 break-words line-clamp-2"></span>
+                        class="text-[10px] font-bold empty:hidden mt-0.5 opacity-80 break-words line-clamp-2"></span>
                 </div>
             </div>
             <button id="guide-btn" onclick="window.electronAPI.toggleSettings('trade')"
-                class="shrink-0 ml-2 text-[9px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg font-bold transition-colors">설정
+                class="shrink-0 ml-2 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg font-black transition-colors">설정
                 열기</button>
         </div>
 

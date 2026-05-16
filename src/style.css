@@ -619,9 +619,9 @@ body[data-sidebar-pos="left"] .boss-toast.show {
 }
 
 .win-title-sub {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

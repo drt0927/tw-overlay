@@ -59,7 +59,7 @@
     .time-tag.past {
       background: rgba(71, 85, 105, 0.2);
       border-color: rgba(71, 85, 105, 0.3);
-      color: #94a3b8;
+      color: #cbd5e1;
     }
 
     .time-tag.future {
@@ -82,13 +82,6 @@
     select option {
       background: #1a1b2e;
       color: white;
-    }
-
-    .drag-handle {
-      padding: 18px 20px;
-      -webkit-app-region: drag;
-      background: linear-gradient(to bottom, rgba(239, 68, 68, 0.15), transparent);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .no-drag {
@@ -141,9 +134,9 @@
     </div>
   </div>
 
-  <div class="flex-1 overflow-hidden flex flex-col no-drag">
+  <div class="flex-1 overflow-hidden flex flex-col no-drag p-6">
     <!-- 공통 설정 패널 -->
-    <div class="p-3 border-b border-white/5 bg-black/20 space-y-3">
+    <div class="p-4 border border-white/5 rounded-2xl bg-black/20 space-y-3 mb-6">
       <!-- 활성화 -->
       <div class="flex items-center justify-between">
         <label class="flex items-center gap-2.5 cursor-pointer group">
@@ -155,7 +148,7 @@
           </div>
           <span class="text-xs font-black text-slate-300 group-hover:text-white">필드보스 알림 활성화</span>
         </label>
-        <span class="text-[9px] font-bold text-slate-600">변경 시 자동 저장</span>
+        <span class="text-[9px] font-bold text-slate-400">변경 시 자동 저장</span>
       </div>
 
       <!-- 알림 시점 -->
@@ -198,18 +191,18 @@
     </div>
 
     <!-- 가이드 배너 -->
-    <div class="px-4 py-2.5 bg-slate-900/60 border-b border-white/5 flex items-center gap-2.5">
-      <div class="w-6 h-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-        <i data-lucide="info" class="w-3.5 h-3.5 text-blue-400"></i>
+    <div class="px-4 py-3 bg-slate-900/60 border border-white/5 rounded-2xl flex items-center gap-3 mb-6">
+      <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+        <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
       </div>
-      <p class="text-[10px] font-bold text-slate-400 leading-tight">
+      <p class="text-[11px] font-bold text-slate-400 leading-relaxed">
         지나간 보스 시간을 클릭하면 <span class="text-blue-300">모험일지</span>에 자동으로 기록됩니다. <br/>
         <span class="text-slate-500 font-medium">기록된 시간은 녹색 체크(✓)로 표시됩니다.</span>
       </p>
     </div>
 
     <!-- Boss List -->
-    <div id="boss-list" class="flex-1 overflow-y-auto px-3 pt-[10px] pb-4 space-y-3 custom-scroll">
+    <div id="boss-list" class="flex-1 overflow-y-auto space-y-4 custom-scroll pr-1">
       <div class="flex flex-col items-center justify-center py-20 text-slate-600 gap-3">
         <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
         <span class="text-xs font-bold">설정을 불러오는 중...</span>
@@ -411,8 +404,6 @@
         fieldBossNotifyVolume: parseInt(document.getElementById('boss-volume-input').value) || 50
       });
     }
-
-
   </script>
 </body>
 

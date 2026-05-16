@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
+  toggleSienaAura: () => ipcRenderer.send('toggle-siena-aura'),
   resetXp: () => ipcRenderer.send('xp-reset'),
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 

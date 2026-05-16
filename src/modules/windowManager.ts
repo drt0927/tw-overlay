@@ -139,12 +139,12 @@ const windowRegistry: Record<string, ManagedWindow> = {
       return { x: targetX, y: targetY };
     }
   },
-  gallery: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'gallery', html: 'gallery.html', width: 380, height: 600 },
+  gallery: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'gallery', html: 'gallery.html', width: 450, height: 600 },
   abbreviation: { ref: null, pos: { offsetX: -510, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 500, height: 700 },
   buffs: { ref: null, pos: { offsetX: -1000, offsetY: 40 }, key: 'buffs', html: 'buffs.html', width: 1000, height: 700 },
-  bossSettings: { ref: null, pos: { offsetX: -370, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 370, height: 750 },
-  etaRanking: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 380, height: 600 },
-  trade: { ref: null, pos: { offsetX: -380, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 380, height: 600 },
+  bossSettings: { ref: null, pos: { offsetX: -410, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 410, height: 750 },
+  etaRanking: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 400, height: 600 },
+  trade: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 450, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 850, height: 1150 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
@@ -157,6 +157,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   buffTimer: { ref: null, pos: { offsetX: -600, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 600, height: 850 },
   xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 1050 },
   scamDetector: { ref: null, pos: { offsetX: -480, offsetY: 40 }, key: 'scamDetector', html: 'scam-detector.html', width: 480, height: 780 },
+  sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
 };
 
 let gameRect: GameRect | null = null;
@@ -539,6 +540,7 @@ export function toggleDiaryWindow(): boolean { return createToggleableWindow('di
 export function toggleScamDetectorWindow(): boolean { return createToggleableWindow('scamDetector'); }
 export function toggleBuffTimerWindow(): boolean { return createToggleableWindow('buffTimer'); }
 export function toggleXpHudWindow(): boolean { return createToggleableWindow('xpHud'); }
+export function toggleSienaAuraWindow(): boolean { return createToggleableWindow('sienaAura'); }
 export function toggleContentsCheckerWindow(): boolean {
   return createToggleableWindow('contentsChecker', {
     onReady: (win) => {

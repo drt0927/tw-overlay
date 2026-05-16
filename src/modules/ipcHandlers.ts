@@ -89,6 +89,7 @@ export function register(): void {
     'toggle-diary': wm.toggleDiaryWindow,
     'toggle-buff-timer': wm.toggleBuffTimerWindow,
     'toggle-xp-hud': wm.toggleXpHudWindow,
+    'toggle-siena-aura': wm.toggleSienaAuraWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {

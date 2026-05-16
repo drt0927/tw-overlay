@@ -44,6 +44,8 @@ function buildMenuTemplate(): any[] {
         'toggleMagicStoneCalculator': wm.toggleMagicStoneCalculatorWindow,
         'toggleDiary': wm.toggleDiaryWindow,
         'toggleUniformColor': wm.toggleUniformColorWindow,
+        'toggleScamDetector': wm.toggleScamDetectorWindow,
+        'toggleSienaAura': wm.toggleSienaAuraWindow,
         'toggleOverlay': wm.toggleOverlay,
         'toggleClickThrough': wm.toggleClickThrough
       };

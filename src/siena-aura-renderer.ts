@@ -812,4 +812,5 @@ window.onload = () => {
   updateAutoStatPool();
   updateAutoExtraPool();
   updateUI();
+  if ((window as any).bindEscapeClose) (window as any).bindEscapeClose();
 };

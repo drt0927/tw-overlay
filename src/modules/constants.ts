@@ -122,6 +122,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   essenceAlertVolume: 70,
   abandonedAutoHideMinutes: 10,
   abandonedEnabled: true,
+  abandonedWidgetPos: { left: 200, bottom: 63 },
 
 };
 

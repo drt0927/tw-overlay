@@ -897,14 +897,13 @@
 
           hud.style.left = `${left}px`;
           hud.style.bottom = `${bottom}px`;
-
-          // 어벤던로드 위젯 위치를 XP HUD 위로 연동
-          if (arWidget) {
-            arWidget.style.left = `${left}px`;
-            // XP HUD 높이(약 55px) + 간격(8px) 적용
-            arWidget.style.bottom = `${bottom + 63}px`;
-          }
         }
+      }
+
+      // 어벤던로드 위젯 독립 위치 적용
+      if (arWidget && config.abandonedWidgetPos) {
+        arWidget.style.left = `${config.abandonedWidgetPos.left}px`;
+        arWidget.style.bottom = `${config.abandonedWidgetPos.bottom}px`;
       }
 
       // 버프 HUD 표시 여부 제어

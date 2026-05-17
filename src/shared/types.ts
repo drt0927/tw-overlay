@@ -238,6 +238,7 @@ export interface AppConfig {
     // --- Abandoned Road Settings ---
     abandonedAutoHideMinutes?: number;
     abandonedEnabled?: boolean;
+    abandonedWidgetPos?: { left: number; bottom: number };
 
     // --- Scam Detector Settings ---
     scamDetectorEnabled?: boolean;

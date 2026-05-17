@@ -101,60 +101,94 @@
   <div class="p-4 flex flex-col gap-4 h-[calc(100vh-56px)] overflow-y-auto no-drag">
 
     <!-- 어벤던로드 세션 섹션 -->
-    <div id="session-section" class="p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl text-[11px] leading-relaxed">
+    <div id="session-section" class="p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl text-xs leading-relaxed">
       <div class="flex items-center gap-1.5 mb-2">
-        <i data-lucide="swords" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span class="text-[11px] font-black text-amber-400 uppercase tracking-tight">어벤던로드 세션</span>
+        <i data-lucide="swords" class="w-4 h-4 text-amber-400"></i>
+        <span class="text-xs font-black text-amber-400 uppercase tracking-tight">어벤던로드 세션</span>
       </div>
 
       <!-- 마을별 내역 -->
       <div id="session-regions" class="flex flex-col gap-1.5 mb-1">
-        <div class="text-slate-500 text-[10px]">세션 데이터 없음</div>
+        <div class="text-slate-500 text-[11px]">세션 데이터 없음</div>
       </div>
 
       <!-- 총계 (마을 데이터 있을 때만 표시) -->
       <div id="session-totals" class="hidden">
         <div class="h-px bg-white/10 my-1.5"></div>
-        <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">총계</div>
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">총계</div>
         <div id="session-stones" class="flex flex-col gap-1 mb-1.5"></div>
-        <div class="flex flex-col gap-0.5 mb-2">
+        <div class="flex flex-col gap-1 mb-2">
           <div class="flex justify-between items-center">
-            <span class="text-slate-400">입장료</span>
-            <span id="session-fee" class="font-bold text-rose-400 font-mono">-0</span>
+            <span class="text-slate-400 text-[11px]">입장료</span>
+            <span id="session-fee" class="font-bold text-rose-400 font-mono text-[11px]">-0</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-slate-400">최종수익</span>
-            <span id="session-profit" class="font-black font-mono text-white">+0</span>
+            <span class="text-slate-400 text-[11px]">최종수익</span>
+            <span id="session-profit" class="font-black font-mono text-white text-xs">+0</span>
           </div>
         </div>
-        <div class="flex items-center gap-2 mb-2">
-          <button onclick="abandonedHideNow()"
-            class="flex items-center gap-1 px-2 py-0.5 bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 rounded-lg text-[10px] font-bold transition-all active:scale-95">
-            <i data-lucide="eye-off" class="w-3 h-3"></i>
-            즉시 숨김
-          </button>
+        <div class="flex items-center gap-2">
           <button onclick="fillFromSession()"
-            class="flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold transition-all active:scale-95">
-            <i data-lucide="download" class="w-3 h-3"></i>
+            class="flex items-center gap-1 px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-bold transition-all active:scale-95">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
             입력란 자동 채우기
           </button>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-slate-400 text-[10px]">자동 숨김</span>
+      </div>
+
+      <!-- 오버레이 위치 설정 -->
+      <div class="mt-3">
+        <div class="flex items-center gap-1.5 text-[11px] text-slate-300 font-bold mb-2">
+          <i data-lucide="move" class="w-3.5 h-3.5 shrink-0 text-amber-400/70"></i>
+          오버레이 위치
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-bold">Left</span>
+            <div class="relative">
+              <input type="number" id="ar-pos-left" min="0" max="3000" value="200"
+                class="w-16 px-2 py-1 bg-slate-800 border border-slate-600 text-slate-200 text-xs font-bold rounded-md outline-none text-right pr-6 focus:border-amber-500/50"
+                style="appearance:textfield;-moz-appearance:textfield;">
+              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold">px</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-bold">Bottom</span>
+            <div class="relative">
+              <input type="number" id="ar-pos-bottom" min="0" max="3000" value="63"
+                class="w-16 px-2 py-1 bg-slate-800 border border-slate-600 text-slate-200 text-xs font-bold rounded-md outline-none text-right pr-6 focus:border-amber-500/50"
+                style="appearance:textfield;-moz-appearance:textfield;">
+              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold">px</span>
+            </div>
+          </div>
+          <button onclick="applyArPos()"
+            class="flex items-center gap-1 px-3 py-1 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-bold transition-all active:scale-95">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            적용
+          </button>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-slate-400 text-[11px]">자동 숨김</span>
           <select id="autohide-select" onchange="setAutoHide(this.value)"
-            class="no-drag bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded px-1.5 py-0.5 cursor-pointer">
+            class="no-drag bg-slate-800 border border-slate-600 text-slate-200 text-[11px] rounded px-2 py-0.5 cursor-pointer">
             <option value="5">5분</option>
             <option value="10" selected>10분</option>
             <option value="15">15분</option>
             <option value="20">20분</option>
           </select>
         </div>
-      </div>
-
-      <!-- 오버레이 위치 안내 -->
-      <div class="mt-2 flex items-center gap-1 text-[9px] text-slate-500">
-        <i data-lucide="map-pin" class="w-2.5 h-2.5 shrink-0"></i>
-        오버레이 위치: 경험치 HUD 상단 고정
+        <div class="flex items-center gap-2 mt-2">
+          <button onclick="abandonedForceShow()"
+            class="flex items-center gap-1 px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-bold transition-all active:scale-95">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            즉시 표시
+          </button>
+          <button onclick="abandonedHideNow()"
+            class="flex items-center gap-1 px-2.5 py-1 bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 rounded-lg text-[11px] font-bold transition-all active:scale-95">
+            <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+            즉시 숨김
+          </button>
+        </div>
       </div>
     </div>
 
@@ -311,7 +345,7 @@
       const regionKeys = Object.keys(regionDetails);
 
       if (regionKeys.length === 0) {
-        if (regionsEl) regionsEl.innerHTML = '<div class="text-slate-500 text-[10px]">세션 데이터 없음</div>';
+        if (regionsEl) regionsEl.innerHTML = '<div class="text-slate-500 text-[11px]">세션 데이터 없음</div>';
         if (totalsEl) totalsEl.classList.add('hidden');
       } else {
         if (regionsEl) {
@@ -327,15 +361,15 @@
                   const color = net > 0 ? 'text-emerald-400' : 'text-rose-400';
                   const sign = net > 0 ? '+' : '';
                   return `<span class="flex items-center gap-0.5">
-                    <img src="${GRADE_IMGS[grade]}" class="w-3 h-3 object-contain" alt="${grade}">
-                    <span class="text-[9px] font-bold ${color}">${sign}${net}</span>
+                    <img src="${GRADE_IMGS[grade]}" class="w-3.5 h-3.5 object-contain" alt="${grade}">
+                    <span class="text-[11px] font-bold ${color}">${sign}${net}</span>
                   </span>`;
                 }).join('')}</div>`
               : '';
             return `<div class="mb-0.5">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black text-amber-300">${region}</span>
-                <span class="text-[10px] text-slate-400">${rd.count}회 | ${formatSeedShort(-rd.totalFee)}</span>
+                <span class="text-[11px] font-black text-amber-300">${region}</span>
+                <span class="text-[11px] text-slate-400">${rd.count}회 | ${formatSeedShort(-rd.totalFee)}</span>
               </div>
               ${stonesHtml}
             </div>`;
@@ -356,9 +390,9 @@
             ? rows.map(({ grade, gain, loss }) => `
               <div class="flex items-center gap-2">
                 <img src="${GRADE_IMGS[grade]}" class="w-4 h-4 object-contain" alt="${grade}">
-                <span class="text-slate-300 text-[10px] font-bold w-10">${grade}</span>
-                <span class="text-emerald-400 text-[10px] font-bold">획득 ${gain}</span>
-                ${loss > 0 ? `<span class="text-rose-400 text-[10px] font-bold">뺏김 ${loss}</span>` : ''}
+                <span class="text-slate-300 text-[11px] font-bold w-10">${grade}</span>
+                <span class="text-emerald-400 text-[11px] font-bold">획득 ${gain}</span>
+                ${loss > 0 ? `<span class="text-rose-400 text-[11px] font-bold">뺏김 ${loss}</span>` : ''}
               </div>`).join('')
             : '';
         }
@@ -369,7 +403,7 @@
       if (feeEl) feeEl.textContent = formatSeedShort(-state.totalFee);
       if (profitEl) {
         profitEl.textContent = formatSeedShort(state.profit);
-        profitEl.className = `font-black font-mono text-[11px] ${state.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        profitEl.className = `font-black font-mono text-xs ${state.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
       }
 
       currentOverlayEnabled = state.isEnabled;
@@ -407,10 +441,24 @@
       }
     }
 
+    function abandonedForceShow() {
+      if (window.electronAPI && window.electronAPI.abandonedForceVisible) {
+        window.electronAPI.abandonedForceVisible(true);
+      }
+    }
+
     function setAutoHide(value) {
       const minutes = parseInt(value, 10);
       if (window.electronAPI && window.electronAPI.setAbandonedAutoHide) {
         window.electronAPI.setAbandonedAutoHide(minutes);
+      }
+    }
+
+    function applyArPos() {
+      const left = parseInt(document.getElementById('ar-pos-left').value) || 0;
+      const bottom = parseInt(document.getElementById('ar-pos-bottom').value) || 0;
+      if (window.electronAPI && window.electronAPI.applySettings) {
+        window.electronAPI.applySettings({ abandonedWidgetPos: { left, bottom } });
       }
     }
 
@@ -436,6 +484,12 @@
           const select = document.getElementById('autohide-select');
           if (select && data.abandonedAutoHideMinutes) {
             select.value = String(data.abandonedAutoHideMinutes);
+          }
+          if (data.abandonedWidgetPos) {
+            const posLeft = document.getElementById('ar-pos-left');
+            const posBottom = document.getElementById('ar-pos-bottom');
+            if (posLeft) posLeft.value = data.abandonedWidgetPos.left;
+            if (posBottom) posBottom.value = data.abandonedWidgetPos.bottom;
           }
         });
       }

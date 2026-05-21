@@ -678,6 +678,61 @@
         border-color: rgba(239, 68, 68, 1.0);
       }
     }
+
+    /* ── 에토스 기믹 알림 CSS ── */
+    .ethos-arrow-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 260px;
+      height: 260px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 105;
+    }
+    .ethos-arrow-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .ethos-arrow-wrapper.show {
+      opacity: 1;
+    }
+    .ethos-arrow-scaler {
+      transform-origin: center center;
+    }
+    .ethos-arrow-wrapper.show .ethos-arrow-scaler {
+      animation: ethos-pulse-arrow 0.6s infinite alternate ease-in-out;
+    }
+    @keyframes ethos-pulse-arrow {
+      0% { filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.4)); transform: scale(1); }
+      100% { filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.85)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.5)); transform: scale(1.1); }
+    }
+    .ethos-dir-N  { transform: translate(-50%, -50%) rotate(0deg) translateY(-90px); }
+    .ethos-dir-NE { transform: translate(-50%, -50%) rotate(45deg) translateY(-90px); }
+    .ethos-dir-E  { transform: translate(-50%, -50%) rotate(90deg) translateY(-90px); }
+    .ethos-dir-SE { transform: translate(-50%, -50%) rotate(135deg) translateY(-90px); }
+    .ethos-dir-S  { transform: translate(-50%, -50%) rotate(180deg) translateY(-90px); }
+    .ethos-dir-SW { transform: translate(-50%, -50%) rotate(225deg) translateY(-90px); }
+    .ethos-dir-W  { transform: translate(-50%, -50%) rotate(270deg) translateY(-90px); }
+    .ethos-dir-NW { transform: translate(-50%, -50%) rotate(315deg) translateY(-90px); }
+
+    .ethos-warning-text {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ef4444;
+      font-weight: 900;
+      font-size: 26px;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.9), 0 0 8px rgba(239, 68, 68, 0.6);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .ethos-warning-text.show { opacity: 1; }
   </style>
 </head>
 
@@ -749,6 +804,19 @@
     </svg>
     <div class="essence-alert-title">경험의 정수 버프 확인!</div>
     <div class="essence-alert-sub">경험치 100억 달성 — 자동 교환 버프가 꺼져 있을 수 있습니다</div>
+  </div>
+
+  <!-- 에토스 기믹 알림 -->
+  <div id="ethos-arrow-container" class="ethos-arrow-container">
+    <div id="ethos-alert-text" class="ethos-warning-text"></div>
+    <div id="ethos-arrow-indicator" class="ethos-arrow-wrapper ethos-dir-N">
+      <div class="ethos-arrow-scaler">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="rgba(255, 255, 255, 0.92)" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21V3"/>
+          <path d="m5 10 7-7 7 7"/>
+        </svg>
+      </div>
+    </div>
   </div>
 
   <!-- 버프 타이머 HUD -->
@@ -1063,13 +1131,112 @@
       alertEl.classList.add('show');
     });
 
+    // 에토스 기믹 알림
+    let ethosTimeout = null;
+    window.electronAPI.onEthosAlert((data) => {
+      const arrowContainer = document.getElementById('ethos-arrow-container');
+      const arrowIndicator = document.getElementById('ethos-arrow-indicator');
+      const alertText = document.getElementById('ethos-alert-text');
+      if (!arrowContainer || !arrowIndicator || !alertText) return;
+
+      // 8방향 매핑
+      const dirMap = {
+        '번개': 'N',
+        '갈퀴 모양 번개': 'NE',
+        '갈퀴': 'E',
+        '갈퀴 모양 갈고리': 'SE',
+        '갈고리': 'S',
+        '파도 모양 갈고리': 'SW',
+        '파도': 'W',
+        '파도 모양 번개': 'NW'
+      };
+
+      const dir = dirMap[data.password];
+      if (!dir) return; // 알 수 없는 암호인 경우 무시
+
+      // 이전 타이머 초기화
+      if (ethosTimeout) {
+        clearTimeout(ethosTimeout);
+        ethosTimeout = null;
+      }
+
+      // 애니메이션 재시작을 위한 클래스 초기화
+      arrowIndicator.className = 'ethos-arrow-wrapper ethos-dir-' + dir;
+      alertText.classList.remove('show');
+      void arrowIndicator.offsetWidth; // Reflow
+
+      // 텍스트 및 화살표 표시
+      // alertText.innerText = '에토스: ' + data.password;
+      arrowIndicator.classList.add('show');
+      // alertText.classList.add('show');
+
+      // 5초 후 자동으로 사라짐
+      ethosTimeout = setTimeout(() => {
+        arrowIndicator.classList.remove('show');
+        alertText.classList.remove('show');
+      }, 5000);
+    });
+
     // ── 테스트 가이드 (Console) ──
     console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
     console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
     console.log(`const el = document.getElementById('pitta-alert'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');`);
-    console.log('%c2. 실제 로그 시뮬레이션 테스트 (터미널 실행):', 'color: #facc15; font-weight: bold;');
-    console.log('node test-pitta.js');
+    console.log('%c2. 에토스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testEthos('번개') // N, NE, E, SE, S, SW, W, NW 중 택1 혹은 암호 입력`);
     console.log('----------------------------------------------------');
+
+    // [DevTools 전용 글로벌 테스트 함수]
+    window.testEthos = function(passwordOrDir = '번개') {
+      const data = {
+        password: passwordOrDir,
+        message: '테스트 메시지'
+      };
+      // 단축 방향키를 입력했을 경우 실제 암호로 변환하여 테스트 지원
+      const reverseDirMap = {
+        'N': '번개', 'NE': '갈퀴 모양 번개', 'E': '갈퀴', 'SE': '갈퀴 모양 갈고리',
+        'S': '갈고리', 'SW': '파도 모양 갈고리', 'W': '파도', 'NW': '파도 모양 번개'
+      };
+      if (reverseDirMap[passwordOrDir]) {
+        data.password = reverseDirMap[passwordOrDir];
+      }
+      
+      // 이미 등록된 ipc 콜백을 강제로 발생시키는 것은 Renderer 레벨에서 어려울 수 있으므로
+      // 동일한 IPC 이벤트 포맷으로 이벤트를 직접 트리거하는 효과를 냅니다.
+      // (단, 기존 리스너 클로저에 접근할 수 없으므로, onEthosAlert 리스너에 등록한 로직과 동일하게 작동하도록 시뮬레이션 합니다)
+      const arrowContainer = document.getElementById('ethos-arrow-container');
+      const arrowIndicator = document.getElementById('ethos-arrow-indicator');
+      const alertText = document.getElementById('ethos-alert-text');
+      if (!arrowContainer || !arrowIndicator || !alertText) return;
+
+      const dirMap = {
+        '번개': 'N', '갈퀴 모양 번개': 'NE', '갈퀴': 'E', '갈퀴 모양 갈고리': 'SE',
+        '갈고리': 'S', '파도 모양 갈고리': 'SW', '파도': 'W', '파도 모양 번개': 'NW'
+      };
+      const dir = dirMap[data.password];
+      if (!dir) {
+        console.error('올바르지 않은 에토스 암호입니다:', passwordOrDir);
+        return;
+      }
+      
+      if (window.ethosTimeout) {
+        clearTimeout(window.ethosTimeout);
+      }
+      
+      arrowIndicator.className = 'ethos-arrow-wrapper ethos-dir-' + dir;
+      alertText.classList.remove('show');
+      void arrowIndicator.offsetWidth; 
+      
+      // alertText.innerText = '에토스: ' + data.password;
+      arrowIndicator.classList.add('show');
+      // alertText.classList.add('show');
+      
+      window.ethosTimeout = setTimeout(() => {
+        arrowIndicator.classList.remove('show');
+        alertText.classList.remove('show');
+      }, 5000);
+      
+      console.log(`✅ 에토스 기믹 테스트: ${data.password} (${dir} 방향)`);
+    };
 
     window.onload = () => {
       refreshIcons();

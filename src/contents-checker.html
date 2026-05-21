@@ -191,6 +191,20 @@
             box-shadow: none;
         }
 
+        .check-box.count-box {
+            font-size: 9px;
+            font-weight: 900;
+            color: #22d3ee;
+            border-color: rgba(34, 211, 238, 0.4);
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .check-box.count-box.checked {
+            color: white;
+            border-color: #10b981;
+        }
+
         .check-box.excluded::after {
             content: '-';
             color: #475569;
@@ -719,14 +733,44 @@
                             const state = item.completedState?.[char.id];
                             const isCompleted = state?.isCompleted || false;
                             const isExcluded = state?.isExcluded || false;
+                            const max = item.maxCount || 1;
+                            const current = state?.currentCount || 0;
                             checkCell.className = `matrix-cell ${!item.isVisible ? 'hidden-row' : ''}`;
 
-                            checkCell.innerHTML = `
-                                <div class="check-box ${isExcluded ? 'excluded' : (isCompleted ? 'checked' : '')}" 
-                                     onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})">
-                                    ${isExcluded ? '' : `<i data-lucide="check" class="w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}"></i>`}
-                                </div>
-                            `;
+                            if (isExcluded) {
+                                checkCell.innerHTML = `
+                                    <div class="check-box excluded" 
+                                         onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})">
+                                    </div>
+                                `;
+                            } else if (max > 1) {
+                                // 카운트 진행도에 따라 카운트 텍스트 색상 분기 (7/7 완료 시 초록색, 진행 중 하늘색, 0회는 흐리게)
+                                const countColorClass = current === max 
+                                    ? 'text-emerald-400 border-emerald-500/50' 
+                                    : (current > 0 ? 'text-cyan-400 border-cyan-500/40' : 'text-slate-400 opacity-60');
+                                checkCell.innerHTML = `
+                                    <div class="flex gap-1.5 items-center justify-center">
+                                        <div class="check-box count-box ${countColorClass}" 
+                                             onclick="handleCountClick(event, '${item.id}', '${char.id}', 1, ${isExcluded})"
+                                             oncontextmenu="handleCountClick(event, '${item.id}', '${char.id}', -1, ${isExcluded})"
+                                             title="좌클릭: +1 | 우클릭: -1">
+                                            ${current}/${max}
+                                        </div>
+                                        <div class="check-box ${isCompleted ? 'checked' : ''}" 
+                                             onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})"
+                                             title="즉시 완료 토글">
+                                            <i data-lucide="check" class="w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}"></i>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                checkCell.innerHTML = `
+                                    <div class="check-box ${isCompleted ? 'checked' : ''}" 
+                                         onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})">
+                                        <i data-lucide="check" class="w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}"></i>
+                                    </div>
+                                `;
+                            }
                             table.appendChild(checkCell);
                         });
                     });
@@ -826,6 +870,56 @@
             }
 
             window.electronAPI.contentsToggleItem(itemId, charId);
+        }
+
+        function handleCountClick(event, itemId, charId, action, isExcluded) {
+            event.preventDefault(); // 우클릭 시 컨텍스트 메뉴 방지
+            
+            if (isEditMode) {
+                // 관리 모드에서는 제외(N/A) 상태 토글
+                window.electronAPI.contentsToggleExclude(itemId, charId);
+                return;
+            }
+            if (isExcluded) return;
+
+            const item = configData.contentsCheckerItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            const max = item.maxCount || 1;
+            const state = item.completedState?.[charId];
+            const current = state?.currentCount || 0;
+            
+            let targetCount = current;
+            if (action === 1) {
+                targetCount = current + 1;
+                if (targetCount > max) targetCount = max; // 최대치 도달 후에는 클릭해도 0으로 초기화되지 않고 max 고정
+            } else if (action === -1) {
+                targetCount = current - 1;
+            } else if (action === 'max') {
+                targetCount = state?.isCompleted ? 0 : max; // 이미 완료상태였으면 0으로 토글, 아니면 max로
+            }
+
+            // 범위 보정
+            targetCount = Math.max(0, Math.min(max, targetCount));
+
+            // 소리 재생 로직 (완료 시 WOW 사운드 재생)
+            const vol = (configData?.volumeContentsChecker !== undefined ? configData.volumeContentsChecker : 50) / 100;
+            const nowCompleted = (targetCount === max);
+            const prevCompleted = state?.isCompleted || false;
+
+            if (nowCompleted && !prevCompleted && vol > 0) {
+                const type = item.resetRule.type;
+                const soundFile = type === 'daily' ? 'assets/sound/voice_wow.wav' : 'assets/sound/max_affection.wav';
+                const audio = new Audio(soundFile);
+                audio.volume = vol;
+                audio.play().catch(() => {});
+            } else if (targetCount !== current && vol > 0) {
+                const audio = new Audio('assets/sound/item_get.wav');
+                audio.volume = vol;
+                audio.play().catch(() => {});
+            }
+
+            window.electronAPI.contentsUpdateCount(itemId, charId, targetCount);
         }
 
         function toggleEditMode() {

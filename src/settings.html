@@ -561,6 +561,22 @@
               </p>
             </div>
 
+            <!-- 에토스 기믹 알림 (추가) -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2">
+                <i data-lucide="crosshair" class="w-4 h-4 text-indigo-400"></i> 이클립스 보스 기믹 알림
+              </label>
+              <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" id="ethos-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                  <div>
+                    <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">에토스 기믹 알림 표시</span>
+                    <p class="text-[10px] text-slate-500 mt-0.5">에토스의 대사를 인식하여 피해야 할 방향을 중앙에 표시합니다.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <!-- 인게임 외치기 알림 키워드 (추가) -->
             <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
               <label class="section-label flex items-center gap-2 mb-4">
@@ -812,7 +828,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.13.2</span></p>
+                        class="text-purple-400">1.13.3</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1704,6 +1720,7 @@
           chatLogAutoDeleteDays: parseInt(document.getElementById('chat-log-auto-delete-input').value) || 0,
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,
+          ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
 
         };
         window.electronAPI.applySettings(settings);

@@ -1,144 +1,159 @@
 [
   {
-    "id": "daily-mur-1",
+    "id": "weekly-mur-1",
     "name": "머루 (머큐리얼 4보스 + 루미)",
-    "category": "재화",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-abyss-treasure",
+    "id": "weekly-abyss-treasure",
     "name": "심연의 보물창고",
     "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
     "id": "daily-psiky-illusion",
     "name": "프시키의 허상",
-    "category": "성장",
+    "category": "재화",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "daily", "hour": 0 }
   },
   {
-    "id": "daily-power-root",
-    "name": "힘의 근원 (보물상자)",
-    "category": "성장",
+    "id": "weekly-power-root",
+    "name": "힘의 근원",
+    "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-rune-dungeon",
-    "name": "룬 경험의 던전 (1시간)",
-    "category": "성장",
+    "id": "weekly-rune-dungeon",
+    "name": "룬 경험의 던전",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-tesis-core",
+    "id": "weekly-tesis-core",
     "name": "테시스 코어 던전",
-    "category": "성장",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-digsite",
+    "id": "weekly-digsite",
     "name": "발굴지",
-    "category": "성장",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
     "id": "daily-sun-relic",
     "name": "태양의 렐릭 퀘스트",
-    "category": "성장",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "daily", "hour": 0 }
   },
   {
-    "id": "daily-fortress-ghost",
+    "id": "weekly-fortress-ghost",
     "name": "지하요새의 망령",
-    "category": "전투",
-    "isVisible": true,
-    "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
-  },
-  {
-    "id": "daily-eclipse-6boss",
-    "name": "이클립스 6보스",
     "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-eclipse-recapture-supplies",
+    "id": "weekly-eclipse-6boss",
+    "name": "이클립스 6보스",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
+  },
+  {
+    "id": "weekly-eclipse-recapture-supplies",
     "name": "이클립스 보급품 탈환",
     "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-eclipse-special-force-suppression",
+    "id": "weekly-eclipse-special-force-suppression",
     "name": "이클립스 별동대 토벌",
     "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-apethiria-ex",
+    "id": "weekly-apethiria-ex",
     "name": "아페티리아 (EX)",
-    "category": "레이드",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-moon-queen",
+    "id": "weekly-moon-queen",
     "name": "달여왕 군대 훈련소",
-    "category": "전투",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-eclipse-boss",
+    "id": "weekly-eclipse-boss",
     "name": "이클립스 보스 토벌전",
-    "category": "전투",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-ancient-relic-shinjo",
+    "id": "weekly-ancient-relic-shinjo",
     "name": "고대 렐릭의 성소 (신조)",
-    "category": "성장",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
-    "id": "daily-ancient-relic-kishinik",
+    "id": "weekly-ancient-relic-kishinik",
     "name": "고대 렐릭의 성소 (키시니크)",
-    "category": "성장",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
     "id": "daily-tirkalrag-ss",
     "name": "티르칼라그 SS랭",
-    "category": "성장",
+    "category": "재화",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "daily", "hour": 0 }
@@ -146,15 +161,16 @@
   {
     "id": "weekly-prava-defense",
     "name": "프라바 방어전 (1인)",
-    "category": "전투",
+    "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   },
   {
     "id": "weekly-abyss-dungeon",
     "name": "어비스 보스 (심층 1~3)",
-    "category": "던전",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -162,7 +178,7 @@
   {
     "id": "weekly-shinjo-nest",
     "name": "신조의 둥지 (일반/어려움)",
-    "category": "던전",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -170,7 +186,7 @@
   {
     "id": "weekly-catacomb-hell",
     "name": "망령의 카타콤 (지옥)",
-    "category": "던전",
+    "category": "재화",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -194,7 +210,7 @@
   {
     "id": "weekly-thursday-clean",
     "name": "목요일에는 청소를!",
-    "category": "기타",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 4, "hour": 0 }
@@ -202,7 +218,7 @@
   {
     "id": "weekly-apethiria-raid",
     "name": "아페티리아 (일반/어려움)",
-    "category": "레이드",
+    "category": "보스",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -210,7 +226,7 @@
   {
     "id": "weekly-orly-defense",
     "name": "오를리 방어전",
-    "category": "전투",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -218,7 +234,7 @@
   {
     "id": "weekly-vestige",
     "name": "베스티지",
-    "category": "전투",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -226,7 +242,7 @@
   {
     "id": "weekly-siokan-boss",
     "name": "시오칸 하임 보스 토벌전",
-    "category": "전투",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -234,7 +250,7 @@
   {
     "id": "weekly-siokan-odin",
     "name": "시오칸 하임 오딘 전면전",
-    "category": "전투",
+    "category": "내실",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
@@ -242,9 +258,36 @@
   {
     "id": "weekly-abyss-climb",
     "name": "어비스 심층 1~6 100층 등반",
-    "category": "던전",
+    "category": "재화",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+  },
+  {
+    "id": "weekly-abyss-boss-ex",
+    "name": "어비스 보스전 (EX)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
+  },
+  {
+    "id": "weekly-abyss-core-master",
+    "name": "어비스 코어 마스터",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
+  },
+  {
+    "id": "weekly-mercurial-core-master",
+    "name": "머큐리얼 케이브 코어 마스터",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7
   }
 ]

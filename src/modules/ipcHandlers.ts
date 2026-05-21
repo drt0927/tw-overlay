@@ -103,6 +103,9 @@ export function register(): void {
   ipcMain.on('contents-toggle-item', (_e, id: string, characterId?: string) => {
     import('./contentsChecker').then(mod => mod.toggleItem(id, characterId));
   });
+  ipcMain.on('contents-update-count', (_e, id: string, characterId: string, count: number) => {
+    import('./contentsChecker').then(mod => mod.updateItemCount(id, characterId, count));
+  });
   ipcMain.on('contents-toggle-exclude', (_e, id: string, characterId: string) => {
     import('./contentsChecker').then(mod => mod.toggleExcludeItem(id, characterId));
   });

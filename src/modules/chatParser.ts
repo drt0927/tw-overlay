@@ -213,6 +213,17 @@ class ChatParser extends EventEmitter {
         }
     }
 
+    // I. 에토스 기믹 특화 패턴
+    // (예: "수색대장, 에토스 : 암호는 갈퀴 모양 번개")
+    if (cleanMsg.includes('수색대장, 에토스') && cleanMsg.includes('암호는')) {
+        const ethosMatch = cleanMsg.match(/암호는\s+(.*)/);
+        if (ethosMatch) {
+            const password = ethosMatch[1].trim();
+            this.emit('ETHOS_PASSWORD', { date: this._currentDate, timestamp, password, message: cleanMsg });
+            return;
+        }
+    }
+
     // A. SEED 획득 (콘텐츠 보상 및 일반 습득 모두 대응)
     if (cleanMsg.includes('SEED를') || cleanMsg.includes('Seed를') || cleanMsg.includes('시드를')) {
         // "보상으로 1500만 SEED", "[300000]SEED", "1500만 SEED를 획득" 등

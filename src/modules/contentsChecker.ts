@@ -34,6 +34,54 @@ export function init(): void {
   let currentItems = cfg.contentsCheckerItems || [];
   let changed = false;
 
+  // 0. ID 및 리셋 룰 마이그레이션 (일일 -> 주간)
+  const ID_MIGRATION_MAP: Record<string, string> = {
+    'daily-mur-1': 'weekly-mur-1',
+    'daily-abyss-treasure': 'weekly-abyss-treasure',
+    'daily-power-root': 'weekly-power-root',
+    'daily-rune-dungeon': 'weekly-rune-dungeon',
+    'daily-tesis-core': 'weekly-tesis-core',
+    'daily-digsite': 'weekly-digsite',
+    'daily-fortress-ghost': 'weekly-fortress-ghost',
+    'daily-eclipse-6boss': 'weekly-eclipse-6boss',
+    'daily-eclipse-recapture-supplies': 'weekly-eclipse-recapture-supplies',
+    'daily-eclipse-special-force-suppression': 'weekly-eclipse-special-force-suppression',
+    'daily-apethiria-ex': 'weekly-apethiria-ex',
+    'daily-moon-queen': 'weekly-moon-queen',
+    'daily-eclipse-boss': 'weekly-eclipse-boss',
+    'daily-ancient-relic-shinjo': 'weekly-ancient-relic-shinjo',
+    'daily-ancient-relic-kishinik': 'weekly-ancient-relic-kishinik'
+  };
+
+  currentItems.forEach((item: any) => {
+    if (ID_MIGRATION_MAP[item.id]) {
+      const newId = ID_MIGRATION_MAP[item.id];
+      log(`[Contents Checker] 마이그레이션: ${item.id} -> ${newId}`);
+      item.id = newId;
+      item.resetRule = { type: 'weekly', dayOfWeek: 1, hour: 0 };
+      item.maxCount = 7;
+
+      if (item.completedState) {
+        Object.keys(item.completedState).forEach(charId => {
+          const state = item.completedState[charId];
+          if (state.currentCount === undefined) {
+            state.currentCount = state.isCompleted ? 7 : 0;
+          }
+        });
+      }
+      changed = true;
+    }
+  });
+
+  // currentItems를 순회하며 defaultItems에 정의된 maxCount를 동기화
+  currentItems.forEach(item => {
+    const def = defaultItems.find(d => d.id === item.id);
+    if (def && item.maxCount !== def.maxCount) {
+      item.maxCount = def.maxCount;
+      changed = true;
+    }
+  });
+
   // 1. 캐릭터 프리셋 초기화
   let characterPresets = cfg.characterPresets || [];
   if (characterPresets.length === 0) {
@@ -50,6 +98,18 @@ export function init(): void {
     if (!item.completedState) {
       item.completedState = {};
       changed = true;
+    }
+
+    // maxCount가 변경/지정되었으나 캐릭터별 currentCount 필드가 누락된 경우 안전하게 마이그레이션
+    const max = item.maxCount || 1;
+    if (item.completedState) {
+      Object.keys(item.completedState).forEach(charId => {
+        const state = item.completedState[charId];
+        if (state.currentCount === undefined) {
+          state.currentCount = state.isCompleted ? max : 0;
+          changed = true;
+        }
+      });
     }
 
     // [v1.12.7 일원화] 기존 단일 필드가 존재한다면 마이그레이션 후 삭제
@@ -79,9 +139,14 @@ export function init(): void {
       });
       changed = true;
     } else {
-      if (exists.name !== def.name || JSON.stringify(exists.resetRule) !== JSON.stringify(def.resetRule)) {
+      if (exists.name !== def.name || 
+          exists.category !== def.category ||
+          JSON.stringify(exists.resetRule) !== JSON.stringify(def.resetRule) ||
+          exists.maxCount !== def.maxCount) {
         exists.name = def.name;
+        exists.category = def.category;
         exists.resetRule = def.resetRule;
+        exists.maxCount = def.maxCount;
         changed = true;
       }
     }
@@ -174,11 +239,13 @@ export function checkReset(): boolean {
     if (item.completedState) {
       Object.keys(item.completedState).forEach(charId => {
         const state = item.completedState[charId];
-        if (state.isCompleted && state.lastCompletedAt) {
+        // 진행중이거나 완료된 상태이고 마지막 완료 시각이 있는 경우 초기화 검사
+        if ((state.isCompleted || (state.currentCount && state.currentCount > 0)) && state.lastCompletedAt) {
           const lastCompleted = new Date(state.lastCompletedAt);
           if (shouldReset(item.resetRule, lastCompleted, now)) {
             state.isCompleted = false;
             state.lastCompletedAt = undefined;
+            state.currentCount = 0;
             changed = true;
             log(`[Contents] 초기화됨: ${item.name} (캐릭터: ${charId}, ${item.resetRule.type})`);
           }
@@ -295,8 +362,11 @@ export function toggleItem(id: string, characterId?: string): void {
     if (item.completedState[targetCharId].isExcluded) return;
 
     const state = item.completedState[targetCharId];
+    const max = item.maxCount || 1;
+
     state.isCompleted = !state.isCompleted;
-    state.lastCompletedAt = state.isCompleted ? Date.now() : undefined;
+    state.currentCount = state.isCompleted ? max : 0;
+    state.lastCompletedAt = state.currentCount > 0 ? Date.now() : undefined;
 
     config.saveImmediate({ contentsCheckerItems: items });
 
@@ -501,4 +571,65 @@ export function removeItem(id: string): void {
   items = items.filter(i => i.id !== id);
   config.saveImmediate({ contentsCheckerItems: items });
   refreshUI();
+}
+
+/** 특정 숙제의 완료 횟수 직접 업데이트 */
+export function updateItemCount(id: string, characterId: string, count: number): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const targetCharId = characterId || cfg.selectedCharacterId || MAIN_CHAR_ID;
+  
+  const item = items.find(i => i.id === id);
+  if (item) {
+    if (!item.completedState) item.completedState = {};
+    if (!item.completedState[targetCharId]) {
+      item.completedState[targetCharId] = { isCompleted: false };
+    }
+
+    const state = item.completedState[targetCharId];
+    if (state.isExcluded) return;
+
+    const max = item.maxCount || 1;
+    const prevCompleted = state.isCompleted;
+
+    state.currentCount = Math.max(0, Math.min(max, count));
+    state.isCompleted = (state.currentCount === max);
+    state.lastCompletedAt = state.currentCount > 0 ? Date.now() : undefined;
+
+    config.saveImmediate({ contentsCheckerItems: items });
+
+    // 일지 연동 로직
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const dateStr = String(now.getDate()).padStart(2, '0');
+    const date = `${year}-${month}-${dateStr}`;
+
+    const charName = cfg.characterPresets?.find(p => p.id === targetCharId)?.name || '알수없음';
+    const diaryContentId = `${item.id}_${targetCharId}`;
+    const diaryContentName = `[${charName}] ${item.name}`;
+
+    if (state.isCompleted && !prevCompleted) {
+      diaryDb.addHomeworkLog(date, diaryContentId, diaryContentName, item.category, item.resetRule.type, Date.now());
+    } else if (!state.isCompleted && prevCompleted) {
+      diaryDb.removeHomeworkLog(date, diaryContentId);
+    }
+
+    // 전 캐릭터 통합 다이어리 통계 동기화
+    syncDiaryStats(items);
+    refreshUI();
+  }
+}
+
+/** 특정 숙제의 완료 횟수 증감 (채팅 로그 등 외부 연동용) */
+export function incrementItemCount(id: string, characterId: string, amount: number = 1): void {
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const targetCharId = characterId || cfg.selectedCharacterId || MAIN_CHAR_ID;
+  
+  const item = items.find(i => i.id === id);
+  if (item) {
+    const current = item.completedState?.[targetCharId]?.currentCount || 0;
+    updateItemCount(id, targetCharId, current + amount);
+  }
 }

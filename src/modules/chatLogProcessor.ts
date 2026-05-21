@@ -53,6 +53,18 @@ class ChatLogProcessor {
       }
     });
 
+    // 4. 에토스 기믹 알림 처리
+    chatParser.on('ETHOS_PASSWORD', (data) => {
+      const cfg = config.load();
+      if (!cfg.ethosAlertEnabled) return;
+
+      const allWindows = BrowserWindow.getAllWindows();
+      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+      if (gameOverlay) {
+        gameOverlay.webContents.send('ethos-alert', data);
+      }
+    });
+
     // XP 추적 (xpTracker에 위임)
     xpTracker.start();
 

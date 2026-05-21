@@ -21,6 +21,7 @@ export interface ChatParserEventMap {
     BUFF_USED: { date: string; timestamp: string; buffId: string; usedBy: string; message: string };
     PITTA_ENTRY: { date: string; timestamp: string; energy: number; grade: string; message: string };
     PITTA_CLEAR: { date: string; timestamp: string; grade: string; itemName: string; message: string };
+    ETHOS_PASSWORD: { date: string; timestamp: string; password: string; message: string };
 }
 
 // ── 어벤던로드 상태 타입 ──
@@ -143,6 +144,7 @@ export interface ContentsCheckerItem {
     isCustom?: boolean;
     resetRule: ResetRule;
     sortOrder?: number;
+    maxCount?: number; // 최대 완료 필요 횟수 (생략 시 기본값: 1)
 
     /** 캐릭터별 완료 상태 (다중 캐릭터 지원) */
     completedState: {
@@ -150,6 +152,7 @@ export interface ContentsCheckerItem {
             isCompleted: boolean;
             lastCompletedAt?: number;
             isExcluded?: boolean; // 캐릭터별 참여 제외 여부
+            currentCount?: number; // 현재 완료 횟수 (0 ~ maxCount)
         }
     };
 }
@@ -215,6 +218,7 @@ export interface AppConfig {
     chatLogAutoDeleteDays?: number;
     lootKeywords?: string[];
     shoutKeywords?: string[];
+    ethosAlertEnabled?: boolean;
     showXpWidget?: boolean;
     ignoreNegativeXp?: boolean;
     xpWidgetPos?: { left: number; bottom: number };

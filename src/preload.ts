@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 
   contentsToggleItem: (id: string, characterId?: string) => ipcRenderer.send('contents-toggle-item', id, characterId),
+  contentsUpdateCount: (id: string, characterId: string, count: number) => ipcRenderer.send('contents-update-count', id, characterId, count),
   contentsToggleExclude: (id: string, characterId: string) => ipcRenderer.send('contents-toggle-exclude', id, characterId),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
@@ -242,6 +243,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('pitta-alert');
     ipcRenderer.on('pitta-alert', () => callback());
   },
+  onEthosAlert: (callback: (data: { password: string; message: string }) => void) => {
+    ipcRenderer.removeAllListeners('ethos-alert');
+    ipcRenderer.on('ethos-alert', (_event, data) => callback(data));
+  },
   onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
     ipcRenderer.removeAllListeners('scam-alert');
     ipcRenderer.on('scam-alert', (_event, result) => callback(result));
@@ -288,7 +293,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'boss-times-data', 'play-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
-      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert',
+      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));

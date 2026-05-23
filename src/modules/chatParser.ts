@@ -34,6 +34,8 @@ class ChatParser extends EventEmitter {
   private _triggerIndex: Map<string, Array<{ buffId: string; trigger: ChatTrigger }>> = new Map();
   // FIXED_MSG 전용: 고정 메시지 → buffId
   private _fixedMsgIndex: Map<string, string> = new Map();
+  // 퇴마사의 은총 마지막 감지 로그 타임스탬프
+  private _lastExorcistLogTime: number = 0;
 
   constructor() {
     super();
@@ -524,6 +526,13 @@ class ChatParser extends EventEmitter {
     // FIXED_MSG: 고정 메시지 포함 여부 체크
     for (const [keyword, buffId] of this._fixedMsgIndex) {
       if (cleanMsg.includes(keyword)) {
+        if (buffId === 'stat_izabel_ratio') {
+          const currentLogTime = this.parseLogTimestamp(this._currentDate, timestamp);
+          if (currentLogTime - this._lastExorcistLogTime <= 3000) {
+            log(`[CHAT_PARSER] 퇴마사의 은총 사용 후 3초 내 비아누의 숨결 감지됨 -> 이자벨 비율 버프 감지 무시`);
+            return;
+          }
+        }
         this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy: 'self', message: cleanMsg });
         return;
       }
@@ -550,6 +559,9 @@ class ChatParser extends EventEmitter {
       const hits = this._lookupTrigger(itemName, 'PARTY_ITEM');
       if (hits.length > 0) {
         hits.forEach(({ buffId }) => {
+          if (buffId === 'stat_exorcist') {
+            this._lastExorcistLogTime = this.parseLogTimestamp(this._currentDate, timestamp);
+          }
           this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy, message: cleanMsg });
         });
         return;
@@ -567,6 +579,21 @@ class ChatParser extends EventEmitter {
         });
         return;
       }
+    }
+  }
+
+  /**
+   * 로그의 날짜 및 시간 텍스트를 밀리초 타임스탬프로 변환
+   */
+  public parseLogTimestamp(dateStr: string, timestampStr: string): number {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const timeOnly = timestampStr.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
+      const [hh, mm, ss] = timeOnly.split(':').map(Number);
+      return new Date(y, m - 1, d, hh, mm, ss).getTime();
+    } catch (e) {
+      log(`[CHAT_PARSER] 시간 파싱 실패: ${e}`);
+      return Date.now();
     }
   }
 

@@ -109,6 +109,18 @@ class BuffTimerManager {
       return;
     }
 
+    // 동일한 group에 속한 기존 활성 버프 제거 (none 제외)
+    if (def.group && def.group !== 'none') {
+      for (const [activeBuffId, activeBuff] of this._activeBuffs) {
+        if (activeBuffId === buffId) continue;
+        const activeDef = this._buffDefs.get(activeBuffId);
+        if (activeDef && activeDef.group === def.group) {
+          log(`[BUFF_TIMER] 동일 그룹 중복 버프 제거: ${activeBuff.name} (그룹: ${def.group}) -> 새 버프: ${def.name}`);
+          this._activeBuffs.delete(activeBuffId);
+        }
+      }
+    }
+
     const durationMs = customDurationMs ?? def.durationMs;
     const finalStartTime = startTime ?? Date.now();
 

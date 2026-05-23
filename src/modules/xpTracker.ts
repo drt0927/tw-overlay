@@ -77,7 +77,7 @@ class XpTracker {
       const isAllowed = allowedKeywords.some(k => data.message.includes(k)) ||
         [
           'exp_heart', 'rare_heart', 'stat_exorcist',
-          'rare_loto', 'util_ampoule', 'dmg_izabel', 'stat_izabel_ratio', 'util_illumination'
+          'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination'
         ].includes(data.buffId);
       if (isAllowed) {
         const startTime = this.parseLogTimestamp(data.date, data.timestamp);

@@ -396,9 +396,7 @@
     "group": "stat_ratio",
     "removeOnExit": false,
     "image": "assets/img/buffs/이자벨의비법_비율능력치.png",
-    "chatTriggers": [
-      { "pattern": "FIXED_MSG", "keyword": "일시적으로 능력치가 상승했습니다 : 상태이상 [비아누의 숨결]" }
-    ],
+    "chatTriggers": [],
     "description": "퇴마사의 은총/특선 묘약(비율)과 중복 불가."
   },
   {

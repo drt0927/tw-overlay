@@ -22,6 +22,26 @@ export interface ChatParserEventMap {
     PITTA_ENTRY: { date: string; timestamp: string; energy: number; grade: string; message: string };
     PITTA_CLEAR: { date: string; timestamp: string; grade: string; itemName: string; message: string };
     ETHOS_PASSWORD: { date: string; timestamp: string; password: string; message: string };
+    ECLIPSE_BOSS_CLEAR: { date: string; timestamp: string; bossName: string; count: number; message: string };
+    ECLIPSE_SUPPLIES_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    ECLIPSE_SPECIAL_FORCE_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    MERCURIAL_BOSS_CLEAR: { date: string; timestamp: string; bossName: string; count: number; message: string };
+    CORE_MASTER_CLEAR: { date: string; timestamp: string; contentName: string; count: number; message: string };
+    RELIC_SANCTUARY_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    TESIS_CORE_CLEAR: { date: string; timestamp: string; message: string };
+    POWER_ROOT_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    ABYSS_TREASURE_ENTRY: { date: string; timestamp: string; count: number; message: string };
+    FORTRESS_GHOST_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    DIGSITE_ENTRY: { date: string; timestamp: string; count?: number; message: string };
+    CONTENT_SHINJO_NEST_CLEAR: { date: string; timestamp: string; message: string };
+    ABYSS_DUNGEON_CLEAR: { date: string; timestamp: string; depth: string; count: number; message: string };
+    ABYSS_BOSS_EX_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    PRAVA_DEFENSE_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    CATACOMB_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    SIOKAN_BOSS_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    ORLY_DEFENSE_CLEAR: { date: string; timestamp: string; message: string };
+    VESTIGE_CLEAR: { date: string; timestamp: string; message: string };
+    APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; message: string };
 }
 
 // ── 어벤던로드 상태 타입 ──
@@ -145,6 +165,7 @@ export interface ContentsCheckerItem {
     resetRule: ResetRule;
     sortOrder?: number;
     maxCount?: number; // 최대 완료 필요 횟수 (생략 시 기본값: 1)
+    auto?: boolean;    // 실시간 채팅 로그를 통한 자동 체크 지원 여부
 
     /** 캐릭터별 완료 상태 (다중 캐릭터 지원) */
     completedState: {
@@ -160,6 +181,13 @@ export interface ContentsCheckerItem {
 export interface CharacterPreset {
     id: string;   // 고유 ID (예: 'char-1')
     name: string; // 사용자 지정 이름 (예: '본캐', '티치엘')
+}
+
+export interface PendingHomework {
+    id: string;         // 숙제 ID (예: 'weekly-eclipse-boss-ethos')
+    count: number;      // 감지된 횟수
+    isIncrement: boolean; // 횟수 누적 방식 여부
+    timestamp: number;  // 감지된 시간
 }
 
 export interface AppConfig {
@@ -209,6 +237,7 @@ export interface AppConfig {
     contentsCheckerItems?: ContentsCheckerItem[];
     characterPresets?: CharacterPreset[];
     selectedCharacterId?: string;
+    pendingHomeworks?: PendingHomework[];
     lastContentsResetCheck?: number;
     shortcuts?: ShortcutsConfig;
     customAlerts?: CustomAlert[];

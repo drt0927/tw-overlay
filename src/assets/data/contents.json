@@ -1,12 +1,203 @@
 [
   {
-    "id": "weekly-mur-1",
-    "name": "머루 (머큐리얼 4보스 + 루미)",
+    "id": "weekly-eclipse-boss-ethos",
+    "name": "이클립스 (에토스)",
     "category": "보스",
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-eclipse-boss-matias",
+    "name": "이클립스 (마티아)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-eclipse-boss-tyrorost",
+    "name": "이클립스 (티로로스)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-eclipse-boss-lycos",
+    "name": "이클립스 (라이코스)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-eclipse-boss-cheria",
+    "name": "이클립스 (체리아)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-eclipse-boss-selfina",
+    "name": "이클립스 (셀피나)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-sylvan",
+    "name": "머큐리얼 (실반)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-salion",
+    "name": "머큐리얼 (샐리온)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-silyron",
+    "name": "머큐리얼 (실라이론)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-saleana",
+    "name": "머큐리얼 (샐레아나)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-luminous",
+    "name": "머큐리얼 (루미너스)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-luminous-ex",
+    "name": "머큐리얼 (루미너스 EX)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-abyss-core-master-1",
+    "name": "어비스 코어 마스터 (심층 I)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-abyss-core-master-2",
+    "name": "어비스 코어 마스터 (심층 II)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-abyss-core-master-3",
+    "name": "어비스 코어 마스터 (심층 III)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-core-master-sylvan",
+    "name": "머큐리얼 코어 마스터 (실반)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-core-master-salion",
+    "name": "머큐리얼 코어 마스터 (샐리온)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-core-master-silyron",
+    "name": "머큐리얼 코어 마스터 (실라이론)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-core-master-saleana",
+    "name": "머큐리얼 코어 마스터 (샐레아나)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-mur-core-master-luminous",
+    "name": "머큐리얼 코어 마스터 (루미너스)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-abyss-treasure",
@@ -15,7 +206,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "daily-psiky-illusion",
@@ -32,7 +224,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-rune-dungeon",
@@ -50,7 +243,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-digsite",
@@ -59,7 +253,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "daily-sun-relic",
@@ -76,16 +271,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
-  },
-  {
-    "id": "weekly-eclipse-6boss",
-    "name": "이클립스 6보스",
-    "category": "보스",
-    "isVisible": true,
-    "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-eclipse-recapture-supplies",
@@ -94,7 +281,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-eclipse-special-force-suppression",
@@ -103,7 +291,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-apethiria-ex",
@@ -139,7 +328,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-ancient-relic-kishinik",
@@ -148,7 +338,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "daily-tirkalrag-ss",
@@ -165,7 +356,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 5,
+    "auto": true
   },
   {
     "id": "weekly-abyss-dungeon",
@@ -173,7 +365,9 @@
     "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-shinjo-nest",
@@ -181,15 +375,19 @@
     "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-catacomb-hell",
-    "name": "망령의 카타콤 (지옥)",
+    "name": "망각의 카타콤 (지옥)",
     "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 5,
+    "auto": true
   },
   {
     "id": "weekly-abandon-road",
@@ -221,7 +419,9 @@
     "category": "보스",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-orly-defense",
@@ -229,7 +429,9 @@
     "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-vestige",
@@ -237,7 +439,9 @@
     "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-siokan-boss",
@@ -245,7 +449,9 @@
     "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-siokan-odin",
@@ -270,24 +476,7 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
-  },
-  {
-    "id": "weekly-abyss-core-master",
-    "name": "어비스 코어 마스터",
-    "category": "보스",
-    "isVisible": true,
-    "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
-  },
-  {
-    "id": "weekly-mercurial-core-master",
-    "name": "머큐리얼 케이브 코어 마스터",
-    "category": "보스",
-    "isVisible": true,
-    "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   }
 ]

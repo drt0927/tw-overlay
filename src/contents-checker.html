@@ -421,7 +421,7 @@
                 </select>
                 <select id="new-item-hour" class="form-input w-24"></select>
             </div>
-            <div id="weekly-only-fields" class="hidden">
+            <div id="weekly-only-fields" class="hidden space-y-3">
                 <select id="new-item-day" class="form-input">
                     <option value="1">월요일 (기본)</option>
                     <option value="2">화요일</option>
@@ -431,6 +431,10 @@
                     <option value="6">토요일</option>
                     <option value="0">일요일</option>
                 </select>
+                <div class="flex items-center gap-2 px-1">
+                    <span class="text-xs text-slate-400 font-bold">주간 수행 횟수:</span>
+                    <input id="new-item-max-count" type="number" min="1" value="1" class="form-input w-20 text-center">
+                </div>
             </div>
             <button id="btn-add-item"
                 class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black py-3.5 rounded-xl shadow-lg transition-all active:scale-[0.98]">
@@ -542,6 +546,51 @@
         </div>
     </div>
 
+    <!-- Pending Homework Selection Modal -->
+    <div id="pending-modal" class="fixed inset-0 bg-black/85 flex items-center justify-center z-[140] hidden no-drag">
+        <div class="bg-slate-900 border border-cyan-500/30 p-7 rounded-2xl w-[400px] shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bell" class="w-5 h-5 text-cyan-400"></i>
+                    <span class="text-xs font-black text-white uppercase tracking-widest">미반영 완료 이력 감지</span>
+                </div>
+                <button onclick="document.getElementById('pending-modal').classList.add('hidden')" class="text-slate-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <p class="text-[11px] text-slate-400 mb-4 leading-relaxed">
+                채팅 로그로 감지된 완료 내역이 있습니다.<br>
+                이 이력을 반영할 캐릭터를 선택해주세요. (이미 완료한 숙제는 중복 반영되지 않습니다)
+            </p>
+
+            <!-- 보류 중인 숙제 목록 -->
+            <div class="bg-black/30 border border-white/5 rounded-xl p-3.5 mb-4 max-h-[150px] overflow-y-auto custom-scroll">
+                <div id="pending-items-list" class="space-y-1.5 text-xs text-slate-300">
+                    <!-- JS에 의해 렌더링됨 -->
+                </div>
+            </div>
+
+            <!-- 캐릭터 선택 리스트 -->
+            <div class="flex-1 overflow-y-auto space-y-2 mb-6 custom-scroll pr-1">
+                <div id="pending-chars-list" class="space-y-2">
+                    <!-- JS에 의해 버튼들이 렌더링됨 -->
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-white/10">
+                <button id="btn-clear-pending" 
+                    class="flex-1 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-400 text-xs font-bold py-3 rounded-xl transition-colors">
+                    보류 내역 삭제
+                </button>
+                <button onclick="document.getElementById('pending-modal').classList.add('hidden')"
+                    class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-3 rounded-xl transition-colors">
+                    나중에 하기
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let isEditMode = false;
         let editingItemId = null; // 현재 편집 중인 아이템 ID
@@ -578,6 +627,7 @@
             document.getElementById('new-item-category').value = item.category;
             document.getElementById('new-item-type').value = item.resetRule.type;
             document.getElementById('new-item-hour').value = item.resetRule.hour;
+            document.getElementById('new-item-max-count').value = item.maxCount || 1;
             if (item.resetRule.type === 'weekly') {
                 document.getElementById('new-item-day').value = item.resetRule.dayOfWeek || 1;
             }
@@ -602,6 +652,7 @@
             editingItemId = null;
             document.getElementById('new-item-name').value = '';
             document.getElementById('new-item-category').value = '';
+            document.getElementById('new-item-max-count').value = '1';
             document.getElementById('add-form-title').textContent = '새로운 숙제 추가';
             document.getElementById('btn-add-item').textContent = '목록에 추가하기';
             document.getElementById('btn-add-item').classList.replace('bg-blue-600', 'bg-cyan-600');
@@ -707,7 +758,10 @@
 
                         infoCell.innerHTML = `
                             <div class="flex flex-col min-w-0 flex-1">
-                                <span class="text-xs font-bold truncate text-slate-100">${item.name}</span>
+                                <div class="flex items-center gap-1 min-w-0">
+                                    <span class="text-xs font-bold truncate text-slate-100">${item.name}</span>
+                                    ${item.auto ? `<span class="px-1 py-0.5 text-[8px] leading-none font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded flex-shrink-0 select-none">AUTO</span>` : ''}
+                                </div>
                                 <span class="text-[9px] text-slate-500 font-medium">${resetInfo}</span>
                             </div>
                             ${isEditMode ? `
@@ -1042,6 +1096,7 @@
             const type = document.getElementById('new-item-type').value;
             const hour = parseInt(document.getElementById('new-item-hour').value);
             const dayOfWeek = parseInt(document.getElementById('new-item-day').value);
+            const maxCount = type === 'weekly' ? (parseInt(document.getElementById('new-item-max-count').value) || 1) : 1;
             if (!name) return alert('숙제 이름을 입력하세요.');
             
             const rule = { type, hour };
@@ -1049,26 +1104,129 @@
             
             if (editingItemId) {
                 // 수정 모드
-                window.electronAPI.contentsUpdateItem(editingItemId, name, category, rule);
+                window.electronAPI.contentsUpdateItem(editingItemId, name, category, rule, maxCount);
                 resetForm();
             } else {
                 // 추가 모드
-                window.electronAPI.contentsAddCustom(name, category, rule);
+                window.electronAPI.contentsAddCustom(name, category, rule, maxCount);
                 document.getElementById('new-item-name').value = '';
             }
         };
+
+        // 보류 팝업 모달 체크 및 렌더링
+        function checkAndRenderPendingModal(data) {
+            const modal = document.getElementById('pending-modal');
+            const itemsList = document.getElementById('pending-items-list');
+            const charsList = document.getElementById('pending-chars-list');
+            if (!modal || !itemsList || !charsList) return;
+
+            const pending = data.pendingHomeworks || [];
+            const presets = data.characterPresets || [];
+
+            // 캐릭터가 2개 이상이고, 보류 이력이 1개 이상 있을 때 팝업을 표시
+            if (presets.length >= 2 && pending.length > 0) {
+                // 보류 내역 목록 그리기
+                itemsList.innerHTML = '';
+                pending.forEach(p => {
+                    const item = data.contentsCheckerItems?.find(i => i.id === p.id);
+                    const name = item ? item.name : p.id;
+                    const typeLabel = item?.resetRule?.type === 'daily' ? '일일' : '주간';
+                    const typeColor = item?.resetRule?.type === 'daily' ? 'text-blue-400' : 'text-purple-400';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center py-0.5 border-b border-white/5 last:border-0';
+                    div.innerHTML = `
+                        <span class="truncate pr-2 font-bold">[<span class="${typeColor}">${typeLabel}</span>] ${name}</span>
+                        <span class="text-cyan-400 font-extrabold flex-shrink-0">${p.isIncrement ? '+' : ''}${p.count}회</span>
+                    `;
+                    itemsList.appendChild(div);
+                });
+
+                // 캐릭터 버튼 목록 그리기
+                charsList.innerHTML = '';
+                presets.forEach(char => {
+                    // 실수 방지 검사: 이 캐릭터가 보류 중인 모든 숙제를 이미 완료했는가?
+                    let allCompleted = true;
+                    let activePendingCount = 0; // 해당 캐릭터가 반영받을 수 있는 숙제의 가짓수
+
+                    pending.forEach(p => {
+                        const item = data.contentsCheckerItems?.find(i => i.id === p.id);
+                        if (!item) return;
+
+                        const state = item.completedState?.[char.id];
+                        const max = item.maxCount || 1;
+                        const current = state?.currentCount || 0;
+                        const isExcluded = state?.isExcluded || false;
+
+                        if (!isExcluded) {
+                            activePendingCount++;
+                            const isCompleted = state?.isCompleted || (current === max);
+                            if (!isCompleted) {
+                                allCompleted = false;
+                            }
+                        }
+                    });
+
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full py-3.5 px-4 rounded-xl font-black text-xs flex justify-between items-center transition-all no-drag';
+                    
+                    if (activePendingCount === 0) {
+                        // 모든 보류 숙제에서 제외(N/A)된 캐릭터인 경우
+                        btn.className += ' bg-slate-800/40 border border-slate-700/50 text-slate-500 cursor-not-allowed opacity-50';
+                        btn.innerHTML = `<span>${char.name}</span><span class="text-[10px] font-bold text-slate-600 bg-slate-700/30 px-2 py-0.5 rounded">참여 안함 (N/A)</span>`;
+                        btn.disabled = true;
+                    } else if (allCompleted) {
+                        // 보류 숙제들을 이미 모두 완료한 캐릭터인 경우 (실수 방지 UX)
+                        btn.className += ' bg-emerald-950/20 border border-emerald-900/40 text-emerald-500/70 hover:bg-emerald-900/30 hover:border-emerald-500/30';
+                        btn.innerHTML = `<span>${char.name}</span><span class="text-[10px] font-bold text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded">이미 완료함 (선택가능)</span>`;
+                        btn.onclick = () => {
+                            if (confirm(`'${char.name}' 캐릭터는 보류 중인 숙제를 이미 모두 완료했습니다. 정말 반영하시겠습니까? (초과 횟수는 무시됩니다)`)) {
+                                window.electronAPI.contentsApplyPending(char.id);
+                                modal.classList.add('hidden');
+                            }
+                        };
+                    } else {
+                        // 반영 가능한 숙제가 남은 캐릭터인 경우 (일반적인 선택 상황)
+                        btn.className += ' bg-cyan-950/30 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500 hover:text-white hover:shadow-cyan-500/20 hover:shadow-lg active:scale-[0.98]';
+                        btn.innerHTML = `<span>${char.name}</span><span class="text-[10px] font-bold text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded">반영 가능</span>`;
+                        btn.onclick = () => {
+                            window.electronAPI.contentsApplyPending(char.id);
+                            modal.classList.add('hidden');
+                        };
+                    }
+                    charsList.appendChild(btn);
+                });
+
+                modal.classList.remove('hidden');
+                lucide.createIcons();
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
 
         if (window.electronAPI?.onConfigData) {
             window.electronAPI.onConfigData((data) => {
                 configData = data;
                 render();
                 if (!document.getElementById('char-modal').classList.contains('hidden')) renderCharList();
+                checkAndRenderPendingModal(data);
             });
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             updateFormVisibility();
+
+            // 보류 내역 삭제 버튼 이벤트 바인딩
+            const clearPendingBtn = document.getElementById('btn-clear-pending');
+            if (clearPendingBtn) {
+                clearPendingBtn.onclick = () => {
+                    if (confirm('보류 중인 클리어 이력을 반영하지 않고 완전히 삭제하시겠습니까?')) {
+                        window.electronAPI.contentsClearPending();
+                        document.getElementById('pending-modal').classList.add('hidden');
+                    }
+                };
+            }
         });
 
         window.addEventListener('keydown', (e) => {

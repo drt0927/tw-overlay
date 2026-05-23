@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import * as config from './config';
-import { ContentsCheckerItem, ResetRule, MAIN_CHAR_ID, DEFAULT_CHAR_NAME } from '../shared/types';
+import { ContentsCheckerItem, ResetRule, MAIN_CHAR_ID, DEFAULT_CHAR_NAME, PendingHomework } from '../shared/types';
 import { log } from './logger';
 import * as diaryDb from './diaryDb';
 
@@ -73,6 +73,117 @@ export function init(): void {
     }
   });
 
+  // 0-1. 기존 뭉뚱그려진 주간 보스 숙제의 세분화 마이그레이션 (가시성 및 캐릭터별 제외 상태 승계)
+  const SPLIT_MIGRATION_MAP: Record<string, string[]> = {
+    'weekly-mur-1': [
+      'weekly-mur-sylvan',
+      'weekly-mur-salion',
+      'weekly-mur-silyron',
+      'weekly-mur-saleana',
+      'weekly-mur-luminous',
+      'weekly-mur-luminous-ex'
+    ],
+    'weekly-eclipse-6boss': [
+      'weekly-eclipse-boss-ethos',
+      'weekly-eclipse-boss-matias',
+      'weekly-eclipse-boss-tyrorost',
+      'weekly-eclipse-boss-lycos',
+      'weekly-eclipse-boss-cheria',
+      'weekly-eclipse-boss-selfina'
+    ],
+    'weekly-abyss-core-master': [
+      'weekly-abyss-core-master-1',
+      'weekly-abyss-core-master-2',
+      'weekly-abyss-core-master-3'
+    ],
+    'weekly-mercurial-core-master': [
+      'weekly-mur-core-master-sylvan',
+      'weekly-mur-core-master-salion',
+      'weekly-mur-core-master-silyron',
+      'weekly-mur-core-master-saleana',
+      'weekly-mur-core-master-luminous'
+    ]
+  };
+
+  Object.entries(SPLIT_MIGRATION_MAP).forEach(([oldId, newIds]) => {
+    const oldItemIdx = currentItems.findIndex((item: any) => item.id === oldId);
+    if (oldItemIdx !== -1) {
+      const oldItem = currentItems[oldItemIdx];
+      log(`[Contents Checker] 분할 마이그레이션 시작: ${oldId} -> ${newIds.join(', ')}`);
+      
+      newIds.forEach(newId => {
+        const def = defaultItems.find(d => d.id === newId);
+        if (!def) return;
+
+        let newItem = currentItems.find((item: any) => item.id === newId);
+        if (!newItem) {
+          newItem = {
+            ...def,
+            completedState: {},
+            sortOrder: currentItems.length
+          };
+          currentItems.push(newItem);
+        }
+
+        // 이전 설정 승계
+        newItem.isVisible = oldItem.isVisible;
+        
+        if (oldItem.completedState) {
+          Object.keys(oldItem.completedState).forEach(charId => {
+            const oldState = oldItem.completedState[charId];
+            if (!newItem.completedState[charId]) {
+              newItem.completedState[charId] = { isCompleted: false };
+            }
+            if (oldState.isExcluded !== undefined) {
+              newItem.completedState[charId].isExcluded = oldState.isExcluded;
+            }
+          });
+        }
+      });
+
+      // 구 버전 숙제 제거
+      currentItems.splice(oldItemIdx, 1);
+      changed = true;
+    }
+  });
+
+  // 0-2. ID 기준 중복 항목 제거 및 상태 병합
+  const uniqueMap = new Map<string, any>();
+  const deduplicatedItems: any[] = [];
+
+  currentItems.forEach((item: any) => {
+    if (!uniqueMap.has(item.id)) {
+      uniqueMap.set(item.id, item);
+      deduplicatedItems.push(item);
+    } else {
+      const existing = uniqueMap.get(item.id);
+      log(`[Contents Checker] 중복 항목 감지 및 병합: ${item.id} (${item.name})`);
+
+      // 더 가치 있는 설정 보존 (가시성이 켜져 있거나 완료 횟수가 더 많은 상태 우선)
+      if (item.isVisible) {
+        existing.isVisible = true;
+      }
+      if (item.completedState) {
+        if (!existing.completedState) existing.completedState = {};
+        Object.keys(item.completedState).forEach(charId => {
+          const extState = existing.completedState[charId];
+          const itemState = item.completedState[charId];
+          if (!extState) {
+            existing.completedState[charId] = { ...itemState };
+          } else {
+            const extCount = extState.currentCount || 0;
+            const itemCount = itemState.currentCount || 0;
+            if (itemCount > extCount || itemState.isCompleted) {
+              existing.completedState[charId] = { ...itemState };
+            }
+          }
+        });
+      }
+      changed = true;
+    }
+  });
+  currentItems = deduplicatedItems;
+
   // currentItems를 순회하며 defaultItems에 정의된 maxCount를 동기화
   currentItems.forEach(item => {
     const def = defaultItems.find(d => d.id === item.id);
@@ -101,12 +212,17 @@ export function init(): void {
     }
 
     // maxCount가 변경/지정되었으나 캐릭터별 currentCount 필드가 누락된 경우 안전하게 마이그레이션
+    // 또한 currentCount가 새로운 maxCount를 초과하는 경우 한도 내로 자동 조정
     const max = item.maxCount || 1;
     if (item.completedState) {
       Object.keys(item.completedState).forEach(charId => {
         const state = item.completedState[charId];
         if (state.currentCount === undefined) {
           state.currentCount = state.isCompleted ? max : 0;
+          changed = true;
+        } else if (state.currentCount > max) {
+          state.currentCount = max;
+          state.isCompleted = true;
           changed = true;
         }
       });
@@ -142,11 +258,13 @@ export function init(): void {
       if (exists.name !== def.name || 
           exists.category !== def.category ||
           JSON.stringify(exists.resetRule) !== JSON.stringify(def.resetRule) ||
-          exists.maxCount !== def.maxCount) {
+          exists.maxCount !== def.maxCount ||
+          exists.auto !== def.auto) {
         exists.name = def.name;
         exists.category = def.category;
         exists.resetRule = def.resetRule;
         exists.maxCount = def.maxCount;
+        exists.auto = def.auto;
         changed = true;
       }
     }
@@ -504,8 +622,8 @@ export function toggleVisibility(id: string): void {
   }
 }
 
-/** 항목 수정 (이름, 카테고리, 초기화 규칙) */
-export function updateItem(id: string, name: string, category: string, rule: ResetRule): void {
+/** 항목 수정 (이름, 카테고리, 초기화 규칙, 주간 최대 횟수) */
+export function updateItem(id: string, name: string, category: string, rule: ResetRule, maxCount?: number): void {
   const cfg = config.load();
   const items = cfg.contentsCheckerItems || [];
   const item = items.find(i => i.id === id);
@@ -513,6 +631,31 @@ export function updateItem(id: string, name: string, category: string, rule: Res
     item.name = name;
     item.category = category;
     item.resetRule = rule;
+    
+    if (rule.type === 'weekly') {
+      const newMax = maxCount !== undefined ? maxCount : 1;
+      item.maxCount = newMax;
+      
+      // 캐릭터별 완료 횟수가 새로운 maxCount를 초과하는 경우 한도 내로 자동 조정
+      if (item.completedState) {
+        Object.keys(item.completedState).forEach(charId => {
+          const state = item.completedState[charId];
+          if (state.currentCount !== undefined && state.currentCount > newMax) {
+            state.currentCount = newMax;
+            state.isCompleted = true;
+          }
+        });
+      }
+    } else {
+      // daily일 경우 maxCount 제거
+      delete item.maxCount;
+      if (item.completedState) {
+        Object.keys(item.completedState).forEach(charId => {
+          const state = item.completedState[charId];
+          state.currentCount = state.isCompleted ? 1 : 0;
+        });
+      }
+    }
     
     // 규칙이 변경되었을 수 있으므로 초기화 체크 수행
     config.saveImmediate({ contentsCheckerItems: items });
@@ -546,7 +689,7 @@ export function updateName(id: string, newName: string): void {
 }
 
 /** 커스텀 항목 추가 */
-export function addCustomItem(name: string, category: string, rule: ResetRule): void {
+export function addCustomItem(name: string, category: string, rule: ResetRule, maxCount?: number): void {
   const cfg = config.load();
   const items = cfg.contentsCheckerItems || [];
   const newItem: ContentsCheckerItem = {
@@ -559,6 +702,11 @@ export function addCustomItem(name: string, category: string, rule: ResetRule): 
     sortOrder: items.length,
     completedState: {}
   };
+  
+  if (rule.type === 'weekly' && maxCount !== undefined) {
+    newItem.maxCount = maxCount;
+  }
+  
   items.push(newItem);
   config.saveImmediate({ contentsCheckerItems: items });
   refreshUI();
@@ -633,3 +781,173 @@ export function incrementItemCount(id: string, characterId: string, amount: numb
     updateItemCount(id, targetCharId, current + amount);
   }
 }
+
+/** 채팅 로그 감지 시 캐릭터 개수에 따라 즉시 반영 또는 보류 대기열 추가 */
+export function queuePendingHomework(id: string, count: number, isIncrement: boolean): void {
+  const cfg = config.load();
+  const presets = cfg.characterPresets || [];
+
+  log(`[Contents Checker] queuePendingHomework 호출 - ID: ${id}, Count: ${count}, isIncrement: ${isIncrement}`);
+
+  const items = cfg.contentsCheckerItems || [];
+  const targetItem = items.find(i => i.id === id);
+
+  // 1. 해당 숙제가 존재하지 않거나 숨김 처리(isVisible: false)된 경우 감지 및 보류 대기열 추가 무시
+  if (!targetItem || targetItem.isVisible === false) {
+    log(`[Contents Checker] 감지된 숙제(${id})가 숨김 상태이거나 존재하지 않아 적립을 무시합니다.`);
+    return;
+  }
+
+  // 2. 등록된 모든 캐릭터에 대해 해당 숙제가 참여 제외(isExcluded: true)된 경우 무시
+  const hasActiveCharacter = presets.some(char => {
+    const state = targetItem.completedState?.[char.id];
+    return !state?.isExcluded;
+  });
+
+  if (!hasActiveCharacter) {
+    log(`[Contents Checker] 모든 캐릭터가 이 숙제(${id})에 참여하지 않도록 설정되어 있어 적립을 무시합니다.`);
+    return;
+  }
+
+  // 캐릭터가 1개 이하면 보류 대기열 없이 즉시 해당 캐릭터에 반영
+  if (presets.length <= 1) {
+    const targetCharId = presets[0]?.id || MAIN_CHAR_ID;
+    log(`[Contents Checker] 단일 캐릭터 감지 - 즉시 반영 진행 (캐릭터: ${targetCharId})`);
+    if (isIncrement) {
+      incrementItemCount(id, targetCharId, count);
+    } else {
+      updateItemCount(id, targetCharId, count);
+    }
+    return;
+  }
+
+  // 캐릭터가 2개 이상일 때 보류 대기열에 추가
+  const pendingList: PendingHomework[] = cfg.pendingHomeworks || [];
+  const existingIdx = pendingList.findIndex(p => p.id === id);
+
+  if (existingIdx !== -1) {
+    const existing = pendingList[existingIdx];
+    if (isIncrement) {
+      existing.count += count;
+    } else {
+      // update의 경우 기존 적립 값보다 더 클 때만 대체
+      existing.count = Math.max(existing.count, count);
+      existing.isIncrement = false;
+    }
+    existing.timestamp = Date.now();
+    log(`[Contents Checker] 보류 대기열 병합 업데이트 - ID: ${id}, 새 보류수량: ${existing.count}`);
+  } else {
+    pendingList.push({
+      id,
+      count,
+      isIncrement,
+      timestamp: Date.now()
+    });
+    log(`[Contents Checker] 보류 대기열 신규 추가 - ID: ${id}, 수량: ${count}`);
+  }
+
+  // 3. 자동 반영 검사: 보류 대기열 전체를 기준으로 아직 숙제를 덜 끝낸(반영 가능한) 캐릭터가 단 1개뿐인지 조사
+  const candidateChars = presets.filter(char => {
+    return pendingList.some(p => {
+      const item = items.find(i => i.id === p.id);
+      if (!item) return false;
+      const state = item.completedState?.[char.id];
+      const max = item.maxCount || 1;
+      const current = state?.currentCount || 0;
+      const isExcluded = state?.isExcluded || false;
+      return !isExcluded && current < max;
+    });
+  });
+
+  if (candidateChars.length === 1) {
+    const targetCharId = candidateChars[0].id;
+    log(`[Contents Checker] 자동 반영 활성화 - 보류 내역을 처리할 수 있는 유일한 캐릭터 '${candidateChars[0].name}' (${targetCharId}) 감지.`);
+    config.saveImmediate({ pendingHomeworks: pendingList });
+    applyPendingHomeworks(targetCharId);
+    return;
+  }
+
+  config.saveImmediate({ pendingHomeworks: pendingList });
+  refreshUI();
+}
+
+/** 보류 대기열의 내역을 특정 캐릭터에 반영 */
+export function applyPendingHomeworks(characterId: string): void {
+  const cfg = config.load();
+  const pendingList = cfg.pendingHomeworks || [];
+  if (pendingList.length === 0) return;
+
+  const items = cfg.contentsCheckerItems || [];
+
+  log(`[Contents Checker] 보류 내역을 캐릭터(${characterId})에 일괄 반영 시작. 보류 건수: ${pendingList.length}`);
+
+  pendingList.forEach(pending => {
+    const item = items.find(i => i.id === pending.id);
+    if (!item) return;
+
+    if (!item.completedState) item.completedState = {};
+    if (!item.completedState[characterId]) {
+      item.completedState[characterId] = { isCompleted: false, currentCount: 0 };
+    }
+
+    const state = item.completedState[characterId];
+    if (state.isExcluded) {
+      log(`[Contents Checker] 캐릭터(${characterId})가 숙제(${item.name})에서 제외 상태(N/A)이므로 이력 반영을 생략합니다.`);
+      return;
+    }
+
+    const max = item.maxCount || 1;
+    const current = state.currentCount || 0;
+    const prevCompleted = state.isCompleted;
+
+    let targetCount = current;
+    if (pending.isIncrement) {
+      targetCount = current + pending.count;
+    } else {
+      targetCount = pending.count;
+    }
+
+    // 범위 보정 (최대 완료 횟수 제한 적용)
+    state.currentCount = Math.max(0, Math.min(max, targetCount));
+    state.isCompleted = (state.currentCount === max);
+    state.lastCompletedAt = state.currentCount > 0 ? Date.now() : undefined;
+
+    log(`[Contents Checker] 반영 완료 - 숙제: ${item.name}, 카운트: ${current} -> ${state.currentCount} (${state.isCompleted ? '완료' : '진행중'})`);
+
+    // 일지 연동 로직
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const dateStr = String(now.getDate()).padStart(2, '0');
+    const date = `${year}-${month}-${dateStr}`;
+
+    const charName = cfg.characterPresets?.find(p => p.id === characterId)?.name || '알수없음';
+    const diaryContentId = `${item.id}_${characterId}`;
+    const diaryContentName = `[${charName}] ${item.name}`;
+
+    if (state.isCompleted && !prevCompleted) {
+      diaryDb.addHomeworkLog(date, diaryContentId, diaryContentName, item.category, item.resetRule.type, Date.now());
+    } else if (!state.isCompleted && prevCompleted) {
+      diaryDb.removeHomeworkLog(date, diaryContentId);
+    }
+  });
+
+  // 대기열 비우기 및 저장
+  config.saveImmediate({
+    contentsCheckerItems: items,
+    pendingHomeworks: []
+  });
+
+  // 다이어리 동기화 및 UI 갱신
+  syncDiaryStats(items);
+  refreshUI();
+  log(`[Contents Checker] 보류 내역 일괄 반영 및 대기열 초기화 완료`);
+}
+
+/** 보류 대기열 초기화 (적용 없이 취소) */
+export function clearPendingHomeworks(): void {
+  log(`[Contents Checker] 보류 대기열 초기화 호출 (삭제)`);
+  config.saveImmediate({ pendingHomeworks: [] });
+  refreshUI();
+}
+

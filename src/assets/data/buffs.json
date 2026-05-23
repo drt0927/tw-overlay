@@ -231,7 +231,7 @@
     "durationMs": 1800000,
     "group": "none",
     "removeOnExit": false,
-    "image": "",
+    "image": "assets/img/buffs/로토의부적.png",
     "chatTriggers": [
       { "pattern": "PARTY_ITEM", "keyword": "로토의 부적" }
     ],
@@ -395,8 +395,10 @@
     "durationMs": 1800000,
     "group": "stat_ratio",
     "removeOnExit": false,
-    "image": "",
-    "chatTriggers": [],
+    "image": "assets/img/buffs/이자벨의비법_비율능력치.png",
+    "chatTriggers": [
+      { "pattern": "FIXED_MSG", "keyword": "일시적으로 능력치가 상승했습니다 : 상태이상 [비아누의 숨결]" }
+    ],
     "description": "퇴마사의 은총/특선 묘약(비율)과 중복 불가."
   },
   {
@@ -475,8 +477,10 @@
     "durationMs": 1800000,
     "group": "dmg_pot",
     "removeOnExit": false,
-    "image": "",
-    "chatTriggers": [],
+    "image": "assets/img/buffs/이자벨의비법_대미지.png",
+    "chatTriggers": [
+      { "pattern": "FIXED_MSG", "keyword": "공격 피해량(이자벨)이 상승했습니다." }
+    ],
     "description": "괴력의 물약/특선 묘약(대미지)과 중복 불가."
   },
   {
@@ -514,7 +518,7 @@
     "durationMs": 7200000,
     "group": "event_mega",
     "removeOnExit": false,
-    "image": "",
+    "image": "assets/img/buffs/일루미네이션축체음료.png",
     "chatTriggers": [
       { "pattern": "EFFECT_APPLIED", "keyword": "일루미네이션 축제 음료" }
     ],
@@ -555,7 +559,7 @@
     "durationMs": 3600000,
     "group": "none",
     "removeOnExit": false,
-    "image": "",
+    "image": "assets/img/buffs/속성앰플.png",
     "chatTriggers": [
       { "pattern": "PARTY_ITEM", "keyword": "앰플", "matchType": "contains" }
     ],

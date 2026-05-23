@@ -146,6 +146,239 @@ class ChatParser extends EventEmitter {
     const timestamp = timeMatch[1];
     const cleanMsg = this.stripHtml(rawLine.replace(/\[.*?\]/, '')); // 시간 부분 제외하고 HTML 제거
 
+    // J. 숙제 체크 관련 특화 패턴
+    // 1. 이클립스 보스전
+    const eclipseBossMatch = cleanMsg.match(/이클립스 보스전\((.*?)\) 클리어 횟수: \[(\d+)회\/7회\]/);
+    if (eclipseBossMatch) {
+      this.emit('ECLIPSE_BOSS_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        bossName: eclipseBossMatch[1].trim(),
+        count: parseInt(eclipseBossMatch[2], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 2. 머큐리얼 보스전
+    const mercurialBossMatch = cleanMsg.match(/^(실반|샐리온|실라이론|샐레아나|루미너스|루미너스\s*\(EX\))\s*클리어 횟수: \[(\d+)회\/7회\]/);
+    if (mercurialBossMatch) {
+      this.emit('MERCURIAL_BOSS_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        bossName: mercurialBossMatch[1].trim(),
+        count: parseInt(mercurialBossMatch[2], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 3. 코어 마스터 던전
+    const coreMasterMatch = cleanMsg.match(/코어 마스터\s*-\s*(심층Ⅰ|심층Ⅱ|심층Ⅲ|실반|샐리온|실라이론|샐레아나|루미너스) 클리어 횟수: \[(\d+)회\/7회\]/);
+    if (coreMasterMatch) {
+      this.emit('CORE_MASTER_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        contentName: coreMasterMatch[1].trim(),
+        count: parseInt(coreMasterMatch[2], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 4. 고대 렐릭의 성소
+    const relicSanctuaryMatch = cleanMsg.match(/고대 렐릭의 성소.*?주간 무료 클리어 횟수\s*:\s*(\d+)/);
+    if (relicSanctuaryMatch) {
+      this.emit('RELIC_SANCTUARY_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(relicSanctuaryMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 5. 힘의 근원
+    const powerRootMatch = cleanMsg.match(/수르트의 힘의 근원 클리어 횟수: \[(\d+)회\/7회\]/);
+    if (powerRootMatch) {
+      this.emit('POWER_ROOT_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(powerRootMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 6. 심연의 보물창고
+    const abyssTreasureMatch = cleanMsg.match(/심연의 보물창고 입장 횟수: \[(\d+)회\/7회\]/);
+    if (abyssTreasureMatch) {
+      this.emit('ABYSS_TREASURE_ENTRY', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(abyssTreasureMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 7. 보급품 탈환
+    const suppliesMatch = cleanMsg.match(/보급품 탈환 클리어 횟수: \[(\d+)회\/7회\]/);
+    if (suppliesMatch) {
+      this.emit('ECLIPSE_SUPPLIES_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(suppliesMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 8. 별동대 토벌
+    const specialForceMatch = cleanMsg.match(/별동대 토벌 클리어 횟수: \[(\d+)회\/7회\]/);
+    if (specialForceMatch) {
+      this.emit('ECLIPSE_SPECIAL_FORCE_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(specialForceMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 9. 지하요새의 망령
+    const fortressGhostMatch = cleanMsg.match(/지하요새의 망령 클리어 횟수: \[(\d+)회\/7회\]/);
+    if (fortressGhostMatch) {
+      this.emit('FORTRESS_GHOST_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(fortressGhostMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 10. 테시스 코어 던전
+    if (cleanMsg.includes('던전을 클리어 하였습니다. 곧 마을로 돌아가게 됩니다.')) {
+      this.emit('TESIS_CORE_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 11. 발굴지
+    const digsiteMatch = cleanMsg.match(/무료 입장 횟수 (\d+)회 중 (\d+)회째 입장합니다\./);
+    if (digsiteMatch) {
+      this.emit('DIGSITE_ENTRY', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(digsiteMatch[2], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 12. 신조의 둥지
+    if (/미션을\s*완료했습니다\.\s*:\s*신조의\s*둥지\s*-\s*신조\s*처치/.test(cleanMsg)) {
+      this.emit('CONTENT_SHINJO_NEST_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 13. 어비스 보스 (심층 1~3)
+    const abyssDungeonMatch = cleanMsg.match(/어비스\s*-\s*(심층Ⅰ|심층Ⅱ|심층Ⅲ)\(보스전\)\s*플레이를\s*이번\s*주에\s*(\d+)회\s*중\s*(\d+)회째\s*하고\s*계십니다/);
+    if (abyssDungeonMatch) {
+      this.emit('ABYSS_DUNGEON_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        depth: abyssDungeonMatch[1].trim(),
+        count: parseInt(abyssDungeonMatch[3], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 14. 어비스 보스전 (EX)
+    const abyssBossExMatch = cleanMsg.match(/어비스\s*보스전\(EX\)\s*클리어\s*횟수:\s*\[(\d+)회\/7회\]/);
+    if (abyssBossExMatch) {
+      this.emit('ABYSS_BOSS_EX_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(abyssBossExMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 15. 프라바 방어전 (1인)
+    if (/프라바\s*방어전\s*성공\s*보상으로\s*경험치\s*(?:\d+만|[\d,]+)\s*을\s*획득\s*했습니다\./.test(cleanMsg)) {
+      this.emit('PRAVA_DEFENSE_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: 1,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 16. 망각의 카타콤 (지옥)
+    if (/\[카타콤\s*훈장\]\s*을\(를\)\s*\d+개\s*획득하였습니다\./.test(cleanMsg)) {
+      this.emit('CATACOMB_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: 1,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 17. 시오칸하임 보스 토벌전
+    const siokanBossMatch = cleanMsg.match(/시오칸하임\s*-\s*보스\s*토벌전의\s*클리어\s*횟수\s*:\s*(\d+)\s*회/);
+    if (siokanBossMatch) {
+      this.emit('SIOKAN_BOSS_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(siokanBossMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 18. 오를리 방어전
+    if (/미션을\s*완료했습니다\.\s*:\s*오를리\s*방어전\s*지옥\s*난이도\s*클리어/.test(cleanMsg)) {
+      this.emit('ORLY_DEFENSE_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 19. 베스티지
+    if (/미션을\s*완료했습니다\.\s*:\s*베스티지\s*던전\s*클리어/.test(cleanMsg)) {
+      this.emit('VESTIGE_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 20. 아페티리아 (일반/어려움)
+    if (/미션을\s*완료했습니다\.\s*:\s*아페티리아\s*\(일반\s*\/\s*어려움\)\s*최종\s*보스\s*키시니크\s*처치/.test(cleanMsg)) {
+      this.emit('APETHIRIA_RAID_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
     // G. 어벤던로드 특화 패턴
     // 1. 입장료 (예: "입장료 5680만 Seed를 지불 하였습니다.", "입장료 1억 40만 Seed를 지불 하였습니다.")
     if (cleanMsg.includes('입장료') && (cleanMsg.toLowerCase().includes('seed') || cleanMsg.includes('시드'))) {

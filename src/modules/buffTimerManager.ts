@@ -130,6 +130,18 @@ class BuffTimerManager {
   }
 
   /**
+   * 버프 타이머 강제 비활성화
+   */
+  public deactivateBuff(buffId: string): void {
+    if (this._activeBuffs.has(buffId)) {
+      const buff = this._activeBuffs.get(buffId);
+      this._activeBuffs.delete(buffId);
+      log(`[BUFF_TIMER] 버프 수동 비활성화: ${buff?.name}`);
+      this._sendHudUpdate();
+    }
+  }
+
+  /**
    * 1초마다 실행 — 남은시간 계산 및 경고 트리거
    */
   private _tick(): void {
@@ -227,6 +239,7 @@ class BuffTimerManager {
     states.sort((a, b) => a.remainingMs - b.remainingMs);
 
     this._sendToGameOverlay('buff-timer-update', states);
+    this._sendToBuffTimerWindow('buff-timer-update', states);
   }
 
   /**
@@ -239,6 +252,18 @@ class BuffTimerManager {
       try { return w.webContents.getURL().includes('game-overlay.html'); } catch { return false; }
     });
     if (overlay) overlay.webContents.send(channel, data);
+  }
+
+  /**
+   * buff-timer.html 창에 IPC 전송
+   */
+  private _sendToBuffTimerWindow(channel: string, data: any): void {
+    const wins = BrowserWindow.getAllWindows();
+    const buffTimer = wins.find(w => {
+      if (w.isDestroyed()) return false;
+      try { return w.webContents.getURL().includes('buff-timer.html'); } catch { return false; }
+    });
+    if (buffTimer) buffTimer.webContents.send(channel, data);
   }
 
   /**

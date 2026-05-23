@@ -85,7 +85,7 @@
     /* Main content */
     .content {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1.1fr 0.9fr;
       gap: 0;
       flex: 1;
       overflow: hidden;
@@ -411,6 +411,81 @@
       flex-shrink: 0;
       box-shadow: 0 -1px 0 rgba(167, 139, 250, 0.08);
     }
+
+    /* Active buff list */
+    .active-buff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .active-buff-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .active-buff-item:hover {
+      background: rgba(239, 68, 68, 0.03);
+      border-color: rgba(239, 68, 68, 0.15);
+    }
+
+    .active-buff-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .active-buff-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .active-buff-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .active-buff-time {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
+
+    .active-buff-deactivate-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .active-buff-deactivate-btn:hover {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+    }
   </style>
 </head>
 
@@ -598,6 +673,18 @@
       </div>
 
     </div>
+
+    <!-- 오른쪽: 활성 버프 관리 -->
+    <div class="panel">
+      <div class="panel-title">현재 활성화된 버프</div>
+      <div class="active-buff-list" id="active-buff-list">
+        <div class="flex flex-col items-center justify-center py-12 px-4 text-center" id="active-buff-empty">
+          <i data-lucide="info" class="w-6 h-6 text-slate-500 mb-2"></i>
+          <span class="text-[11px] text-slate-500 font-semibold">현재 활성화된 버프가 없습니다.</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- 푸터 -->
@@ -625,6 +712,11 @@
       { id: 'exp_heart', name: '경험의 심장', duration: '20분 유지', cat: 'exp', image: 'assets/img/buffs/경험의심장.png' },
       { id: 'rare_heart', name: '레어의 심장', duration: '20분 유지', cat: 'drop', image: 'assets/img/buffs/레어의심장.png' },
       { id: 'stat_exorcist', name: '퇴마사의 은총', duration: '20분 유지', cat: 'stats', image: 'assets/img/buffs/퇴마사의은총.png' },
+      { id: 'rare_loto', name: '로토의 부적', duration: '30분 유지', cat: 'drop', image: 'assets/img/buffs/로토의부적.png' },
+      { id: 'util_ampoule', name: '속성 앰플', duration: '1시간 유지', cat: 'util', image: 'assets/img/buffs/속성앰플.png' },
+      { id: 'dmg_izabel', name: '이자벨의 비법 (대미지)', duration: '30분 유지', cat: 'damage', image: 'assets/img/buffs/이자벨의비법_대미지.png' },
+      { id: 'stat_izabel_ratio', name: '이자벨의 비법 (비율 능력치)', duration: '30분 유지', cat: 'stats', image: 'assets/img/buffs/이자벨의비법_비율능력치.png' },
+      { id: 'util_illumination', name: '일루미네이션 축제 음료', duration: '2시간 유지', cat: 'util', image: 'assets/img/buffs/일루미네이션축체음료.png' },
     ];
 
     const CAT_LABELS = { exp: 'E', drop: 'R', stats: 'S', damage: 'D', util: 'U' };
@@ -751,6 +843,70 @@
       });
     };
 
+    function formatMs(ms) {
+      if (ms <= 0) return '0초';
+      const totalSecs = Math.ceil(ms / 1000);
+      const hrs = Math.floor(totalSecs / 3600);
+      const mins = Math.floor((totalSecs % 3600) / 60);
+      const secs = totalSecs % 60;
+      if (hrs > 0) {
+        return `${hrs}시간 ${mins}분`;
+      }
+      if (mins > 0) {
+        return `${mins}분 ${secs}초`;
+      }
+      return `${secs}초`;
+    }
+
+    // 실시간 활성 버프 업데이트 리스너
+    window.electronAPI.onBuffTimerUpdate((states) => {
+      const list = document.getElementById('active-buff-list');
+      
+      if (!states || states.length === 0) {
+        list.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12 px-4 text-center" id="active-buff-empty">
+            <i data-lucide="info" class="w-6 h-6 text-slate-500 mb-2"></i>
+            <span class="text-[11px] text-slate-500 font-semibold">현재 활성화된 버프가 없습니다.</span>
+          </div>
+        `;
+        refreshIcons();
+        return;
+      }
+
+      list.innerHTML = '';
+      states.forEach(state => {
+        const buffDef = TRACKED_BUFFS.find(b => b.id === state.buffId);
+        const imagePath = state.image || (buffDef ? buffDef.image : '');
+        const iconHtml = imagePath
+          ? `<div class="active-buff-icon" style="background:transparent;border:none;padding:0">
+               <img src="${imagePath}" style="width:100%;height:100%;object-fit:contain">
+             </div>`
+          : `<div class="active-buff-icon cat-util">${state.name.substring(0, 1)}</div>`;
+
+        const div = document.createElement('div');
+        div.className = 'active-buff-item';
+        div.innerHTML = `
+          ${iconHtml}
+          <div class="active-buff-info">
+            <div class="active-buff-name">${state.name}</div>
+            <div class="active-buff-time">${formatMs(state.remainingMs)}</div>
+          </div>
+          <button class="active-buff-deactivate-btn" title="버프 제거" data-buff-id="${state.buffId}">
+            <i data-lucide="trash-2" style="width:13.5px;height:13.5px;"></i>
+          </button>
+        `;
+
+        div.querySelector('.active-buff-deactivate-btn').onclick = (e) => {
+          const buffId = e.currentTarget.dataset.buffId;
+          window.electronAPI.buffTimerDeactivate(buffId);
+        };
+
+        list.appendChild(div);
+      });
+
+      refreshIcons();
+    });
+
     window.electronAPI.onConfigData(async (config) => {
       cfg = config;
       if (window.loadSoundList) {
@@ -767,7 +923,7 @@
       document.getElementById('volume-slider').value = vol;
       document.getElementById('volume-val').textContent = vol;
       warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
-      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true }) };
+      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, stat_izabel_ratio: true, util_illumination: true }) };
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
       document.getElementById('hud-pos-left').value = hudPos.left;
       document.getElementById('hud-pos-bottom').value = hudPos.bottom;
@@ -780,3 +936,4 @@
 </body>
 
 </html>
+

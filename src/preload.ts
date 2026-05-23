@@ -32,8 +32,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
   contentsUpdateName: (id: string, name: string) => ipcRenderer.send('contents-update-name', id, name),
-  contentsUpdateItem: (id: string, name: string, category: string, rule: any) => ipcRenderer.send('contents-update-item', id, name, category, rule),
-  contentsAddCustom: (name: string, category: string, rule: any) => ipcRenderer.send('contents-add-custom', name, category, rule),
+  contentsUpdateItem: (id: string, name: string, category: string, rule: any, maxCount?: number) => ipcRenderer.send('contents-update-item', id, name, category, rule, maxCount),
+  contentsAddCustom: (name: string, category: string, rule: any, maxCount?: number) => ipcRenderer.send('contents-add-custom', name, category, rule, maxCount),
   contentsRemoveItem: (id: string) => ipcRenderer.send('contents-remove-item', id),
   contentsReorderItem: (id: string, direction: 'up' | 'down') => ipcRenderer.send('contents-reorder-item', id, direction),
   contentsReorderList: (ids: string[]) => ipcRenderer.send('contents-reorder-list', ids),
@@ -42,6 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   contentsRemoveCharacter: (id: string) => ipcRenderer.send('contents-remove-character', id),
   contentsRenameCharacter: (id: string, name: string) => ipcRenderer.send('contents-rename-character', id, name),
   contentsSelectCharacter: (id: string) => ipcRenderer.send('contents-select-character', id),
+  contentsApplyPending: (characterId: string) => ipcRenderer.send('contents-apply-pending', characterId),
+  contentsClearPending: () => ipcRenderer.send('contents-clear-pending'),
   setIgnoreMouseEvents: (ignore: boolean, options: { forward?: boolean }) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   closeApp: () => ipcRenderer.send('close-app'),
   toolbarMouseEnter: () => ipcRenderer.send('toolbar-mouse-enter'),
@@ -231,6 +233,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
   buffTimerTest: (seconds?: number) => ipcRenderer.send('buff-timer-test', seconds),
   buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
+  buffTimerDeactivate: (buffId: string) => ipcRenderer.send('buff-timer-deactivate', buffId),
   onXpResetDone: (callback: (data: { startTime: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-reset-done');
     ipcRenderer.on('xp-reset-done', (_event, data) => callback(data));

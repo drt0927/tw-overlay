@@ -103,6 +103,12 @@ export function register(): void {
   ipcMain.on('contents-toggle-item', (_e, id: string, characterId?: string) => {
     import('./contentsChecker').then(mod => mod.toggleItem(id, characterId));
   });
+  ipcMain.on('contents-apply-pending', (_e, characterId: string) => {
+    import('./contentsChecker').then(mod => mod.applyPendingHomeworks(characterId));
+  });
+  ipcMain.on('contents-clear-pending', () => {
+    import('./contentsChecker').then(mod => mod.clearPendingHomeworks());
+  });
   ipcMain.on('contents-update-count', (_e, id: string, characterId: string, count: number) => {
     import('./contentsChecker').then(mod => mod.updateItemCount(id, characterId, count));
   });
@@ -118,11 +124,11 @@ export function register(): void {
   ipcMain.on('contents-update-name', (_e, id: string, name: string) => {
     import('./contentsChecker').then(mod => mod.updateName(id, name));
   });
-  ipcMain.on('contents-update-item', (_e, id: string, name: string, category: string, rule: any) => {
-    import('./contentsChecker').then(mod => mod.updateItem(id, name, category, rule));
+  ipcMain.on('contents-update-item', (_e, id: string, name: string, category: string, rule: any, maxCount?: number) => {
+    import('./contentsChecker').then(mod => mod.updateItem(id, name, category, rule, maxCount));
   });
-  ipcMain.on('contents-add-custom', (_e, name: string, category: string, rule: any) => {
-    import('./contentsChecker').then(mod => mod.addCustomItem(name, category, rule));
+  ipcMain.on('contents-add-custom', (_e, name: string, category: string, rule: any, maxCount?: number) => {
+    import('./contentsChecker').then(mod => mod.addCustomItem(name, category, rule, maxCount));
   });
   ipcMain.on('contents-remove-item', (_e, id: string) => {
     import('./contentsChecker').then(mod => mod.removeItem(id));
@@ -395,15 +401,22 @@ export function register(): void {
     }
   });
 
-  // 버프 타이머 테스트 — 3개 버프 강제 활성화
+  // 버프 타이머 테스트 — 8개 버프 강제 활성화
   ipcMain.on('buff-timer-test', (event, seconds?: number) => {
-   const TEST_BUFFS = ['exp_heart', 'rare_heart', 'stat_exorcist'];
+   const TEST_BUFFS = [
+     'exp_heart', 'rare_heart', 'stat_exorcist',
+     'rare_loto', 'util_ampoule', 'dmg_izabel', 'stat_izabel_ratio', 'util_illumination'
+   ];
    const durationMs = (seconds && seconds > 0) ? seconds * 1000 : undefined;
    TEST_BUFFS.forEach(buffId => buffTimerManager.activateBuff(buffId, 'test', durationMs));
   });
   // 버프 타이머 테스트 종료 — 테스트 버프 제거
   ipcMain.on('buff-timer-clear-test', () => {
     buffTimerManager.clearTestBuffs();
+  });
+  // 버프 타이머 강제 비활성화
+  ipcMain.on('buff-timer-deactivate', (_e, buffId: string) => {
+    buffTimerManager.deactivateBuff(buffId);
   });
   // XP 세션 제어
   ipcMain.handle('xp-get-stats', async () => {

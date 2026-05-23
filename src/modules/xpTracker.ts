@@ -70,9 +70,15 @@ class XpTracker {
 
     // 버프 사용 감지
     chatParser.on('BUFF_USED', (data) => {
-      const allowedKeywords = ['경험의 심장', '레어의 심장', '퇴마사의 은총'];
+      const allowedKeywords = [
+        '경험의 심장', '레어의 심장', '퇴마사의 은총',
+        '로토의 부적', '속성 앰플', '앰플', '이자벨의 비법', '일루미네이션 축제 음료'
+      ];
       const isAllowed = allowedKeywords.some(k => data.message.includes(k)) ||
-        ['exp_heart', 'rare_heart', 'stat_exorcist'].includes(data.buffId);
+        [
+          'exp_heart', 'rare_heart', 'stat_exorcist',
+          'rare_loto', 'util_ampoule', 'dmg_izabel', 'stat_izabel_ratio', 'util_illumination'
+        ].includes(data.buffId);
       if (isAllowed) {
         const startTime = this.parseLogTimestamp(data.date, data.timestamp);
         buffTimerManager.activateBuff(data.buffId, data.usedBy, undefined, startTime);

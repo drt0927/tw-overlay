@@ -111,6 +111,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getShoutHistory: (hours: number, searchQuery: string) => ipcRenderer.invoke('diary-get-shout-history', hours, searchQuery),
   toggleShoutHistory: () => ipcRenderer.send('toggle-shout-history'),
   playSound: (file: string, volume: number) => ipcRenderer.send('play-sound', { file, volume }),
+  toggleWordAlarm: () => ipcRenderer.send('toggle-word-alarm'),
+  getWordAlarmHistory: (hours: number) => ipcRenderer.invoke('word-alarm-get-history', hours),
+  getWordAlarmContext: (alarmId: number) => ipcRenderer.invoke('word-alarm-get-context', alarmId),
+  deleteWordAlarmHistoryItem: (id: number) => ipcRenderer.send('word-alarm-delete-item', id),
+  clearWordAlarmHistory: () => ipcRenderer.send('word-alarm-clear-history'),
 
   // 사기꾼 탐지
   scamSetEnabled: (enabled: boolean) => ipcRenderer.send('scam-set-enabled', enabled),
@@ -250,6 +255,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('ethos-alert');
     ipcRenderer.on('ethos-alert', (_event, data) => callback(data));
   },
+  onAbyssApostleAlert: (callback: (data: { message: string }) => void) => {
+    ipcRenderer.removeAllListeners('abyss-apostle-alert');
+    ipcRenderer.on('abyss-apostle-alert', (_event, data) => callback(data));
+  },
   onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
     ipcRenderer.removeAllListeners('scam-alert');
     ipcRenderer.on('scam-alert', (_event, result) => callback(result));
@@ -296,7 +305,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'boss-times-data', 'play-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
-      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert',
+      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));

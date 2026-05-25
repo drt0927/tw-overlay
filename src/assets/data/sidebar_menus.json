@@ -24,6 +24,14 @@
     "api": "toggleShoutHistory"
   },
   {
+    "id": "word-alarm-btn",
+    "label": "지정 단어 알림",
+    "icon": "bell-ring",
+    "tooltip": "일반/클럽 채팅 지정 단어 알림 설정 및 이력",
+    "color": "indigo-400",
+    "api": "toggleWordAlarm"
+  },
+  {
     "id": "abbreviation-btn",
     "label": "약어 사전",
     "icon": "book-open",

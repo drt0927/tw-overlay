@@ -50,8 +50,8 @@
     "auto": true
   },
   {
-    "id": "weekly-eclipse-boss-selfina",
-    "name": "이클립스 (셀피나)",
+    "id": "weekly-eclipse-boss-lokagos",
+    "name": "이클립스 (로카고스)",
     "category": "보스",
     "isVisible": true,
     "isCustom": false,
@@ -322,18 +322,8 @@
     "maxCount": 7
   },
   {
-    "id": "weekly-ancient-relic-shinjo",
-    "name": "고대 렐릭의 성소 (신조)",
-    "category": "내실",
-    "isVisible": true,
-    "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7,
-    "auto": true
-  },
-  {
-    "id": "weekly-ancient-relic-kishinik",
-    "name": "고대 렐릭의 성소 (키시니크)",
+    "id": "weekly-ancient-relic",
+    "name": "고대 렐릭의 성소 (신조/키시니크)",
     "category": "내실",
     "isVisible": true,
     "isCustom": false,
@@ -360,8 +350,28 @@
     "auto": true
   },
   {
-    "id": "weekly-abyss-dungeon",
-    "name": "어비스 보스 (심층 1~3)",
+    "id": "weekly-abyss-dungeon-1",
+    "name": "어비스 보스 (심층 I)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-abyss-dungeon-2",
+    "name": "어비스 보스 (심층 II)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "weekly-abyss-dungeon-3",
+    "name": "어비스 보스 (심층 III)",
     "category": "보스",
     "isVisible": true,
     "isCustom": false,
@@ -430,8 +440,7 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7,
-    "auto": true
+    "maxCount": 7
   },
   {
     "id": "weekly-vestige",

@@ -173,14 +173,36 @@ class ChatParser extends EventEmitter {
       return;
     }
 
-    // 3. 코어 마스터 던전
-    const coreMasterMatch = cleanMsg.match(/코어 마스터\s*-\s*(심층Ⅰ|심층Ⅱ|심층Ⅲ|실반|샐리온|실라이론|샐레아나|루미너스) 클리어 횟수: \[(\d+)회\/7회\]/);
-    if (coreMasterMatch) {
+    // 3. 코어 마스터 던전 (절대 횟수 표기형)
+    // 3-1-A. 머큐리얼 코어 마스터
+    const mercurialCoreMasterMatch = cleanMsg.match(/^(실반|샐리온|실라이론|샐레아나|루미너스)\s*코어\s*마스터\s*던전\s*클리어\s*횟수\s*:\s*\[(\d+)회\/7회\]/);
+    if (mercurialCoreMasterMatch) {
       this.emit('CORE_MASTER_CLEAR', {
         date: this._currentDate,
         timestamp,
-        contentName: coreMasterMatch[1].trim(),
-        count: parseInt(coreMasterMatch[2], 10),
+        contentName: mercurialCoreMasterMatch[1].trim(),
+        count: parseInt(mercurialCoreMasterMatch[2], 10),
+        isIncrement: false,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 3-1-B. 어비스 심층 코어 마스터 (예: 코어 마스터 - 심층Ⅰ 클리어 횟수: [1회/7회])
+    const abyssCoreMasterMatch = cleanMsg.match(/^코어\s*마스터\s*-\s*(심층Ⅰ|심층Ⅱ|심층Ⅲ|심층\s*I|심층\s*II|심층\s*III)\s*클리어\s*횟수\s*:\s*\[(\d+)회\/7회\]/);
+    if (abyssCoreMasterMatch) {
+      let contentName = abyssCoreMasterMatch[1].trim().replace(/\s+/g, '');
+      // 심층 로마자/영어 정규화
+      if (contentName === '심층I') contentName = '심층Ⅰ';
+      if (contentName === '심층II') contentName = '심층Ⅱ';
+      if (contentName === '심층III') contentName = '심층Ⅲ';
+
+      this.emit('CORE_MASTER_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        contentName,
+        count: parseInt(abyssCoreMasterMatch[2], 10),
+        isIncrement: false,
         message: cleanMsg
       });
       return;
@@ -349,15 +371,7 @@ class ChatParser extends EventEmitter {
       return;
     }
 
-    // 18. 오를리 방어전
-    if (/미션을\s*완료했습니다\.\s*:\s*오를리\s*방어전\s*지옥\s*난이도\s*클리어/.test(cleanMsg)) {
-      this.emit('ORLY_DEFENSE_CLEAR', {
-        date: this._currentDate,
-        timestamp,
-        message: cleanMsg
-      });
-      return;
-    }
+
 
     // 19. 베스티지
     if (/미션을\s*완료했습니다\.\s*:\s*베스티지\s*던전\s*클리어/.test(cleanMsg)) {
@@ -370,10 +384,12 @@ class ChatParser extends EventEmitter {
     }
 
     // 20. 아페티리아 (일반/어려움)
-    if (/미션을\s*완료했습니다\.\s*:\s*아페티리아\s*\(일반\s*\/\s*어려움\)\s*최종\s*보스\s*키시니크\s*처치/.test(cleanMsg)) {
+    const apethiriaMatch = cleanMsg.match(/^아페티리아\s*클리어\s*횟수\s*:\s*\[(\d+)회\/7회\]/);
+    if (apethiriaMatch) {
       this.emit('APETHIRIA_RAID_CLEAR', {
         date: this._currentDate,
         timestamp,
+        count: parseInt(apethiriaMatch[1], 10),
         message: cleanMsg
       });
       return;
@@ -457,6 +473,12 @@ class ChatParser extends EventEmitter {
         }
     }
 
+    // J. 심연의 제2사도 기믹 특화 패턴
+    if (cleanMsg.includes('심연의 제2사도 : 절제와 균형의 중심에서 빗나간 힘은 칼날이 되어 돌아오지.')) {
+        this.emit('ABYSS_APOSTLE_PATTERN', { date: this._currentDate, timestamp, message: cleanMsg });
+        return;
+    }
+
     // A. SEED 획득 (콘텐츠 보상 및 일반 습득 모두 대응)
     if (cleanMsg.includes('SEED를') || cleanMsg.includes('Seed를') || cleanMsg.includes('시드를')) {
         // "보상으로 1500만 SEED", "[300000]SEED", "1500만 SEED를 획득" 등
@@ -493,6 +515,29 @@ class ChatParser extends EventEmitter {
             this.emit('TRADE_SHOUT', { date: this._currentDate, timestamp, sender, message: pureMessage });
         }
         return;
+    }
+
+    // 일반 대화 색상(#ffffff)으로 기록되며 닉네임 형식을 취하는 보스/NPC 예외 목록
+    const NPC_BLACK_LIST = [
+        '데스포이나', '신조', '키시니크', '에레오스', '로카고스',
+        '마티아', '티로로스', '라이코스', '체리아', '실반',
+        '샐리온', '실라이론', '샐레아나', '루미너스'
+    ];
+
+    // D-2. 일반 및 클럽 채팅 감지
+    if (rawLine.includes('color="#94ddfa"') || rawLine.includes('color="#ffffff"')) {
+        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
+        if (chatMatch) {
+            const sender = chatMatch[1].trim();
+            const message = chatMatch[2].trim();
+            
+            // 닉네임에 공백이나 쉼표가 들어간 경우 또는 주요 NPC 이름인 경우는 제외
+            if (!sender.includes(' ') && !sender.includes(',') && !NPC_BLACK_LIST.includes(sender)) {
+                const color = rawLine.includes('color="#94ddfa"') ? '#94ddfa' : '#ffffff';
+                this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color });
+                return;
+            }
+        }
     }
 
     // E. 아이템 획득

@@ -94,7 +94,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   lastContentsResetCheck: 0,
   shortcuts: {
     toggleClickThrough: 'CommandOrControl+Shift+T',
-    toggleContentsChecker: 'CommandOrControl+Shift+C'
+    toggleContentsChecker: 'CommandOrControl+Shift+C',
+    toggleBuffHud: 'CommandOrControl+Shift+B'
   },
   volumeContentsChecker: 50,
   volumeCalculators: 50,
@@ -102,6 +103,11 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatLogPath: '',
   lootKeywords: [],
   shoutKeywords: [],
+  wordAlarmEnabled: true,
+  wordAlarmKeywords: [],
+  wordAlarmSound: 'orb.mp3',
+  wordAlarmVolume: 70,
+  wordAlarmHistoryEnabled: true,
   showXpWidget: true,
   ignoreNegativeXp: true,
   xpWidgetPos: { left: 200, bottom: 0 },
@@ -128,6 +134,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   abandonedAutoHideMinutes: 10,
   abandonedEnabled: true,
   abandonedWidgetPos: { left: 200, bottom: 63 },
+  abyssApostleAlertEnabled: false,
 
 };
 

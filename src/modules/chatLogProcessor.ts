@@ -14,8 +14,8 @@ import * as contentsChecker from './contentsChecker';
  * 이 클래스는 SEED/아이템/외치기 핸들러와 외부 API를 관리합니다.
  */
 class ChatLogProcessor {
-  private lastRelicType: 'shinjo' | 'kishinik' | null = null;
-  private lastRelicTypeTime: number = 0;
+  private _chatContextCache: Array<{ timestamp: number; sender: string; message: string; color: string }> = [];
+  private _activeTrackingAlarms: Array<{ alarmId: number; endTime: number }> = [];
 
   public start(): void {
     log('[CHAT_PROCESSOR] 시작됨 - 이벤트 리스너 등록');
@@ -29,15 +29,6 @@ class ChatLogProcessor {
 
     // 2. 아이템 획득 처리
     chatParser.on('ITEM_LOOTED', (data) => {
-      // 고대 렐릭의 성소 구분용 전리품 감지 캐싱
-      if (data.message.includes('신조의 가루') || data.message.includes('신조의 정수') || data.message.includes('신조의 깃털')) {
-        this.lastRelicType = 'shinjo';
-        this.lastRelicTypeTime = Date.now();
-      } else if (data.message.includes('키시니크의 가루') || data.message.includes('키시니크의 정수') || data.message.includes('키시니크의 파편')) {
-        this.lastRelicType = 'kishinik';
-        this.lastRelicTypeTime = Date.now();
-      }
-
       const cfg = config.load();
       const keywords = cfg.lootKeywords || [];
       const matchedKeyword = keywords.find(k => data.message.includes(k));
@@ -66,6 +57,66 @@ class ChatLogProcessor {
       }
     });
 
+    // 3-2. 일반 채팅 알림 처리
+    chatParser.on('NORMAL_CHAT', (data) => {
+      const now = Date.now();
+
+      // 1. 만료된(5분이 경과한) 실시간 감지 추적 목록 필터링
+      this._activeTrackingAlarms = this._activeTrackingAlarms.filter(a => now <= a.endTime);
+
+      // 2. 대화 캐시 적재 및 5분 만료 처리
+      this._chatContextCache.push({
+        timestamp: now,
+        sender: data.sender,
+        message: data.message,
+        color: data.color
+      });
+      // 5분(300초) 이상 지난 데이터 삭제
+      this._chatContextCache = this._chatContextCache.filter(c => now - c.timestamp <= 5 * 60 * 1000);
+
+      // 3. 현재 추적 활성 상태인 알림들에 대해 감지 이후의 후속 대화 기입
+      for (const active of this._activeTrackingAlarms) {
+        diaryDb.addWordAlarmContextLine(active.alarmId, now, data.sender, data.message, data.color);
+      }
+
+      // 4. 지정 단어 알림 처리
+      const cfg = config.load();
+      if (!cfg.wordAlarmEnabled) return;
+
+      const keywords = cfg.wordAlarmKeywords || [];
+      const matchedKeyword = keywords.find(k => data.message.includes(k));
+      
+      if (keywords.length > 0 && matchedKeyword) {
+        // DB에 히스토리 및 현재 대화 캐시 큐 목록 저장 (대화 기록이 켜져있을 때만 캐시 제공)
+        const historyContext = cfg.wordAlarmHistoryEnabled !== false ? [...this._chatContextCache] : [];
+        const alarmId = diaryDb.addWordAlarmHistory(matchedKeyword, data.sender, data.message, historyContext);
+        
+        // 새로 생성된 알림에 대해 향후 5분 동안 발생하는 대화를 추적하도록 등록 (대화 기록이 켜져있을 때만)
+        if (alarmId !== -1 && cfg.wordAlarmHistoryEnabled !== false) {
+          this._activeTrackingAlarms.push({
+            alarmId,
+            endTime: now + 5 * 60 * 1000 // 5분 동안 후속 수집
+          });
+        }
+
+        // OS 토스트 알림 발송
+        this.sendNotification(`일반 채팅 알림: [${data.sender}]`, data.message);
+
+        // 지정 사운드 재생
+        if (cfg.wordAlarmSound) {
+          const allWindows = BrowserWindow.getAllWindows();
+          const sidebar = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
+          if (sidebar) {
+            sidebar.webContents.send('play-sound', {
+              label: '지정 단어 알림',
+              soundFile: cfg.wordAlarmSound,
+              volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70
+            });
+          }
+        }
+      }
+    });
+
     // 4. 에토스 기믹 알림 처리
     chatParser.on('ETHOS_PASSWORD', (data) => {
       const cfg = config.load();
@@ -78,6 +129,18 @@ class ChatLogProcessor {
       }
     });
 
+    // 4-2. 심연의 제2사도 기믹 알림 처리
+    chatParser.on('ABYSS_APOSTLE_PATTERN', (data) => {
+      const cfg = config.load();
+      if (!cfg.abyssApostleAlertEnabled) return;
+
+      const allWindows = BrowserWindow.getAllWindows();
+      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+      if (gameOverlay) {
+        gameOverlay.webContents.send('abyss-apostle-alert', data);
+      }
+    });
+
     // 5. 이클립스 보스 클리어 처리
     chatParser.on('ECLIPSE_BOSS_CLEAR', (data) => {
       const bossMapping: Record<string, string> = {
@@ -86,7 +149,7 @@ class ChatLogProcessor {
         '티로로스': 'weekly-eclipse-boss-tyrorost',
         '라이코스': 'weekly-eclipse-boss-lycos',
         '체리아': 'weekly-eclipse-boss-cheria',
-        '셀피나': 'weekly-eclipse-boss-selfina'
+        '로카고스': 'weekly-eclipse-boss-lokagos'
       };
       const id = bossMapping[data.bossName];
       if (id) {
@@ -126,20 +189,13 @@ class ChatLogProcessor {
       };
       const id = coreMapping[data.contentName];
       if (id) {
-        contentsChecker.queuePendingHomework(id, data.count, false);
+        contentsChecker.queuePendingHomework(id, data.count, data.isIncrement !== false);
       }
     });
  
     // 8. 고대 렐릭의 성소 클리어 처리
     chatParser.on('RELIC_SANCTUARY_CLEAR', (data) => {
-      const now = Date.now();
-      let targetId = 'weekly-ancient-relic-shinjo';
-      if (this.lastRelicType && (now - this.lastRelicTypeTime < 5000)) {
-        if (this.lastRelicType === 'kishinik') {
-          targetId = 'weekly-ancient-relic-kishinik';
-        }
-      }
-      contentsChecker.queuePendingHomework(targetId, data.count, false);
+      contentsChecker.queuePendingHomework('weekly-ancient-relic', data.count, false);
     });
  
     // 9. 테시스 코어 던전 클리어 처리
@@ -188,7 +244,15 @@ class ChatLogProcessor {
  
     // 17. 어비스 보스 (심층 1~3) 클리어 처리
     chatParser.on('ABYSS_DUNGEON_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-abyss-dungeon', data.count, false);
+      const depthMap: Record<string, string> = {
+        '심층Ⅰ': 'weekly-abyss-dungeon-1',
+        '심층Ⅱ': 'weekly-abyss-dungeon-2',
+        '심층Ⅲ': 'weekly-abyss-dungeon-3'
+      };
+      const id = depthMap[data.depth];
+      if (id) {
+        contentsChecker.queuePendingHomework(id, data.count, false);
+      }
     });
  
     // 18. 어비스 보스전 (EX) 클리어 처리
@@ -211,10 +275,7 @@ class ChatLogProcessor {
       contentsChecker.queuePendingHomework('weekly-siokan-boss', data.count, false);
     });
  
-    // 22. 오를리 방어전 클리어 처리
-    chatParser.on('ORLY_DEFENSE_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-orly-defense', 1, true);
-    });
+
  
     // 23. 베스티지 클리어 처리
     chatParser.on('VESTIGE_CLEAR', (data) => {
@@ -223,7 +284,7 @@ class ChatLogProcessor {
  
     // 24. 아페티리아 (일반/어려움) 클리어 처리
     chatParser.on('APETHIRIA_RAID_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-apethiria-raid', 1, true);
+      contentsChecker.queuePendingHomework('weekly-apethiria-raid', data.count, false);
     });
 
     // XP 추적 (xpTracker에 위임)

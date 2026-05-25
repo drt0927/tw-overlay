@@ -24,7 +24,12 @@ function notifyUpdate(): void {
 export function initDb(): void {
   if (db) return; // 이미 초기화된 경우 스킵
   try {
-    const userDataPath = app.getPath('userData');
+    let userDataPath = '';
+    try {
+      userDataPath = app ? app.getPath('userData') : '.';
+    } catch (e) {
+      userDataPath = '.';
+    }
     const dbPath = path.join(userDataPath, 'diary.db');
     db = new Database(dbPath);
 
@@ -70,6 +75,24 @@ export function initDb(): void {
         sender TEXT NOT NULL,
         message TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS word_alarm_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        alarm_timestamp INTEGER NOT NULL, -- Unix Timestamp
+        keyword TEXT NOT NULL,
+        sender TEXT NOT NULL,
+        message TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS word_alarm_chat_context (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        alarm_id INTEGER NOT NULL,
+        timestamp INTEGER NOT NULL, -- Unix Timestamp
+        sender TEXT NOT NULL,
+        message TEXT NOT NULL,
+        color TEXT NOT NULL,
+        FOREIGN KEY (alarm_id) REFERENCES word_alarm_history(id) ON DELETE CASCADE
+      );
     `);
 
     // 마이그레이션: amount 컬럼이 없는 경우 추가 (이미 테이블이 생성된 경우 대비)
@@ -83,6 +106,53 @@ export function initDb(): void {
       }
     } catch (e) {
       log(`[DiaryDB] Migration check failed: ${e}`);
+    }
+
+    // 마이그레이션: 이클립스 셀피나 -> 로카고스 데이터 인계
+    try {
+      db.prepare(`
+        UPDATE homework_logs 
+        SET content_id = replace(content_id, 'weekly-eclipse-boss-selfina', 'weekly-eclipse-boss-lokagos'),
+            content_name = replace(content_name, '이클립스 (셀피나)', '이클립스 (로카고스)')
+        WHERE content_id LIKE 'weekly-eclipse-boss-selfina%'
+      `).run();
+      db.prepare(`
+        UPDATE activity_logs 
+        SET content = replace(content, '셀피나', '로카고스')
+        WHERE content LIKE '%셀피나%'
+      `).run();
+      log('[DiaryDB] SQLite data migrated successfully from selfina to lokagos.');
+    } catch (e) {
+      log(`[DiaryDB] SQLite selfina to lokagos migration failed: ${e}`);
+    }
+
+    // 마이그레이션: 고대 렐릭의 성소 (신조/키시니크) 데이터 합산/인계
+    try {
+      db.prepare(`
+        UPDATE homework_logs 
+        SET content_id = replace(replace(content_id, 'weekly-ancient-relic-shinjo', 'weekly-ancient-relic'), 'weekly-ancient-relic-kishinik', 'weekly-ancient-relic'),
+            content_name = '고대 렐릭의 성소 (신조/키시니크)'
+        WHERE content_id LIKE 'weekly-ancient-relic-shinjo%' OR content_id LIKE 'weekly-ancient-relic-kishinik%'
+      `).run();
+      
+      // 중복 일지 레코드 단일화 처리
+      db.prepare(`
+        DELETE FROM homework_logs 
+        WHERE id NOT IN (
+          SELECT MIN(id) 
+          FROM homework_logs 
+          GROUP BY date, content_id
+        )
+      `).run();
+
+      db.prepare(`
+        UPDATE activity_logs 
+        SET content = replace(replace(content, '고대 렐릭의 성소 (신조)', '고대 렐릭의 성소 (신조/키시니크)'), '고대 렐릭의 성소 (키시니크)', '고대 렐릭의 성소 (신조/키시니크)')
+        WHERE content LIKE '%고대 렐릭의 성소 (신조)%' OR content LIKE '%고대 렐릭의 성소 (키시니크)%'
+      `).run();
+      log('[DiaryDB] SQLite data migrated successfully for ancient relic sanctuary.');
+    } catch (e) {
+      log(`[DiaryDB] SQLite ancient relic migration failed: ${e}`);
     }
 
     log('[DiaryDB] Database initialized successfully.');
@@ -514,3 +584,112 @@ export function getShoutHistory(hours: number = 24, searchQuery: string = ''): a
     return stmt.all(since);
   }
 }
+
+/**
+ * 지정 단어 알림 이력과 당시 5분간의 대화 맥락을 하나의 트랜잭션으로 저장합니다.
+ * 또한 24시간이 지난 오래된 알림 이력은 자동으로 삭제합니다.
+ */
+export function addWordAlarmHistory(
+  keyword: string, 
+  sender: string, 
+  message: string, 
+  contextList: Array<{ timestamp: number; sender: string; message: string; color: string }>
+): number {
+  if (!db) initDb();
+  if (!db) return -1;
+
+  const now = Math.floor(Date.now() / 1000);
+  const oneDayAgo = now - (24 * 60 * 60);
+  let alarmId = -1;
+
+  const transaction = db.transaction(() => {
+    // 1. 24시간 지난 오래된 알림 삭제 (ON DELETE CASCADE에 의해 대화 맥락도 자동 삭제됨)
+    db!.prepare('DELETE FROM word_alarm_history WHERE alarm_timestamp < ?').run(oneDayAgo);
+
+    // 2. 새 알림 이력 추가
+    const insertHistoryStmt = db!.prepare(
+      'INSERT INTO word_alarm_history (alarm_timestamp, keyword, sender, message) VALUES (?, ?, ?, ?)'
+    );
+    const result = insertHistoryStmt.run(now, keyword, sender, message);
+    alarmId = Number(result.lastInsertRowid);
+
+    // 3. 연관된 5분 대화 맥락 추가
+    const insertContextStmt = db!.prepare(
+      'INSERT INTO word_alarm_chat_context (alarm_id, timestamp, sender, message, color) VALUES (?, ?, ?, ?, ?)'
+    );
+    for (const ctx of contextList) {
+      const ctxTimestamp = Math.floor(ctx.timestamp / 1000);
+      insertContextStmt.run(alarmId, ctxTimestamp, ctx.sender, ctx.message, ctx.color);
+    }
+  });
+
+  transaction();
+  notifyUpdate();
+  return alarmId;
+}
+
+/**
+ * 감지 후 5분 동안 발생하는 개별 대화 한 줄을 특정 알림 ID에 매핑하여 추가합니다.
+ */
+export function addWordAlarmContextLine(
+  alarmId: number,
+  timestamp: number,
+  sender: string,
+  message: string,
+  color: string
+): void {
+  if (!db) initDb();
+  if (!db) return;
+
+  const stmt = db.prepare(
+    'INSERT INTO word_alarm_chat_context (alarm_id, timestamp, sender, message, color) VALUES (?, ?, ?, ?, ?)'
+  );
+  stmt.run(alarmId, Math.floor(timestamp / 1000), sender, message, color);
+  notifyUpdate();
+}
+
+/**
+ * 최근 N시간 동안 발생한 지정 단어 알림 이력을 가져옵니다.
+ */
+export function getWordAlarmHistory(hours: number = 24): any[] {
+  if (!db) initDb();
+  if (!db) return [];
+
+  const since = Math.floor(Date.now() / 1000) - (hours * 60 * 60);
+  const stmt = db.prepare('SELECT * FROM word_alarm_history WHERE alarm_timestamp > ? ORDER BY alarm_timestamp DESC');
+  return stmt.all(since);
+}
+
+/**
+ * 특정 알림에 연동된 5분 대화 맥락을 가져옵니다.
+ */
+export function getWordAlarmContext(alarmId: number): any[] {
+  if (!db) initDb();
+  if (!db) return [];
+
+  const stmt = db.prepare('SELECT * FROM word_alarm_chat_context WHERE alarm_id = ? ORDER BY timestamp ASC');
+  return stmt.all(alarmId);
+}
+
+/**
+ * 특정 지정 단어 알림 히스토리 아이템을 개별 삭제합니다. (Cascades to context)
+ */
+export function deleteWordAlarmHistoryItem(id: number): void {
+  if (!db) initDb();
+  if (!db) return;
+
+  db.prepare('DELETE FROM word_alarm_history WHERE id = ?').run(id);
+  notifyUpdate();
+}
+
+/**
+ * 모든 지정 단어 알림 히스토리와 관련된 맥락 데이터를 전체 삭제합니다.
+ */
+export function clearWordAlarmHistory(): void {
+  if (!db) initDb();
+  if (!db) return;
+
+  db.prepare('DELETE FROM word_alarm_history').run();
+  notifyUpdate();
+}
+

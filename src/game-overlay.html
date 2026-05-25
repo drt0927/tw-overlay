@@ -733,6 +733,76 @@
       transition: opacity 0.3s ease;
     }
     .ethos-warning-text.show { opacity: 1; }
+
+    /* ── 심연의 제2사도 반사 알림 CSS ── */
+    .abyss-apostle-alert-overlay {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      pointer-events: none;
+      z-index: 110;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(20, 5, 5, 0.95) 0%, rgba(10, 2, 2, 0.95) 100%);
+      border: 2px solid rgba(239, 68, 68, 0.75);
+      border-radius: 20px;
+      padding: 24px 48px;
+      box-shadow:
+        0 0 40px rgba(239, 68, 68, 0.35),
+        0 16px 48px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(16px);
+      white-space: nowrap;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .abyss-apostle-alert-overlay.warn {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      border-color: rgba(239, 68, 68, 0.85);
+      background: linear-gradient(160deg, rgba(30, 5, 5, 0.95) 0%, rgba(15, 2, 2, 0.95) 100%);
+      box-shadow:
+        0 0 50px rgba(239, 68, 68, 0.5),
+        0 16px 48px rgba(0, 0, 0, 0.8);
+    }
+    .abyss-apostle-alert-overlay.safe {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      border-color: rgba(34, 197, 94, 0.85);
+      background: linear-gradient(160deg, rgba(5, 25, 5, 0.95) 0%, rgba(2, 12, 2, 0.95) 100%);
+      box-shadow:
+        0 0 50px rgba(34, 197, 94, 0.5),
+        0 16px 48px rgba(0, 0, 0, 0.8);
+    }
+    .abyss-apostle-alert-overlay.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+      transition: all 0.3s ease-in;
+    }
+    .abyss-apostle-title {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      line-height: 1.2;
+    }
+    .abyss-apostle-title.warn {
+      color: #ef4444;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    .abyss-apostle-title.safe {
+      color: #22c55e;
+      text-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    .abyss-apostle-subtitle {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e2e8f0;
+      opacity: 0.85;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
   </style>
 </head>
 
@@ -817,6 +887,12 @@
         </svg>
       </div>
     </div>
+  </div>
+
+  <!-- 심연의 제2사도 기믹 알림 -->
+  <div id="abyss-apostle-alert" class="abyss-apostle-alert-overlay hide">
+    <div id="abyss-apostle-title" class="abyss-apostle-title warn">공격 반사 패턴! 경고!</div>
+    <div id="abyss-apostle-subtitle" class="abyss-apostle-subtitle">보스 공격 중단 (6.5초 유지)</div>
   </div>
 
   <!-- 버프 타이머 HUD -->
@@ -1177,12 +1253,49 @@
       }, 5000);
     });
 
+    // ── 심연의 제2사도 기믹 알림 ──
+    let abyssAlertTimeout = null;
+    let abyssResetTimeout = null;
+    if (window.electronAPI.onAbyssApostleAlert) {
+      window.electronAPI.onAbyssApostleAlert(() => {
+        const overlay = document.getElementById('abyss-apostle-alert');
+        const title = document.getElementById('abyss-apostle-title');
+        const subtitle = document.getElementById('abyss-apostle-subtitle');
+        if (!overlay || !title || !subtitle) return;
+
+        // 이전 타이머들 취소
+        if (abyssAlertTimeout) clearTimeout(abyssAlertTimeout);
+        if (abyssResetTimeout) clearTimeout(abyssResetTimeout);
+
+        // 공격 반사 패턴 경고 표출 (붉은색)
+        overlay.className = 'abyss-apostle-alert-overlay warn';
+        title.className = 'abyss-apostle-title warn';
+        title.innerText = '공격 반사 패턴! 경고!';
+        subtitle.innerText = '보스 공격 중단 (6.5초)';
+
+        // 6.5초 후 종료 표시로 전환 (초록색)
+        abyssAlertTimeout = setTimeout(() => {
+          overlay.className = 'abyss-apostle-alert-overlay safe';
+          title.className = 'abyss-apostle-title safe';
+          title.innerText = '공격 반사 패턴 종료!';
+          subtitle.innerText = '공격 가능';
+
+          // 2초 유지 후 페이드 아웃
+          abyssResetTimeout = setTimeout(() => {
+            overlay.className = 'abyss-apostle-alert-overlay hide';
+          }, 2000);
+        }, 6500);
+      });
+    }
+
     // ── 테스트 가이드 (Console) ──
     console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
     console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
     console.log(`const el = document.getElementById('pitta-alert'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');`);
     console.log('%c2. 에토스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
     console.log(`testEthos('번개') // N, NE, E, SE, S, SW, W, NW 중 택1 혹은 암호 입력`);
+    console.log('%c3. 심연의 제2사도 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testAbyssApostle()`);
     console.log('----------------------------------------------------');
 
     // [DevTools 전용 글로벌 테스트 함수]
@@ -1236,6 +1349,34 @@
       }, 5000);
       
       console.log(`✅ 에토스 기믹 테스트: ${data.password} (${dir} 방향)`);
+    };
+
+    window.testAbyssApostle = function() {
+      const overlay = document.getElementById('abyss-apostle-alert');
+      const title = document.getElementById('abyss-apostle-title');
+      const subtitle = document.getElementById('abyss-apostle-subtitle');
+      if (!overlay || !title || !subtitle) return;
+
+      if (abyssAlertTimeout) clearTimeout(abyssAlertTimeout);
+      if (abyssResetTimeout) clearTimeout(abyssResetTimeout);
+
+      overlay.className = 'abyss-apostle-alert-overlay warn';
+      title.className = 'abyss-apostle-title warn';
+      title.innerText = '공격 반사 패턴! 경고!';
+      subtitle.innerText = '보스 공격 중단 (6.5초)';
+
+      abyssAlertTimeout = setTimeout(() => {
+        overlay.className = 'abyss-apostle-alert-overlay safe';
+        title.className = 'abyss-apostle-title safe';
+        title.innerText = '공격 반사 패턴 종료!';
+        subtitle.innerText = '공격 가능';
+
+        abyssResetTimeout = setTimeout(() => {
+          overlay.className = 'abyss-apostle-alert-overlay hide';
+        }, 2000);
+      }, 6500);
+
+      console.log('✅ 심연의 제2사도 기믹 테스트 시작 (6.5초 경고 -> 2초 복구)');
     };
 
     window.onload = () => {

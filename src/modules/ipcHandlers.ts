@@ -90,6 +90,7 @@ export function register(): void {
     'toggle-buff-timer': wm.toggleBuffTimerWindow,
     'toggle-xp-hud': wm.toggleXpHudWindow,
     'toggle-siena-aura': wm.toggleSienaAuraWindow,
+    'toggle-word-alarm': wm.toggleWordAlarmWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -267,6 +268,18 @@ export function register(): void {
   });
   ipcMain.handle('diary-get-shout-history', (_e, hours: number, searchQuery: string) => {
     return diaryDb.getShoutHistory(hours || 24, searchQuery || '');
+  });
+  ipcMain.handle('word-alarm-get-history', (_e, hours: number) => {
+    return diaryDb.getWordAlarmHistory(hours || 24);
+  });
+  ipcMain.handle('word-alarm-get-context', (_e, alarmId: number) => {
+    return diaryDb.getWordAlarmContext(alarmId);
+  });
+  ipcMain.on('word-alarm-delete-item', (_e, id: number) => {
+    diaryDb.deleteWordAlarmHistoryItem(id);
+  });
+  ipcMain.on('word-alarm-clear-history', () => {
+    diaryDb.clearWordAlarmHistory();
   });
   ipcMain.on('toggle-shout-history', () => {
     wm.toggleShoutHistoryWindow();

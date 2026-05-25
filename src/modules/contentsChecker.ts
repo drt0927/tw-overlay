@@ -34,6 +34,59 @@ export function init(): void {
   let currentItems = cfg.contentsCheckerItems || [];
   let changed = false;
 
+  // 0-A. 고대 렐릭의 성소 (신조/키시니크) 단일 항목 병합 마이그레이션
+  const relicShinjoIdx = currentItems.findIndex((i: any) => i.id === 'weekly-ancient-relic-shinjo');
+  const relicKishinikIdx = currentItems.findIndex((i: any) => i.id === 'weekly-ancient-relic-kishinik');
+  
+  if (relicShinjoIdx !== -1 || relicKishinikIdx !== -1) {
+    log(`[Contents Checker] 고대 렐릭의 성소 병합 마이그레이션 수행`);
+    const relicDef = defaultItems.find(d => d.id === 'weekly-ancient-relic');
+    if (relicDef) {
+      let relicItem = currentItems.find((i: any) => i.id === 'weekly-ancient-relic');
+      if (!relicItem) {
+        relicItem = {
+          ...relicDef,
+          completedState: {},
+          sortOrder: currentItems.length
+        };
+        currentItems.push(relicItem);
+      }
+      
+      const shinjoItem = relicShinjoIdx !== -1 ? currentItems[relicShinjoIdx] : null;
+      const kishinikItem = relicKishinikIdx !== -1 ? currentItems[relicKishinikIdx] : null;
+      
+      relicItem.isVisible = (shinjoItem?.isVisible !== false) || (kishinikItem?.isVisible !== false);
+      
+      const presets = cfg.characterPresets || [{ id: MAIN_CHAR_ID, name: DEFAULT_CHAR_NAME }];
+      presets.forEach(char => {
+        const charId = char.id;
+        const sState = shinjoItem?.completedState?.[charId];
+        const kState = kishinikItem?.completedState?.[charId];
+        
+        const sCount = sState?.currentCount || 0;
+        const kCount = kState?.currentCount || 0;
+        const totalCount = Math.min(relicDef.maxCount || 7, sCount + kCount);
+        
+        const isExcluded = !!(sState?.isExcluded && kState?.isExcluded);
+        
+        relicItem.completedState[charId] = {
+          currentCount: totalCount,
+          isCompleted: totalCount >= (relicDef.maxCount || 7),
+          isExcluded,
+          lastCompletedAt: sState?.lastCompletedAt || kState?.lastCompletedAt
+        };
+      });
+      
+      if (relicShinjoIdx !== -1) {
+        currentItems = currentItems.filter((i: any) => i.id !== 'weekly-ancient-relic-shinjo');
+      }
+      if (relicKishinikIdx !== -1) {
+        currentItems = currentItems.filter((i: any) => i.id !== 'weekly-ancient-relic-kishinik');
+      }
+      changed = true;
+    }
+  }
+
   // 0. ID 및 리셋 룰 마이그레이션 (일일 -> 주간)
   const ID_MIGRATION_MAP: Record<string, string> = {
     'daily-mur-1': 'weekly-mur-1',
@@ -50,7 +103,8 @@ export function init(): void {
     'daily-moon-queen': 'weekly-moon-queen',
     'daily-eclipse-boss': 'weekly-eclipse-boss',
     'daily-ancient-relic-shinjo': 'weekly-ancient-relic-shinjo',
-    'daily-ancient-relic-kishinik': 'weekly-ancient-relic-kishinik'
+    'daily-ancient-relic-kishinik': 'weekly-ancient-relic-kishinik',
+    'weekly-eclipse-boss-selfina': 'weekly-eclipse-boss-lokagos'
   };
 
   currentItems.forEach((item: any) => {
@@ -58,14 +112,17 @@ export function init(): void {
       const newId = ID_MIGRATION_MAP[item.id];
       log(`[Contents Checker] 마이그레이션: ${item.id} -> ${newId}`);
       item.id = newId;
-      item.resetRule = { type: 'weekly', dayOfWeek: 1, hour: 0 };
-      item.maxCount = 7;
+      // 로카고스로의 단순 ID 마이그레이션의 경우 주간 룰로의 일방적인 강제 덮어쓰기 방지
+      if (item.id !== 'weekly-eclipse-boss-lokagos') {
+        item.resetRule = { type: 'weekly', dayOfWeek: 1, hour: 0 };
+        item.maxCount = 7;
+      }
 
       if (item.completedState) {
         Object.keys(item.completedState).forEach(charId => {
           const state = item.completedState[charId];
           if (state.currentCount === undefined) {
-            state.currentCount = state.isCompleted ? 7 : 0;
+            state.currentCount = state.isCompleted ? (item.maxCount || 7) : 0;
           }
         });
       }
@@ -89,7 +146,7 @@ export function init(): void {
       'weekly-eclipse-boss-tyrorost',
       'weekly-eclipse-boss-lycos',
       'weekly-eclipse-boss-cheria',
-      'weekly-eclipse-boss-selfina'
+      'weekly-eclipse-boss-lokagos'
     ],
     'weekly-abyss-core-master': [
       'weekly-abyss-core-master-1',
@@ -102,6 +159,11 @@ export function init(): void {
       'weekly-mur-core-master-silyron',
       'weekly-mur-core-master-saleana',
       'weekly-mur-core-master-luminous'
+    ],
+    'weekly-abyss-dungeon': [
+      'weekly-abyss-dungeon-1',
+      'weekly-abyss-dungeon-2',
+      'weekly-abyss-dungeon-3'
     ]
   };
 

@@ -43,6 +43,18 @@ export function registerAll(): void {
     }
   }
 
+  // 3. 버프 타이머 HUD 표시 토글
+  if (shortcuts.toggleBuffHud) {
+    const registered = globalShortcut.register(shortcuts.toggleBuffHud, () => {
+      log('[SHORTCUT] Toggle Buff HUD');
+      const current = config.load();
+      wm.applySettings({ showBuffHud: !current.showBuffHud });
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleBuffHud}`);
+    }
+  }
+
   log('[SHORTCUT] All shortcuts registered');
 }
 

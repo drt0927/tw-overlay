@@ -26,7 +26,7 @@ export interface ChatParserEventMap {
     ECLIPSE_SUPPLIES_CLEAR: { date: string; timestamp: string; count: number; message: string };
     ECLIPSE_SPECIAL_FORCE_CLEAR: { date: string; timestamp: string; count: number; message: string };
     MERCURIAL_BOSS_CLEAR: { date: string; timestamp: string; bossName: string; count: number; message: string };
-    CORE_MASTER_CLEAR: { date: string; timestamp: string; contentName: string; count: number; message: string };
+    CORE_MASTER_CLEAR: { date: string; timestamp: string; contentName: string; count: number; isIncrement?: boolean; message: string };
     RELIC_SANCTUARY_CLEAR: { date: string; timestamp: string; count: number; message: string };
     TESIS_CORE_CLEAR: { date: string; timestamp: string; message: string };
     POWER_ROOT_CLEAR: { date: string; timestamp: string; count: number; message: string };
@@ -39,9 +39,11 @@ export interface ChatParserEventMap {
     PRAVA_DEFENSE_CLEAR: { date: string; timestamp: string; count: number; message: string };
     CATACOMB_CLEAR: { date: string; timestamp: string; count: number; message: string };
     SIOKAN_BOSS_CLEAR: { date: string; timestamp: string; count: number; message: string };
-    ORLY_DEFENSE_CLEAR: { date: string; timestamp: string; message: string };
+
     VESTIGE_CLEAR: { date: string; timestamp: string; message: string };
-    APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; message: string };
+    APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    NORMAL_CHAT: { date: string; timestamp: string; sender: string; message: string; color: string };
+    ABYSS_APOSTLE_PATTERN: { date: string; timestamp: string; message: string };
 }
 
 // ── 어벤던로드 상태 타입 ──
@@ -123,6 +125,8 @@ export interface ShortcutsConfig {
     toggleClickThrough: string;
     /** 숙제 체크 리스트 창 토글 */
     toggleContentsChecker?: string;
+    /** 버프 타이머 HUD 표시 토글 */
+    toggleBuffHud?: string;
 }
 
 /** 채팅 로그 버프 감지 트리거 */
@@ -248,6 +252,12 @@ export interface AppConfig {
     lootKeywords?: string[];
     shoutKeywords?: string[];
     ethosAlertEnabled?: boolean;
+    abyssApostleAlertEnabled?: boolean;
+    wordAlarmEnabled?: boolean;
+    wordAlarmKeywords?: string[];
+    wordAlarmSound?: string;
+    wordAlarmVolume?: number;
+    wordAlarmHistoryEnabled?: boolean;
     showXpWidget?: boolean;
     ignoreNegativeXp?: boolean;
     xpWidgetPos?: { left: number; bottom: number };

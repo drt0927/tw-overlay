@@ -479,6 +479,12 @@ class ChatParser extends EventEmitter {
         return;
     }
 
+    // K. 몬스터 웨이브 종료 대기 알림 특화 패턴
+    if (cleanMsg.includes('몬스터가 남아있으면 다음 웨이브로 넘어가지 않습니다.')) {
+        this.emit('WAVE_MONSTER_WARNING', { date: this._currentDate, timestamp, message: cleanMsg });
+        return;
+    }
+
     // A. SEED 획득 (콘텐츠 보상 및 일반 습득 모두 대응)
     if (cleanMsg.includes('SEED를') || cleanMsg.includes('Seed를') || cleanMsg.includes('시드를')) {
         // "보상으로 1500만 SEED", "[300000]SEED", "1500만 SEED를 획득" 등

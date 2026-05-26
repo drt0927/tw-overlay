@@ -803,6 +803,59 @@
       opacity: 0.85;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     }
+
+    /* ── 몬스터 웨이브 경고 알림 CSS ── */
+    .wave-warning-alert-overlay {
+      position: fixed;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      pointer-events: none;
+      z-index: 110;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(20, 5, 20, 0.95) 0%, rgba(10, 2, 10, 0.95) 100%);
+      border: 2px solid rgba(217, 70, 239, 0.75);
+      border-radius: 20px;
+      padding: 24px 48px;
+      box-shadow:
+        0 0 40px rgba(217, 70, 239, 0.35),
+        0 16px 48px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(16px);
+      white-space: nowrap;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wave-warning-alert-overlay.warn {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      border-color: rgba(217, 70, 239, 0.85);
+      box-shadow:
+        0 0 50px rgba(217, 70, 239, 0.5),
+        0 16px 48px rgba(0, 0, 0, 0.8);
+    }
+    .wave-warning-alert-overlay.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+      transition: all 0.3s ease-in;
+    }
+    .wave-warning-title {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #e879f9;
+      text-shadow: 0 0 20px rgba(217, 70, 239, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8);
+      line-height: 1.2;
+    }
+    .wave-warning-subtitle {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fdf4ff;
+      opacity: 0.85;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
   </style>
 </head>
 
@@ -897,6 +950,12 @@
   <div id="abyss-apostle-alert" class="abyss-apostle-alert-overlay hide">
     <div id="abyss-apostle-title" class="abyss-apostle-title warn">공격 반사 패턴! 경고!</div>
     <div id="abyss-apostle-subtitle" class="abyss-apostle-subtitle">보스 공격 중단 (6.5초 유지)</div>
+  </div>
+
+  <!-- 몬스터 웨이브 종료 대기 알림 -->
+  <div id="wave-warning-alert" class="wave-warning-alert-overlay hide">
+    <div class="wave-warning-title">몬스터 처치 대기!</div>
+    <div class="wave-warning-subtitle">잔존 몬스터를 퇴치해야 다음 웨이브로 진행됩니다.</div>
   </div>
 
   <!-- 버프 타이머 HUD -->
@@ -1290,6 +1349,24 @@
             overlay.className = 'abyss-apostle-alert-overlay hide';
           }, 2000);
         }, 6500);
+      });
+    }
+
+    // ── 몬스터 웨이브 종료 대기 알림 ──
+    let waveWarningTimeout = null;
+    if (window.electronAPI.onWaveWarningAlert) {
+      window.electronAPI.onWaveWarningAlert(() => {
+        const overlay = document.getElementById('wave-warning-alert');
+        if (!overlay) return;
+
+        if (waveWarningTimeout) clearTimeout(waveWarningTimeout);
+
+        overlay.className = 'wave-warning-alert-overlay warn';
+
+        // 4초 유지 후 페이드 아웃
+        waveWarningTimeout = setTimeout(() => {
+          overlay.className = 'wave-warning-alert-overlay hide';
+        }, 4000);
       });
     }
 

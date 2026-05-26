@@ -44,6 +44,7 @@ export interface ChatParserEventMap {
     APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; count: number; message: string };
     NORMAL_CHAT: { date: string; timestamp: string; sender: string; message: string; color: string };
     ABYSS_APOSTLE_PATTERN: { date: string; timestamp: string; message: string };
+    WAVE_MONSTER_WARNING: { date: string; timestamp: string; message: string };
 }
 
 // ── 어벤던로드 상태 타입 ──
@@ -261,6 +262,9 @@ export interface AppConfig {
     showXpWidget?: boolean;
     ignoreNegativeXp?: boolean;
     xpWidgetPos?: { left: number; bottom: number };
+    waveMonsterWarningEnabled?: boolean;
+    waveMonsterWarningSound?: string;
+    waveMonsterWarningVolume?: number;
 
     // --- Buff Timer Settings ---
     buffTimerEnabled?: boolean;

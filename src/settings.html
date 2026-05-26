@@ -561,35 +561,66 @@
               </p>
             </div>
 
-            <!-- 에토스 기믹 알림 (추가) -->
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+            <!-- 인게임 기믹 및 시스템 알림 (기존 기믹 알림 병합 및 웨이브 알림 추가) -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
               <label class="section-label flex items-center gap-2">
-                <i data-lucide="crosshair" class="w-4 h-4 text-indigo-400"></i> 이클립스 보스 기믹 알림
+                <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-400"></i> 인게임 기믹 및 시스템 알림
               </label>
-              <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" id="ethos-alert-enabled" class="w-5 h-5 accent-indigo-600">
-                  <div>
-                    <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">에토스 기믹 알림 표시</span>
-                    <p class="text-[10px] text-slate-500 mt-0.5">에토스의 대사를 인식하여 피해야 할 방향을 중앙에 표시합니다.</p>
-                  </div>
-                </label>
-              </div>
-            </div>
+              
+              <div class="space-y-4">
+                <!-- 1. 에토스 -->
+                <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="ethos-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                    <div>
+                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">이클립스 에토스 기믹 알림</span>
+                      <p class="text-[10px] text-slate-500 mt-0.5">에토스의 대사를 인식하여 피해야 할 방향(8방향 화살표)을 오버레이 중앙에 표시합니다.</p>
+                    </div>
+                  </label>
+                </div>
 
-            <!-- 심연의 제2사도 기믹 알림 (추가) -->
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
-              <label class="section-label flex items-center gap-2">
-                <i data-lucide="shield-alert" class="w-4 h-4 text-rose-400"></i> 심연의 제2사도 기믹 알림
-              </label>
-              <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
-                <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" id="abyss-apostle-alert-enabled" class="w-5 h-5 accent-rose-600">
-                  <div>
-                    <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">공격 반사 패턴 알림 표시</span>
-                    <p class="text-[10px] text-slate-500 mt-0.5">심연의 제2사도의 반사 대사를 인식하여 공격 반사 패턴을 화면 중앙에 알립니다. (기본값 미사용)</p>
+                <!-- 2. 제2사도 -->
+                <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="abyss-apostle-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                    <div>
+                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">심연의 제2사도 반사 기믹 알림</span>
+                      <p class="text-[10px] text-slate-500 mt-0.5">제2사도의 반사 대사를 인식하여 공격 반사 패턴 경고를 화면 중앙에 알립니다.</p>
+                    </div>
+                  </label>
+                </div>
+
+                <!-- 3. 웨이브 종료 대기 알림 -->
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
+                  <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" id="wave-warning-enabled" class="w-5 h-5 accent-indigo-600">
+                      <div>
+                        <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">몬스터 웨이브 종료 대기 알림</span>
+                        <p class="text-[10px] text-slate-500 mt-0.5">"몬스터가 남아있으면 다음 웨이브로 넘어가지 않습니다." 문구 감지 시 알림 오버레이 및 효과음 재생</p>
+                      </div>
+                    </label>
                   </div>
-                </label>
+                  
+                  <!-- 웨이브 사운드 설정 영역 -->
+                  <div id="wave-sound-settings" class="pl-8 space-y-3 pt-2 border-t border-white/5">
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-16">알림음</span>
+                      <select id="wave-warning-sound" class="input-field py-1.5 px-3 bg-black/40 text-xs text-slate-300 rounded-lg flex-1">
+                        <!-- 동적으로 로드됨 -->
+                      </select>
+                      <button id="btn-wave-sound-preview" onclick="previewWaveSound()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs">
+                        ▶ 미리듣기
+                      </button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <span class="text-xs text-slate-400 font-bold w-16">볼륨</span>
+                      <input type="range" id="wave-warning-volume" min="0" max="100" class="w-full h-2 rounded-lg appearance-none bg-slate-800 accent-indigo-500">
+                      <span id="wave-warning-volume-val" class="text-xs font-bold text-indigo-400 w-12 text-right">70%</span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -864,7 +895,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.14.1</span></p>
+                        class="text-purple-400">1.14.2</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1216,6 +1247,12 @@
     async function initSettings() {
       soundFiles = await window.loadSoundList();
 
+      // 웨이브 알림 사운드 셀렉트 옵션 채우기
+      const waveSoundSel = document.getElementById('wave-warning-sound');
+      if (waveSoundSel && soundFiles) {
+        waveSoundSel.innerHTML = soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+      }
+
       window.bindEscapeClose();
       initIconList();
       await initDynamicMenuManagement();
@@ -1377,6 +1414,22 @@
       }
       if (document.getElementById('abyss-apostle-alert-enabled')) {
         document.getElementById('abyss-apostle-alert-enabled').checked = !!config.abyssApostleAlertEnabled;
+      }
+      if (document.getElementById('wave-warning-enabled')) {
+        document.getElementById('wave-warning-enabled').checked = !!config.waveMonsterWarningEnabled;
+      }
+      if (document.getElementById('wave-warning-sound')) {
+        document.getElementById('wave-warning-sound').value = config.waveMonsterWarningSound || 'orb.mp3';
+      }
+      const waveVolumeEl = document.getElementById('wave-warning-volume');
+      const waveVolumeVal = document.getElementById('wave-warning-volume-val');
+      if (waveVolumeEl && waveVolumeVal) {
+        const vol = config.waveMonsterWarningVolume !== undefined ? config.waveMonsterWarningVolume : 70;
+        waveVolumeEl.value = vol;
+        waveVolumeVal.innerText = vol + '%';
+        waveVolumeEl.oninput = (e) => {
+          waveVolumeVal.innerText = e.target.value + '%';
+        };
       }
 
 
@@ -1773,6 +1826,9 @@
           shoutKeywords: shoutKeywordsList,
           ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
           abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+          waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
+          waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
+          waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
 
 
         };
@@ -1782,6 +1838,12 @@
       } catch (e) { console.error(e); }
     }
 
+
+    function previewWaveSound() {
+      const sound = document.getElementById('wave-warning-sound').value || 'orb.mp3';
+      const vol = parseInt(document.getElementById('wave-warning-volume').value) || 70;
+      window.electronAPI.previewBossSound(sound, vol, '몬스터 웨이브 종료 대기 알림');
+    }
 
     window.addEventListener('keydown', (e) => {
       if (recordingShortcutKey) {

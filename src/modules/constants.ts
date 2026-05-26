@@ -135,6 +135,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   abandonedEnabled: true,
   abandonedWidgetPos: { left: 200, bottom: 63 },
   abyssApostleAlertEnabled: false,
+  waveMonsterWarningEnabled: true,
+  waveMonsterWarningSound: 'orb.mp3',
+  waveMonsterWarningVolume: 70,
 
 };
 

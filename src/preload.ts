@@ -259,6 +259,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('abyss-apostle-alert');
     ipcRenderer.on('abyss-apostle-alert', (_event, data) => callback(data));
   },
+  onWaveWarningAlert: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('wave-warning-alert');
+    ipcRenderer.on('wave-warning-alert', () => callback());
+  },
   onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
     ipcRenderer.removeAllListeners('scam-alert');
     ipcRenderer.on('scam-alert', (_event, result) => callback(result));
@@ -306,7 +310,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
-      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result',
+      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

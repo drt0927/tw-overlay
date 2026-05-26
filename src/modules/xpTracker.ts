@@ -169,7 +169,7 @@ class XpTracker {
     const allWindows = BrowserWindow.getAllWindows();
     const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
     if (gameOverlay) {
-      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [] });
+      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0 });
     }
     const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
     if (xpHud) {

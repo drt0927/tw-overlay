@@ -818,6 +818,10 @@
       <span class="text-[9px] text-emerald-400 font-black uppercase">분당 경험치</span>
       <span id="xp-epm" class="text-xs font-bold text-white">0</span>
     </div>
+    <div class="flex items-center gap-2">
+      <span class="text-[9px] text-rose-400 font-black uppercase">잡은 몬스터</span>
+      <span id="xp-kills" class="text-xs font-bold text-white">0</span>
+    </div>
   </div>
 
   <!-- 어벤던로드 위젯 -->
@@ -1068,6 +1072,7 @@
       if (!showXpWidget) return;
       document.getElementById('xp-total').innerText = formatXP(data.total);
       document.getElementById('xp-epm').innerText = formatXP(data.epm);
+      document.getElementById('xp-kills').innerText = (data.kills || 0).toLocaleString();
     });
 
     // 버프 타이머 HUD 업데이트

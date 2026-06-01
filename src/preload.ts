@@ -63,6 +63,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startUpdateDownload: () => ipcRenderer.send('start-update-download'),
   quitAndInstall: () => ipcRenderer.send('quit-and-install'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getGameStatus: () => ipcRenderer.invoke('get-game-status'),
   getOptimizationStatus: () => ipcRenderer.invoke('get-optimization-status'),
   setOptimization: (enable: boolean) => ipcRenderer.invoke('set-optimization', enable),
   sidebarReady: () => ipcRenderer.send('sidebar-ready'),
@@ -183,7 +184,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('boss-times-data');
     ipcRenderer.on('boss-times-data', (_event, times) => callback(times));
   },
-  onPlaySound: (callback: (data: { label: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean, isAlreadyRecorded?: boolean, volume?: number }) => void) => {
+  onPlaySound: (callback: (data: { label: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean, isAlreadyRecorded?: boolean, volume?: number, isPreview?: boolean }) => void) => {
     ipcRenderer.removeAllListeners('play-sound');
     ipcRenderer.on('play-sound', (_event, data) => callback(data));
   },

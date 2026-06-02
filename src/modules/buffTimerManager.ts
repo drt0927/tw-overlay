@@ -215,7 +215,7 @@ class BuffTimerManager {
 
     // 청각적 알림 — 범용 play-sound 채널로 전송
     if (cfg.buffTimerAudioAlert !== false) {
-      const soundFile = cfg.buffTimerSound || 'voice_boss_first.wav';
+      const soundFile = cfg.buffTimerSound || 'orb.mp3';
       const volume = cfg.buffTimerVolume ?? 70;
       const label2 = phase === 'warn2' ? `[임박] ${buff.name} 5초 전!` : `[경고] ${buff.name} ${label} 남음`;
       this._sendToMainWindow('play-sound', { label: label2, soundFile, volume, isCustom: true });

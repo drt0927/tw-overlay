@@ -530,8 +530,8 @@ class ChatParser extends EventEmitter {
         '샐리온', '실라이론', '샐레아나', '루미너스'
     ];
 
-    // D-2. 일반 및 클럽 채팅 감지
-    if (rawLine.includes('color="#94ddfa"') || rawLine.includes('color="#ffffff"')) {
+    // D-2. 일반, 클럽 및 팀 채팅 감지
+    if (rawLine.includes('color="#94ddfa"') || rawLine.includes('color="#ffffff"') || rawLine.includes('color="#c8ffc8"')) {
         const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
         if (chatMatch) {
             const sender = chatMatch[1].trim();
@@ -539,7 +539,12 @@ class ChatParser extends EventEmitter {
             
             // 닉네임에 공백이나 쉼표가 들어간 경우 또는 주요 NPC 이름인 경우는 제외
             if (!sender.includes(' ') && !sender.includes(',') && !NPC_BLACK_LIST.includes(sender)) {
-                const color = rawLine.includes('color="#94ddfa"') ? '#94ddfa' : '#ffffff';
+                let color = '#ffffff';
+                if (rawLine.includes('color="#94ddfa"')) {
+                    color = '#94ddfa';
+                } else if (rawLine.includes('color="#c8ffc8"')) {
+                    color = '#c8ffc8';
+                }
                 this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color });
                 return;
             }

@@ -6,6 +6,7 @@ import { Notification, BrowserWindow } from 'electron';
 import { xpTracker } from './xpTracker';
 import { abandonedTracker } from './abandonedTracker';
 import * as contentsChecker from './contentsChecker';
+import { discordNotifier } from './discordNotifier';
 
 /**
  * 파싱된 채팅 데이터를 실제 앱 기능(DB 저장, 알림 등)으로 연결하는 프로세서
@@ -55,6 +56,26 @@ class ChatLogProcessor {
       if (keywords.length > 0 && matchedKeyword) {
         this.sendNotification(`외치기 알림: [${data.sender}]`, data.message);
       }
+
+      // 디스코드 전용 알림 처리 (외치기 전용)
+      if (cfg.discordAlertEnabled && cfg.discordWebhookUrl) {
+        const rules = cfg.discordRules || [];
+        for (const rule of rules) {
+          if (!data.message.includes(rule.keyword)) continue;
+
+          // 1. 발송 대상(외치기) 필터링
+          if (!rule.targetShout) continue;
+
+          // 2. 발신인(보낸 사람) 닉네임 필터링
+          if (rule.targetSender && rule.targetSender.trim() !== '') {
+            if (data.sender !== rule.targetSender.trim()) continue;
+          }
+
+          // 모든 필터를 통과하면 디스코드에 알림 발송
+          void discordNotifier.sendWord(data.sender, data.message, rule.keyword);
+          break; // 단어 하나가 매칭되어 발송되었다면 한 메시지에 대해 중복 발송 차단
+        }
+      }
     });
 
     // 3-2. 일반 채팅 알림 처리
@@ -79,8 +100,41 @@ class ChatLogProcessor {
         diaryDb.addWordAlarmContextLine(active.alarmId, now, data.sender, data.message, data.color);
       }
 
-      // 4. 지정 단어 알림 처리
+      // 디스코드 전용 알림 처리 (독립 동작)
       const cfg = config.load();
+      if (cfg.discordAlertEnabled && cfg.discordWebhookUrl) {
+        // 기존 discordKeywords 필드만 있고 discordRules가 없는 구버전 설정을 위한 마이그레이션
+        let rules = cfg.discordRules || [];
+        if (rules.length === 0 && cfg.discordKeywords && cfg.discordKeywords.length > 0) {
+          rules = cfg.discordKeywords.map(kw => ({
+            keyword: kw,
+            targetNormal: true,
+            targetClub: true,
+            targetShout: true
+          }));
+        }
+
+        for (const rule of rules) {
+          if (!data.message.includes(rule.keyword)) continue;
+
+          // 1. 발송 대상(대화 색상별) 필터링
+          let isTargetColor = false;
+          if ((data.color === '#ffffff' || data.color === '#c8ffc8') && rule.targetNormal) isTargetColor = true;
+          if (data.color === '#94ddfa' && rule.targetClub) isTargetColor = true;
+          if (!isTargetColor) continue;
+
+          // 2. 발신인(보낸 사람) 닉네임 필터링
+          if (rule.targetSender && rule.targetSender.trim() !== '') {
+            if (data.sender !== rule.targetSender.trim()) continue;
+          }
+
+          // 모든 필터를 통과하면 디스코드에 알림 발송
+          void discordNotifier.sendWord(data.sender, data.message, rule.keyword);
+          break; // 단어 하나가 매칭되어 발송되었다면 한 메시지에 대해 중복 발송 차단
+        }
+      }
+
+      // 4. 지정 단어 알림 처리
       if (!cfg.wordAlarmEnabled) return;
 
       const keywords = cfg.wordAlarmKeywords || [];

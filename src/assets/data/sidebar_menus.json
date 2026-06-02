@@ -32,6 +32,14 @@
     "api": "toggleWordAlarm"
   },
   {
+    "id": "discord-alarm-btn",
+    "label": "디스코드 알림",
+    "icon": "send",
+    "tooltip": "디스코드 웹훅 알림 및 전송 단어 설정",
+    "color": "indigo-400",
+    "api": "toggleDiscordAlarm"
+  },
+  {
     "id": "abbreviation-btn",
     "label": "약어 사전",
     "icon": "book-open",

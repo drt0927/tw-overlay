@@ -159,6 +159,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   scamDetector: { ref: null, pos: { offsetX: -480, offsetY: 40 }, key: 'scamDetector', html: 'scam-detector.html', width: 480, height: 780 },
   sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
   wordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'wordAlarm', html: 'word-alarm.html', width: 450, height: 950 },
+  discordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'discordAlarm', html: 'discord-alarm.html', width: 450, height: 950 },
 };
 
 let gameRect: GameRect | null = null;
@@ -543,6 +544,7 @@ export function toggleBuffTimerWindow(): boolean { return createToggleableWindow
 export function toggleXpHudWindow(): boolean { return createToggleableWindow('xpHud'); }
 export function toggleSienaAuraWindow(): boolean { return createToggleableWindow('sienaAura'); }
 export function toggleWordAlarmWindow(): boolean { return createToggleableWindow('wordAlarm'); }
+export function toggleDiscordAlarmWindow(): boolean { return createToggleableWindow('discordAlarm'); }
 export function toggleContentsCheckerWindow(): boolean {
   return createToggleableWindow('contentsChecker', {
     onReady: (win) => {

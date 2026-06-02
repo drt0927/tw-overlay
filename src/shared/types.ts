@@ -195,6 +195,14 @@ export interface PendingHomework {
     timestamp: number;  // 감지된 시간
 }
 
+export interface DiscordKeywordRule {
+    keyword: string;          // 감지할 키워드
+    targetNormal: boolean;    // 일반 채팅 감지 여부 (#ffffff & #c8ffc8)
+    targetClub: boolean;      // 클럽 채팅 감지 여부 (#94ddfa)
+    targetShout: boolean;     // 외치기 감지 여부 (#c896c8)
+    targetSender?: string;    // 특정 보낸 사람 필터 (비어있으면 전체 감지)
+}
+
 export interface AppConfig {
     width: number;
     height: number;
@@ -292,6 +300,12 @@ export interface AppConfig {
     msgerLogPath?: string;
     scamAlertSound?: string;
     scamGpuVariant?: LlamaServerVariant;
+
+    // --- Discord Webhook Settings ---
+    discordWebhookUrl?: string;
+    discordAlertEnabled?: boolean;
+    discordKeywords?: string[];
+    discordRules?: DiscordKeywordRule[];
 
     // --- Sound Settings ---
     volumeContentsChecker?: number;

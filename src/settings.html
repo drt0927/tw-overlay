@@ -206,6 +206,7 @@
         </div>
 
 
+
         <div class="nav-item" onclick="showSection('slots', this)">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> 퀵슬롯 관리
         </div>
@@ -662,6 +663,8 @@
         </div>
       </div>
 
+
+
       <!-- 5. 퀵슬롯 관리 (기존 유지) -->
       <div id="section-slots" class="settings-section space-y-8 hidden">
         <div class="w-full">
@@ -895,7 +898,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.14.3</span></p>
+                        class="text-purple-400">1.15.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1433,6 +1436,8 @@
       }
 
 
+
+
       // 단축키 설정 로드
       if (config.shortcuts) {
         currentShortcuts = { ...currentShortcuts, ...config.shortcuts };
@@ -1831,6 +1836,8 @@
           waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
 
 
+
+
         };
         window.electronAPI.applySettings(settings);
         window.electronAPI.saveQuickSlots(validSlots);
@@ -1844,6 +1851,8 @@
       const vol = parseInt(document.getElementById('wave-warning-volume').value) || 70;
       window.electronAPI.previewBossSound(sound, vol, '몬스터 웨이브 종료 대기 알림');
     }
+
+
 
     window.addEventListener('keydown', (e) => {
       if (recordingShortcutKey) {

@@ -19,6 +19,7 @@ import * as diaryDb from './diaryDb';
 import * as backup from './backupManager';
 import { buffTimerManager } from './buffTimerManager';
 import * as scam from './scamMonitor';
+import { discordNotifier } from './discordNotifier';
 
 let _registered = false;
 
@@ -91,6 +92,7 @@ export function register(): void {
     'toggle-xp-hud': wm.toggleXpHudWindow,
     'toggle-siena-aura': wm.toggleSienaAuraWindow,
     'toggle-word-alarm': wm.toggleWordAlarmWindow,
+    'toggle-discord-alarm': wm.toggleDiscordAlarmWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -449,5 +451,15 @@ export function register(): void {
     setTimeout(() => {
       tracker.focusGameWindow();
     }, FOCUS_RESTORE_DELAY_MS);
+  });
+
+  ipcMain.handle('test-discord-webhook', async (_e, webhookUrl: string) => {
+    try {
+      await discordNotifier.sendTest(webhookUrl);
+      return true;
+    } catch (e) {
+      console.error('[DISCORD TEST ERROR]', e);
+      return false;
+    }
   });
 }

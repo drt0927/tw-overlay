@@ -3,6 +3,7 @@
  */
 import * as config from '../config';
 import * as wm from '../windowManager';
+import * as path from 'path';
 import type { MessengerMessage, ScamAnalysisResult } from '../../shared/types';
 
 // ── 상수 ──
@@ -163,6 +164,8 @@ export async function sendAlert(result: ScamAnalysisResult): Promise<void> {
   const alertSound = config.load().scamAlertSound || SCAM_ALERT_SOUND;
   sidebar?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 100 });
   sidebar?.webContents.send('scam-alert', result);
+
+
 }
 
 // ── 테스트 시나리오 ──

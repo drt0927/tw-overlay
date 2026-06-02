@@ -106,6 +106,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 백업 및 복구
   backupExport: () => ipcRenderer.invoke('backup-export'),
   backupImport: () => ipcRenderer.invoke('backup-import'),
+  testDiscordWebhook: (webhookUrl: string) => ipcRenderer.invoke('test-discord-webhook', webhookUrl),
 
   // 채팅 로그
   openChatLogFolderDialog: () => ipcRenderer.invoke('dialog:openChatLogFolder'),
@@ -113,6 +114,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleShoutHistory: () => ipcRenderer.send('toggle-shout-history'),
   playSound: (file: string, volume: number) => ipcRenderer.send('play-sound', { file, volume }),
   toggleWordAlarm: () => ipcRenderer.send('toggle-word-alarm'),
+  toggleDiscordAlarm: () => ipcRenderer.send('toggle-discord-alarm'),
   getWordAlarmHistory: (hours: number) => ipcRenderer.invoke('word-alarm-get-history', hours),
   getWordAlarmContext: (alarmId: number) => ipcRenderer.invoke('word-alarm-get-context', alarmId),
   deleteWordAlarmHistoryItem: (id: number) => ipcRenderer.send('word-alarm-delete-item', id),

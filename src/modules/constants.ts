@@ -138,7 +138,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   waveMonsterWarningEnabled: true,
   waveMonsterWarningSound: 'orb.mp3',
   waveMonsterWarningVolume: 70,
-
+  discordWebhookUrl: '',
+  discordAlertEnabled: false,
+  discordKeywords: [],
+  discordRules: [],
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

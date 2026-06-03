@@ -128,6 +128,8 @@ export interface ShortcutsConfig {
     toggleContentsChecker?: string;
     /** 버프 타이머 HUD 표시 토글 */
     toggleBuffHud?: string;
+    /** Dock 바 토글 */
+    toggleDock?: string;
 }
 
 /** 채팅 로그 버프 감지 트리거 */
@@ -310,7 +312,7 @@ export interface AppConfig {
     // --- Sound Settings ---
     volumeContentsChecker?: number;
     volumeCalculators?: number;
-    sidebarPosition?: 'left' | 'right';
+    sidebarPosition?: 'left' | 'right' | 'dock';
 }
 
 export interface GalleryPost {

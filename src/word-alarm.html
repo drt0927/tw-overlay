@@ -302,6 +302,30 @@
     async function init() {
       window.bindEscapeClose();
 
+      // 초기 설정 바인딩 (레이스 컨디션을 예방하기 위해 가장 먼저 동기 등록)
+      window.electronAPI.onConfigData((config) => {
+        appConfig = config;
+        wordAlarmEnabled = !!config.wordAlarmEnabled;
+        wordAlarmKeywords = JSON.parse(JSON.stringify(config.wordAlarmKeywords || []));
+        wordAlarmSound = config.wordAlarmSound || 'orb.mp3';
+        wordAlarmVolume = config.wordAlarmVolume !== undefined ? config.wordAlarmVolume : 70;
+        wordAlarmHistoryEnabled = config.wordAlarmHistoryEnabled !== false;
+
+        document.getElementById('alarm-toggle').checked = wordAlarmEnabled;
+        document.getElementById('history-save-toggle').checked = wordAlarmHistoryEnabled;
+        
+        // 사운드 셀렉트 박스 옵션이 이미 준비된 경우 설정값 지정
+        const select = document.getElementById('sound-select');
+        if (select && select.options.length > 0) {
+          select.value = wordAlarmSound;
+        }
+        
+        document.getElementById('volume-slider').value = wordAlarmVolume;
+        document.getElementById('volume-val').innerText = wordAlarmVolume + '%';
+
+        renderKeywords();
+      });
+
       // 사운드 파일 목록 로드
       if (window.loadSoundList) {
         soundFiles = await window.loadSoundList();
@@ -313,25 +337,11 @@
           opt.innerText = s.name;
           select.appendChild(opt);
         });
+        // 목록 로딩 완료 후 저장되어 있던 설정값 적용
+        if (wordAlarmSound) {
+          select.value = wordAlarmSound;
+        }
       }
-
-      // 초기 설정 바인딩
-      window.electronAPI.onConfigData((config) => {
-        appConfig = config;
-        wordAlarmEnabled = !!config.wordAlarmEnabled;
-        wordAlarmKeywords = JSON.parse(JSON.stringify(config.wordAlarmKeywords || []));
-        wordAlarmSound = config.wordAlarmSound || 'orb.mp3';
-        wordAlarmVolume = config.wordAlarmVolume !== undefined ? config.wordAlarmVolume : 70;
-        wordAlarmHistoryEnabled = config.wordAlarmHistoryEnabled !== false;
-
-        document.getElementById('alarm-toggle').checked = wordAlarmEnabled;
-        document.getElementById('history-save-toggle').checked = wordAlarmHistoryEnabled;
-        document.getElementById('sound-select').value = wordAlarmSound;
-        document.getElementById('volume-slider').value = wordAlarmVolume;
-        document.getElementById('volume-val').innerText = wordAlarmVolume + '%';
-
-        renderKeywords();
-      });
 
       // DB 업데이트 시그널 리스너 (실시간 히스토리 갱신용)
       if (window.electronAPI.onDiaryUpdated) {

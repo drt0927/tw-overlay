@@ -55,6 +55,17 @@ export function registerAll(): void {
     }
   }
 
+  // 4. Dock 바 토글
+  if (shortcuts.toggleDock) {
+    const registered = globalShortcut.register(shortcuts.toggleDock, () => {
+      log('[SHORTCUT] Toggle Dock');
+      wm.toggleDockWindow();
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleDock}`);
+    }
+  }
+
   log('[SHORTCUT] All shortcuts registered');
 }
 

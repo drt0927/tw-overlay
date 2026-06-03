@@ -145,7 +145,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   bossSettings: { ref: null, pos: { offsetX: -410, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 410, height: 750 },
   etaRanking: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 400, height: 600 },
   trade: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 450, height: 600 },
-  coefficientCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 850, height: 1150 },
+  coefficientCalculator: { ref: null, pos: { offsetX: -1360, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1350, height: 1080 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
@@ -160,6 +160,22 @@ const windowRegistry: Record<string, ManagedWindow> = {
   sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
   wordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'wordAlarm', html: 'word-alarm.html', width: 450, height: 950 },
   discordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'discordAlarm', html: 'discord-alarm.html', width: 450, height: 950 },
+  dock: {
+    ref: null,
+    pos: { offsetX: 0, offsetY: 0 },
+    key: 'dock',
+    html: 'dock.html',
+    width: 800,
+    height: 380,
+    onOpen: (_win) => {
+      sendActiveWindowsStatus();
+    },
+    calcPosition: (gr, _pos) => {
+      const targetX = Math.round(gr.x + (gr.width - 800) / 2);
+      const targetY = Math.round(gr.y + gr.height - 380 - 20); // 하단 내부 중앙 배치 (20px 여백)
+      return { x: targetX, y: targetY };
+    }
+  }
 };
 
 let gameRect: GameRect | null = null;
@@ -545,6 +561,30 @@ export function toggleXpHudWindow(): boolean { return createToggleableWindow('xp
 export function toggleSienaAuraWindow(): boolean { return createToggleableWindow('sienaAura'); }
 export function toggleWordAlarmWindow(): boolean { return createToggleableWindow('wordAlarm'); }
 export function toggleDiscordAlarmWindow(): boolean { return createToggleableWindow('discordAlarm'); }
+
+let isDockVisible = false;
+export function toggleDockWindow(): void {
+  const cfg = config.load();
+  if (cfg.sidebarPosition !== 'dock') return;
+
+  const winCfg = windowRegistry['dock'];
+  if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+    if (winCfg.ref.isVisible()) {
+      isDockVisible = false;
+      winCfg.ref.close();
+    } else {
+      isDockVisible = true;
+      winCfg.ref.show();
+      if (gameRect) {
+        const { x, y } = winCfg.calcPosition!(gameRect, winCfg.pos);
+        winCfg.ref.setPosition(x, y);
+      }
+    }
+  } else {
+    isDockVisible = true;
+    createToggleableWindow('dock');
+  }
+}
 export function toggleContentsCheckerWindow(): boolean {
   return createToggleableWindow('contentsChecker', {
     onReady: (win) => {
@@ -562,10 +602,17 @@ export function toggleContentsCheckerWindow(): boolean {
 export function getAllWindowHwnds(): string[] {
   const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
 
-  // 사이드바(mainWindow)를 항상 첫 번째로 → promoteWindows에서 최하단 Z-Order 유지
+  // 사이드바(mainWindow)와 독바(dock)를 항상 Z-Order 최하단에 배치
+  const dockWin = windowRegistry.dock?.ref;
   windows.sort((a, b) => {
-    if (a === mainWindow) return -1;
-    if (b === mainWindow) return 1;
+    const isSpecialA = (a === mainWindow || a === dockWin);
+    const isSpecialB = (b === mainWindow || b === dockWin);
+    if (isSpecialA && !isSpecialB) return -1;
+    if (!isSpecialA && isSpecialB) return 1;
+    if (isSpecialA && isSpecialB) {
+      if (a === mainWindow) return -1;
+      if (b === mainWindow) return 1;
+    }
     return 0;
   });
 
@@ -610,7 +657,25 @@ export function syncOverlay(currentRect: GameRect): void {
   if (!mainWindow || isApplyingSize) return;
   if (mandatoryUpdateLock) return; // 필수 업데이트 중에는 창 동기화 중지
   if (currentRect && currentRect.x > -10000) {
-    if (!mainWindow.isVisible()) mainWindow.show();
+    const cfg = config.load();
+    const sidebarPos = cfg.sidebarPosition || 'right';
+
+    if (sidebarPos === 'dock') {
+      if (mainWindow.isVisible()) mainWindow.hide();
+      const dockCfg = windowRegistry['dock'];
+      if (!isDockVisible) {
+        if (dockCfg.ref && !dockCfg.ref.isDestroyed()) {
+          dockCfg.ref.close();
+        }
+      }
+    } else {
+      if (!mainWindow.isVisible()) mainWindow.show();
+      const dockCfg = windowRegistry['dock'];
+      if (dockCfg.ref && !dockCfg.ref.isDestroyed()) {
+        dockCfg.ref.close();
+      }
+    }
+
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
     // 물리 좌표를 보존 — applySettings에서 syncOverlay 재호출 시 이중 DIP 변환 방지
     physicalGameRect = { x: currentRect.x, y: currentRect.y, width: currentRect.width, height: currentRect.height, isForeground: currentRect.isForeground };
@@ -645,26 +710,42 @@ export function syncOverlay(currentRect: GameRect): void {
       if (!gameOverlayWindow.isDestroyed() && !gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
     }
 
-    const currentSidebarB = mainWindow.getBounds();
-    const cfg = config.load();
-    const sidebarPos = cfg.sidebarPosition || 'right';
-    // 게임 창이 두 모니터에 걸쳐 있을 때, 중심 기반 모니터 감지가 아닌
-    // 사이드바가 붙는 쪽 엣지(물리 좌표 1×1)를 기준으로 DIP 변환하여 정확히 정렬
-    const edgePhysX = sidebarPos === 'left'
-      ? currentRect.x
-      : currentRect.x + currentRect.width;
-    const edgeDipX = screen.screenToDipRect(null, { x: edgePhysX, y: currentRect.y, width: 1, height: 1 }).x;
-    const newSidebarX = sidebarPos === 'left' ? edgeDipX - currentSidebarB.width : edgeDipX;
-    const newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
-    const newSidebarH = gH - 30; // 제목 표시줄 두께만큼 높이 축소
+    if (sidebarPos === 'dock') {
+      const dockCfg = windowRegistry['dock'];
+      if (isDockVisible) {
+        const scaledGameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };
+        const { x, y } = dockCfg.calcPosition!(scaledGameRect, dockCfg.pos);
+        if (!dockCfg.ref || dockCfg.ref.isDestroyed()) {
+          createToggleableWindow('dock');
+        } else {
+          if (!dockCfg.ref.isVisible()) dockCfg.ref.showInactive();
+          const b = dockCfg.ref.getBounds();
+          if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
+            setProgrammaticMove('dock');
+            dockCfg.ref.setPosition(x, y);
+          }
+        }
+      }
+    } else {
+      const currentSidebarB = mainWindow.getBounds();
+      const edgePhysX = sidebarPos === 'left'
+        ? currentRect.x
+        : currentRect.x + currentRect.width;
+      const edgeDipX = screen.screenToDipRect(null, { x: edgePhysX, y: currentRect.y, width: 1, height: 1 }).x;
+      const newSidebarX = sidebarPos === 'left' ? edgeDipX - currentSidebarB.width : edgeDipX;
+      const newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
+      const newSidebarH = gH - 30; // 제목 표시줄 두께만큼 높이 축소
 
-    if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD ||
-      Math.abs(currentSidebarB.y - newSidebarY) > POSITION_THRESHOLD ||
-      Math.abs(currentSidebarB.height - newSidebarH) > POSITION_THRESHOLD) {
-      setProgrammaticMove('main');
-      mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: newSidebarH });
+      if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD ||
+        Math.abs(currentSidebarB.y - newSidebarY) > POSITION_THRESHOLD ||
+        Math.abs(currentSidebarB.height - newSidebarH) > POSITION_THRESHOLD) {
+        setProgrammaticMove('main');
+        mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: newSidebarH });
+      }
     }
+
     Object.keys(windowRegistry).forEach(key => {
+      if (key === 'dock') return;
       const winCfg = windowRegistry[key];
       if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {
         setProgrammaticMove(key);
@@ -678,6 +759,7 @@ export function syncOverlay(currentRect: GameRect): void {
     });
     gameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };
     closeSplashWindow();
+    sendActiveWindowsStatus();
   } else {
     // 게임 창을 찾을 수 없는 경우: 사이드바/오버레이 숨김 및 추적 해제
     hideOverlayWindows();
@@ -827,6 +909,12 @@ export function hideOverlayWindows(): void {
     gameOverlayWindow.hide();
   }
 
+  // 독바 숨김
+  const dockCfg = windowRegistry['dock'];
+  if (dockCfg && dockCfg.ref && !dockCfg.ref.isDestroyed() && dockCfg.ref.isVisible()) {
+    dockCfg.ref.hide();
+  }
+
   isTracking = false;
   gameRect = null; // 게임 상태 초기화
   physicalGameRect = null;
@@ -874,5 +962,20 @@ export function showGameExitReminder(): void {
     reminderWin.show();
     reminderWin.focus();
   });
+}
+
+export function sendActiveWindowsStatus(): void {
+  const activeKeys: string[] = [];
+  Object.keys(windowRegistry).forEach(key => {
+    if (key === 'dock') return;
+    const winCfg = windowRegistry[key];
+    if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {
+      activeKeys.push(key);
+    }
+  });
+  const dockCfg = windowRegistry['dock'];
+  if (dockCfg && dockCfg.ref && !dockCfg.ref.isDestroyed()) {
+    dockCfg.ref.webContents.send('active-windows', activeKeys);
+  }
 }
 

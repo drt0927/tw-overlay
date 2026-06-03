@@ -4,6 +4,7 @@ import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPos
 contextBridge.exposeInMainWorld('electronAPI', {
   // 창 제어
   toggleSidebar: () => ipcRenderer.send('toggle-sidebar'),
+  toggleDock: () => ipcRenderer.send('toggle-dock'),
   toggleOverlay: () => ipcRenderer.send('toggle-overlay'),
   toggleClickThrough: () => ipcRenderer.send('toggle-click-through'),
   toggleSettings: (tabId?: string) => ipcRenderer.send('toggle-settings', tabId),
@@ -149,6 +150,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onClickThroughStatus: (callback: (status: boolean) => void) => {
     ipcRenderer.removeAllListeners('click-through-status');
     ipcRenderer.on('click-through-status', (_event, status) => callback(status));
+  },
+  onActiveWindows: (callback: (activeKeys: string[]) => void) => {
+    ipcRenderer.removeAllListeners('active-windows');
+    ipcRenderer.on('active-windows', (_event, activeKeys) => callback(activeKeys));
   },
   onConfigData: (callback: (config: AppConfig) => void) => {
     ipcRenderer.removeAllListeners('config-data');

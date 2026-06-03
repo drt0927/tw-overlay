@@ -217,6 +217,29 @@
     let killedActivities = new Set();
     const ALLOWED_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
 
+    // 레이스 컨디션 예방을 위해 최상단에서 리스너를 동기식으로 먼저 등록합니다.
+    window.electronAPI.onConfigData((data) => {
+      config = data;
+      // 공통 설정 로드
+      const enabledCheck = document.getElementById('boss-enabled-check');
+      if (enabledCheck) enabledCheck.checked = config.fieldBossNotifyEnabled !== false;
+      const currentOffsets = config.fieldBossNotifyOffsets || [0];
+      document.querySelectorAll('.boss-offset-check').forEach(cb => {
+        cb.checked = currentOffsets.includes(parseInt(cb.value));
+      });
+      const vol = config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50;
+      const volInput = document.getElementById('boss-volume-input');
+      const volVal = document.getElementById('boss-volume-val');
+      if (volInput) volInput.value = vol;
+      if (volVal) volVal.textContent = vol + '%';
+      render();
+    });
+
+    window.electronAPI.onBossTimesData((times) => {
+      bossTimes = times;
+      render();
+    });
+
     function getTodayDateStr() {
       const now = new Date();
       const year = now.getFullYear();
@@ -249,25 +272,6 @@
 
       render();
     };
-
-    window.electronAPI.onConfigData((data) => {
-      config = data;
-      // 공통 설정 로드
-      document.getElementById('boss-enabled-check').checked = config.fieldBossNotifyEnabled !== false;
-      const currentOffsets = config.fieldBossNotifyOffsets || [0];
-      document.querySelectorAll('.boss-offset-check').forEach(cb => {
-        cb.checked = currentOffsets.includes(parseInt(cb.value));
-      });
-      const vol = config.fieldBossNotifyVolume !== undefined ? config.fieldBossNotifyVolume : 50;
-      document.getElementById('boss-volume-input').value = vol;
-      document.getElementById('boss-volume-val').textContent = vol + '%';
-      render();
-    });
-
-    window.electronAPI.onBossTimesData((times) => {
-      bossTimes = times;
-      render();
-    });
 
     function render() {
       if (!config || Object.keys(bossTimes).length === 0 || soundFiles.length === 0) return;

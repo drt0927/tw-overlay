@@ -906,30 +906,60 @@
       refreshIcons();
     });
 
-    window.electronAPI.onConfigData(async (config) => {
+    let soundFiles = [];
+
+    window.electronAPI.onConfigData((config) => {
       cfg = config;
-      if (window.loadSoundList) {
-        const sounds = await window.loadSoundList();
-        const sel = document.getElementById('sound-select');
-        sel.innerHTML = sounds.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
-        if (config.buffTimerSound) sel.value = config.buffTimerSound;
-      }
-      document.getElementById('master-toggle').checked = config.buffTimerEnabled !== false;
-      document.getElementById('show-hud-toggle').checked = config.showBuffHud !== false;
-      document.getElementById('audio-toggle').checked = config.buffTimerAudioAlert !== false;
-      document.getElementById('visual-toggle').checked = config.buffTimerVisualAlert !== false;
+      
+      const masterToggle = document.getElementById('master-toggle');
+      if (masterToggle) masterToggle.checked = config.buffTimerEnabled !== false;
+      const showHudToggle = document.getElementById('show-hud-toggle');
+      if (showHudToggle) showHudToggle.checked = config.showBuffHud !== false;
+      const audioToggle = document.getElementById('audio-toggle');
+      if (audioToggle) audioToggle.checked = config.buffTimerAudioAlert !== false;
+      const visualToggle = document.getElementById('visual-toggle');
+      if (visualToggle) visualToggle.checked = config.buffTimerVisualAlert !== false;
+      
       const vol = config.buffTimerVolume ?? 70;
-      document.getElementById('volume-slider').value = vol;
-      document.getElementById('volume-val').textContent = vol;
+      const volSlider = document.getElementById('volume-slider');
+      if (volSlider) volSlider.value = vol;
+      const volVal = document.getElementById('volume-val');
+      if (volVal) volVal.textContent = vol;
+      
       warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
       buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, stat_izabel_ratio: true, util_illumination: true }) };
+      
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
-      document.getElementById('hud-pos-left').value = hudPos.left;
-      document.getElementById('hud-pos-bottom').value = hudPos.bottom;
+      const posLeft = document.getElementById('hud-pos-left');
+      if (posLeft) posLeft.value = hudPos.left;
+      const posBottom = document.getElementById('hud-pos-bottom');
+      if (posBottom) posBottom.value = hudPos.bottom;
+
+      // 사운드 셀렉트 박스 옵션이 이미 준비된 경우 설정값 지정
+      const sel = document.getElementById('sound-select');
+      if (sel && sel.options.length > 0 && config.buffTimerSound) {
+        sel.value = config.buffTimerSound;
+      }
+
       renderBuffList(); setupAddChip(); renderWarnChips(); refreshIcons();
     });
 
-    window.onload = () => { refreshIcons(); if (window.bindEscapeClose) window.bindEscapeClose(); };
+    window.onload = async () => {
+      refreshIcons(); 
+      if (window.bindEscapeClose) window.bindEscapeClose();
+
+      // 사운드 파일 목록은 로드 시점에 1회만 비동기로 가져옵니다.
+      if (window.loadSoundList) {
+        soundFiles = await window.loadSoundList();
+        const sel = document.getElementById('sound-select');
+        if (sel) {
+          sel.innerHTML = soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+          if (cfg && cfg.buffTimerSound) {
+            sel.value = cfg.buffTimerSound;
+          }
+        }
+      }
+    };
     window.addEventListener('beforeunload', () => window.electronAPI.buffTimerClearTest());
   </script>
 </body>

@@ -281,6 +281,13 @@
                       <p class="text-[10px] text-slate-500 mt-0.5">게임 창 오른쪽에 붙음 (기본)</p>
                     </div>
                   </label>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="sidebar-position" value="dock" class="w-5 h-5 accent-purple-600">
+                    <div>
+                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">하단 독(Dock) 배치</span>
+                      <p class="text-[10px] text-slate-500 mt-0.5">게임창 내부 하단 중앙에 macOS 스타일 독바 노출<br><span class="text-purple-400 font-bold">(단축키: <span id="dock-shortcut-guide">Ctrl + Shift + D</span>로 보이기/숨기기 토글)</span></p>
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>
@@ -820,6 +827,25 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 4. 하단 독(Dock) 표시 토글 -->
+              <div class="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5 group">
+                <div class="flex flex-col gap-1">
+                  <span class="text-sm font-bold text-slate-200">하단 독(Dock) 표시 토글</span>
+                  <p class="text-[10px] text-slate-500">하단 독바의 보이기/숨기기 가시성을 제어합니다.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="relative">
+                    <input type="text" id="shortcut-toggleDock" readonly
+                      class="shortcut-input w-48 text-center font-mono text-xs py-2.5 px-4 bg-black/40 border border-white/10 rounded-lg text-purple-400 cursor-pointer focus:border-purple-500/50 outline-none transition-all"
+                      placeholder="단축키 입력..." onclick="recordShortcut('toggleDock')">
+                    <button onclick="resetShortcut('toggleDock')"
+                      class="absolute -right-2 -top-2 w-5 h-5 bg-slate-800 border border-white/10 rounded-full text-slate-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                      <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="mt-4 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
@@ -1109,7 +1135,8 @@
     let currentShortcuts = {
       toggleClickThrough: 'CommandOrControl+Shift+T',
       toggleContentsChecker: 'CommandOrControl+Shift+C',
-      toggleBuffHud: 'CommandOrControl+Shift+B'
+      toggleBuffHud: 'CommandOrControl+Shift+B',
+      toggleDock: 'CommandOrControl+Shift+D'
     };
 
     function recordShortcut(key) {
@@ -1168,10 +1195,14 @@
         toggleClickThrough: 'CommandOrControl+Shift+T',
         toggleContentsChecker: 'CommandOrControl+Shift+C',
         toggleBuffHud: 'CommandOrControl+Shift+B',
+        toggleDock: 'CommandOrControl+Shift+D'
       };
       currentShortcuts[key] = defaults[key];
       const input = document.getElementById(`shortcut-${key}`);
       if (input) input.value = defaults[key];
+      if (key === 'toggleDock') {
+        updateDockShortcutGuide();
+      }
     }
 
     function handleShortcutKeyDown(e) {
@@ -1213,6 +1244,17 @@
       if (input) input.value = shortcutStr;
 
       stopRecording();
+      if (recordingShortcutKey === 'toggleDock') {
+        updateDockShortcutGuide();
+      }
+    }
+
+    function updateDockShortcutGuide() {
+      const toggleDockShortcut = currentShortcuts.toggleDock || 'CommandOrControl+Shift+D';
+      const guideEl = document.getElementById('dock-shortcut-guide');
+      if (guideEl) {
+        guideEl.innerText = toggleDockShortcut.replace('CommandOrControl', 'Ctrl');
+      }
     }
 
     let _configReady = false;
@@ -1446,6 +1488,7 @@
         const input = document.getElementById(`shortcut-${key}`);
         if (input) input.value = currentShortcuts[key];
       });
+      updateDockShortcutGuide();
 
       const tradeServer = config.tradeServer || 'RyXp';
       document.querySelectorAll('input[name="trade-server"]').forEach(radio => {

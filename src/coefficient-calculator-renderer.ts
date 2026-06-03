@@ -211,8 +211,8 @@ function updateGuide(coeff: number, hit: number, coreCoeff: number) {
     const cur = ct.isOdin ? (coeff - coreCoeff) : coeff;
     const status = ct.target === 0 ? '정보부족' : ct.calc(cur), hitOk = hit >= ct.hit, color = status === '원활' ? 'text-green-400' : status === '가능' ? 'text-yellow-400' : status === '힘듬' ? 'text-orange-400' : 'text-red-400';
     const pct = ct.target > 0 ? Math.min(100, Math.floor((cur / ct.target) * 100)) : 0;
-    const div = document.createElement('div'); div.className = 'bg-slate-900/60 p-3 rounded-xl border border-slate-800/50 space-y-1.5 mb-2';
-    div.innerHTML = `<div class="flex justify-between items-center"><span class="text-slate-200 text-[12px] font-black">${ct.name}</span><div class="flex gap-2"><span class="${hitOk ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold">DEX ${ct.hit} ${hitOk ? 'OK' : '부족'}</span><span class="${color} text-[10px] font-black">${status}</span></div></div><div class="flex justify-between text-[9px] text-slate-500 font-bold"><span>목표: ${ct.target > 0 ? ct.target.toLocaleString() : '미정'}</span><span>현재: ${Math.floor(cur).toLocaleString()} ${ct.target > 0 ? `(${pct}%)` : ''}</span></div>${ct.target > 0 ? `<div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full ${pct >= 100 ? (hitOk ? 'bg-green-500' : 'bg-yellow-500') : 'bg-blue-500'}" style="width: ${pct}%"></div></div>` : ''}`;
+    const div = document.createElement('div'); div.className = 'bg-slate-900/60 p-3 rounded-xl border border-slate-800/50 flex flex-col justify-between space-y-2';
+    div.innerHTML = `<div class="flex justify-between items-center"><span class="text-slate-200 text-[13px] font-black truncate max-w-[110px]" title="${ct.name}">${ct.name}</span><span class="${color} text-[11px] font-black">${status}</span></div><div class="flex justify-between items-center"><span class="${hitOk ? 'text-green-500' : 'text-red-500'} text-[11px] font-bold">DEX ${ct.hit}</span><span class="${hitOk ? 'text-green-500/20 bg-green-500/10' : 'text-red-500/20 bg-red-500/10'} text-[9px] font-black px-1 rounded">${hitOk ? 'OK' : '부족'}</span></div><div class="flex justify-between text-[11px] text-slate-500 font-bold"><span>목표: ${ct.target > 0 ? ct.target.toLocaleString() : '미정'}</span><span>현재: ${Math.floor(cur).toLocaleString()} ${ct.target > 0 ? `(${pct}%)` : ''}</span></div>${ct.target > 0 ? `<div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-0.5"><div class="h-full ${pct >= 100 ? (hitOk ? 'bg-green-500' : 'bg-yellow-500') : 'bg-blue-500'}" style="width: ${pct}%"></div></div>` : ''}`;
     container.appendChild(div);
   });
 }
@@ -278,9 +278,12 @@ function updateLabels() {
   });
   const sn = document.getElementById('current-series-name'), ab = document.querySelector(`.tab-btn[data-type="${currentType}"]`); if (sn && ab) sn.innerText = ab.textContent || "";
   const f = document.getElementById('sum-formula'); if (f) {
-    if (['stab', 'hack'].includes(currentType)) f.innerText = `장비(${m}*23.75 + ${s}*3.75) + 강화(${m}*32.5 + ${s}*18.75) + 캐릭터(${m}*2.1 + ${s}*1.08) + 코어*32.5`;
-    else if (currentType === 'phycomp') f.innerText = `장비(${m}*14.5 + ${s}*14.5) + 강화(${m}*28.75 + ${s}*28.75) + 캐릭터(${m}*1.8 + ${s}*1.8) + 코어*32.5`;
-    else f.innerText = `장비(${m}*23.75 + ${s}*2.5) + 강화(${m}*32.5 + ${s}*18.25) + 캐릭터(${m}*2.4 + ${s}*0.6) + 코어*32.5`;
+    let formulaText = '';
+    if (['stab', 'hack'].includes(currentType)) formulaText = `장비(${m}*23.75 + ${s}*3.75) + 강화(${m}*32.5 + ${s}*18.75) + 캐릭터(${m}*2.1 + ${s}*1.08) + 코어*32.5`;
+    else if (currentType === 'phycomp') formulaText = `장비(${m}*14.5 + ${s}*14.5) + 강화(${m}*28.75 + ${s}*28.75) + 캐릭터(${m}*1.8 + ${s}*1.8) + 코어*32.5`;
+    else formulaText = `장비(${m}*23.75 + ${s}*2.5) + 강화(${m}*32.5 + ${s}*18.25) + 캐릭터(${m}*2.4 + ${s}*0.6) + 코어*32.5`;
+    f.innerText = formulaText;
+    f.title = formulaText;
   }
 }
 

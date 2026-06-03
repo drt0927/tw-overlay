@@ -95,7 +95,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   shortcuts: {
     toggleClickThrough: 'CommandOrControl+Shift+T',
     toggleContentsChecker: 'CommandOrControl+Shift+C',
-    toggleBuffHud: 'CommandOrControl+Shift+B'
+    toggleBuffHud: 'CommandOrControl+Shift+B',
+    toggleDock: 'CommandOrControl+Shift+D'
   },
   volumeContentsChecker: 50,
   volumeCalculators: 50,

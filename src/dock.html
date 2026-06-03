@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Dock Launcher</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: transparent !important;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 100vh;
+      user-select: none;
+    }
+
+    /* macOS Dock 스타일의 반투명 유리 바 패널 (다단 지원) */
+    .dock-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(15, 18, 30, 0.85) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 8px 12px;
+      gap: 4px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 780px;
+      height: auto;
+      max-height: none; /* 5row 배치를 안정적으로 담기 위해 최대 높이 제한 해제 */
+      box-sizing: border-box;
+    }
+
+    .dock-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      -webkit-app-region: no-drag;
+    }
+
+    /* 일반과 시스템 영역을 구분하는 은은한 가로선 */
+    .dock-divider {
+      width: 95%;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 2px 0;
+    }
+
+    /* 각 아이콘 항목 스타일 */
+    .dock-item {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      color: #94a3b8;
+      cursor: pointer;
+      border: 1px solid transparent; /* 보더 미리 확보하여 레이아웃 꿈틀거림 방지 */
+      box-sizing: border-box;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      -webkit-app-region: no-drag;
+    }
+
+    /* 호버 시 macOS 줌, 들림 효과 및 테마 컬러 포커싱 */
+    .dock-item:hover {
+      transform: scale(1.22) translateY(-8px);
+      color: var(--theme-color, #f8fafc);
+      background: var(--theme-glow, rgba(255, 255, 255, 0.08)) !important;
+      border-color: rgba(255, 255, 255, 0.12); /* border-color만 변경하여 1px 격차에 따른 레이아웃 시프트 방지 */
+      box-shadow: 0 8px 24px var(--theme-glow, rgba(0, 0, 0, 0.3));
+    }
+
+    .dock-item i {
+      width: 20px;
+      height: 20px;
+      color: #94a3b8;
+      transition: all 0.2s;
+    }
+
+    .dock-item:hover i {
+      color: var(--theme-color) !important;
+      filter: drop-shadow(0 0 6px var(--theme-color));
+    }
+
+    /* 테마 색상 및 글로우 HSL 변수 정의 */
+    .color-purple-400 { --theme-color: #c084fc; --theme-glow: rgba(192, 132, 252, 0.15); }
+    .color-emerald-400 { --theme-color: #34d399; --theme-glow: rgba(52, 211, 153, 0.15); }
+    .color-indigo-400 { --theme-color: #818cf8; --theme-glow: rgba(129, 140, 248, 0.15); }
+    .color-blue-400 { --theme-color: #60a5fa; --theme-glow: rgba(96, 165, 250, 0.15); }
+    .color-amber-400 { --theme-color: #fbbf24; --theme-glow: rgba(251, 191, 36, 0.15); }
+    .color-red-400 { --theme-color: #f87171; --theme-glow: rgba(248, 113, 113, 0.15); }
+    .color-pink-400 { --theme-color: #f472b6; --theme-glow: rgba(244, 114, 182, 0.15); }
+    .color-violet-400 { --theme-color: #a78bfa; --theme-glow: rgba(167, 139, 250, 0.15); }
+    .color-cyan-400 { --theme-color: #22d3ee; --theme-glow: rgba(34, 211, 238, 0.15); }
+    .color-lime-400 { --theme-color: #a3e635; --theme-glow: rgba(163, 230, 53, 0.15); }
+    .color-orange-400 { --theme-color: #fb923c; --theme-glow: rgba(251, 146, 60, 0.15); }
+    .color-teal-400 { --theme-color: #2dd4bf; --theme-glow: rgba(45, 212, 191, 0.15); }
+    .color-rose-400 { --theme-color: #fb7185; --theme-glow: rgba(251, 113, 133, 0.15); }
+    .color-purple-500 { --theme-color: #a855f7; --theme-glow: rgba(168, 85, 247, 0.15); }
+    .color-slate-400 { --theme-color: #cbd5e1; --theme-glow: rgba(203, 213, 225, 0.15); }
+
+    /* 활성화 인디케이터 닷 (개별 테마 적용) */
+    .indicator-dot {
+      position: absolute;
+      bottom: 2.5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--theme-color, #f8fafc);
+      box-shadow: 0 0 6px var(--theme-color, #f8fafc);
+      opacity: 0;
+      transition: opacity 0.2s, background-color 0.2s;
+    }
+
+    .dock-item.active .indicator-dot {
+      opacity: 1;
+    }
+
+    /* 툴팁 */
+    .dock-tooltip {
+      position: absolute;
+      bottom: 48px; /* 여유 공간 확보로 살짝 높임 */
+      background: rgba(15, 18, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #ede9fe;
+      padding: 5px 9px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .dock-item:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="dock-container" id="dock-bar">
+    <div class="dock-section" id="normal-section"></div>
+    <div class="dock-divider" id="divider-1"></div>
+    <div class="dock-section" id="quickslot-section"></div>
+    <div class="dock-divider" id="divider-2"></div>
+    <div class="dock-section" id="system-section"></div>
+  </div>
+
+  <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+  <script>
+    let appConfig = null;
+    let menuData = [];
+    let activeKeys = [];
+
+    async function loadMenus() {
+      try {
+        const res = await fetch('assets/data/sidebar_menus.json');
+        menuData = await res.json();
+        renderDock();
+      } catch (e) {
+        console.error('Failed to load dock menus:', e);
+      }
+    }
+
+    function renderDock() {
+      if (!menuData.length) return;
+
+      const normalSection = document.getElementById('normal-section');
+      const quickslotSection = document.getElementById('quickslot-section');
+      const systemSection = document.getElementById('system-section');
+      const divider1 = document.getElementById('divider-1');
+      const divider2 = document.getElementById('divider-2');
+
+      normalSection.innerHTML = '';
+      quickslotSection.innerHTML = '';
+      systemSection.innerHTML = '';
+
+      // 1. 일반 섹션 첫 번째 메뉴로 '독 숨기기' 추가
+      const hideDockItem = document.createElement('div');
+      hideDockItem.className = 'dock-item color-slate-400';
+      hideDockItem.id = 'dock-hide-btn';
+      hideDockItem.innerHTML = `
+        <i data-lucide="chevrons-down"></i>
+        <span class="indicator-dot"></span>
+        <span class="dock-tooltip">독 숨기기</span>
+      `;
+      hideDockItem.onclick = () => {
+        if (window.electronAPI.toggleDock) {
+          window.electronAPI.toggleDock();
+        }
+      };
+      normalSection.appendChild(hideDockItem);
+
+      const hiddenMenuIds = (appConfig && appConfig.hiddenMenuIds) || [];
+
+      // 2. 일반 메뉴 렌더링
+      menuData.forEach(menu => {
+        if (menu.isSystem) return; // 시스템 메뉴는 아래에서 분리 처리
+        if (hiddenMenuIds.includes(menu.id)) return; // 숨김 적용
+
+        const item = document.createElement('div');
+        const colorClass = menu.color ? `color-${menu.color}` : 'color-slate-400';
+        item.className = `dock-item ${colorClass}`;
+        item.id = `dock-${menu.id}`;
+        
+        const windowKey = menu.api ? menu.api.replace('toggle', '').replace('Window', '') : '';
+        const camelKey = windowKey ? windowKey.charAt(0).toLowerCase() + windowKey.slice(1) : '';
+        item.dataset.winKey = camelKey;
+
+        item.innerHTML = `
+          <i data-lucide="${menu.icon}"></i>
+          <span class="indicator-dot"></span>
+          <span class="dock-tooltip">${menu.label}</span>
+        `;
+
+        item.onclick = () => {
+          if (menu.action === 'openGallery') {
+            if (window.electronAPI.toggleGallery) window.electronAPI.toggleGallery();
+          } else if (menu.api && window.electronAPI[menu.api]) {
+            window.electronAPI[menu.api]();
+          }
+        };
+
+        normalSection.appendChild(item);
+      });
+
+      // 2-1. 사용자가 추가한 퀵슬롯(사이트 목록) 렌더링
+      const quickSlots = (appConfig && appConfig.quickSlots) || [];
+      const validSlots = quickSlots.filter(slot => slot && slot.url);
+
+      if (validSlots.length > 0) {
+        quickslotSection.style.display = 'flex';
+        divider1.style.display = 'block';
+        divider2.style.display = 'block';
+
+        validSlots.forEach((slot, i) => {
+          const item = document.createElement('div');
+          item.className = 'dock-item color-slate-400';
+          item.id = `dock-quickslot-${i}`;
+          item.dataset.winKey = ''; // 퀵슬롯은 켜져있는 오버레이를 공유하므로 개별 닷 표시 불필요
+
+          const iconHtml = slot.iconType === 'text' && slot.textChar 
+            ? `<span class="tw-slot-text" style="font-size: 14px; font-weight: 900; color: var(--theme-color, #94a3b8); transition: all 0.2s;">${slot.textChar}</span>` 
+            : `<i data-lucide="${slot.icon || 'link'}"></i>`;
+
+          item.innerHTML = `
+            ${iconHtml}
+            <span class="indicator-dot"></span>
+            <span class="dock-tooltip">${slot.label || 'LINK'}</span>
+          `;
+
+          item.onclick = () => {
+            if (slot.external) {
+              window.electronAPI.openExternal(slot.url);
+            } else {
+              window.electronAPI.navigate(slot.url);
+            }
+          };
+
+          quickslotSection.appendChild(item);
+        });
+      } else {
+        // 등록된 퀵슬롯이 없으면 퀵슬롯 전용 Row 및 구분선 감춤
+        quickslotSection.style.display = 'none';
+        divider1.style.display = 'none';
+        divider2.style.display = 'block'; // 일반과 시스템 경계선으로 단일 노출 유지
+      }
+
+      // 3. 시스템 관련 메뉴 렌더링 (홈페이지, 오버레이 토글, 마우스 투과 토글)
+      menuData.forEach(menu => {
+        if (!menu.isSystem) return;
+
+        const item = document.createElement('div');
+        const colorClass = menu.color ? `color-${menu.color}` : 'color-slate-400';
+        item.className = `dock-item ${colorClass}`;
+        item.id = `dock-${menu.id}`;
+        
+        const windowKey = menu.api ? menu.api.replace('toggle', '').replace('Window', '') : '';
+        const camelKey = windowKey ? windowKey.charAt(0).toLowerCase() + windowKey.slice(1) : '';
+        item.dataset.winKey = camelKey;
+
+        item.innerHTML = `
+          <i data-lucide="${menu.icon}"></i>
+          <span class="indicator-dot"></span>
+          <span class="dock-tooltip">${menu.label}</span>
+        `;
+
+        item.onclick = () => {
+          if (menu.action === 'openGallery') {
+            if (window.electronAPI.toggleGallery) window.electronAPI.toggleGallery();
+          } else if (menu.api && window.electronAPI[menu.api]) {
+            window.electronAPI[menu.api]();
+          }
+        };
+
+        systemSection.appendChild(item);
+      });
+
+      // 4. 하드코딩된 시스템 제어 메뉴 추가 고정 노출 (환경 설정, 후원, 종료)
+      const systemItems = [
+        {
+          id: 'settings-btn',
+          label: '환경 설정',
+          icon: 'settings',
+          color: 'slate-400',
+          api: 'toggleSettings',
+          isSystem: true
+        },
+        {
+          id: 'sponsor-btn',
+          label: '후원하기 🧚',
+          icon: 'feather',
+          color: 'purple-400',
+          action: 'openSponsor',
+          isSystem: true
+        },
+        {
+          id: 'close-btn',
+          label: '앱 종료',
+          icon: 'power',
+          color: 'red-400',
+          api: 'closeApp',
+          isSystem: true
+        }
+      ];
+
+      systemItems.forEach(menu => {
+        const item = document.createElement('div');
+        const colorClass = menu.color ? `color-${menu.color}` : 'color-slate-400';
+        item.className = `dock-item ${colorClass}`;
+        item.id = `dock-${menu.id}`;
+        
+        const windowKey = menu.api ? menu.api.replace('toggle', '').replace('Window', '') : '';
+        const camelKey = windowKey ? windowKey.charAt(0).toLowerCase() + windowKey.slice(1) : '';
+        item.dataset.winKey = camelKey;
+
+        item.innerHTML = `
+          <i data-lucide="${menu.icon}"></i>
+          <span class="indicator-dot"></span>
+          <span class="dock-tooltip">${menu.label}</span>
+        `;
+
+        item.onclick = () => {
+          if (menu.action === 'openSponsor') {
+            window.electronAPI.openExternal('https://fairy.hada.io/@filbert');
+          } else if (menu.api && window.electronAPI[menu.api]) {
+            window.electronAPI[menu.api]();
+          }
+        };
+
+        systemSection.appendChild(item);
+      });
+
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+
+      updateActiveStates();
+    }
+
+    function updateActiveStates() {
+      document.querySelectorAll('.dock-item').forEach(item => {
+        const key = item.dataset.winKey;
+        if (key && activeKeys.includes(key)) {
+          item.classList.add('active');
+        } else {
+          // 특수 예외 케이스 처리
+          if (item.id === 'dock-gallery-btn' && activeKeys.includes('gallery')) {
+            item.classList.add('active');
+            return;
+          }
+          if (item.id === 'dock-overlay-toggle-btn' && activeKeys.includes('overlay')) {
+            item.classList.add('active');
+            return;
+          }
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    // 설정 데이터 이벤트 수신
+    window.electronAPI.onConfigData((config) => {
+      appConfig = config;
+      renderDock();
+    });
+
+    // 현재 활성화된 창 목록 수신
+    window.electronAPI.onActiveWindows((keys) => {
+      activeKeys = keys;
+      updateActiveStates();
+    });
+
+    // 로드
+    loadMenus();
+    if (window.bindEscapeClose) {
+      window.bindEscapeClose();
+    }
+  </script>
+</body>
+</html>

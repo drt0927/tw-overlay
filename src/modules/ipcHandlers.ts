@@ -78,6 +78,7 @@ export function register(): void {
     'toggle-boss-settings': wm.toggleBossSettingsWindow,
     'toggle-eta-ranking': wm.toggleEtaRankingWindow,
     'toggle-sidebar': wm.toggleSidebar,
+    'toggle-dock': wm.toggleDockWindow,
     'toggle-overlay': wm.toggleOverlay,
     'toggle-click-through': wm.toggleClickThrough,
     'toggle-trade': wm.toggleTradeWindow,

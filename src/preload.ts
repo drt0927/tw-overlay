@@ -59,6 +59,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
   saveQuickSlots: (slots: QuickSlotItem[]) => ipcRenderer.send('save-quick-slots', slots),
   applySettings: (settings: Partial<AppConfig>) => ipcRenderer.send('apply-settings', settings),
+  setChatOverlaySize: (mode: 'main' | 'sub1' | 'sub2', width: number, height: number) => ipcRenderer.send('set-chat-overlay-size', mode, width, height),
   previewBossSound: (soundFile: string, volume: number | null = null, bossName: string = '미리보기') => ipcRenderer.send('preview-boss-sound', soundFile, volume, bossName),
   checkForUpdates: () => ipcRenderer.send('check-for-updates'),
   startUpdateDownload: () => ipcRenderer.send('start-update-download'),
@@ -113,6 +114,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openChatLogFolderDialog: () => ipcRenderer.invoke('dialog:openChatLogFolder'),
   getShoutHistory: (hours: number, searchQuery: string) => ipcRenderer.invoke('diary-get-shout-history', hours, searchQuery),
   toggleShoutHistory: () => ipcRenderer.send('toggle-shout-history'),
+  
+  // 채팅 오버레이
+  toggleChatOverlay: () => ipcRenderer.send('toggle-chat-overlay'),
+  toggleChatOverlaySub: (subNum: 1 | 2) => ipcRenderer.send('toggle-chat-overlay-sub', subNum),
+  getChatHistory: (category: string) => ipcRenderer.invoke('chat-get-history', category),
+  getMoreChatHistory: (category: string) => ipcRenderer.invoke('chat-get-more-history', category),
+  openTodayLog: () => ipcRenderer.send('chat-open-today-log'),
+  fetchEtaRankings: () => ipcRenderer.invoke('chat-fetch-eta-rankings'),
+  getEtaCacheStatus: () => ipcRenderer.invoke('chat-get-eta-cache-status'),
+  
   playSound: (file: string, volume: number) => ipcRenderer.send('play-sound', { file, volume }),
   toggleWordAlarm: () => ipcRenderer.send('toggle-word-alarm'),
   toggleDiscordAlarm: () => ipcRenderer.send('toggle-discord-alarm'),
@@ -146,6 +157,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOverlayStatus: (callback: (status: boolean) => void) => {
     ipcRenderer.removeAllListeners('overlay-status');
     ipcRenderer.on('overlay-status', (_event, status) => callback(status));
+  },
+  onChatOverlayStatus: (callback: (status: boolean) => void) => {
+    ipcRenderer.removeAllListeners('chat-overlay-status');
+    ipcRenderer.on('chat-overlay-status', (_event, status) => callback(status));
   },
   onClickThroughStatus: (callback: (status: boolean) => void) => {
     ipcRenderer.removeAllListeners('click-through-status');
@@ -303,6 +318,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('abandoned-hide-now');
     ipcRenderer.on('abandoned-hide-now', () => callback());
   },
+  onChatUpdated: (callback: (chatItem: any) => void) => {
+    ipcRenderer.removeAllListeners('chat-updated');
+    ipcRenderer.on('chat-updated', (_event, chatItem) => callback(chatItem));
+  },
+  onChatOverlayMode: (callback: (mode: 'main' | 'sub1' | 'sub2') => void) => {
+    ipcRenderer.removeAllListeners('chat-overlay-mode');
+    ipcRenderer.on('chat-overlay-mode', (_event, mode) => callback(mode));
+  },
   abandonedGetState: () => ipcRenderer.invoke('abandoned-get-state'),
   abandonedForceVisible: (visible: boolean) => ipcRenderer.send('abandoned-force-visible', visible),
   abandonedSetEnabled: (enabled: boolean) => ipcRenderer.send('abandoned-set-enabled', enabled),
@@ -311,14 +334,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   cleanupAllListeners: () => {
     const events = [
-      'sidebar-status', 'overlay-status', 'click-through-status', 'config-data',
+      'sidebar-status', 'overlay-status', 'chat-overlay-status', 'click-through-status', 'config-data',
       'url-change', 'load-status', 'gallery-posts', 'gallery-new-activity',
       'gallery-watched-update', 'gallery-connection-status', 'update-status',
       'boss-times-data', 'play-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
-      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert',
+      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'chat-updated', 'chat-overlay-mode',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>사기꾼 탐지 AI</title>
+  <title>사기꾼 탐지</title>
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
@@ -131,7 +131,7 @@
        style="background:#0d1020; border-bottom:1px solid rgba(255,255,255,0.07);">
     <div class="flex items-center gap-2.5">
       <i data-lucide="shield-alert" class="w-4 h-4 text-red-400 no-drag"></i>
-      <span class="font-black text-white" style="font-size:14px;">사기꾼 탐지 AI</span>
+      <span class="font-black text-white" style="font-size:14px;">사기꾼 탐지</span>
       <span style="font-size:9px;font-weight:800;background:#f59e0b;color:#000;padding:1px 6px;border-radius:3px;letter-spacing:0.05em;">BETA</span>
     </div>
     <button class="no-drag text-slate-500 hover:text-white transition-colors p-1" onclick="window.close()">
@@ -146,15 +146,43 @@
     <div class="card space-y-3">
       <div class="section-title"><i data-lucide="activity" class="w-3.5 h-3.5"></i> 탐지 제어</div>
 
-      <div class="flex items-center justify-between">
-        <span class="font-bold text-slate-200">실시간 탐지</span>
-        <label class="flex items-center gap-2.5 no-drag cursor-pointer">
+      <!-- 1:1 대화 모니터링 토글 -->
+      <div class="flex items-start justify-between gap-4 pt-1">
+        <div class="flex-1">
+          <div class="font-bold text-slate-200 text-sm">1:1 대화 실시간 탐지</div>
+          <div class="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+            게임 내 1:1 대화방을 실시간으로 감시하여 대화 로그를 기록하고 상대방의 에타 레벨 배지를 자동으로 조회합니다.
+          </div>
+        </div>
+        <label class="flex items-center gap-2.5 no-drag cursor-pointer shrink-0 mt-0.5">
           <div class="toggle-switch">
             <input type="checkbox" id="scam-enabled-toggle" onchange="onToggleEnabled(this.checked)">
             <span class="toggle-slider"></span>
           </div>
-          <span id="scam-enabled-label" class="font-bold text-slate-400" style="width:60px;">비활성화</span>
+          <span id="scam-enabled-label" class="font-bold text-slate-400 text-xs" style="width:48px; text-align:right;">꺼짐</span>
         </label>
+      </div>
+
+      <!-- AI 대화 위험도 분석 토글 -->
+      <div class="flex items-start justify-between gap-4 pt-2.5 border-t border-white/5">
+        <div class="flex-1">
+          <div class="font-bold text-slate-200 text-sm">AI 대화 위험도 분석</div>
+          <div class="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+            AI 모델(LLM)을 활용하여 대화 내용을 실시간 판독하고 사기 위험도(위험/의심/안전) 및 행동 지침을 자동으로 제공합니다.
+          </div>
+        </div>
+        <label class="flex items-center gap-2.5 no-drag cursor-pointer shrink-0 mt-0.5">
+          <div class="toggle-switch">
+            <input type="checkbox" id="scam-llm-enabled-toggle" onchange="onToggleLlmEnabled(this.checked)">
+            <span class="toggle-slider"></span>
+          </div>
+          <span id="scam-llm-enabled-label" class="font-bold text-slate-400 text-xs" style="width:48px; text-align:right;">꺼짐</span>
+        </label>
+      </div>
+
+      <!-- AI 미설치 경고 배너 -->
+      <div id="ai-status-banner" class="hidden p-2 rounded-lg text-slate-400 bg-yellow-950/20 border border-yellow-500/20 text-[11px] leading-relaxed">
+        <span class="text-yellow-500 font-bold">ℹ️ AI 미설치 상태</span>: 실시간 대화 기록 및 에타 레벨 조회는 작동하지만, 자동 사기 위험 분석은 동작하지 않습니다. (모델 다운로드 필요)
       </div>
 
       <div class="flex items-center justify-between pt-2.5 border-t border-white/5">
@@ -462,14 +490,48 @@
       setInterval(updateTimers, 1000);
     }
 
+    function updateAiStatusBanner() {
+      const banner = document.getElementById('ai-status-banner');
+      if (!banner) return;
+      const isEnabled = !!_config?.scamDetectorEnabled;
+      const isLlmDisabled = !!_config?.scamLlmDisabled;
+
+      if (isEnabled) {
+        if (isLlmDisabled) {
+          banner.innerHTML = `<span class="text-yellow-500 font-bold">ℹ️ AI 분석 비활성화 상태</span>: 실시간 대화 기록 및 에타 레벨 조회는 작동하지만, 자동 사기 분석은 건너뜁니다.`;
+          banner.classList.remove('hidden');
+        } else if (!_modelReady) {
+          banner.innerHTML = `<span class="text-yellow-500 font-bold">ℹ️ AI 미설치 상태</span>: 실시간 대화 기록 및 에타 레벨 조회는 작동하지만, 자동 사기 위험 분석은 동작하지 않습니다. (모델 다운로드 필요)`;
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
     function applyConfig(cfg) {
       _config = cfg;
       const toggle = document.getElementById('scam-enabled-toggle');
       const label = document.getElementById('scam-enabled-label');
       if (toggle) {
         toggle.checked = !!cfg.scamDetectorEnabled;
-        label.textContent = cfg.scamDetectorEnabled ? '활성화됨' : '비활성화';
-        label.style.color = cfg.scamDetectorEnabled ? '#4ade80' : '#64748b';
+        if (label) {
+          label.textContent = cfg.scamDetectorEnabled ? '켜짐' : '꺼짐';
+          label.style.color = cfg.scamDetectorEnabled ? '#4ade80' : '#64748b';
+        }
+      }
+
+      const llmToggle = document.getElementById('scam-llm-enabled-toggle');
+      const llmLabel = document.getElementById('scam-llm-enabled-label');
+      if (llmToggle) {
+        const enabled = !cfg.scamLlmDisabled;
+        llmToggle.checked = enabled;
+        if (llmLabel) {
+          llmLabel.textContent = enabled ? '켜짐' : '꺼짐';
+          llmLabel.style.color = enabled ? '#4ade80' : '#64748b';
+        }
       }
 
       const soundSel = document.getElementById('scam-alert-sound-select');
@@ -496,6 +558,7 @@
       }
 
       updateTestButtons();
+      updateAiStatusBanner();
     }
 
     async function loadModelStatus() {
@@ -524,7 +587,7 @@
           downloadArea.classList.add('hidden');
           document.getElementById('progress-area').classList.add('hidden');
           rebinaryArea.classList.remove('hidden');
-          if (toggle) toggle.disabled = false;
+          if (toggle) { toggle.disabled = false; toggle.title = ''; }
         } else {
           _modelReady = false;
           statusEl.textContent = !status.serverBinaryReady
@@ -534,9 +597,13 @@
           downloadArea.classList.remove('hidden');
           document.getElementById('progress-area').classList.add('hidden');
           rebinaryArea.classList.add('hidden');
-          if (toggle) { toggle.disabled = true; toggle.title = '모델을 먼저 다운로드해주세요.'; }
+          if (toggle) {
+            toggle.disabled = false;
+            toggle.title = 'AI 모델이 없으므로 대화 기록 및 에타 조회만 동작합니다.';
+          }
         }
         updateTestButtons();
+        updateAiStatusBanner();
       } catch (_) {}
     }
 
@@ -616,6 +683,65 @@
 
         const fpEncoded = encodeURIComponent(s.filePath);
         const canAnalyze = !s.analyzing && s.messageCount > 0;
+
+        // 대화 메시지 목록 포맷팅
+        let messagesHtml = '';
+        if (s.messages && s.messages.length > 0) {
+          messagesHtml = s.messages.map(msg => {
+            if (msg.isSystem) {
+              return `<div class="text-center text-[11px] text-slate-500 my-1 bg-slate-900/40 py-0.5 px-2 rounded-md border border-white/5 select-none">${escapeHtml(msg.content)}</div>`;
+            }
+
+            const timeStr = msg.timestamp ? `<span class="text-[10px] text-slate-600 select-none">${msg.timestamp}</span>` : '';
+
+            if (msg.isSelf) {
+              // 내 메시지 (우측 정렬, 연두색 테두리)
+              return `<div class="flex flex-col items-end gap-1 my-1.5">
+                <div class="flex items-center gap-1 text-[11px]">
+                  ${timeStr}
+                  <span class="font-bold text-emerald-400 select-none">${escapeHtml(msg.sender)}</span>
+                </div>
+                <div class="bg-emerald-950/20 border border-emerald-500/20 text-emerald-100 rounded-lg rounded-tr-none px-2.5 py-1.5 max-w-[85%] text-left text-[13px] break-all leading-relaxed">
+                  ${escapeHtml(msg.content)}
+                </div>
+              </div>`;
+            } else {
+              // 상대방 메시지 (좌측 정렬, 에타 레벨 배지)
+              let etaBadge = '';
+              if (msg.etaLevel !== undefined && msg.etaLevel !== null) {
+                etaBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black text-white bg-gradient-to-r from-violet-500 to-indigo-500 border border-indigo-500/30 shadow-[0_0_4px_rgba(99,102,241,0.2)] select-none">에타 ${msg.etaLevel}</span>`;
+              } else {
+                etaBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-500 bg-slate-900 border border-slate-800 select-none">에타 -</span>`;
+              }
+
+              return `<div class="flex flex-col items-start gap-1 my-1.5">
+                <div class="flex items-center gap-1.5 text-[11px]">
+                  ${etaBadge}
+                  <span class="font-bold text-slate-300 select-none">${escapeHtml(msg.sender)}</span>
+                  ${timeStr}
+                </div>
+                <div class="bg-slate-800/40 border border-slate-700/40 text-slate-200 rounded-lg rounded-tl-none px-2.5 py-1.5 max-w-[85%] text-left text-[13px] break-all leading-relaxed">
+                  ${escapeHtml(msg.content)}
+                </div>
+              </div>`;
+            }
+          }).join('');
+        } else {
+          messagesHtml = `<p class="text-slate-600 italic text-[11px] text-center py-2 select-none">수집된 메시지가 없습니다.</p>`;
+        }
+
+        const detailsId = 'details-' + boxId;
+        const detailsBox = `
+        <details id="${detailsId}" class="mt-2.5 border-t border-white/5 pt-2 no-drag" open>
+          <summary class="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-[11px] font-bold select-none cursor-pointer py-1">
+            <i data-lucide="message-square" class="w-3 h-3 shrink-0"></i>
+            <span>대화 로그 보기 (${s.messageCount})</span>
+          </summary>
+          <div class="mt-1.5 space-y-1 max-h-[160px] overflow-y-auto pr-1 scroll-area">
+            ${messagesHtml}
+          </div>
+        </details>`;
+
         return `<div class="session-card ${cardClass} mb-2">
           <div class="flex items-start justify-between gap-2">
             <div class="flex items-start gap-2 min-w-0">
@@ -646,9 +772,14 @@
             </div>
           </div>
           ${streamBox}
+          ${detailsBox}
         </div>`;
       }).join('');
 
+      // 아이콘 새로고침
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
     }
 
     // ── 타이머 인플레이스 업데이트 ──
@@ -680,7 +811,8 @@
         // 즉시 분석 버튼 활성/비활성
         const btn = document.getElementById(`btn-analyze-${fpEncoded}`);
         if (btn) {
-          const canAnalyze = !analyzing;
+          const isLlmDisabled = !!_config?.scamLlmDisabled;
+          const canAnalyze = !analyzing && !isLlmDisabled;
           btn.disabled = !canAnalyze;
           btn.style.color  = canAnalyze ? '#60a5fa' : '#334155';
           btn.style.cursor = canAnalyze ? 'pointer' : 'default';
@@ -691,15 +823,21 @@
     // ── 테스트 버튼 잠금 ──
 
     function updateTestButtons() {
-      const canTest = _modelReady && !!_config?.scamDetectorEnabled;
+      const isLlmDisabled = !!_config?.scamLlmDisabled;
+      // 실시간 사기 탐지만 활성화되어 있으면 테스트 실행 가능 (AI 비활성화나 모델 미준수 시 가상 분석으로 대체됨)
+      const canTest = !!_config?.scamDetectorEnabled;
       document.querySelectorAll('.test-btn').forEach(btn => { btn.disabled = !canTest; });
       const hint = document.getElementById('test-buttons-hint');
       if (!hint) return;
-      if (!_modelReady) {
-        hint.textContent = '⚠️ 모델을 먼저 설치해야 테스트를 실행할 수 있습니다.';
-        hint.classList.remove('hidden');
-      } else if (!_config?.scamDetectorEnabled) {
+      
+      if (!_config?.scamDetectorEnabled) {
         hint.textContent = '⚠️ 실시간 탐지를 활성화해야 테스트를 실행할 수 있습니다.';
+        hint.classList.remove('hidden');
+      } else if (isLlmDisabled) {
+        hint.textContent = 'ℹ️ AI 분석(LLM)이 비활성화되어 가상 분석(Mock)으로 테스트가 실행됩니다.';
+        hint.classList.remove('hidden');
+      } else if (!_modelReady) {
+        hint.textContent = 'ℹ️ AI 모델이 준비되지 않아 가상 분석(Mock)으로 테스트가 실행됩니다.';
         hint.classList.remove('hidden');
       } else {
         hint.classList.add('hidden');
@@ -711,8 +849,29 @@
     function onToggleEnabled(enabled) {
       window.electronAPI.scamSetEnabled(enabled);
       const label = document.getElementById('scam-enabled-label');
-      label.textContent = enabled ? '활성화됨' : '비활성화';
-      label.style.color = enabled ? '#4ade80' : '#64748b';
+      if (label) {
+        label.textContent = enabled ? '켜짐' : '꺼짐';
+        label.style.color = enabled ? '#4ade80' : '#64748b';
+      }
+      if (!_config) _config = {};
+      _config.scamDetectorEnabled = enabled;
+      updateAiStatusBanner();
+      updateTestButtons();
+    }
+
+    function onToggleLlmEnabled(enabled) {
+      const disabled = !enabled;
+      window.electronAPI.applySettings({ scamLlmDisabled: disabled });
+      const label = document.getElementById('scam-llm-enabled-label');
+      if (label) {
+        label.textContent = enabled ? '켜짐' : '꺼짐';
+        label.style.color = enabled ? '#4ade80' : '#64748b';
+      }
+      if (!_config) _config = {};
+      _config.scamLlmDisabled = disabled;
+      updateAiStatusBanner();
+      updateTestButtons();
+      updateTimers();
     }
 
     function stopServer() {

@@ -83,7 +83,10 @@ export const DEFAULT_CONFIG: AppConfig = {
     etaRanking: { offsetX: -380, offsetY: 40 },
     trade: { offsetX: -380, offsetY: 40 },
     coefficientCalculator: { offsetX: -850, offsetY: 40 },
-    contentsChecker: { offsetX: -320, offsetY: 40 }
+    contentsChecker: { offsetX: -320, offsetY: 40 },
+    chatOverlay: { offsetX: -460, offsetY: 450 },
+    chatOverlaySub: { offsetX: -460, offsetY: 240 },
+    chatOverlaySub2: { offsetX: -460, offsetY: 40 }
   },
   tradeServer: 'RyXp',
   tradeKeywords: [],
@@ -96,7 +99,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     toggleClickThrough: 'CommandOrControl+Shift+T',
     toggleContentsChecker: 'CommandOrControl+Shift+C',
     toggleBuffHud: 'CommandOrControl+Shift+B',
-    toggleDock: 'CommandOrControl+Shift+D'
+    toggleDock: 'CommandOrControl+Shift+D',
+    toggleChatOverlaySync: 'CommandOrControl+Shift+H'
   },
   volumeContentsChecker: 50,
   volumeCalculators: 50,
@@ -143,6 +147,25 @@ export const DEFAULT_CONFIG: AppConfig = {
   discordAlertEnabled: false,
   discordKeywords: [],
   discordRules: [],
+  chatOverlayEnabled: false,
+  chatOverlaySubEnabled: false, // 신규 추가
+  chatOverlaySub2Enabled: false,
+  chatOverlayOpacity: 0.8,
+  chatOverlayFontSize: 14,
+  chatOverlayClickThrough: true,
+  chatOverlayKeywords: [],
+  userServer: 16,
+  etaDataUrl: '',
+  chatOverlayWidth: 450,
+  chatOverlayHeight: 400,
+  chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'],
+  chatOverlaySubWidth: 450,
+  chatOverlaySubHeight: 400,
+  chatOverlayTab: 'Basic',
+  chatOverlaySubTab: 'Basic',
+  chatOverlaySub2Width: 450,
+  chatOverlaySub2Height: 400,
+  chatOverlaySub2Tab: 'Basic',
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

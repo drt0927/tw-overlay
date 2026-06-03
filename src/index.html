@@ -119,6 +119,7 @@
           // 오버레이 토글 아이콘 등은 동적으로 변할 수 있으므로 초기값만 설정
           btn.innerHTML = `<i data-lucide="${menu.icon}" class="${menu.id.includes('icon') ? '' : 'w-4 h-4'}"></i>`;
           if (menu.id === 'overlay-toggle-btn') btn.querySelector('i').id = 'overlay-icon';
+          if (menu.id === 'chat-overlay-toggle-btn') btn.querySelector('i').id = 'chat-overlay-icon';
           if (menu.id === 'click-through-btn') btn.querySelector('i').id = 'click-through-icon';
 
           if (menu.id === 'gallery-btn') {
@@ -300,6 +301,14 @@
       }
     }
 
+    function updateChatOverlayIcon(isVisible) {
+      const iconContainer = document.getElementById('chat-overlay-toggle-btn');
+      if (iconContainer) {
+        iconContainer.innerHTML = `<i id="chat-overlay-icon" data-lucide="message-square" class="w-4 h-4 ${isVisible ? 'text-emerald-400' : 'text-slate-600'}"></i>`;
+        refreshIcons();
+      }
+    }
+
     function openGallery() { document.getElementById('noti-badge').classList.add('hidden'); window.electronAPI.toggleGallery(); }
 
     // IPC 리스너 등록
@@ -382,6 +391,7 @@
     });
 
     window.electronAPI.onOverlayStatus(updateOverlayIcon);
+    window.electronAPI.onChatOverlayStatus(updateChatOverlayIcon);
 
     window.electronAPI.onClickThroughStatus((isClickThrough) => {
       const icon = document.getElementById('click-through-icon');
@@ -418,6 +428,7 @@
       applyMenuVisibility();
 
       updateOverlayIcon(config.overlayVisible !== false);
+      updateChatOverlayIcon(config.chatOverlayEnabled !== false);
       const container = document.getElementById('slot-container');
       container.innerHTML = '';
       (config.quickSlots || []).forEach(slot => {

@@ -38,6 +38,10 @@ export function register(): void {
     config.save({ opacity });
   });
 
+  ipcMain.on('set-chat-overlay-size', (_e, mode: 'main' | 'sub1' | 'sub2', width: number, height: number) => {
+    wm.setChatOverlaySize(mode, width, height);
+  });
+
   ipcMain.on('navigate', (_e, url: string) => {
     let t = url.trim();
     if (!t.startsWith('http://') && !t.startsWith('https://')) t = 'https://' + t;
@@ -94,6 +98,7 @@ export function register(): void {
     'toggle-siena-aura': wm.toggleSienaAuraWindow,
     'toggle-word-alarm': wm.toggleWordAlarmWindow,
     'toggle-discord-alarm': wm.toggleDiscordAlarmWindow,
+    'toggle-chat-overlay': wm.toggleChatOverlayWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -462,5 +467,39 @@ export function register(): void {
       console.error('[DISCORD TEST ERROR]', e);
       return false;
     }
+  });
+
+  // --- Chat Overlay IPC ---
+  ipcMain.handle('chat-get-history', async (_e, category: string) => {
+    const { chatLogProcessor } = await import('./chatLogProcessor');
+    const { chatLogManager } = await import('./chatLogManager');
+    chatLogManager.resetLastReadIndex(category);
+    return chatLogProcessor.getChatHistory(category);
+  });
+
+  ipcMain.handle('chat-get-more-history', async (_e, category: string) => {
+    const { chatLogManager } = await import('./chatLogManager');
+    return await chatLogManager.getMoreHistory(category);
+  });
+
+  ipcMain.on('chat-open-today-log', async () => {
+    const { chatLogManager } = await import('./chatLogManager');
+    const fs = await import('fs');
+    const filePath = chatLogManager.getTodayFilePath();
+    if (filePath && fs.existsSync(filePath)) {
+      shell.openPath(filePath);
+    }
+  });
+
+  ipcMain.on('toggle-chat-overlay-sub', (_e, subNum: number) => {
+    wm.toggleSubWindow(subNum as 1 | 2);
+  });
+  ipcMain.handle('chat-fetch-eta-rankings', async () => {
+    const { etaCacheManager } = await import('./etaCacheManager');
+    return await etaCacheManager.fetchRemoteData(true);
+  });
+  ipcMain.handle('chat-get-eta-cache-status', async () => {
+    const { etaCacheManager } = await import('./etaCacheManager');
+    return etaCacheManager.getCacheStatus();
   });
 }

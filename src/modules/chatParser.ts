@@ -145,6 +145,7 @@ class ChatParser extends EventEmitter {
 
     const timestamp = timeMatch[1];
     const cleanMsg = this.stripHtml(rawLine.replace(/\[.*?\]/, '')); // 시간 부분 제외하고 HTML 제거
+    if (cleanMsg.trim().length === 0) return;
 
     // J. 숙제 체크 관련 특화 패턴
     // 1. 이클립스 보스전
@@ -530,25 +531,61 @@ class ChatParser extends EventEmitter {
         '샐리온', '실라이론', '샐레아나', '루미너스'
     ];
 
-    // D-2. 일반, 클럽 및 팀 채팅 감지
-    if (rawLine.includes('color="#94ddfa"') || rawLine.includes('color="#ffffff"') || rawLine.includes('color="#c8ffc8"')) {
+    // D-2. 색상 최우선 기반 카테고리 분류 적용
+    let color = '#a8a8a8';
+    const colorMatch = rawLine.match(/color=["']?(#[0-9a-fA-F]{6})["']?/);
+    if (colorMatch) {
+        color = colorMatch[1].toLowerCase();
+    }
+
+    // 색상에 따른 분류 처리
+    if (color === '#94ddfa') { // 1. 클럽 메시지 (클럽 대화, 클럽 공지, 클럽 접속 알림 등)
+        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
+        let sender = '클럽 알림';
+        let message = cleanMsg;
+        if (chatMatch) {
+            sender = chatMatch[1].trim();
+            message = chatMatch[2].trim();
+        } else if (cleanMsg.includes('[클럽 공지]')) {
+            sender = '클럽 공지';
+        }
+        this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color: '#94ddfa' });
+        return;
+    } 
+    else if (color === '#f7b73c') { // 2. 팀 메시지
+        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
+        let sender = '팀 알림';
+        let message = cleanMsg;
+        if (chatMatch) {
+            sender = chatMatch[1].trim();
+            message = chatMatch[2].trim();
+        }
+        this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color: '#f7b73c' });
+        return;
+    } 
+    else if (color === '#64ff64') { // 3. 귓속말
+        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
+        let sender = '귓속말';
+        let message = cleanMsg;
+        if (chatMatch) {
+            sender = chatMatch[1].trim();
+            message = chatMatch[2].trim();
+        }
+        this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color: '#64ff64' });
+        return;
+    } 
+    else if (color === '#ffffff' || color === '#c8ffc8') { // 4. 일반 메시지 후보
         const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
         if (chatMatch) {
             const sender = chatMatch[1].trim();
             const message = chatMatch[2].trim();
-            
-            // 닉네임에 공백이나 쉼표가 들어간 경우 또는 주요 NPC 이름인 경우는 제외
+            // 일반 메시지인 경우에만 닉네임 유효성(공백/쉼표 검사) 및 NPC 검사를 진행
             if (!sender.includes(' ') && !sender.includes(',') && !NPC_BLACK_LIST.includes(sender)) {
-                let color = '#ffffff';
-                if (rawLine.includes('color="#94ddfa"')) {
-                    color = '#94ddfa';
-                } else if (rawLine.includes('color="#c8ffc8"')) {
-                    color = '#c8ffc8';
-                }
                 this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color });
                 return;
             }
         }
+        // 형식 탈락 시 시스템 메시지로 흐르게 함
     }
 
     // E. 아이템 획득
@@ -571,6 +608,15 @@ class ChatParser extends EventEmitter {
 
     // F. 버프 사용 감지
     this._detectBuffUsed(rawLine, cleanMsg, timestamp);
+
+    // G. 어떤 분기에도 걸리지 않고 흘러내려온 시스템 메시지 폴백
+    this.emit('NORMAL_CHAT', {
+      date: this._currentDate,
+      timestamp,
+      sender: '시스템',
+      message: cleanMsg,
+      color: color
+    });
   }
 
   /**

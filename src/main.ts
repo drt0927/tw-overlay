@@ -24,6 +24,7 @@ import { chatLogManager } from './modules/chatLogManager';
 import { chatLogProcessor } from './modules/chatLogProcessor';
 import { buffTimerManager } from './modules/buffTimerManager';
 import * as scamMonitor from './modules/scamMonitor';
+import { etaCacheManager } from './modules/etaCacheManager';
 
 // ── 에러 트래킹 세팅 ──
 process.on('uncaughtException', (error) => {
@@ -109,6 +110,9 @@ app.whenReady().then(() => {
 
   gallery.start(null, sidebar);
   trade.start(sidebar);
+
+  // 에타 캐시 먼저 초기화 (로컬 캐시 로드) → chatLogManager replay 시 에타 레벨 표시 가능
+  etaCacheManager.init();
 
   // 채팅 로그 감시 시스템 시작
   chatLogProcessor.start();

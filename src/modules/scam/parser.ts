@@ -12,8 +12,8 @@ export const SCAM_ALERT_SOUND = 'gongseubgyeongbo-gongseubgyeongbo.mp3';
 export const END_KEYWORDS = ['종료', '나가셨습니다', '대화를 마쳤습니다', '채팅이 종료'];
 
 // ── HTML 파싱 ──
-const TS_RE = /color="white">\s*\[(\d+)분\s+(\d+)분\s+(\d+)분\]/;
-const MSG_RE = /color="(?:#c8ffc8|#ffffff)">([\s\S]*?)<\/font>/;
+const TS_RE = /color="white">\s*\[(\d+)(?:시|분)\s+(\d+)분\s+(\d+)(?:초|분)\]/;
+const MSG_RE = /color="(#c8ffc8|#ffffff)">([\s\S]*?)<\/font>/;
 const SYS_RE = /color="#c8c8ff">([\s\S]*?)<\/font>/;
 
 export function parseLine(line: string): MessengerMessage | null {
@@ -31,13 +31,15 @@ export function parseLine(line: string): MessengerMessage | null {
 
   const msgMatch = line.match(MSG_RE);
   if (msgMatch) {
-    const raw = msgMatch[1].trim();
+    const color = msgMatch[1];
+    const raw = msgMatch[2].trim();
     const colonIdx = raw.indexOf(':');
     if (colonIdx < 0) return null;
     const sender = raw.slice(0, colonIdx).trim();
     const content = raw.slice(colonIdx + 1).trim();
     if (!sender || !content) return null;
-    return { timestamp, sender, content, isSystem: false };
+    const isSelf = color === '#c8ffc8';
+    return { timestamp, sender, content, isSystem: false, isSelf };
   }
 
   return null;
@@ -175,72 +177,72 @@ function makeLogLine(hour: number, min: number, sec: number, color: string, cont
 
 export const TEST_SCENARIOS: Record<string, (h: number, m: number) => string[]> = {
   scam_keyword: (h, m) => [
-    makeLogLine(h, m, 0, '#c8ffc8', '사기꾼A: 안녕하세요~ 아이템 판매하시나요?'),
-    makeLogLine(h, m, 5, '#ffffff', '나: 네 맞습니다'),
-    makeLogLine(h, m, 10, '#c8ffc8', '사기꾼A: 거래 전에 가중치 코드 확인해야 해요'),
-    makeLogLine(h, m, 15, '#ffffff', '나: 가중치 코드가 뭔가요?'),
-    makeLogLine(h, m, 20, '#c8ffc8', '사기꾼A: 테일즈위버 거래 시스템인데요 쪽지로 코드 보내드릴게요'),
-    makeLogLine(h, m, 25, '#c8ffc8', '사기꾼A: Ctrl+1 누르고 코드 입력하시면 거래 잠금 풀려요'),
-    makeLogLine(h, m, 30, '#ffffff', '나: 그런 시스템이 있나요?'),
-    makeLogLine(h, m, 35, '#c8ffc8', '사기꾼A: 네 최근에 업데이트됐어요 가중치 안 풀면 시드가 막혀요'),
-    makeLogLine(h, m, 40, '#c8ffc8', '사기꾼A: 빨리 해주셔야 해요 다른 분도 기다리고 계셔서'),
-    makeLogLine(h, m, 45, '#ffffff', '나: 잠깐만요 좀 이상한거같은데'),
-    makeLogLine(h, m, 50, '#c8ffc8', '사기꾼A: 별전으로 보증금 먼저 주시면 바로 처리해드려요'),
+    makeLogLine(h, m, 0, '#ffffff', '룰러: 안녕하세요~ 아이템 판매하시나요?'),
+    makeLogLine(h, m, 5, '#c8ffc8', '나: 네 맞습니다'),
+    makeLogLine(h, m, 10, '#ffffff', '룰러: 거래 전에 가중치 코드 확인해야 해요'),
+    makeLogLine(h, m, 15, '#c8ffc8', '나: 가중치 코드가 뭔가요?'),
+    makeLogLine(h, m, 20, '#ffffff', '룰러: 테일즈위버 거래 시스템인데요 쪽지로 코드 보내드릴게요'),
+    makeLogLine(h, m, 25, '#ffffff', '룰러: Ctrl+1 누르고 코드 입력하시면 거래 잠금 풀려요'),
+    makeLogLine(h, m, 30, '#c8ffc8', '나: 그런 시스템이 있나요?'),
+    makeLogLine(h, m, 35, '#ffffff', '룰러: 네 최근에 업데이트됐어요 가중치 안 풀면 시드가 막혀요'),
+    makeLogLine(h, m, 40, '#ffffff', '룰러: 빨리 해주셔야 해요 다른 분도 기다리고 계셔서'),
+    makeLogLine(h, m, 45, '#c8ffc8', '나: 잠깐만요 좀 이상한거같은데'),
+    makeLogLine(h, m, 50, '#ffffff', '룰러: 별전으로 보증금 먼저 주시면 바로 처리해드려요'),
   ],
   scam_duo: (h, m) => [
-    makeLogLine(h, m, 0, '#c8ffc8', '판매자햄찌: 안녕하세요 아이템 사고싶어서요'),
-    makeLogLine(h, m, 5, '#ffffff', '나: 네 교환창 열게요'),
-    makeLogLine(h, m, 10, '#c8ffc8', '클럽장-햄찌: 잠깐요 저희 클럽원이랑 거래 중이신가요?'),
-    makeLogLine(h, m, 15, '#ffffff', '나: 네 그런데요?'),
-    makeLogLine(h, m, 20, '#c8ffc8', '클럽장-햄찌: 저희 클럽에서는 상속거래 시스템 써야 해요'),
-    makeLogLine(h, m, 25, '#c8ffc8', '클럽장-햄찌: 녜힁 코드 입력 안 하면 거래 취소돼요'),
-    makeLogLine(h, m, 30, '#c8ffc8', '판매자햄찌: 클럽장님 말씀이 맞아요 롤벤 피하려면 해야해요'),
-    makeLogLine(h, m, 35, '#ffffff', '나: 롤벤이 뭔가요?'),
-    makeLogLine(h, m, 40, '#c8ffc8', '클럽장-햄찌: 계정 정지예요 빨리 쪽지로 코드 받으세요'),
-    makeLogLine(h, m, 45, '#c8ffc8', '판매자햄찌: 서두르세요 다른 분 기다려요'),
+    makeLogLine(h, m, 0, '#ffffff', '판매자햄찌: 안녕하세요 아이템 사고싶어서요'),
+    makeLogLine(h, m, 5, '#c8ffc8', '나: 네 교환창 열게요'),
+    makeLogLine(h, m, 10, '#ffffff', '클럽장-햄찌: 잠깐요 저희 클럽원이랑 거래 중이신가요?'),
+    makeLogLine(h, m, 15, '#c8ffc8', '나: 네 그런데요?'),
+    makeLogLine(h, m, 20, '#ffffff', '클럽장-햄찌: 저희 클럽에서는 상속거래 시스템 써야 해요'),
+    makeLogLine(h, m, 25, '#ffffff', '클럽장-햄찌: 녜힁 코드 입력 안 하면 거래 취소돼요'),
+    makeLogLine(h, m, 30, '#ffffff', '판매자햄찌: 클럽장님 말씀이 맞아요 롤벤 피하려면 해야해요'),
+    makeLogLine(h, m, 35, '#c8ffc8', '나: 롤벤이 뭔가요?'),
+    makeLogLine(h, m, 40, '#ffffff', '클럽장-햄찌: 계정 정지예요 빨리 쪽지로 코드 받으세요'),
+    makeLogLine(h, m, 45, '#ffffff', '판매자햄찌: 서두르세요 다른 분 기다려요'),
   ],
   scam_seed: (h, m) => [
-    makeLogLine(h, m, 0, '#c8ffc8', '사기꾼B: 아이템 교환창 열었는데 제 시드가 막혔어요'),
-    makeLogLine(h, m, 5, '#ffffff', '나: 시드가 왜 막혀요?'),
-    makeLogLine(h, m, 10, '#c8ffc8', '사기꾼B: 거래 정지 먹어서 가중치를 풀어야 해요'),
-    makeLogLine(h, m, 15, '#c8ffc8', '사기꾼B: 네냐플에서 시드 50억 사서 저한테 보내주시면 풀어드릴게요'),
-    makeLogLine(h, m, 20, '#ffffff', '나: 그게 말이 되나요?'),
-    makeLogLine(h, m, 25, '#c8ffc8', '사기꾼B: 네 운영자 규정이에요 안 하시면 아이템 못 받아요'),
-    makeLogLine(h, m, 30, '#c8ffc8', '사기꾼B: 매니아에서 사셔도 돼요 빠르게 부탁드려요'),
-    makeLogLine(h, m, 35, '#ffffff', '나: 처음 듣는 시스템인데'),
-    makeLogLine(h, m, 40, '#c8ffc8', '사기꾼B: 뉴비분들은 잘 모르세요 고소 피하려면 해야해요'),
-    makeLogLine(h, m, 45, '#c8ffc8', '사기꾼B: 현금 말고 시드로만 받아요'),
+    makeLogLine(h, m, 0, '#ffffff', '할리퀸: 아이템 교환창 열었는데 제 시드가 막혔어요'),
+    makeLogLine(h, m, 5, '#c8ffc8', '나: 시드가 왜 막혀요?'),
+    makeLogLine(h, m, 10, '#ffffff', '할리퀸: 거래 정지 먹어서 가중치를 풀어야 해요'),
+    makeLogLine(h, m, 15, '#ffffff', '할리퀸: 네냐플에서 시드 50억 사서 저한테 보내주시면 풀어드릴게요'),
+    makeLogLine(h, m, 20, '#c8ffc8', '나: 그게 말이 되나요?'),
+    makeLogLine(h, m, 25, '#ffffff', '할리퀸: 네 운영자 규정이에요 안 하시면 아이템 못 받아요'),
+    makeLogLine(h, m, 30, '#ffffff', '할리퀸: 매니아에서 사셔도 돼요 빠르게 부탁드려요'),
+    makeLogLine(h, m, 35, '#c8ffc8', '나: 처음 듣는 시스템인데'),
+    makeLogLine(h, m, 40, '#ffffff', '할리퀸: 뉴비분들은 잘 모르세요 고소 피하려면 해야해요'),
+    makeLogLine(h, m, 45, '#ffffff', '할리퀸: 현금 말고 시드로만 받아요'),
   ],
   suspicious: (h, m) => {
     const m2 = (m + 1) % 60, m5 = (m + 5) % 60, m6 = (m + 6) % 60;
     const m8 = (m + 8) % 60, m9 = (m + 9) % 60, m11 = (m + 11) % 60;
     const m12 = (m + 12) % 60, m13 = (m + 13) % 60;
     return [
-      makeLogLine(h, m,  0, '#c8ffc8', '저레벨유저: 안녕하세요 아이템 팔려고요'),
-      makeLogLine(h, m,  30, '#ffffff', '나: 네 교환창 열게요'),
-      makeLogLine(h, m2, 10, '#c8ffc8', '저레벨유저: 잠깐만요 준비 중이에요'),
-      makeLogLine(h, m2, 50, '#ffffff', '나: 아이템 올려주세요'),
-      makeLogLine(h, m5, 20, '#c8ffc8', '저레벨유저: 조금만요 확인 중이에요'),
-      makeLogLine(h, m6,  0, '#ffffff', '나: 교환창 연 지 5분이 넘었는데 아직도 아이템을 안 올리시네요'),
-      makeLogLine(h, m6, 30, '#c8ffc8', '저레벨유저: 죄송해요 컴퓨터가 느려서요'),
-      makeLogLine(h, m8,  0, '#ffffff', '나: 레벨이 몇이세요?'),
-      makeLogLine(h, m8, 20, '#c8ffc8', '저레벨유저: 185레벨이에요 에타는 아직 못 했어요'),
-      makeLogLine(h, m9,  0, '#ffffff', '나: 10분 가까이 됐는데 아이템을 왜 안 올리시나요'),
-      makeLogLine(h, m11, 0, '#c8ffc8', '저레벨유저: 기다려주세요 곧 올릴게요'),
-      makeLogLine(h, m12, 0, '#ffffff', '나: 이상한데 그냥 교환창 닫을게요'),
-      makeLogLine(h, m13, 0, '#c8ffc8', '저레벨유저: 잠깐만요 지금 올릴게요 꼭 거래해야해요'),
+      makeLogLine(h, m,  0, '#ffffff', '췌릴: 안녕하세요 아이템 팔려고요'),
+      makeLogLine(h, m,  30, '#c8ffc8', '나: 네 교환창 열게요'),
+      makeLogLine(h, m2, 10, '#ffffff', '췌릴: 잠깐만요 준비 중이에요'),
+      makeLogLine(h, m2, 50, '#c8ffc8', '나: 아이템 올려주세요'),
+      makeLogLine(h, m5, 20, '#ffffff', '췌릴: 조금만요 확인 중이에요'),
+      makeLogLine(h, m6,  0, '#c8ffc8', '나: 교환창 연 지 5분이 넘었는데 아직도 아이템을 안 올리시네요'),
+      makeLogLine(h, m6, 30, '#ffffff', '췌릴: 죄송해요 컴퓨터가 느려서요'),
+      makeLogLine(h, m8,  0, '#c8ffc8', '나: 레벨이 몇이세요?'),
+      makeLogLine(h, m8, 20, '#ffffff', '췌릴: 185레벨이에요 에타는 아직 못 했어요'),
+      makeLogLine(h, m9,  0, '#c8ffc8', '나: 10분 가까이 됐는데 아이템을 왜 안 올리시나요'),
+      makeLogLine(h, m11, 0, '#ffffff', '췌릴: 기다려주세요 곧 올릴게요'),
+      makeLogLine(h, m12, 0, '#c8ffc8', '나: 이상한데 그냥 교환창 닫을게요'),
+      makeLogLine(h, m13, 0, '#ffffff', '췌릴: 잠깐만요 지금 올릴게요 꼭 거래해야해요'),
     ];
   },
   safe: (h, m) => [
-    makeLogLine(h, m, 0, '#c8ffc8', '일반유저: 안녕하세요 전설 반지 팔려고 올리셨나요?'),
-    makeLogLine(h, m, 5, '#ffffff', '나: 네 맞아요 교환창 열게요'),
-    makeLogLine(h, m, 10, '#c8ffc8', '일반유저: 감사합니다 확인할게요'),
-    makeLogLine(h, m, 15, '#c8ffc8', '일반유저: 아이템 올렸어요 가격은 30억으로 알고 있는데 맞나요?'),
-    makeLogLine(h, m, 20, '#ffffff', '나: 네 30억 맞아요'),
-    makeLogLine(h, m, 25, '#c8ffc8', '일반유저: 시드 확인했어요 교환 누를게요'),
-    makeLogLine(h, m, 30, '#ffffff', '나: 저도 확인했어요 교환할게요'),
+    makeLogLine(h, m, 0, '#ffffff', '밍키: 안녕하세요 전설 반지 팔려고 올리셨나요?'),
+    makeLogLine(h, m, 5, '#c8ffc8', '나: 네 맞아요 교환창 열게요'),
+    makeLogLine(h, m, 10, '#ffffff', '밍키: 감사합니다 확인할게요'),
+    makeLogLine(h, m, 15, '#ffffff', '밍키: 아이템 올렸어요 가격은 30억으로 알고 있는데 맞나요?'),
+    makeLogLine(h, m, 20, '#c8ffc8', '나: 네 30억 맞아요'),
+    makeLogLine(h, m, 25, '#ffffff', '밍키: 시드 확인했어요 교환 누를게요'),
+    makeLogLine(h, m, 30, '#c8ffc8', '나: 저도 확인했어요 교환할게요'),
     makeLogLine(h, m, 35, '#c8c8ff', '거래가 성사되었습니다.'),
-    makeLogLine(h, m, 40, '#c8ffc8', '일반유저: 감사합니다 좋은 하루 되세요'),
-    makeLogLine(h, m, 45, '#ffffff', '나: 감사합니다'),
+    makeLogLine(h, m, 40, '#ffffff', '밍키: 감사합니다 좋은 하루 되세요'),
+    makeLogLine(h, m, 45, '#c8ffc8', '나: 감사합니다'),
   ],
 };

@@ -130,6 +130,8 @@ export interface ShortcutsConfig {
     toggleBuffHud?: string;
     /** Dock 바 토글 */
     toggleDock?: string;
+    /** 채팅창 오버레이 토글/싱크 */
+    toggleChatOverlaySync?: string;
 }
 
 /** 채팅 로그 버프 감지 트리거 */
@@ -242,7 +244,10 @@ export interface AppConfig {
         diary?: WindowPosition;
         buffTimer?: WindowPosition;
         scamDetector?: WindowPosition;
-    };
+        chatOverlay?: WindowPosition;
+        chatOverlaySub?: WindowPosition;
+        chatOverlaySub2?: WindowPosition;
+      };
     tradeServer?: string;
     tradeKeywords?: string[];
     tradeNotify?: boolean;
@@ -302,6 +307,7 @@ export interface AppConfig {
     msgerLogPath?: string;
     scamAlertSound?: string;
     scamGpuVariant?: LlamaServerVariant;
+    scamLlmDisabled?: boolean;
 
     // --- Discord Webhook Settings ---
     discordWebhookUrl?: string;
@@ -313,6 +319,27 @@ export interface AppConfig {
     volumeContentsChecker?: number;
     volumeCalculators?: number;
     sidebarPosition?: 'left' | 'right' | 'dock';
+
+    // --- Chat Overlay Settings ---
+    chatOverlayEnabled?: boolean;
+    chatOverlaySubEnabled?: boolean; // 신규 추가
+    chatOverlaySub2Enabled?: boolean;
+    chatOverlayOpacity?: number;
+    chatOverlayFontSize?: number;
+    chatOverlayClickThrough?: boolean;
+    chatOverlayKeywords?: string[];
+    userServer?: number; // 16: 네냐플, 7: 하이아칸
+    etaDataUrl?: string;
+    chatOverlayWidth?: number;
+    chatOverlayHeight?: number;
+    chatOverlaySelectedChannels?: string[];
+    chatOverlaySubWidth?: number;
+    chatOverlaySubHeight?: number;
+    chatOverlayTab?: string;
+    chatOverlaySubTab?: string;
+    chatOverlaySub2Width?: number;
+    chatOverlaySub2Height?: number;
+    chatOverlaySub2Tab?: string;
 }
 
 export interface GalleryPost {
@@ -378,6 +405,8 @@ export interface MessengerMessage {
   sender: string;
   content: string;
   isSystem: boolean;
+  etaLevel?: number | null;
+  isSelf?: boolean;
 }
 
 export interface ScamAnalysisResult {
@@ -415,6 +444,7 @@ export interface SessionState {
   lastVerdict: 'SCAM' | 'SUSPICIOUS' | 'SAFE' | 'UNKNOWN';
   lastMessageTime: number;
   lastAnalysisAt: number;
+  messages?: MessengerMessage[];
 }
 
 export type LlamaServerVariant = 'cuda-13.1' | 'cuda-12.4' | 'vulkan' | 'cpu';

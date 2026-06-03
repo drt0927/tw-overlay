@@ -122,6 +122,7 @@ interface ManagedWindow {
   html: string;
   width: number;
   height: number;
+  skipTaskbar?: boolean;
   onOpen?: (win: BrowserWindow) => void;
   onClose?: () => void;
   calcPosition?: (gr: GameRect, pos: WindowPosition) => { x: number, y: number };
@@ -160,6 +161,97 @@ const windowRegistry: Record<string, ManagedWindow> = {
   sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
   wordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'wordAlarm', html: 'word-alarm.html', width: 450, height: 950 },
   discordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'discordAlarm', html: 'discord-alarm.html', width: 450, height: 950 },
+  chatOverlay: {
+    ref: null,
+    pos: { offsetX: -460, offsetY: 450 },
+    key: 'chatOverlay',
+    html: 'chat-overlay.html',
+    width: 450,
+    height: 400,
+    skipTaskbar: true,
+    onOpen: (win) => {
+      const cfg = config.load();
+      if (cfg.chatOverlayClickThrough) {
+        win.setIgnoreMouseEvents(true, { forward: true });
+      }
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-overlay-status', true);
+      }
+      win.webContents.send('chat-overlay-mode', 'main');
+    },
+    onClose: () => {
+      isChatOverlayVisible = false;
+      const updated = { ...config.load(), chatOverlayEnabled: false };
+      config.saveImmediate({ chatOverlayEnabled: false });
+
+      const dockCfg = windowRegistry['dock'];
+      [mainWindow, dockCfg?.ref].forEach(win => {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('config-data', updated);
+        }
+      });
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('chat-overlay-status', false);
+      }
+
+      // 서브 창들도 함께 닫아줌
+      const subWinCfg = windowRegistry['chatOverlaySub'];
+      const sub2WinCfg = windowRegistry['chatOverlaySub2'];
+      if (subWinCfg.ref && !subWinCfg.ref.isDestroyed()) {
+        subWinCfg.ref.close();
+      }
+      if (sub2WinCfg.ref && !sub2WinCfg.ref.isDestroyed()) {
+        sub2WinCfg.ref.close();
+      }
+    }
+  },
+  chatOverlaySub: {
+    ref: null,
+    pos: { offsetX: -460, offsetY: 240 }, // Main 창과 겹치지 않게 기본 Y축 오프셋을 240으로 배치
+    key: 'chatOverlaySub',
+    html: 'chat-overlay.html',
+    width: 450,
+    height: 400,
+    skipTaskbar: true,
+    onOpen: (win) => {
+      const cfg = config.load();
+      if (cfg.chatOverlayClickThrough) {
+        win.setIgnoreMouseEvents(true, { forward: true });
+      }
+      win.webContents.send('chat-overlay-mode', 'sub1');
+    },
+    onClose: () => {
+      isChatOverlaySubVisible = false;
+      if (isChatOverlayVisible && !appState.isQuitting) {
+        config.saveImmediate({ chatOverlaySubEnabled: false });
+      }
+      broadcastConfig();
+    }
+  },
+  chatOverlaySub2: {
+    ref: null,
+    pos: { offsetX: -460, offsetY: 40 }, // Main 창과 겹치지 않게 기본 Y축 오프셋을 40으로 배치
+    key: 'chatOverlaySub2',
+    html: 'chat-overlay.html',
+    width: 450,
+    height: 400,
+    skipTaskbar: true,
+    onOpen: (win) => {
+      const cfg = config.load();
+      if (cfg.chatOverlayClickThrough) {
+        win.setIgnoreMouseEvents(true, { forward: true });
+      }
+      win.webContents.send('chat-overlay-mode', 'sub2');
+    },
+    onClose: () => {
+      isChatOverlaySub2Visible = false;
+      if (isChatOverlayVisible && !appState.isQuitting) {
+        config.saveImmediate({ chatOverlaySub2Enabled: false });
+      }
+      broadcastConfig();
+    }
+  },
   dock: {
     ref: null,
     pos: { offsetX: 0, offsetY: 0 },
@@ -188,6 +280,9 @@ let isApplyingSize = false;
 let isToolbarShown = true;
 let isSidebarCollapsed = false;
 let isOverlayVisible = false;
+let isChatOverlayVisible = false;
+let isChatOverlaySubVisible = false; // 신규 추가
+let isChatOverlaySub2Visible = false; // 신규 추가
 let onOverlayReady: (() => void) | null = null;
 let mandatoryUpdateLock = false;
 
@@ -199,6 +294,9 @@ function consumeProgrammaticMove(key: string): boolean {
 
 function init() {
   const cfg = config.load();
+  isChatOverlayVisible = !!cfg.chatOverlayEnabled;
+  isChatOverlaySubVisible = !!cfg.chatOverlaySubEnabled; // 신규 추가
+  isChatOverlaySub2Visible = !!cfg.chatOverlaySub2Enabled; // 신규 추가
   if (cfg.positions) {
     if (cfg.positions.overlay) overlayPos = { ...cfg.positions.overlay };
     Object.keys(windowRegistry).forEach(key => {
@@ -389,18 +487,52 @@ function createToggleableWindow(key: string, callbacks?: {
   const maxH = display.workAreaSize.height;
   
   // 설정된 높이가 모니터 높이보다 크면 클램핑
-  const finalW = winCfg.width;
-  const finalH = Math.min(winCfg.height, maxH - 40); // 상단 여백 등 고려하여 약간의 여유(40px) 둠
+  let finalW = winCfg.width;
+  let finalH = winCfg.height;
+  if (key === 'chatOverlay') {
+    const cfg = config.load();
+    if (cfg.chatOverlayWidth) finalW = cfg.chatOverlayWidth;
+    if (cfg.chatOverlayHeight) finalH = cfg.chatOverlayHeight;
+  } else if (key === 'chatOverlaySub') {
+    const cfg = config.load();
+    if (cfg.chatOverlaySubWidth) finalW = cfg.chatOverlaySubWidth;
+    if (cfg.chatOverlaySubHeight) finalH = cfg.chatOverlaySubHeight;
+  } else if (key === 'chatOverlaySub2') {
+    const cfg = config.load();
+    if (cfg.chatOverlaySub2Width) finalW = cfg.chatOverlaySub2Width;
+    if (cfg.chatOverlaySub2Height) finalH = cfg.chatOverlaySub2Height;
+  }
+  finalH = Math.min(finalH, maxH - 40); // 상단 여백 등 고려하여 약간의 여유(40px) 둠
 
-  const win = new BrowserWindow(getStandardOptions(finalW, finalH));
+  const win = new BrowserWindow(getStandardOptions(finalW, finalH, {
+    skipTaskbar: !!winCfg.skipTaskbar
+  }));
   winCfg.ref = win;
   attachStackListeners(win);
   win.loadFile(path.join(__dirname, '..', winCfg.html));
   win.on('ready-to-show', () => {
     if (gameRect) {
-      const { x, y } = (callbacks?.calcPosition || winCfg.calcPosition)
+      let { x, y } = (callbacks?.calcPosition || winCfg.calcPosition)
         ? (callbacks?.calcPosition || winCfg.calcPosition)!(gameRect, winCfg.pos)
         : { x: Math.round(gameRect.x + gameRect.width + winCfg.pos.offsetX), y: Math.round(gameRect.y + winCfg.pos.offsetY) };
+      
+      // 채팅 오버레이 창(Main/Sub1/Sub2)의 경우
+      if (key === 'chatOverlay' || key === 'chatOverlaySub' || key === 'chatOverlaySub2') {
+        const cfg = config.load();
+        const hasSavedPos = cfg.positions && cfg.positions[key as keyof typeof cfg.positions];
+        
+        // 사용자가 수동 드래그하여 저장한 위치가 없을 때(최초 오픈)만 게임창 내부 범위로 강제 클램핑 처리
+        if (!hasSavedPos) {
+          const minY = gameRect.y;
+          const maxY = Math.max(minY, gameRect.y + gameRect.height - finalH);
+          y = Math.max(minY, Math.min(y, maxY));
+          
+          const minX = gameRect.x;
+          const maxX = Math.max(minX, gameRect.x + gameRect.width - finalW);
+          x = Math.max(minX, Math.min(x, maxX));
+        }
+      }
+      
       win.setPosition(x, y);
     } else {
       win.center();
@@ -410,7 +542,16 @@ function createToggleableWindow(key: string, callbacks?: {
     win.show();
     if (IS_DEV) win.webContents.openDevTools({ mode: 'detach' });
   });
-  win.webContents.on('did-finish-load', () => win.webContents.send('config-data', config.load()));
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('config-data', config.load());
+    if (key === 'chatOverlay') {
+      win.webContents.send('chat-overlay-mode', 'main');
+    } else if (key === 'chatOverlaySub') {
+      win.webContents.send('chat-overlay-mode', 'sub1');
+    } else if (key === 'chatOverlaySub2') {
+      win.webContents.send('chat-overlay-mode', 'sub2');
+    }
+  });
   win.on('move', () => {
     if (consumeProgrammaticMove(key) || !winCfg.ref || !gameRect) return;
     const b = winCfg.ref.getBounds();
@@ -561,6 +702,105 @@ export function toggleXpHudWindow(): boolean { return createToggleableWindow('xp
 export function toggleSienaAuraWindow(): boolean { return createToggleableWindow('sienaAura'); }
 export function toggleWordAlarmWindow(): boolean { return createToggleableWindow('wordAlarm'); }
 export function toggleDiscordAlarmWindow(): boolean { return createToggleableWindow('discordAlarm'); }
+export function toggleChatOverlayWindow(): boolean {
+  isChatOverlayVisible = !isChatOverlayVisible;
+  config.save({ chatOverlayEnabled: isChatOverlayVisible });
+
+  const updated = { ...config.load(), chatOverlayEnabled: isChatOverlayVisible };
+  const dockCfg = windowRegistry['dock'];
+  [mainWindow, dockCfg?.ref].forEach(win => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('config-data', updated);
+    }
+  });
+
+  const chatWinCfg = windowRegistry['chatOverlay'];
+  const subWinCfg = windowRegistry['chatOverlaySub'];
+  const sub2WinCfg = windowRegistry['chatOverlaySub2'];
+
+  if (isChatOverlayVisible) {
+    if (!chatWinCfg.ref || chatWinCfg.ref.isDestroyed()) {
+      createToggleableWindow('chatOverlay');
+    }
+    
+    // Main 창이 켜질 때, 설정에 저장되어 있던 활성화 상태에 따라 sub1, sub2도 복원
+    const cfg = config.load();
+    if (cfg.chatOverlaySubEnabled) {
+      isChatOverlaySubVisible = true;
+      if (!subWinCfg.ref || subWinCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlaySub');
+      }
+    }
+    if (cfg.chatOverlaySub2Enabled) {
+      isChatOverlaySub2Visible = true;
+      if (!sub2WinCfg.ref || sub2WinCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlaySub2');
+      }
+    }
+  } else {
+    // 꺼질 때는 Main 및 모든 서브 창 닫기
+    if (chatWinCfg.ref && !chatWinCfg.ref.isDestroyed()) {
+      chatWinCfg.ref.close();
+    }
+    if (subWinCfg.ref && !subWinCfg.ref.isDestroyed()) {
+      subWinCfg.ref.close();
+    }
+    if (sub2WinCfg.ref && !sub2WinCfg.ref.isDestroyed()) {
+      sub2WinCfg.ref.close();
+    }
+  }
+  return isChatOverlayVisible;
+}
+
+export function broadcastConfig(): void {
+  const cfg = config.load();
+  const dockCfg = windowRegistry['dock'];
+  const chatWin = windowRegistry['chatOverlay'];
+  const sub1Win = windowRegistry['chatOverlaySub'];
+  const sub2Win = windowRegistry['chatOverlaySub2'];
+  
+  [mainWindow, dockCfg?.ref, chatWin?.ref, sub1Win?.ref, sub2Win?.ref].forEach(win => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('config-data', cfg);
+    }
+  });
+}
+
+export function toggleSubWindow(subNum: 1 | 2): void {
+  if (subNum === 1) {
+    const winCfg = windowRegistry['chatOverlaySub'];
+    if (!isChatOverlaySubVisible) {
+      isChatOverlaySubVisible = true;
+      config.saveImmediate({ chatOverlaySubEnabled: true });
+      if (!winCfg.ref || winCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlaySub');
+      }
+    } else {
+      isChatOverlaySubVisible = false;
+      config.saveImmediate({ chatOverlaySubEnabled: false });
+      if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+        winCfg.ref.close();
+      }
+    }
+    broadcastConfig();
+  } else if (subNum === 2) {
+    const winCfg = windowRegistry['chatOverlaySub2'];
+    if (!isChatOverlaySub2Visible) {
+      isChatOverlaySub2Visible = true;
+      config.saveImmediate({ chatOverlaySub2Enabled: true });
+      if (!winCfg.ref || winCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlaySub2');
+      }
+    } else {
+      isChatOverlaySub2Visible = false;
+      config.saveImmediate({ chatOverlaySub2Enabled: false });
+      if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+        winCfg.ref.close();
+      }
+    }
+    broadcastConfig();
+  }
+}
 
 let isDockVisible = false;
 export function toggleDockWindow(): void {
@@ -710,6 +950,57 @@ export function syncOverlay(currentRect: GameRect): void {
       if (!gameOverlayWindow.isDestroyed() && !gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
     }
 
+    // --- 채팅 오버레이 자동 동기화 및 띄우기 ---
+    if (isChatOverlayVisible) {
+      const chatWinCfg = windowRegistry['chatOverlay'];
+      if (!chatWinCfg.ref || chatWinCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlay');
+      } else {
+        if (!chatWinCfg.ref.isVisible()) {
+          chatWinCfg.ref.showInactive();
+        }
+      }
+    } else {
+      const chatWinCfg = windowRegistry['chatOverlay'];
+      if (chatWinCfg.ref && !chatWinCfg.ref.isDestroyed()) {
+        chatWinCfg.ref.close();
+      }
+    }
+
+    // --- 채팅 오버레이 자동 동기화 및 띄우기 (Sub) ---
+    if (isChatOverlayVisible && isChatOverlaySubVisible) {
+      const subWinCfg = windowRegistry['chatOverlaySub'];
+      if (!subWinCfg.ref || subWinCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlaySub');
+      } else {
+        if (!subWinCfg.ref.isVisible()) {
+          subWinCfg.ref.showInactive();
+        }
+      }
+    } else {
+      const subWinCfg = windowRegistry['chatOverlaySub'];
+      if (subWinCfg.ref && !subWinCfg.ref.isDestroyed()) {
+        subWinCfg.ref.close();
+      }
+    }
+
+    // --- 채팅 오버레이 자동 동기화 및 띄우기 (Sub 2) ---
+    if (isChatOverlayVisible && isChatOverlaySub2Visible) {
+      const sub2WinCfg = windowRegistry['chatOverlaySub2'];
+      if (!sub2WinCfg.ref || sub2WinCfg.ref.isDestroyed()) {
+        createToggleableWindow('chatOverlaySub2');
+      } else {
+        if (!sub2WinCfg.ref.isVisible()) {
+          sub2WinCfg.ref.showInactive();
+        }
+      }
+    } else {
+      const sub2WinCfg = windowRegistry['chatOverlaySub2'];
+      if (sub2WinCfg.ref && !sub2WinCfg.ref.isDestroyed()) {
+        sub2WinCfg.ref.close();
+      }
+    }
+
     if (sidebarPos === 'dock') {
       const dockCfg = windowRegistry['dock'];
       if (isDockVisible) {
@@ -812,6 +1103,65 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
   [mainWindow, overlayWindow, gameOverlayWindow].forEach(win => win?.webContents.send('config-data', updated));
   Object.values(windowRegistry).forEach(winCfg => winCfg.ref?.webContents.send('config-data', updated));
 
+  if (newSettings.chatOverlayClickThrough !== undefined) {
+    const chatWin = windowRegistry.chatOverlay.ref;
+    if (chatWin && !chatWin.isDestroyed()) {
+      chatWin.setIgnoreMouseEvents(newSettings.chatOverlayClickThrough, { forward: true });
+    }
+    const subWin = windowRegistry.chatOverlaySub.ref;
+    if (subWin && !subWin.isDestroyed()) {
+      subWin.setIgnoreMouseEvents(newSettings.chatOverlayClickThrough, { forward: true });
+    }
+    const sub2Win = windowRegistry.chatOverlaySub2.ref;
+    if (sub2Win && !sub2Win.isDestroyed()) {
+      sub2Win.setIgnoreMouseEvents(newSettings.chatOverlayClickThrough, { forward: true });
+    }
+  }
+
+  if (newSettings.chatOverlayEnabled !== undefined) {
+    isChatOverlayVisible = newSettings.chatOverlayEnabled;
+    const chatWinCfg = windowRegistry['chatOverlay'];
+    if (isChatOverlayVisible) {
+      if (gameRect && (!chatWinCfg.ref || chatWinCfg.ref.isDestroyed())) {
+        createToggleableWindow('chatOverlay');
+      }
+    } else {
+      if (chatWinCfg.ref && !chatWinCfg.ref.isDestroyed()) {
+        chatWinCfg.ref.close();
+      }
+    }
+  }
+
+  if (newSettings.chatOverlayWidth !== undefined || newSettings.chatOverlayHeight !== undefined) {
+    const chatWinCfg = windowRegistry['chatOverlay'];
+    if (chatWinCfg.ref && !chatWinCfg.ref.isDestroyed()) {
+      const b = chatWinCfg.ref.getBounds();
+      const w = newSettings.chatOverlayWidth ?? b.width;
+      const h = newSettings.chatOverlayHeight ?? b.height;
+      chatWinCfg.ref.setBounds({ x: b.x, y: b.y, width: w, height: h });
+    }
+  }
+
+  if (newSettings.chatOverlaySubWidth !== undefined || newSettings.chatOverlaySubHeight !== undefined) {
+    const subWinCfg = windowRegistry['chatOverlaySub'];
+    if (subWinCfg.ref && !subWinCfg.ref.isDestroyed()) {
+      const b = subWinCfg.ref.getBounds();
+      const w = newSettings.chatOverlaySubWidth ?? b.width;
+      const h = newSettings.chatOverlaySubHeight ?? b.height;
+      subWinCfg.ref.setBounds({ x: b.x, y: b.y, width: w, height: h });
+    }
+  }
+
+  if (newSettings.chatOverlaySub2Width !== undefined || newSettings.chatOverlaySub2Height !== undefined) {
+    const sub2WinCfg = windowRegistry['chatOverlaySub2'];
+    if (sub2WinCfg.ref && !sub2WinCfg.ref.isDestroyed()) {
+      const b = sub2WinCfg.ref.getBounds();
+      const w = newSettings.chatOverlaySub2Width ?? b.width;
+      const h = newSettings.chatOverlaySub2Height ?? b.height;
+      sub2WinCfg.ref.setBounds({ x: b.x, y: b.y, width: w, height: h });
+    }
+  }
+
   // buffTimerManager warnSeconds 캐시 갱신
   buffTimerManager.refreshConfig();
 
@@ -825,12 +1175,51 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
 }
 
 export function toggleClickThrough(): boolean {
-  if (!overlayWindow) return false;
+  const chatWin = windowRegistry.chatOverlay.ref;
+  const subWin = windowRegistry.chatOverlaySub.ref;
+  const sub2Win = windowRegistry.chatOverlaySub2.ref;
+  // 오버레이 창들이 모두 닫혀 있다면 작동 무시
+  if (!overlayWindow && (!chatWin || chatWin.isDestroyed()) && (!subWin || subWin.isDestroyed()) && (!sub2Win || sub2Win.isDestroyed())) {
+    return false;
+  }
+
   isClickThrough = !isClickThrough;
-  overlayWindow.setIgnoreMouseEvents(isClickThrough);
-  if (isClickThrough && isToolbarShown) { isToolbarShown = false; updateViewBounds(); }
-  overlayWindow.webContents.send('click-through-status', isClickThrough);
-  if (mainWindow) mainWindow.webContents.send('click-through-status', isClickThrough);
+
+  // 1. 웹 브라우저 오버레이 투과 제어
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.setIgnoreMouseEvents(isClickThrough);
+    if (isClickThrough && isToolbarShown) { isToolbarShown = false; updateViewBounds(); }
+    overlayWindow.webContents.send('click-through-status', isClickThrough);
+  }
+
+  // 2. 채팅 오버레이 투과 제어 및 설정 실시간 동기화/저장
+  if (chatWin && !chatWin.isDestroyed()) {
+    chatWin.setIgnoreMouseEvents(isClickThrough, { forward: true });
+  }
+  if (subWin && !subWin.isDestroyed()) {
+    subWin.setIgnoreMouseEvents(isClickThrough, { forward: true });
+  }
+  if (sub2Win && !sub2Win.isDestroyed()) {
+    sub2Win.setIgnoreMouseEvents(isClickThrough, { forward: true });
+  }
+
+  config.save({ chatOverlayClickThrough: isClickThrough });
+  const updatedCfg = config.load();
+  if (chatWin && !chatWin.isDestroyed()) chatWin.webContents.send('config-data', updatedCfg);
+  if (subWin && !subWin.isDestroyed()) subWin.webContents.send('config-data', updatedCfg);
+  if (sub2Win && !sub2Win.isDestroyed()) sub2Win.webContents.send('config-data', updatedCfg);
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('click-through-status', isClickThrough);
+    mainWindow.webContents.send('config-data', config.load());
+  }
+
+  // 설정 화면이 켜져 있는 경우 UI 체크박스 실시간 반응을 위해 config 재송신
+  const settingsWin = windowRegistry.settings.ref;
+  if (settingsWin && !settingsWin.isDestroyed()) {
+    settingsWin.webContents.send('config-data', config.load());
+  }
+
   return isClickThrough;
 }
 
@@ -915,6 +1304,20 @@ export function hideOverlayWindows(): void {
     dockCfg.ref.hide();
   }
 
+  // 채팅 오버레이 닫기
+  const chatWinCfg = windowRegistry['chatOverlay'];
+  if (chatWinCfg && chatWinCfg.ref && !chatWinCfg.ref.isDestroyed()) {
+    chatWinCfg.ref.close();
+  }
+  const subWinCfg = windowRegistry['chatOverlaySub'];
+  if (subWinCfg && subWinCfg.ref && !subWinCfg.ref.isDestroyed()) {
+    subWinCfg.ref.close();
+  }
+  const sub2WinCfg = windowRegistry['chatOverlaySub2'];
+  if (sub2WinCfg && sub2WinCfg.ref && !sub2WinCfg.ref.isDestroyed()) {
+    sub2WinCfg.ref.close();
+  }
+
   isTracking = false;
   gameRect = null; // 게임 상태 초기화
   physicalGameRect = null;
@@ -978,4 +1381,14 @@ export function sendActiveWindowsStatus(): void {
     dockCfg.ref.webContents.send('active-windows', activeKeys);
   }
 }
+
+export function setChatOverlaySize(mode: 'main' | 'sub1' | 'sub2', width: number, height: number): void {
+  const key = mode === 'main' ? 'chatOverlay' : (mode === 'sub1' ? 'chatOverlaySub' : 'chatOverlaySub2');
+  const winCfg = windowRegistry[key];
+  if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+    const b = winCfg.ref.getBounds();
+    winCfg.ref.setBounds({ x: b.x, y: b.y, width, height });
+  }
+}
+
 

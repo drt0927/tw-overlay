@@ -7,6 +7,7 @@ import { xpTracker } from './xpTracker';
 import { abandonedTracker } from './abandonedTracker';
 import * as contentsChecker from './contentsChecker';
 import { discordNotifier } from './discordNotifier';
+import { etaCacheManager } from './etaCacheManager';
 
 /**
  * 파싱된 채팅 데이터를 실제 앱 기능(DB 저장, 알림 등)으로 연결하는 프로세서
@@ -18,6 +19,104 @@ class ChatLogProcessor {
   private _chatContextCache: Array<{ timestamp: number; sender: string; message: string; color: string }> = [];
   private _activeTrackingAlarms: Array<{ alarmId: number; endTime: number }> = [];
 
+  // 채팅 오버레이 탭별 히스토리 저장 버퍼스토어
+  private _chatHistoryStore: Record<string, Array<any>> = {
+    Basic: [],
+    General: [],
+    Team: [],
+    Club: [],
+    Shout: [],
+    Whisper: [],
+    System: []
+  };
+  private readonly _maxHistoryCount = 150;
+
+  private addChatToHistory(tab: string, chat: any): void {
+    const list = this._chatHistoryStore[tab];
+    if (!list) return;
+    list.push(chat);
+    if (list.length > this._maxHistoryCount) {
+      list.shift();
+    }
+  }
+
+  private broadcastChatUpdate(chatItem: any): void {
+    const allWindows = BrowserWindow.getAllWindows();
+    for (const win of allWindows) {
+      if (!win.isDestroyed() && win.webContents.getURL().includes('chat-overlay.html')) {
+        win.webContents.send('chat-updated', chatItem);
+      }
+    }
+  }
+
+  public getChatHistory(category: string): any[] {
+    return this._chatHistoryStore[category] || [];
+  }
+
+  /**
+   * 앱 시작 시 오늘 로그에서 읽어온 기존 채팅을 히스토리에만 추가 (알림/DB 저장 없이)
+   */
+  public replayChat(data: {
+    type: 'normal' | 'shout' | 'system';
+    timestamp: string;
+    sender: string;
+    message: string;
+    color: string;
+    serverCode: number;
+  }): void {
+    const rankInfo = etaCacheManager.getRankInfo(data.serverCode, data.sender);
+    const level = rankInfo ? rankInfo.level : null;
+    const characterCode = rankInfo ? rankInfo.characterCode : null;
+
+    if (data.type === 'system') {
+      const chatItem = {
+        id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'system',
+        timestamp: data.timestamp,
+        sender: data.sender || '시스템',
+        message: data.message,
+        color: data.color || '#a8a8a8',
+        level: null,
+        characterCode: null
+      };
+      this.addChatToHistory('Basic', chatItem);
+      this.addChatToHistory('System', chatItem);
+    } else if (data.type === 'shout') {
+      const chatItem = {
+        id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'shout',
+        timestamp: data.timestamp,
+        sender: data.sender,
+        message: data.message,
+        color: data.color,
+        level,
+        characterCode
+      };
+      this.addChatToHistory('Basic', chatItem);
+      this.addChatToHistory('Shout', chatItem);
+    } else {
+      // #ffffff = 타인 일반, #c8ffc8 = 본인 일반, #94ddfa = 클럽, #f7b73c = 팀, #64ff64 = 귓속말
+      const type = data.color === '#f7b73c' ? 'team' : 
+                   (data.color === '#94ddfa' ? 'club' : 
+                   (data.color === '#64ff64' ? 'whisper' : 'general'));
+      const chatItem = {
+        id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type,
+        timestamp: data.timestamp,
+        sender: data.sender,
+        message: data.message,
+        color: data.color,
+        level,
+        characterCode
+      };
+      this.addChatToHistory('Basic', chatItem);
+      if (type === 'general') this.addChatToHistory('General', chatItem);
+      else if (type === 'team') this.addChatToHistory('Team', chatItem);
+      else if (type === 'club') this.addChatToHistory('Club', chatItem);
+      else if (type === 'whisper') this.addChatToHistory('Whisper', chatItem);
+    }
+  }
+
   public start(): void {
     log('[CHAT_PROCESSOR] 시작됨 - 이벤트 리스너 등록');
 
@@ -26,6 +125,20 @@ class ChatLogProcessor {
       const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
       const content = `[자동] ${data.message} (${this.formatNumber(data.amount)})`;
       diaryDb.addActivityLog(data.date, timeOnly, 'calc', content, data.amount);
+
+      const chatItem = {
+        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'system',
+        timestamp: data.timestamp,
+        sender: '시스템',
+        message: data.message,
+        color: '#a8a8a8',
+        level: null,
+        characterCode: null
+      };
+      this.addChatToHistory('Basic', chatItem);
+      this.addChatToHistory('System', chatItem);
+      this.broadcastChatUpdate(chatItem);
     });
 
     // 2. 아이템 획득 처리
@@ -40,6 +153,20 @@ class ChatLogProcessor {
         diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
         this.sendNotification('아이템 획득 알림', data.message);
       }
+
+      const chatItem = {
+        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'system',
+        timestamp: data.timestamp,
+        sender: '시스템',
+        message: data.message,
+        color: '#ffd700',
+        level: null,
+        characterCode: null
+      };
+      this.addChatToHistory('Basic', chatItem);
+      this.addChatToHistory('System', chatItem);
+      this.broadcastChatUpdate(chatItem);
     });
 
     // 3. 외치기 처리
@@ -56,6 +183,26 @@ class ChatLogProcessor {
       if (keywords.length > 0 && matchedKeyword) {
         this.sendNotification(`외치기 알림: [${data.sender}]`, data.message);
       }
+
+      // 에타 랭킹 정보 조회 및 탭 히스토리 누적
+      const serverCode = cfg.userServer || 16;
+      const rankInfo = etaCacheManager.getRankInfo(serverCode, data.sender);
+      const level = rankInfo ? rankInfo.level : null;
+      const characterCode = rankInfo ? rankInfo.characterCode : null;
+
+      const chatItem = {
+        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'shout',
+        timestamp: data.timestamp,
+        sender: data.sender,
+        message: data.message,
+        color: '#c896c8',
+        level,
+        characterCode
+      };
+      this.addChatToHistory('Basic', chatItem);
+      this.addChatToHistory('Shout', chatItem);
+      this.broadcastChatUpdate(chatItem);
 
       // 디스코드 전용 알림 처리 (외치기 전용)
       if (cfg.discordAlertEnabled && cfg.discordWebhookUrl) {
@@ -95,13 +242,52 @@ class ChatLogProcessor {
       // 5분(300초) 이상 지난 데이터 삭제
       this._chatContextCache = this._chatContextCache.filter(c => now - c.timestamp <= 5 * 60 * 1000);
 
+      const cfg = config.load();
+
+      // 에타 랭킹 정보 조회 및 탭 히스토리 누적
+      const serverCode = cfg.userServer || 16;
+      const rankInfo = etaCacheManager.getRankInfo(serverCode, data.sender);
+      const level = rankInfo ? rankInfo.level : null;
+      const characterCode = rankInfo ? rankInfo.characterCode : null;
+
+      // #ffffff = 타인 일반, #c8ffc8 = 본인 일반, #94ddfa = 클럽, #f7b73c = 팀, #64ff64 = 귓속말
+      let type = 'general';
+      if (data.sender === '시스템' || data.color === '#a8a8a8') {
+        type = 'system';
+      } else if (data.color === '#f7b73c') {
+        type = 'team';
+      } else if (data.color === '#94ddfa') {
+        type = 'club';
+      } else if (data.color === '#64ff64') {
+        type = 'whisper';
+      }
+
+      const chatItem = {
+        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type,
+        timestamp: data.timestamp,
+        sender: data.sender,
+        message: data.message,
+        color: data.color,
+        level,
+        characterCode
+      };
+
+      this.addChatToHistory('Basic', chatItem);
+      if (type === 'general') this.addChatToHistory('General', chatItem);
+      else if (type === 'team') this.addChatToHistory('Team', chatItem);
+      else if (type === 'club') this.addChatToHistory('Club', chatItem);
+      else if (type === 'whisper') this.addChatToHistory('Whisper', chatItem);
+      else if (type === 'system') this.addChatToHistory('System', chatItem);
+
+      this.broadcastChatUpdate(chatItem);
+
       // 3. 현재 추적 활성 상태인 알림들에 대해 감지 이후의 후속 대화 기입
       for (const active of this._activeTrackingAlarms) {
         diaryDb.addWordAlarmContextLine(active.alarmId, now, data.sender, data.message, data.color);
       }
 
       // 디스코드 전용 알림 처리 (독립 동작)
-      const cfg = config.load();
       if (cfg.discordAlertEnabled && cfg.discordWebhookUrl) {
         // 기존 discordKeywords 필드만 있고 discordRules가 없는 구버전 설정을 위한 마이그레이션
         let rules = cfg.discordRules || [];

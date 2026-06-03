@@ -549,6 +549,169 @@
               </div>
             </div>
 
+            <!-- 인게임 채팅 오버레이 및 에타 연동 설정 -->
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <label class="section-label flex items-center gap-2">
+                <i data-lucide="message-square" class="w-4 h-4 text-indigo-400"></i> 인게임 채팅 오버레이 및 에타 연동
+              </label>
+
+              <div class="space-y-4">
+                <!-- 폰트 크기 및 투명도 -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-400">글자 크기 (Font Size)</h4>
+                    <div class="flex items-center gap-3">
+                      <input type="range" id="chat-overlay-fontsize-input" min="10" max="28" value="14" class="flex-1 accent-indigo-600">
+                      <span id="chat-overlay-fontsize-val" class="text-xs font-bold text-slate-200 min-w-[24px] text-right">14px</span>
+                    </div>
+                  </div>
+                  <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-400">오버레이 기본 불투명도</h4>
+                    <div class="flex items-center gap-3">
+                      <input type="range" id="chat-overlay-opacity-input" min="0.1" max="1.0" step="0.05" value="0.8" class="flex-1 accent-indigo-600">
+                      <span id="chat-overlay-opacity-val" class="text-xs font-bold text-slate-200 min-w-[32px] text-right">80%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 오버레이 크기 설정 그룹 (3열 컬럼) -->
+                <div class="grid grid-cols-3 gap-4 pt-2">
+                  <!-- MAIN 오버레이 설정 그룹 -->
+                  <div class="p-3 bg-black/30 rounded-2xl border border-white/5 space-y-3 flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 text-xs font-black text-indigo-400">
+                      <i data-lucide="layout" class="w-3.5 h-3.5"></i> MAIN
+                    </div>
+                    <div class="space-y-2">
+                      <div class="p-2 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 shrink-0">가로</span>
+                        <div class="flex items-center gap-1">
+                          <input type="number" id="chat-overlay-width-input" min="300" max="1200" step="10" value="450" class="input-field w-16 text-xs py-1 px-2 bg-black/40 text-center font-bold">
+                          <span class="text-[10px] text-slate-500 font-bold">px</span>
+                        </div>
+                      </div>
+                      <div class="p-2 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 shrink-0">세로</span>
+                        <div class="flex items-center gap-1">
+                          <input type="number" id="chat-overlay-height-input" min="200" max="1000" step="10" value="400" class="input-field w-16 text-xs py-1 px-2 bg-black/40 text-center font-bold">
+                          <span class="text-[10px] text-slate-500 font-bold">px</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- SUB 1 오버레이 설정 그룹 -->
+                  <div class="p-3 bg-black/30 rounded-2xl border border-white/5 space-y-3 flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 text-xs font-black text-indigo-400">
+                      <i data-lucide="layout" class="w-3.5 h-3.5"></i> SUB 1
+                    </div>
+                    <div class="space-y-2">
+                      <div class="p-2 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 shrink-0">가로</span>
+                        <div class="flex items-center gap-1">
+                          <input type="number" id="chat-overlay-sub-width-input" min="300" max="1200" step="10" value="450" class="input-field w-16 text-xs py-1 px-2 bg-black/40 text-center font-bold">
+                          <span class="text-[10px] text-slate-500 font-bold">px</span>
+                        </div>
+                      </div>
+                      <div class="p-2 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 shrink-0">세로</span>
+                        <div class="flex items-center gap-1">
+                          <input type="number" id="chat-overlay-sub-height-input" min="200" max="1000" step="10" value="400" class="input-field w-16 text-xs py-1 px-2 bg-black/40 text-center font-bold">
+                          <span class="text-[10px] text-slate-500 font-bold">px</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- SUB 2 오버레이 설정 그룹 -->
+                  <div class="p-3 bg-black/30 rounded-2xl border border-white/5 space-y-3 flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 text-xs font-black text-indigo-400">
+                      <i data-lucide="layout" class="w-3.5 h-3.5"></i> SUB 2
+                    </div>
+                    <div class="space-y-2">
+                      <div class="p-2 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 shrink-0">가로</span>
+                        <div class="flex items-center gap-1">
+                          <input type="number" id="chat-overlay-sub2-width-input" min="300" max="1200" step="10" value="450" class="input-field w-16 text-xs py-1 px-2 bg-black/40 text-center font-bold">
+                          <span class="text-[10px] text-slate-500 font-bold">px</span>
+                        </div>
+                      </div>
+                      <div class="p-2 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 shrink-0">세로</span>
+                        <div class="flex items-center gap-1">
+                          <input type="number" id="chat-overlay-sub2-height-input" min="200" max="1000" step="10" value="400" class="input-field w-16 text-xs py-1 px-2 bg-black/40 text-center font-bold">
+                          <span class="text-[10px] text-slate-500 font-bold">px</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 통합(Basic) 탭 노출 채널 선택 -->
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-3">
+                  <h4 class="text-xs font-bold text-slate-400">통합 탭 노출 채널 선택</h4>
+                  <div class="flex flex-wrap gap-4 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-channel-general" value="general" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>일반</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-channel-whisper" value="whisper" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>귓속말</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-channel-team" value="team" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>팀</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-channel-club" value="club" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>클럽</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-channel-shout" value="shout" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>외치기</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-channel-system" value="system" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>시스템</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- 주 사용 서버 선택 및 에타 URL -->
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
+                  <div class="grid grid-cols-3 gap-4 items-center">
+                    <div class="col-span-1">
+                      <h4 class="text-xs font-bold text-slate-400">주 사용 캐릭터 서버</h4>
+                      <p class="text-[10px] text-slate-500 mt-1">에타 랭커 배지 매칭 기준</p>
+                    </div>
+                    <div class="col-span-2">
+                      <select id="chat-overlay-user-server-input" class="input-field w-full py-2 px-3 bg-black/60">
+                        <option value="16">네냐플</option>
+                        <option value="7">하이아칸</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="border-t border-white/5 pt-3 flex items-center justify-between">
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-400">에타 랭킹 갱신</h4>
+                      <p id="eta-cache-status" class="text-[10px] text-slate-500 mt-1">로컬 캐시 확인 중...</p>
+                    </div>
+                    <button onclick="fetchRemoteEtaRankings()" id="btn-fetch-eta" class="px-2 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-[10px] font-bold transition-all active:scale-95">
+                      지금 즉시 갱신
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 즉시 적용 버튼 추가 -->
+                <div class="pt-2">
+                  <button type="button" onclick="applyChatOverlaySettingsOnly()" class="w-full py-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 hover:border-indigo-500/50 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-950/20 active:scale-[0.98]">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> 채팅 오버레이 설정 즉시 적용
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- 득템 알림 키워드 -->
             <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
               <label class="section-label flex items-center gap-2 mb-4">
@@ -846,6 +1009,25 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 5. 채팅 오버레이 창 열기/닫기 -->
+              <div class="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5 group">
+                <div class="flex flex-col gap-1">
+                  <span class="text-sm font-bold text-slate-200">채팅 오버레이 창 열기/닫기</span>
+                  <p class="text-[10px] text-slate-500">채팅 오버레이 창을 열거나 닫습니다.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="relative">
+                    <input type="text" id="shortcut-toggleChatOverlaySync" readonly
+                      class="shortcut-input w-48 text-center font-mono text-xs py-2.5 px-4 bg-black/40 border border-white/10 rounded-lg text-purple-400 cursor-pointer focus:border-purple-500/50 outline-none transition-all"
+                      placeholder="단축키 입력..." onclick="recordShortcut('toggleChatOverlaySync')">
+                    <button onclick="resetShortcut('toggleChatOverlaySync')"
+                      class="absolute -right-2 -top-2 w-5 h-5 bg-slate-800 border border-white/10 rounded-full text-slate-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                      <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="mt-4 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
@@ -1136,7 +1318,8 @@
       toggleClickThrough: 'CommandOrControl+Shift+T',
       toggleContentsChecker: 'CommandOrControl+Shift+C',
       toggleBuffHud: 'CommandOrControl+Shift+B',
-      toggleDock: 'CommandOrControl+Shift+D'
+      toggleDock: 'CommandOrControl+Shift+D',
+      toggleChatOverlaySync: 'CommandOrControl+Shift+H'
     };
 
     function recordShortcut(key) {
@@ -1195,7 +1378,8 @@
         toggleClickThrough: 'CommandOrControl+Shift+T',
         toggleContentsChecker: 'CommandOrControl+Shift+C',
         toggleBuffHud: 'CommandOrControl+Shift+B',
-        toggleDock: 'CommandOrControl+Shift+D'
+        toggleDock: 'CommandOrControl+Shift+D',
+        toggleChatOverlaySync: 'CommandOrControl+Shift+H'
       };
       currentShortcuts[key] = defaults[key];
       const input = document.getElementById(`shortcut-${key}`);
@@ -1477,6 +1661,61 @@
         };
       }
 
+      // 채팅 오버레이 설정 로드 및 바인딩
+      if (document.getElementById('chat-overlay-user-server-input')) {
+        document.getElementById('chat-overlay-user-server-input').value = config.userServer ?? 16;
+      }
+
+      const overlayFontSizeEl = document.getElementById('chat-overlay-fontsize-input');
+      const overlayFontSizeVal = document.getElementById('chat-overlay-fontsize-val');
+      if (overlayFontSizeEl && overlayFontSizeVal) {
+        const fs = config.chatOverlayFontSize ?? 14;
+        overlayFontSizeEl.value = fs;
+        overlayFontSizeVal.innerText = fs + 'px';
+        overlayFontSizeEl.oninput = (e) => {
+          overlayFontSizeVal.innerText = e.target.value + 'px';
+        };
+      }
+
+      const overlayOpacityEl = document.getElementById('chat-overlay-opacity-input');
+      const overlayOpacityVal = document.getElementById('chat-overlay-opacity-val');
+      if (overlayOpacityEl && overlayOpacityVal) {
+        const op = config.chatOverlayOpacity ?? 0.8;
+        overlayOpacityEl.value = op;
+        overlayOpacityVal.innerText = Math.round(op * 100) + '%';
+        overlayOpacityEl.oninput = (e) => {
+          overlayOpacityVal.innerText = Math.round(parseFloat(e.target.value) * 100) + '%';
+        };
+      }
+
+      if (document.getElementById('chat-overlay-width-input')) {
+        document.getElementById('chat-overlay-width-input').value = config.chatOverlayWidth ?? 450;
+      }
+      if (document.getElementById('chat-overlay-height-input')) {
+        document.getElementById('chat-overlay-height-input').value = config.chatOverlayHeight ?? 400;
+      }
+      if (document.getElementById('chat-overlay-sub-width-input')) {
+        document.getElementById('chat-overlay-sub-width-input').value = config.chatOverlaySubWidth ?? 450;
+      }
+      if (document.getElementById('chat-overlay-sub-height-input')) {
+        document.getElementById('chat-overlay-sub-height-input').value = config.chatOverlaySubHeight ?? 400;
+      }
+      if (document.getElementById('chat-overlay-sub2-width-input')) {
+        document.getElementById('chat-overlay-sub2-width-input').value = config.chatOverlaySub2Width ?? 450;
+      }
+      if (document.getElementById('chat-overlay-sub2-height-input')) {
+        document.getElementById('chat-overlay-sub2-height-input').value = config.chatOverlaySub2Height ?? 400;
+      }
+
+      // 채널 설정 바인딩
+      const selectedChannels = config.chatOverlaySelectedChannels || ['general', 'whisper', 'team', 'club', 'shout', 'system'];
+      ['general', 'whisper', 'team', 'club', 'shout', 'system'].forEach(ch => {
+        const cb = document.getElementById(`chat-overlay-channel-${ch}`);
+        if (cb) {
+          cb.checked = selectedChannels.includes(ch);
+        }
+      });
+
 
 
 
@@ -1514,7 +1753,11 @@
 
       // config 로드 완료
       _configReady = true;
-      hideLoading();
+      updateEtaCacheStatusText().then(() => {
+        hideLoading();
+      }).catch(() => {
+        hideLoading();
+      });
     });
 
     // 초기화 실행
@@ -1867,6 +2110,21 @@
           volumeContentsChecker: parseInt(document.getElementById('volume-contents-checker').value),
           volumeCalculators: parseInt(document.getElementById('volume-calculators').value),
 
+          // 채팅 오버레이 설정
+          chatOverlayFontSize: document.getElementById('chat-overlay-fontsize-input') ? parseInt(document.getElementById('chat-overlay-fontsize-input').value) : 14,
+          chatOverlayOpacity: document.getElementById('chat-overlay-opacity-input') ? parseFloat(document.getElementById('chat-overlay-opacity-input').value) : 0.8,
+          chatOverlayWidth: document.getElementById('chat-overlay-width-input') ? parseInt(document.getElementById('chat-overlay-width-input').value) : 450,
+          chatOverlayHeight: document.getElementById('chat-overlay-height-input') ? parseInt(document.getElementById('chat-overlay-height-input').value) : 400,
+          chatOverlaySubWidth: document.getElementById('chat-overlay-sub-width-input') ? parseInt(document.getElementById('chat-overlay-sub-width-input').value) : 450,
+          chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
+          chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
+          chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
+          chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
+            const cb = document.getElementById(`chat-overlay-channel-${ch}`);
+            return cb ? cb.checked : false;
+          }),
+          userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : 16,
+
           // 채팅 로그 설정
           chatLogPath: document.getElementById('chat-log-path-input').value,
           chatLogAutoDeleteDays: parseInt(document.getElementById('chat-log-auto-delete-input').value) || 0,
@@ -1889,10 +2147,98 @@
     }
 
 
+    function applyChatOverlaySettingsOnly() {
+      try {
+        const chatSettings = {
+          chatOverlayFontSize: document.getElementById('chat-overlay-fontsize-input') ? parseInt(document.getElementById('chat-overlay-fontsize-input').value) : 14,
+          chatOverlayOpacity: document.getElementById('chat-overlay-opacity-input') ? parseFloat(document.getElementById('chat-overlay-opacity-input').value) : 0.8,
+          chatOverlayWidth: document.getElementById('chat-overlay-width-input') ? parseInt(document.getElementById('chat-overlay-width-input').value) : 450,
+          chatOverlayHeight: document.getElementById('chat-overlay-height-input') ? parseInt(document.getElementById('chat-overlay-height-input').value) : 400,
+          chatOverlaySubWidth: document.getElementById('chat-overlay-sub-width-input') ? parseInt(document.getElementById('chat-overlay-sub-width-input').value) : 450,
+          chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
+          chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
+          chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
+          chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
+            const cb = document.getElementById(`chat-overlay-channel-${ch}`);
+            return cb ? cb.checked : false;
+          }),
+          userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : 16,
+          lootKeywords: lootKeywordsList,
+          shoutKeywords: shoutKeywordsList,
+          ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
+          abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+          waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
+          waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
+          waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
+        };
+
+        window.electronAPI.applySettings(chatSettings);
+
+        // 시각적 완료 피드백 애니메이션
+        const btn = document.querySelector('button[onclick="applyChatOverlaySettingsOnly()"]');
+        if (btn) {
+          const origHtml = btn.innerHTML;
+          btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> <span class="text-emerald-400">오버레이에 즉시 적용되었습니다!</span>`;
+          if (window.lucide) window.lucide.createIcons();
+          setTimeout(() => {
+            btn.innerHTML = origHtml;
+            if (window.lucide) window.lucide.createIcons();
+          }, 1500);
+        }
+      } catch (e) {
+        console.error('채팅 오버레이 즉시 적용 오류:', e);
+      }
+    }
+
+
     function previewWaveSound() {
       const sound = document.getElementById('wave-warning-sound').value || 'orb.mp3';
       const vol = parseInt(document.getElementById('wave-warning-volume').value) || 70;
       window.electronAPI.previewBossSound(sound, vol, '몬스터 웨이브 종료 대기 알림');
+    }
+
+    async function updateEtaCacheStatusText() {
+      const statusEl = document.getElementById('eta-cache-status');
+      if (!statusEl) return;
+      try {
+        const status = await window.electronAPI.getEtaCacheStatus();
+        if (status.exists) {
+          statusEl.innerText = status.collectDate 
+            ? `로컬 캐시: 존재함 (${status.collectDate})` 
+            : '로컬 캐시: 존재함';
+          statusEl.className = 'text-[10px] text-emerald-400 mt-1 font-semibold';
+        } else {
+          statusEl.innerText = '로컬 캐시: 없음 (갱신 필요)';
+          statusEl.className = 'text-[10px] text-rose-400 mt-1 font-semibold';
+        }
+      } catch (e) {
+        statusEl.innerText = '로컬 캐시 상태 확인 실패';
+        statusEl.className = 'text-[10px] text-slate-500 mt-1';
+      }
+    }
+
+    async function fetchRemoteEtaRankings() {
+      const btn = document.getElementById('btn-fetch-eta');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '갱신 중...';
+      }
+      try {
+        const success = await window.electronAPI.fetchEtaRankings();
+        if (success) {
+          alert('에타 랭킹 데이터를 성공적으로 갱신했습니다.');
+          await updateEtaCacheStatusText();
+        } else {
+          alert('에타 랭킹 데이터 갱신에 실패했습니다. URL을 확인해 주세요.');
+        }
+      } catch (e) {
+        alert('에러 발생: ' + e.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = '지금 즉시 갱신';
+        }
+      }
     }
 
 

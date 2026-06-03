@@ -89,7 +89,7 @@
   },
   {
     "id": "scam-detector-btn",
-    "label": "사기꾼 탐지 AI",
+    "label": "사기꾼 탐지",
     "icon": "shield-alert",
     "tooltip": "1:1 대화 실시간 사기꾼 탐지 [BETA]",
     "color": "red-400",
@@ -175,6 +175,15 @@
     "tooltip": "오버레이 브라우저 보이기/숨기기",
     "color": "slate-400",
     "api": "toggleOverlay",
+    "isSystem": true
+  },
+  {
+    "id": "chat-overlay-toggle-btn",
+    "label": "채팅 오버레이 토글",
+    "icon": "message-square",
+    "tooltip": "채팅 오버레이 보이기/숨기기 (Ctrl+Shift+H)",
+    "color": "slate-400",
+    "api": "toggleChatOverlay",
     "isSystem": true
   },
   {

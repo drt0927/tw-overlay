@@ -8,9 +8,11 @@ import * as iconv from 'iconv-lite';
 import * as wm from '../windowManager';
 import { log } from '../logger';
 import type { MessengerMessage, ScamAnalysisResult, SessionState } from '../../shared/types';
-import { getMsgerLogPath } from './modelManager';
+import { getMsgerLogPath, getModelStatus } from './modelManager';
 import { startServer, stopServer, callLlmQueued } from './serverManager';
 import { parseLine, buildConversationText, parseResponse, sendAlert, END_KEYWORDS, TEST_SCENARIOS } from './parser';
+import { etaCacheManager } from '../etaCacheManager';
+import * as config from '../config';
 
 // ── 상수 ──
 const MAX_SESSIONS = 5;
@@ -32,6 +34,7 @@ interface ActiveSession {
   analyzing: boolean;
   lastVerdict: ScamAnalysisResult['verdict'];
   closed: boolean;
+  isTest?: boolean;
 }
 
 // ── 상태 ──
@@ -57,6 +60,7 @@ export function getSessionStates(): SessionState[] {
     lastVerdict: s.lastVerdict,
     lastMessageTime: s.lastMessageTime,
     lastAnalysisAt: s.lastAnalysisAt,
+    messages: s.messages,
   }));
 }
 
@@ -115,6 +119,13 @@ function onNewLine(session: ActiveSession, line: string): void {
   const msg = parseLine(line);
   if (!msg) return;
 
+  // 상대방의 에타 레벨만 표시
+  if (!msg.isSystem && msg.sender && !msg.isSelf) {
+    const serverCode = config.load().userServer ?? 16;
+    const rankInfo = etaCacheManager.getRankInfo(serverCode, msg.sender);
+    msg.etaLevel = rankInfo ? rankInfo.level : null;
+  }
+
   session.messages.push(msg);
   session.lastMessageTime = Date.now();
   session.newSinceLastAnalysis++;
@@ -142,9 +153,100 @@ function onNewLine(session: ActiveSession, line: string): void {
   broadcastSessionUpdate();
 }
 
+// ── 가상 분석 (Mock Analysis) ──
+async function runMockAnalysis(session: ActiveSession): Promise<void> {
+  session.analyzing = true;
+  session.newSinceLastAnalysis = 0;
+  session.lastAnalysisAt = Date.now();
+  broadcastSessionUpdate();
+
+  try {
+    let verdict: ScamAnalysisResult['verdict'] = 'UNKNOWN';
+    let detectedScamTypes = '알 수 없음';
+    let analysisReason = '가상 분석 결과입니다.';
+    let actionGuidance = '가상 분석 결과입니다.';
+
+    const senders = new Set(session.messages.map(m => m.sender).filter(Boolean));
+
+    if (senders.has('룰러')) {
+      verdict = 'SCAM';
+      detectedScamTypes = '가중치 거래 코드 유도 / Ctrl+1 키 입력 요구';
+      analysisReason = '거래 전 "가중치 코드" 입력을 요구하며 특정 단축키(Ctrl+1)의 작동 방식을 오도하고 있습니다. 전형적인 권한 편취 및 해킹 사기 패턴입니다.';
+      actionGuidance = '사기 위험 대화입니다. 대화를 즉시 중단하시고 거래 상대방을 차단하세요.';
+    } else if (senders.has('클럽장-햄찌') || senders.has('판매자햄찌')) {
+      verdict = 'SCAM';
+      detectedScamTypes = '3자 대화 유도 / 클럽장 사칭 사기';
+      analysisReason = '클럽장 또는 신뢰할 만한 대상을 사칭하여 특이한 거래 규칙(상속거래 시스템)이나 코드를 요구하고 있습니다. 교란을 목적으로 다수가 공모하는 사기입니다.';
+      actionGuidance = '사기 위험 대화입니다. 해당 유저들과의 대화를 거부하고 즉시 신뢰할 수 있는 경로로 확인하세요.';
+    } else if (senders.has('할리퀸')) {
+      verdict = 'SCAM';
+      detectedScamTypes = '게임 운영자 사칭 / 보증금 및 시드 전송 요구';
+      analysisReason = '비정상적인 규정(운영자 규정, 롤벤)을 운운하며 시드를 먼저 송금하라고 요구하고 있습니다. 수수료나 보증금을 먼저 요구하는 선입금 사기입니다.';
+      actionGuidance = '사기 위험 대화입니다. 절대 시드나 아이템을 먼저 전송하지 마세요.';
+    } else if (senders.has('췌릴')) {
+      verdict = 'SUSPICIOUS';
+      detectedScamTypes = '교환창 장시간 지연 / 비정상적 지연';
+      analysisReason = '교환창을 열어둔 채 컴퓨터 렉 등을 핑계로 비정상적으로 시간을 지체하고 있습니다. 주의력을 흐트러뜨리는 행동 패턴으로 판단됩니다.';
+      actionGuidance = '의심스러운 대화입니다. 불필요한 대기 시간이 길어질 경우 교환창을 닫고 안전한 장소로 이동하세요.';
+    } else if (senders.has('밍키')) {
+      verdict = 'SAFE';
+      detectedScamTypes = '없음';
+      analysisReason = '일상적이고 명확한 의사의 거래 대화가 오가고 있으며, 비정상적인 요구 사항이나 외부 링크, 정체불명의 조작 유도가 발견되지 않았습니다.';
+      actionGuidance = '안전한 대화로 판단되나, 거래 최종 수락 전에 다시 한번 아이템과 금액을 확인해 주십시오.';
+    }
+
+    const result: ScamAnalysisResult = {
+      verdict,
+      detectedScamTypes,
+      analysisReason,
+      actionGuidance,
+      rawResponse: `[MOCK ANALYSIS RESPONSE]\nVerdict: ${verdict}\nTypes: ${detectedScamTypes}\nReason: ${analysisReason}\nGuidance: ${actionGuidance}`,
+      filePath: session.filePath,
+      analyzedAt: Date.now(),
+    };
+
+    // 가상 딜레이 연출 (0.5초)
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    log(`[SCAM] [MOCK] 가상 분석 결과: ${result.verdict} | ${path.basename(session.filePath)}`);
+    wm.getScamDetectorWindow()?.webContents.send('scam-analysis-result', result);
+
+    const shouldAlert =
+      (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&
+      result.verdict !== session.lastVerdict;
+    session.lastVerdict = result.verdict;
+
+    if (shouldAlert) await sendAlert(result);
+  } catch (e) {
+    log(`[SCAM] [MOCK] 가상 분석 예외 발생: ${e}`);
+  } finally {
+    session.analyzing = false;
+    broadcastSessionUpdate();
+  }
+}
+
 // ── 분석 ──
 async function analyze(session: ActiveSession): Promise<void> {
   if (session.analyzing || session.messages.length === 0) return;
+
+  const isLlmDisabled = config.load().scamLlmDisabled;
+  const isModelDownloaded = getModelStatus().downloaded;
+
+  if (isLlmDisabled || !isModelDownloaded) {
+    if (session.isTest) {
+      log(`[SCAM] AI 비활성화 또는 모델 미준비 상태에서 테스트 세션 가상 분석을 진행합니다: ${path.basename(session.filePath)}`);
+      await runMockAnalysis(session);
+      return;
+    } else {
+      if (isLlmDisabled) {
+        log(`[SCAM] AI 분석(LLM)이 비활성화되어 대화 분석을 건너뜁니다: ${path.basename(session.filePath)}`);
+      } else {
+        log(`[SCAM] AI 모델이 다운로드되지 않아 자동 대화 분석을 건너뜁니다: ${path.basename(session.filePath)}`);
+      }
+      return;
+    }
+  }
+
   session.analyzing = true;
   const savedCount = session.newSinceLastAnalysis;
   session.newSinceLastAnalysis = 0;
@@ -217,6 +319,7 @@ export function startSession(filePath: string, isTest = false): void {
     lastAnalysisAt: 0,
     analysisTimer: null, debounceTimer: null, inactivityTimer: null,
     analyzing: false, lastVerdict: 'UNKNOWN', closed: false,
+    isTest,
   };
 
   tail.on('line', (data: string) => {

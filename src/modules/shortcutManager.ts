@@ -66,6 +66,17 @@ export function registerAll(): void {
     }
   }
 
+  // 5. 채팅 오버레이 창 토글
+  if (shortcuts.toggleChatOverlaySync) {
+    const registered = globalShortcut.register(shortcuts.toggleChatOverlaySync, () => {
+      log('[SHORTCUT] Toggle Chat Overlay');
+      wm.toggleChatOverlayWindow();
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleChatOverlaySync}`);
+    }
+  }
+
   log('[SHORTCUT] All shortcuts registered');
 }
 

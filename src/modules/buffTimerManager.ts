@@ -208,9 +208,20 @@ class BuffTimerManager {
 
     log(`[BUFF_TIMER] 경고! ${buff.name} — ${label} 남음 (${phase})`);
 
+    const def = this._buffDefs.get(buff.buffId);
+    const buffName = buff.name;
+    const image = def?.image ?? '';
+
     // game-overlay에 경고 이벤트 전송 (시각적 알림)
     if (cfg.buffTimerVisualAlert !== false) {
-      this._sendToGameOverlay('buff-timer-warning', { buffId: buff.buffId, phase, warnSec });
+      this._sendToGameOverlay('buff-timer-warning', {
+        buffId: buff.buffId,
+        buffName,
+        image,
+        phase,
+        warnSec,
+        buffTimerCenterAlert: cfg.buffTimerCenterAlert !== false
+      });
     }
 
     // 청각적 알림 — 범용 play-sound 채널로 전송

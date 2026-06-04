@@ -427,11 +427,11 @@ export function register(): void {
     }
   });
 
-  // 버프 타이머 테스트 — 8개 버프 강제 활성화
+  // 버프 타이머 테스트 — 7개 버프 강제 활성화
   ipcMain.on('buff-timer-test', (event, seconds?: number) => {
    const TEST_BUFFS = [
      'exp_heart', 'rare_heart', 'stat_exorcist',
-     'rare_loto', 'util_ampoule', 'dmg_izabel', 'stat_izabel_ratio', 'util_illumination'
+     'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination'
    ];
    const durationMs = (seconds && seconds > 0) ? seconds * 1000 : undefined;
    TEST_BUFFS.forEach(buffId => buffTimerManager.activateBuff(buffId, 'test', durationMs));

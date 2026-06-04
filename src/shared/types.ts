@@ -159,6 +159,7 @@ export interface BuffDefinition {
     description: string;
 }
 
+
 export interface ResetRule {
     type: 'daily' | 'weekly';
     dayOfWeek?: number;
@@ -290,6 +291,7 @@ export interface AppConfig {
     buffTimerVolume?: number;
     buffTimerSound?: string;
     buffTimerBuffs?: { [buffId: string]: boolean }; // buffId → 감지 활성화 여부
+    buffTimerCenterAlert?: boolean;
     buffTimerHudPos?: { left: number; bottom: number };
 
     // --- Essence Alert Settings ---

@@ -613,6 +613,16 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div class="alert-row" style="margin-top:4px;">
+          <div>
+            <div class="alert-row-label">화면 중앙 대형 알림</div>
+            <div class="alert-row-sub">종료 5초 전 화면 중앙에 2.3초간 대형 경고 카드 노출</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="center-alert-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 
       <!-- HUD 표시 설정 -->
@@ -815,6 +825,19 @@
     };
 
     document.getElementById('btn-test').onclick = () => {
+      // 테스트 시점의 설정들을 우선 실시간 적용
+      window.electronAPI.applySettings({
+        buffTimerEnabled: document.getElementById('master-toggle').checked,
+        showBuffHud: document.getElementById('show-hud-toggle').checked,
+        buffTimerWarnSeconds: [...warnSeconds],
+        buffTimerAudioAlert: document.getElementById('audio-toggle').checked,
+        buffTimerVisualAlert: document.getElementById('visual-toggle').checked,
+        buffTimerCenterAlert: document.getElementById('center-alert-toggle').checked,
+        buffTimerVolume: parseInt(document.getElementById('volume-slider').value),
+        buffTimerSound: document.getElementById('sound-select').value,
+        buffTimerBuffs: { ...buffEnabled }
+      });
+
       const secs = parseInt(document.getElementById('test-seconds-input').value) || 1200;
       window.electronAPI.buffTimerTest(secs);
     };
@@ -835,6 +858,7 @@
         buffTimerWarnSeconds: [...warnSeconds],
         buffTimerAudioAlert: document.getElementById('audio-toggle').checked,
         buffTimerVisualAlert: document.getElementById('visual-toggle').checked,
+        buffTimerCenterAlert: document.getElementById('center-alert-toggle').checked,
         buffTimerVolume: parseInt(document.getElementById('volume-slider').value),
         buffTimerSound: document.getElementById('sound-select').value,
         buffTimerBuffs: { ...buffEnabled },
@@ -919,6 +943,8 @@
       if (audioToggle) audioToggle.checked = config.buffTimerAudioAlert !== false;
       const visualToggle = document.getElementById('visual-toggle');
       if (visualToggle) visualToggle.checked = config.buffTimerVisualAlert !== false;
+      const centerToggle = document.getElementById('center-alert-toggle');
+      if (centerToggle) centerToggle.checked = config.buffTimerCenterAlert !== false;
       
       const vol = config.buffTimerVolume ?? 70;
       const volSlider = document.getElementById('volume-slider');
@@ -927,7 +953,7 @@
       if (volVal) volVal.textContent = vol;
       
       warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
-      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, stat_izabel_ratio: true, util_illumination: true }) };
+      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true }) };
       
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
       const posLeft = document.getElementById('hud-pos-left');

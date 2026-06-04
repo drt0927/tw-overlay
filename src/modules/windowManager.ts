@@ -180,9 +180,10 @@ const windowRegistry: Record<string, ManagedWindow> = {
       win.webContents.send('chat-overlay-mode', 'main');
     },
     onClose: () => {
-      isChatOverlayVisible = false;
-      const updated = { ...config.load(), chatOverlayEnabled: false };
-      config.saveImmediate({ chatOverlayEnabled: false });
+      // 게임 창 최소화/숨김 시 닫히는 경우와 사용자가 직접 닫은 경우를 구분하기 위해,
+      // config 저장 및 isChatOverlayVisible 변수 갱신은 toggleChatOverlayWindow()에서만 수행합니다.
+      // 여기서는 닫혔을 때 UI 상태 갱신 및 서브 창 닫기 동작만 수행합니다.
+      const updated = config.load();
 
       const dockCfg = windowRegistry['dock'];
       [mainWindow, dockCfg?.ref].forEach(win => {
@@ -222,10 +223,8 @@ const windowRegistry: Record<string, ManagedWindow> = {
       win.webContents.send('chat-overlay-mode', 'sub1');
     },
     onClose: () => {
-      isChatOverlaySubVisible = false;
-      if (isChatOverlayVisible && !appState.isQuitting) {
-        config.saveImmediate({ chatOverlaySubEnabled: false });
-      }
+      // 게임 창 최소화 등으로 인해 닫히는 동작에서는 설정 저장을 무시하기 위해,
+      // config 저장 및 isChatOverlaySubVisible 변수 갱신은 toggleSubWindow()에서만 수행합니다.
       broadcastConfig();
     }
   },
@@ -245,10 +244,8 @@ const windowRegistry: Record<string, ManagedWindow> = {
       win.webContents.send('chat-overlay-mode', 'sub2');
     },
     onClose: () => {
-      isChatOverlaySub2Visible = false;
-      if (isChatOverlayVisible && !appState.isQuitting) {
-        config.saveImmediate({ chatOverlaySub2Enabled: false });
-      }
+      // 게임 창 최소화 등으로 인해 닫히는 동작에서는 설정 저장을 무시하기 위해,
+      // config 저장 및 isChatOverlaySub2Visible 변수 갱신은 toggleSubWindow()에서만 수행합니다.
       broadcastConfig();
     }
   },

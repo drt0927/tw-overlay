@@ -453,6 +453,19 @@ if (btnOpenSub2) {
   });
 }
 
+const btnClose = document.getElementById('btnCloseOverlay') as HTMLButtonElement;
+if (btnClose) {
+  btnClose.addEventListener('click', () => {
+    if (chatOverlayMode === 'main') {
+      window.electronAPI.toggleChatOverlay();
+    } else if (chatOverlayMode === 'sub1') {
+      window.electronAPI.toggleChatOverlaySub(1);
+    } else if (chatOverlayMode === 'sub2') {
+      window.electronAPI.toggleChatOverlaySub(2);
+    }
+  });
+}
+
 // Resize Drag Control
 let chatOverlayIsResizing = false;
 let chatOverlayStartX = 0;

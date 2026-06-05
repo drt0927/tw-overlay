@@ -600,7 +600,7 @@ export function toggleBossSettingsWindow(): boolean {
   return createToggleableWindow('bossSettings', {
     onReady: (win) => {
       const bossTimes: Record<string, string[]> = {};
-      const bosses = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
+      const bosses = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
       bosses.forEach(name => { bossTimes[name] = bossNotifier.getBossTimes(name); });
       win.webContents.send('boss-times-data', bossTimes);
     }

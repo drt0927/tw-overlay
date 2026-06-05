@@ -72,6 +72,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     '스페르첸드': { name: '스페르첸드', enabled: true, soundFile: 'voice_boss_first.wav' },
     '골모답': { name: '골모답', enabled: true, soundFile: 'voice_boss_first.wav' },
     '아칸': { name: '아칸', enabled: true, soundFile: 'voice_boss_first.wav' },
+    '혼란한 대지': { name: '혼란한 대지', enabled: true, soundFile: 'voice_boss_first.wav' },
   },
   positions: {
     overlay: { offsetX: 10, offsetY: 10 },

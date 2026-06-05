@@ -17,21 +17,26 @@ interface BossTime {
 
 export const BOSS_SCHEDULE: BossTime[] = [
   { time: '00:00', name: '골론' },
+  { time: '00:00', name: '혼란한 대지' },
   { time: '00:30', name: '파멸의 기원' },
   { time: '01:00', name: '스페르첸드' },
   { time: '04:00', name: '스페르첸드' },
   { time: '05:00', name: '골모답' },
   { time: '06:00', name: '골론' },
+  { time: '07:00', name: '혼란한 대지' },
   { time: '08:00', name: '스페르첸드' },
   { time: '11:00', name: '파멸의 기원' },
   { time: '12:00', name: '골론' },
   { time: '13:00', name: '골모답' },
+  { time: '13:00', name: '혼란한 대지' },
   { time: '14:30', name: '아칸' },
   { time: '16:00', name: '스페르첸드' },
   { time: '18:00', name: '골론' },
+  { time: '18:00', name: '혼란한 대지' },
   { time: '19:00', name: '스페르첸드' },
   { time: '20:00', name: '파멸의 기원' },
   { time: '21:00', name: '골모답' },
+  { time: '21:00', name: '혼란한 대지' },
   { time: '21:30', name: '아칸' },
   { time: '23:00', name: '스페르첸드' }
 ];
@@ -81,11 +86,11 @@ function checkBossTime(): void {
 
   const now = new Date();
   const HHmmNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const scheduledBoss = BOSS_SCHEDULE.find(b => b.time === HHmmNow);
-  if (scheduledBoss) {
+  const scheduledBosses = BOSS_SCHEDULE.filter(b => b.time === HHmmNow);
+  scheduledBosses.forEach(scheduledBoss => {
     const eventName = 'boss_time_' + scheduledBoss.name.replace(/\s+/g, '_');
     analytics.trackEvent(eventName);
-  }
+  });
 
   const cfg = config.load();
   if (!cfg.fieldBossNotifyEnabled) return;
@@ -100,8 +105,8 @@ function checkBossTime(): void {
     const targetTime = new Date(now.getTime() + offset * 60000);
     const HHmm = `${String(targetTime.getHours()).padStart(2, '0')}:${String(targetTime.getMinutes()).padStart(2, '0')}`;
 
-    const boss = BOSS_SCHEDULE.find(b => b.time === HHmm);
-    if (boss) {
+    const bosses = BOSS_SCHEDULE.filter(b => b.time === HHmm);
+    bosses.forEach(boss => {
       const bossSetting = cfg.fieldBossSettings?.[boss.name];
       if (bossSetting && bossSetting.enabled) {
         const message = offset === 0 ? boss.name : `${boss.name} ${offset}분 전`;
@@ -109,7 +114,7 @@ function checkBossTime(): void {
         notify(boss.name, bossSetting.soundFile, boss.time, offset);
         _lastNotifiedTime = currentTimeKey;
       }
-    }
+    });
   });
 }
 

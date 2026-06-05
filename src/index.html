@@ -70,7 +70,7 @@
     const bossAudio = document.getElementById('boss-audio');
     const toastContainer = document.getElementById('toast-container');
     const wrapper = document.getElementById('wrapper');
-    const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸'];
+    const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
 
     let bossNotifyVolume = 0.5;
     let currentHiddenMenuIds = [];
@@ -78,6 +78,33 @@
     let lastConfig = null;
     let sidebarPos = 'right';
     let isCollapsed = false;
+
+    // 오디오 순차 재생용 큐 및 상태 변수
+    let audioQueue = [];
+    let isPlayingAudio = false;
+
+    function playNextAudio() {
+      if (audioQueue.length === 0) {
+        isPlayingAudio = false;
+        return;
+      }
+      isPlayingAudio = true;
+      const { soundFile, volume } = audioQueue.shift();
+
+      bossAudio.src = `assets/sound/${soundFile}`;
+      bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
+
+      bossAudio.onended = () => {
+        bossAudio.onended = null;
+        setTimeout(playNextAudio, 500);
+      };
+
+      bossAudio.play().catch(e => {
+        console.error('Audio play failed:', e);
+        bossAudio.onended = null;
+        setTimeout(playNextAudio, 500);
+      });
+    }
 
     function refreshIcons() { if (window.lucide) lucide.createIcons(); }
 
@@ -328,9 +355,12 @@
         }
       }
 
-      bossAudio.src = `assets/sound/${soundFile}`;
-      bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
-      bossAudio.play().catch(e => console.error('Audio play failed:', e));
+      // 사운드 재생 큐에 삽입 후 순차 재생 처리
+      audioQueue.push({ soundFile, volume });
+      if (!isPlayingAudio) {
+        playNextAudio();
+      }
+
       const btn = document.getElementById('boss-btn');
       if (btn) { btn.classList.add('animate-bounce', 'text-blue-400'); setTimeout(() => btn.classList.remove('animate-bounce'), 5000); }
       createToast(label, isCustom, spawnTime, offset, isAlreadyRecorded);

@@ -21,6 +21,7 @@ export function load(): AppConfig {
         ...DEFAULT_CONFIG,
         ...parsed,
         shortcuts: { ...DEFAULT_CONFIG.shortcuts, ...(parsed.shortcuts || {}) },
+        fieldBossSettings: { ...DEFAULT_CONFIG.fieldBossSettings, ...(parsed.fieldBossSettings || {}) },
       } as AppConfig;
       return { ..._cachedConfig };
     }

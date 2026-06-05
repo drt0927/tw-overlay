@@ -303,11 +303,11 @@ class ChatLogProcessor {
         for (const rule of rules) {
           if (!data.message.includes(rule.keyword)) continue;
 
-          // 1. 발송 대상(대화 색상별) 필터링
-          let isTargetColor = false;
-          if ((data.color === '#ffffff' || data.color === '#c8ffc8') && rule.targetNormal) isTargetColor = true;
-          if (data.color === '#94ddfa' && rule.targetClub) isTargetColor = true;
-          if (!isTargetColor) continue;
+          // 1. 발송 대상(대화 유형별) 필터링
+          let isTarget = false;
+          if (type === 'general' && rule.targetNormal) isTarget = true;
+          if (type === 'club' && rule.targetClub) isTarget = true;
+          if (!isTarget) continue;
 
           // 2. 발신인(보낸 사람) 닉네임 필터링
           if (rule.targetSender && rule.targetSender.trim() !== '') {
@@ -322,6 +322,7 @@ class ChatLogProcessor {
 
       // 4. 지정 단어 알림 처리
       if (!cfg.wordAlarmEnabled) return;
+      if (type === 'system') return;
 
       const keywords = cfg.wordAlarmKeywords || [];
       const matchedKeyword = keywords.find(k => data.message.includes(k));

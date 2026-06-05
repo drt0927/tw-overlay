@@ -641,11 +641,22 @@ export function addWordAlarmContextLine(
   if (!db) initDb();
   if (!db) return;
 
-  const stmt = db.prepare(
-    'INSERT INTO word_alarm_chat_context (alarm_id, timestamp, sender, message, color) VALUES (?, ?, ?, ?, ?)'
-  );
-  stmt.run(alarmId, Math.floor(timestamp / 1000), sender, message, color);
-  notifyUpdate();
+  try {
+    // alarmId가 실제로 존재하지 않으면 insert를 스킵하여 FOREIGN KEY constraint crash 방지
+    const exists = db.prepare('SELECT id FROM word_alarm_history WHERE id = ?').get(alarmId);
+    if (!exists) {
+      log(`[DiaryDB] word_alarm_history에서 alarmId ${alarmId}를 찾을 수 없습니다. context line 추가를 생략합니다.`);
+      return;
+    }
+
+    const stmt = db.prepare(
+      'INSERT INTO word_alarm_chat_context (alarm_id, timestamp, sender, message, color) VALUES (?, ?, ?, ?, ?)'
+    );
+    stmt.run(alarmId, Math.floor(timestamp / 1000), sender, message, color);
+    notifyUpdate();
+  } catch (error) {
+    log(`[DiaryDB] addWordAlarmContextLine 실패 (alarmId: ${alarmId}): ${error}`);
+  }
 }
 
 /**

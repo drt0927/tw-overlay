@@ -271,7 +271,7 @@ let gameRect: GameRect | null = null;
 let physicalGameRect: GameRect | null = null; // syncOverlay 재호출용 물리(Win32) 좌표 — DIP 이중 변환 방지
 let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
 let isTracking = false;
-const isProgrammaticMoveMap: Record<string, boolean> = {};
+const programmaticMoveTimeMap: Record<string, number> = {};
 let isClickThrough = false;
 let isApplyingSize = false;
 let isToolbarShown = true;
@@ -283,10 +283,10 @@ let isChatOverlaySub2Visible = false; // 신규 추가
 let onOverlayReady: (() => void) | null = null;
 let mandatoryUpdateLock = false;
 
-function setProgrammaticMove(key: string): void { isProgrammaticMoveMap[key] = true; }
+function setProgrammaticMove(key: string): void { programmaticMoveTimeMap[key] = Date.now(); }
 function consumeProgrammaticMove(key: string): boolean {
-  if (isProgrammaticMoveMap[key]) { isProgrammaticMoveMap[key] = false; return true; }
-  return false;
+  const lastTime = programmaticMoveTimeMap[key] || 0;
+  return (Date.now() - lastTime) < 200; // 200ms 시간 안전 가드
 }
 
 function init() {
@@ -1036,13 +1036,17 @@ export function syncOverlay(currentRect: GameRect): void {
       if (key === 'dock') return;
       const winCfg = windowRegistry[key];
       if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {
-        setProgrammaticMove(key);
         // 스케일링된 좌표(gX, gY 등)를 기반으로 위치 계산
         const scaledGameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };
         const { x, y } = (winCfg.calcPosition)
           ? winCfg.calcPosition(scaledGameRect, winCfg.pos)
           : { x: Math.round(gX + gW + winCfg.pos.offsetX), y: Math.round(gY + winCfg.pos.offsetY) };
-        winCfg.ref.setPosition(x, y);
+        
+        const b = winCfg.ref.getBounds();
+        if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
+          setProgrammaticMove(key);
+          winCfg.ref.setPosition(x, y);
+        }
       }
     });
     gameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };
@@ -1077,11 +1081,15 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
       Object.keys(windowRegistry).forEach(key => {
         const winCfg = windowRegistry[key];
         if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {
-          setProgrammaticMove(key);
           const { x, y } = winCfg.calcPosition
             ? winCfg.calcPosition(gameRect!, winCfg.pos)
             : { x: Math.round(gameRect!.x + gameRect!.width + winCfg.pos.offsetX), y: Math.round(gameRect!.y + winCfg.pos.offsetY) };
-          winCfg.ref.setPosition(x, y);
+          
+          const b = winCfg.ref.getBounds();
+          if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
+            setProgrammaticMove(key);
+            winCfg.ref.setPosition(x, y);
+          }
         }
       });
     }

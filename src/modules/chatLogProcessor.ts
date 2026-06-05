@@ -323,6 +323,7 @@ class ChatLogProcessor {
       // 4. 지정 단어 알림 처리
       if (!cfg.wordAlarmEnabled) return;
       if (type === 'system') return;
+      if (data.sender === '클럽 공지') return;
 
       const keywords = cfg.wordAlarmKeywords || [];
       const matchedKeyword = keywords.find(k => data.message.includes(k));

@@ -677,6 +677,20 @@
                   </div>
                 </div>
 
+                <!-- NPC/몬스터 대사 표시 여부 토글 -->
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-3">
+                  <h4 class="text-xs font-bold text-slate-400">NPC / 몬스터 대사 필터 설정</h4>
+                  <div class="flex flex-wrap gap-4 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" id="chat-overlay-show-npc-chat" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                      <span>채팅 오버레이에 NPC 및 몬스터 대사 표시</span>
+                    </label>
+                  </div>
+                  <p class="text-[10px] text-slate-500 mt-2 font-bold italic leading-relaxed">
+                    * <span class="text-indigo-400/80">필터 대상:</span> 데스포이나, 신조, 키시니크, 에레오스, 로카고스, 마티아, 티로로스, 라이코스, 체리아, 실반, 샐리온, 실라이론, 샐레아나, 루미너스, 크라모르 및 공백이 포함된 보스/기믹 몬스터 대사 (예: 심연의 제2사도, 수색대장 등)
+                  </p>
+                </div>
+
                 <!-- 주 사용 서버 선택 및 에타 URL -->
                 <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
                   <div class="grid grid-cols-3 gap-4 items-center">
@@ -1106,7 +1120,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.17.5</span></p>
+                        class="text-purple-400">1.17.6</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1716,6 +1730,10 @@
         }
       });
 
+      if (document.getElementById('chat-overlay-show-npc-chat')) {
+        document.getElementById('chat-overlay-show-npc-chat').checked = config.chatOverlayShowNpcChat !== false;
+      }
+
 
 
 
@@ -2123,6 +2141,7 @@
             const cb = document.getElementById(`chat-overlay-channel-${ch}`);
             return cb ? cb.checked : false;
           }),
+          chatOverlayShowNpcChat: document.getElementById('chat-overlay-show-npc-chat') ? document.getElementById('chat-overlay-show-npc-chat').checked : true,
           userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : 16,
 
           // 채팅 로그 설정
@@ -2162,6 +2181,7 @@
             const cb = document.getElementById(`chat-overlay-channel-${ch}`);
             return cb ? cb.checked : false;
           }),
+          chatOverlayShowNpcChat: document.getElementById('chat-overlay-show-npc-chat') ? document.getElementById('chat-overlay-show-npc-chat').checked : true,
           userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : 16,
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,

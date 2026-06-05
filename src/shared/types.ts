@@ -342,6 +342,7 @@ export interface AppConfig {
     chatOverlaySub2Width?: number;
     chatOverlaySub2Height?: number;
     chatOverlaySub2Tab?: string;
+    chatOverlayShowNpcChat?: boolean;
 }
 
 export interface GalleryPost {

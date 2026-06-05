@@ -20,6 +20,57 @@ interface Window {
   };
 }
 
+// NPC/몬스터 이름 블랙리스트
+const NPC_BLACK_LIST = [
+  '데스포이나', '신조', '키시니크', '에레오스', '로카고스',
+  '마티아', '티로로스', '라이코스', '체리아', '실반',
+  '샐리온', '실라이론', '샐레아나', '루미너스', '크라모르'
+];
+
+// NPC/몬스터 대사 여부 판별 함수
+function isNpcOrMonsterChat(chat: any): boolean {
+  if (!chat) return false;
+  const sender = chat.sender || '';
+  const message = chat.message || '';
+  
+  // 1. 보낸 사람이 NPC인 경우
+  if (NPC_BLACK_LIST.includes(sender)) return true;
+  
+  // 2. 시스템 메시지 내에서 "NPC이름 : 대사" 형태인 경우
+  if (chat.type === 'system') {
+    const match = message.match(/^(.+?)\s*:\s*(.*)$/);
+    if (match) {
+      const parsedSender = match[1].trim();
+      if (NPC_BLACK_LIST.includes(parsedSender)) return true;
+      // 공백이 있는 이름은 보통 NPC/몬스터 (예: "심연의 제2사도", "수색대장, 에토스")
+      if (parsedSender.includes(' ') && !parsedSender.includes(']') && !parsedSender.includes('[')) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// 오버레이 노출 조건 판별 함수
+function shouldShowChat(chat: any): boolean {
+  if (!chat) return false;
+
+  // 1. NPC/몬스터 대사 필터 적용
+  const showNpcChat = chatOverlayAppConfig?.chatOverlayShowNpcChat !== false;
+  if (!showNpcChat && isNpcOrMonsterChat(chat)) {
+    return false;
+  }
+
+  // 2. 채널별 필터 적용
+  if (chatOverlayCurrentTab === 'Basic') {
+    const channels = chatOverlayAppConfig?.chatOverlaySelectedChannels || ['general', 'whisper', 'team', 'club', 'shout', 'system'];
+    return channels.includes(chat.type);
+  } else {
+    const expectedType = tabTypeMap[chatOverlayCurrentTab];
+    return chat.type === expectedType;
+  }
+}
+
 let chatOverlayCurrentTab = 'Basic';
 let chatOverlayHoverTimer: any = null;
 let chatOverlayAppConfig: any = null;
@@ -173,10 +224,7 @@ async function loadHistory() {
   try {
     const history = await window.electronAPI.getChatHistory(chatOverlayCurrentTab);
     if (history && history.length > 0) {
-      const channels = chatOverlayAppConfig?.chatOverlaySelectedChannels || ['general', 'whisper', 'team', 'club', 'shout', 'system'];
-      const filtered = chatOverlayCurrentTab === 'Basic'
-        ? history.filter((chat: any) => channels.includes(chat.type))
-        : history;
+      const filtered = history.filter((chat: any) => shouldShowChat(chat));
 
       filtered.forEach((chat: any) => {
         chatArea.appendChild(createChatRow(chat));
@@ -339,16 +387,7 @@ overlayPanel.addEventListener('mouseleave', handleMouseLeave);
 // Register Electron IPC Listeners
 window.electronAPI.onChatUpdated((chatItem) => {
   // Check if item should be shown in current tab
-  let show = false;
-  if (chatOverlayCurrentTab === 'Basic') {
-    const channels = chatOverlayAppConfig?.chatOverlaySelectedChannels || ['general', 'whisper', 'team', 'club', 'shout', 'system'];
-    show = channels.includes(chatItem.type);
-  } else {
-    const expectedType = tabTypeMap[chatOverlayCurrentTab];
-    if (expectedType && chatItem.type === expectedType) {
-      show = true;
-    }
-  }
+  const show = shouldShowChat(chatItem);
 
   if (show) {
     const isAtBottom = (chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight) < 50;
@@ -377,6 +416,7 @@ window.electronAPI.onConfigData((config) => {
 
   // Detect if channel filters changed
   let channelsChanged = false;
+  let npcChatSettingChanged = false;
   if (lastKnownConfig) {
     const oldChannels = lastKnownConfig.chatOverlaySelectedChannels || [];
     const newChannels = config.chatOverlaySelectedChannels || [];
@@ -392,8 +432,10 @@ window.electronAPI.onConfigData((config) => {
         }
       }
     }
+    npcChatSettingChanged = (lastKnownConfig.chatOverlayShowNpcChat !== config.chatOverlayShowNpcChat);
   } else {
     channelsChanged = true;
+    npcChatSettingChanged = true;
   }
 
   applyConfigStyles(config);
@@ -407,7 +449,9 @@ window.electronAPI.onConfigData((config) => {
   const tabChangedExternally = (currentConfigTab !== chatOverlayCurrentTab);
   if (tabChangedExternally) {
     selectTab(currentConfigTab, false);
-  } else if (channelsChanged && chatOverlayCurrentTab === 'Basic') {
+  } else if ((channelsChanged || npcChatSettingChanged) && chatOverlayCurrentTab === 'Basic') {
+    loadHistory();
+  } else if (npcChatSettingChanged) {
     loadHistory();
   }
 });
@@ -540,10 +584,7 @@ chatArea.addEventListener('scroll', async () => {
       const newItems = await window.electronAPI.getMoreChatHistory(chatOverlayCurrentTab);
       
       if (newItems && newItems.length > 0) {
-        const channels = chatOverlayAppConfig?.chatOverlaySelectedChannels || ['general', 'whisper', 'team', 'club', 'shout', 'system'];
-        const filtered = chatOverlayCurrentTab === 'Basic'
-          ? newItems.filter((chat: any) => channels.includes(chat.type))
-          : newItems;
+        const filtered = newItems.filter((chat: any) => shouldShowChat(chat));
 
         // insertBefore로 앞에 끼워 넣을 때, 가장 최신(뒤쪽) 데이터부터 먼저 삽입해야 
         // 결과적으로 올바른 시간 순서(오래된 로그가 위, 최신 로그가 아래)로 정렬됩니다.

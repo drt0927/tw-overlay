@@ -167,6 +167,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlaySub2Width: 450,
   chatOverlaySub2Height: 400,
   chatOverlaySub2Tab: 'Basic',
+  chatOverlayShowNpcChat: true,
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

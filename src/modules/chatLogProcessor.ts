@@ -56,65 +56,42 @@ class ChatLogProcessor {
   /**
    * 앱 시작 시 오늘 로그에서 읽어온 기존 채팅을 히스토리에만 추가 (알림/DB 저장 없이)
    */
-  public replayChat(data: {
-    type: 'normal' | 'shout' | 'system';
-    timestamp: string;
-    sender: string;
-    message: string;
-    color: string;
-    serverCode: number;
-  }): void {
+  public replayChat(
+    targetTab: string,
+    data: {
+      type: 'normal' | 'shout' | 'system';
+      timestamp: string;
+      sender: string;
+      message: string;
+      color: string;
+      serverCode: number;
+    }
+  ): void {
     const rankInfo = etaCacheManager.getRankInfo(data.serverCode, data.sender);
     const level = rankInfo ? rankInfo.level : null;
     const characterCode = rankInfo ? rankInfo.characterCode : null;
 
-    if (data.type === 'system') {
-      const chatItem = {
-        id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        type: 'system',
-        timestamp: data.timestamp,
-        sender: data.sender || '시스템',
-        message: data.message,
-        color: data.color || '#a8a8a8',
-        level: null,
-        characterCode: null
-      };
-      this.addChatToHistory('Basic', chatItem);
-      this.addChatToHistory('System', chatItem);
-    } else if (data.type === 'shout') {
-      const chatItem = {
-        id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        type: 'shout',
-        timestamp: data.timestamp,
-        sender: data.sender,
-        message: data.message,
-        color: data.color,
-        level,
-        characterCode
-      };
-      this.addChatToHistory('Basic', chatItem);
-      this.addChatToHistory('Shout', chatItem);
-    } else {
-      // #ffffff = 타인 일반, #c8ffc8 = 본인 일반, #94ddfa = 클럽, #f7b73c = 팀, #64ff64 = 귓속말
-      const type = data.color === '#f7b73c' ? 'team' : 
-                   (data.color === '#94ddfa' ? 'club' : 
-                   (data.color === '#64ff64' ? 'whisper' : 'general'));
-      const chatItem = {
-        id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        type,
-        timestamp: data.timestamp,
-        sender: data.sender,
-        message: data.message,
-        color: data.color,
-        level,
-        characterCode
-      };
-      this.addChatToHistory('Basic', chatItem);
-      if (type === 'general') this.addChatToHistory('General', chatItem);
-      else if (type === 'team') this.addChatToHistory('Team', chatItem);
-      else if (type === 'club') this.addChatToHistory('Club', chatItem);
-      else if (type === 'whisper') this.addChatToHistory('Whisper', chatItem);
+    let type = 'system';
+    if (data.type === 'shout') {
+      type = 'shout';
+    } else if (data.type === 'normal') {
+      type = data.color === '#f7b73c' ? 'team' : 
+             (data.color === '#94ddfa' ? 'club' : 
+             (data.color === '#64ff64' ? 'whisper' : 'general'));
     }
+
+    const chatItem = {
+      id: `replay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      type,
+      timestamp: data.timestamp,
+      sender: data.sender || (data.type === 'system' ? '시스템' : ''),
+      message: data.message,
+      color: data.color || '#a8a8a8',
+      level,
+      characterCode
+    };
+
+    this.addChatToHistory(targetTab, chatItem);
   }
 
   public start(): void {

@@ -173,14 +173,24 @@ class ChatLogManager {
       Whisper: 0
     };
 
-    const collectedReplays: Array<{
+    type ChatItemData = {
       type: 'normal' | 'shout' | 'system';
       timestamp: string;
       sender: string;
       message: string;
       color: string;
       serverCode: number;
-    }> = [];
+    };
+
+    const collectedReplays: Record<string, ChatItemData[]> = {
+      Basic: [],
+      System: [],
+      Shout: [],
+      General: [],
+      Team: [],
+      Club: [],
+      Whisper: []
+    };
 
     // 뒤에서부터 역순으로 루프를 돌며 각 카테고리가 150개씩 채워질 때까지 수집
     for (let i = lines.length - 1; i >= 0; i--) {
@@ -267,19 +277,20 @@ class ChatLogManager {
           const needForShout = categoryCounts.Shout < limit;
           const needForBasic = categoryCounts.Basic < limit;
 
-          if (needForShout || needForBasic) {
-            collectedReplays.push({
-              type: 'shout', timestamp, sender, message,
-              color: '#c896c8', serverCode
-            });
-            if (needForShout) {
-              categoryCounts.Shout++;
-              categoryFinalIndexes.Shout = i;
-            }
-            if (needForBasic) {
-              categoryCounts.Basic++;
-              categoryFinalIndexes.Basic = i;
-            }
+          const shoutItem: ChatItemData = {
+            type: 'shout', timestamp, sender, message,
+            color: '#c896c8', serverCode
+          };
+
+          if (needForShout) {
+            collectedReplays.Shout.push(shoutItem);
+            categoryCounts.Shout++;
+            categoryFinalIndexes.Shout = i;
+          }
+          if (needForBasic) {
+            collectedReplays.Basic.push(shoutItem);
+            categoryCounts.Basic++;
+            categoryFinalIndexes.Basic = i;
           }
         }
         continue;
@@ -347,31 +358,28 @@ class ChatLogManager {
       const finalNeedForCat = categoryCounts[catFinalName] < limit;
       const finalNeedForBasic = categoryCounts.Basic < limit;
 
-      if (finalNeedForCat || finalNeedForBasic) {
-        collectedReplays.push({
-          type,
-          timestamp,
-          sender,
-          message,
-          color,
-          serverCode
-        });
-        if (finalNeedForCat) {
-          categoryCounts[catFinalName]++;
-          categoryFinalIndexes[catFinalName] = i;
-        }
-        if (finalNeedForBasic) {
-          categoryCounts.Basic++;
-          categoryFinalIndexes.Basic = i;
-        }
+      const chatItem: ChatItemData = {
+        type, timestamp, sender, message, color, serverCode
+      };
+
+      if (finalNeedForCat) {
+        collectedReplays[catFinalName].push(chatItem);
+        categoryCounts[catFinalName]++;
+        categoryFinalIndexes[catFinalName] = i;
+      }
+      if (finalNeedForBasic) {
+        collectedReplays.Basic.push(chatItem);
+        categoryCounts.Basic++;
+        categoryFinalIndexes.Basic = i;
       }
     }
 
-    // 뒤집어서 원래 시간의 정방향으로 재정렬
-    collectedReplays.reverse();
-
-    for (const item of collectedReplays) {
-      chatLogProcessor.replayChat(item);
+    // 각 카테고리별 수집 배열을 개별적으로 정방향 정렬(reverse)하고 replay 실행
+    for (const category of Object.keys(collectedReplays)) {
+      collectedReplays[category].reverse();
+      for (const item of collectedReplays[category]) {
+        chatLogProcessor.replayChat(category, item);
+      }
     }
 
     this._initialReadIndex = { ...categoryFinalIndexes };

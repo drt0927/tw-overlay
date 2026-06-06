@@ -5,16 +5,17 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.17.7-violet.svg)
+![Version](https://img.shields.io/badge/version-1.17.8-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.17.7 (2026.06.06)
-이번 업데이트는 채팅 오버레이 창 초기 로드(Replay) 과정에서 개별 카테고리 탭(외치기, 클럽 등)의 데이터를 채우기 위해 과거 시간대로 거슬러 올라가 수집한 대화들이 통합(Basic) 탭의 정렬 순서를 깨뜨리는 버그를 수정하였습니다.
+## 🚀 최신 버전: v1.17.8 (2026.06.06)
+이번 업데이트는 브라우저 오버레이 및 채팅 오버레이의 투명도 최소값을 20%로 제한하고, 기존에 20% 미만으로 저장된 설정을 자동으로 20%로 보정하여 마이그레이션하는 기능을 추가하였습니다.
 
-- **🐛 채팅 오버레이 초기 로드 시 탭 간 데이터 격리**: 통합(Basic) 탭과 개별 카테고리 탭의 초기 로그 수집 대상을 격리하여, 과거의 외치기/클럽 채팅 데이터가 통합 탭의 정렬 순서를 깨뜨리는 현상을 방지했습니다.
+- **🔒 투명도 설정 최소치 제한 (20%)**: 오버레이가 과도하게 투명해져 시인성이 저하되거나 잃어버리는 문제를 방지하기 위해 최소 투명도를 20%로 상향했습니다.
+- **🔄 자동 마이그레이션**: 이전 버전에서 투명도를 20% 미만으로 설정해 둔 경우, 구동 시점에 자동으로 20%로 상향 보정하여 저장합니다.
 
 ---
 
@@ -59,7 +60,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.17.7.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.17.8.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

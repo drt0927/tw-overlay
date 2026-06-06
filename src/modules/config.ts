@@ -17,12 +17,34 @@ export function load(): AppConfig {
     const configPath = get_CONFIG_PATH();
     if (fs.existsSync(configPath)) {
       const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Partial<AppConfig>;
+
+      let migrated = false;
+      if (parsed.opacity !== undefined && parsed.opacity < 0.2) {
+        parsed.opacity = 0.2;
+        migrated = true;
+      }
+      if (parsed.chatOverlayOpacity !== undefined && parsed.chatOverlayOpacity < 0.2) {
+        parsed.chatOverlayOpacity = 0.2;
+        migrated = true;
+      }
+
       _cachedConfig = {
         ...DEFAULT_CONFIG,
         ...parsed,
         shortcuts: { ...DEFAULT_CONFIG.shortcuts, ...(parsed.shortcuts || {}) },
         fieldBossSettings: { ...DEFAULT_CONFIG.fieldBossSettings, ...(parsed.fieldBossSettings || {}) },
       } as AppConfig;
+
+      if (migrated) {
+        log(`[CONFIG] 투명도 설정 마이그레이션 적용 (최소값 20% 보정)`);
+        try {
+          fs.writeFileSync(configPath, JSON.stringify(_cachedConfig, null, 2));
+        } catch (saveErr) {
+          const saveErrMsg = saveErr instanceof Error ? saveErr.message : String(saveErr);
+          log(`[CONFIG] 마이그레이션 후 파일 쓰기 실패: ${saveErrMsg}`);
+        }
+      }
+
       return { ..._cachedConfig };
     }
   } catch (e: unknown) {

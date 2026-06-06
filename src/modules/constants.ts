@@ -152,6 +152,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlaySubEnabled: false, // 신규 추가
   chatOverlaySub2Enabled: false,
   chatOverlayOpacity: 0.8,
+  chatOverlaySubOpacity: 0.8,
+  chatOverlaySub2Opacity: 0.8,
   chatOverlayFontSize: 14,
   chatOverlayClickThrough: true,
   chatOverlayKeywords: [],

@@ -127,7 +127,11 @@ class ChatLogProcessor {
         const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
         const amountMatch = data.message.match(/(\d+)개/);
         const amount = amountMatch ? parseInt(amountMatch[1], 10) : 1;
-        diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
+        // 경험의 정수 교환 기록은 xpTracker에서 직접 계산해 처리하므로 중복 방지를 위해 스킵합니다.
+        const isEssence = data.message.includes('경험의 정수') || data.message.includes('경험의정수');
+        if (!isEssence) {
+          diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
+        }
         this.sendNotification('아이템 획득 알림', data.message);
       }
 

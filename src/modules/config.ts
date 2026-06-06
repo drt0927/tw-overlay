@@ -27,6 +27,14 @@ export function load(): AppConfig {
         parsed.chatOverlayOpacity = 0.2;
         migrated = true;
       }
+      if (parsed.chatOverlaySubOpacity !== undefined && parsed.chatOverlaySubOpacity < 0.2) {
+        parsed.chatOverlaySubOpacity = 0.2;
+        migrated = true;
+      }
+      if (parsed.chatOverlaySub2Opacity !== undefined && parsed.chatOverlaySub2Opacity < 0.2) {
+        parsed.chatOverlaySub2Opacity = 0.2;
+        migrated = true;
+      }
 
       _cachedConfig = {
         ...DEFAULT_CONFIG,

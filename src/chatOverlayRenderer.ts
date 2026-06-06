@@ -318,12 +318,17 @@ function applyConfigStyles(config: any) {
   }
 
   // Opacity
-  if (config.chatOverlayOpacity !== undefined) {
-    const normalOpacity = config.chatOverlayOpacity;
-    const hoverOpacity = Math.min(normalOpacity + 0.25, 1.0);
-    document.documentElement.style.setProperty('--bg-overlay', `rgba(15, 14, 26, ${normalOpacity})`);
-    document.documentElement.style.setProperty('--bg-overlay-hover', `rgba(15, 14, 26, ${hoverOpacity})`);
+  let normalOpacity = 0.8;
+  if (chatOverlayMode === 'main') {
+    normalOpacity = config.chatOverlayOpacity !== undefined ? config.chatOverlayOpacity : 0.8;
+  } else if (chatOverlayMode === 'sub1') {
+    normalOpacity = config.chatOverlaySubOpacity !== undefined ? config.chatOverlaySubOpacity : 0.8;
+  } else if (chatOverlayMode === 'sub2') {
+    normalOpacity = config.chatOverlaySub2Opacity !== undefined ? config.chatOverlaySub2Opacity : 0.8;
   }
+  const hoverOpacity = Math.min(normalOpacity + 0.25, 1.0);
+  document.documentElement.style.setProperty('--bg-overlay', `rgba(15, 14, 26, ${normalOpacity})`);
+  document.documentElement.style.setProperty('--bg-overlay-hover', `rgba(15, 14, 26, ${hoverOpacity})`);
 
   isConfigReceived = true;
   if (!isInitialTabLoaded) {

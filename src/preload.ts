@@ -346,3 +346,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }
 });
+
+contextBridge.exposeInMainWorld('testChat', (rawLine: string) => {
+  ipcRenderer.send('inject-test-chat', rawLine);
+});
+
+contextBridge.exposeInMainWorld('testEssence', (count: number = 1) => {
+  const today = new Date().toISOString().split('T')[0];
+  ipcRenderer.send('inject-test-chat', `Date : ${today}`);
+  const xpAmount = count * 10_000_000_000;
+  const formattedXp = xpAmount.toLocaleString();
+  // 파서의 시간 정규식 매칭을 위해 오전/오후 단어를 제거하고 24시간 형식의 [22시 50분 00초] 형태로 보냅니다.
+  ipcRenderer.send('inject-test-chat', `[22시 50분 00초] 경험치가 ${formattedXp} 감소하였습니다.`);
+});

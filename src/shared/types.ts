@@ -327,6 +327,8 @@ export interface AppConfig {
     chatOverlaySubEnabled?: boolean; // 신규 추가
     chatOverlaySub2Enabled?: boolean;
     chatOverlayOpacity?: number;
+    chatOverlaySubOpacity?: number;
+    chatOverlaySub2Opacity?: number;
     chatOverlayFontSize?: number;
     chatOverlayClickThrough?: boolean;
     chatOverlayKeywords?: string[];

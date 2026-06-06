@@ -20,6 +20,7 @@ import * as backup from './backupManager';
 import { buffTimerManager } from './buffTimerManager';
 import * as scam from './scamMonitor';
 import { discordNotifier } from './discordNotifier';
+import { chatParser } from './chatParser';
 
 let _registered = false;
 
@@ -501,5 +502,9 @@ export function register(): void {
   ipcMain.handle('chat-get-eta-cache-status', async () => {
     const { etaCacheManager } = await import('./etaCacheManager');
     return etaCacheManager.getCacheStatus();
+  });
+
+  ipcMain.on('inject-test-chat', (_e, rawLine: string) => {
+    chatParser.parseLine(rawLine);
   });
 }

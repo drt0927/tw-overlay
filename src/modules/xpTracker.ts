@@ -3,6 +3,7 @@ import * as config from './config';
 import { log } from './logger';
 import { Notification, BrowserWindow } from 'electron';
 import { buffTimerManager } from './buffTimerManager';
+import * as diaryDb from './diaryDb';
 
 /**
  * XP 추적 모듈 — 경험치 세션 통계, 분당 히스토리, 경험의 정수 알림, 팔색조 언덕 추적
@@ -38,6 +39,17 @@ class XpTracker {
       if (data.amount <= -9_000_000_000) {
         this._xpSinceLastExchange = 0;
         this._sessionEssenceCount++;
+
+        // 모험일지에 경험의 정수 교환 기록 추가
+        try {
+          const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
+          const count = Math.round(Math.abs(data.amount) / 10_000_000_000);
+          const content = count > 1 ? `[득템] 경험의 정수 ${count}개` : `[득템] 경험의 정수`;
+          diaryDb.addActivityLog(data.date, timeOnly, 'loot', content, count);
+          log(`[XP_TRACKER] 경험의 정수 교환 일지 기록 완료: ${count}개`);
+        } catch (e) {
+          log(`[XP_TRACKER] 경험의 정수 일지 기록 중 에러 발생: ${e}`);
+        }
       }
 
       const cfg = config.load();

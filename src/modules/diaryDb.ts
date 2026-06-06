@@ -282,6 +282,8 @@ export function addActivityLog(date: string, time: string, type: 'boss' | 'calc'
   const transaction = db.transaction(() => {
     ensureDiaryExists(date);
 
+
+
     // 보스 처치 기록인 경우 중복 체크 (동일 날짜, 동일 내용)
     if (type === 'boss') {
       const existing = db!.prepare('SELECT id FROM activity_logs WHERE date = ? AND content = ?').get(date, content);
@@ -414,7 +416,9 @@ export function getMonthlySummary(yearMonth: string): { totalLoots: number, tota
   logs.forEach(log => {
     if (log.type === 'loot') {
       lootList.push({ date: log.date, content: log.content });
-      totalLoots += log.amount || 1;
+      if (!log.content.includes('경험의 정수')) {
+        totalLoots += log.amount || 1;
+      }
     } else if (log.type === 'calc') {
       seedList.push({ date: log.date, content: log.content });
       totalSeed += log.amount || 0;
@@ -442,6 +446,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
   // 3. 보람찬 활동들 (보스, 득템, 수익)
   let totalBosses = 0;
   let totalLoots = 0;
+  let totalEssences = 0;
   let totalSeed = 0;
   const bossCounts: Record<string, number> = {};
   const weeklyActivity = [0, 0, 0, 0, 0, 0, 0]; // 월~일 (0~6)
@@ -464,7 +469,11 @@ export function getMonthlyStatistics(yearMonth: string): any {
       const bossName = log.content.replace('[보스 처치] ', '').trim();
       bossCounts[bossName] = (bossCounts[bossName] || 0) + 1;
     } else if (log.type === 'loot') {
-      totalLoots += log.amount || 1;
+      if (log.content.includes('경험의 정수')) {
+        totalEssences += log.amount || 1;
+      } else {
+        totalLoots += log.amount || 1;
+      }
     } else if (log.type === 'calc') {
       totalSeed += log.amount || 0;
       const dateNum = parseInt(log.date.split('-')[2], 10);
@@ -496,6 +505,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
     totalDays,
     totalBosses,
     totalLoots,
+    totalEssences,
     totalSeed,
     topBosses,
     weeklyActivity,

@@ -322,6 +322,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('chat-updated');
     ipcRenderer.on('chat-updated', (_event, chatItem) => callback(chatItem));
   },
+  onChatHistoryCleared: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('chat-history-cleared');
+    ipcRenderer.on('chat-history-cleared', () => callback());
+  },
   onChatOverlayMode: (callback: (mode: 'main' | 'sub1' | 'sub2') => void) => {
     ipcRenderer.removeAllListeners('chat-overlay-mode');
     ipcRenderer.on('chat-overlay-mode', (_event, mode) => callback(mode));
@@ -341,7 +345,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
-      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'chat-updated', 'chat-overlay-mode',
+      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

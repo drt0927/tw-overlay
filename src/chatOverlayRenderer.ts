@@ -8,6 +8,7 @@ interface Window {
     openTodayLog: () => void;
     fetchEtaRankings: () => Promise<boolean>;
     onChatUpdated: (callback: (chatItem: any) => void) => void;
+    onChatHistoryCleared: (callback: () => void) => void;
     onConfigData: (callback: (config: any) => void) => void;
     onChatOverlayMode: (callback: (mode: 'main' | 'sub1' | 'sub2') => void) => void;
     cleanupAllListeners: () => void;
@@ -409,6 +410,12 @@ window.electronAPI.onChatUpdated((chatItem) => {
       scrollToBottom();
     }
   }
+});
+
+window.electronAPI.onChatHistoryCleared(() => {
+  isLoadingMore = false;
+  hasReachedEnd = false;
+  loadHistory();
 });
 
 window.electronAPI.onConfigData((config) => {

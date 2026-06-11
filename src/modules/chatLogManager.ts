@@ -138,6 +138,9 @@ class ChatLogManager {
     const cfg = config.load();
     const serverCode = cfg.userServer || 16;
 
+    // 리플레이 시작 전 기존 버퍼스토어 초기화
+    chatLogProcessor.clearHistoryStore();
+
     // 날짜 헤더 감지 (파서와 동일한 방식)
     let currentDate = new Date().toISOString().split('T')[0];
     const dateHeaderMatch = lines.slice(0, 20).find(l => l.includes('Date :'));
@@ -387,6 +390,9 @@ class ChatLogManager {
     this._lastReadIndex['initial'] = categoryFinalIndexes.Basic;
 
     log(`[CHAT_LOG] 오늘 로그 replay 완료: 각 탭별로 최대 150개씩 수집 및 적재 완료.`);
+
+    // 리플레이 완료 후 렌더러에 갱신 알림 브로드캐스트
+    chatLogProcessor.broadcastHistoryCleared();
   }
 
   public resetLastReadIndex(category: string): void {

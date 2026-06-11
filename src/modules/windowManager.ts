@@ -693,6 +693,16 @@ export function toggleUniformColorWindow(): void {
 
 export function toggleShoutHistoryWindow(): boolean { return createToggleableWindow('shoutHistory'); }
 export function toggleDiaryWindow(): boolean { return createToggleableWindow('diary'); }
+export function openScamDetectorWindow(): boolean {
+  const winCfg = windowRegistry['scamDetector'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    return true;
+  }
+  return createToggleableWindow('scamDetector');
+}
+
 export function toggleScamDetectorWindow(): boolean { return createToggleableWindow('scamDetector'); }
 export function toggleBuffTimerWindow(): boolean { return createToggleableWindow('buffTimer'); }
 export function toggleXpHudWindow(): boolean { return createToggleableWindow('xpHud'); }

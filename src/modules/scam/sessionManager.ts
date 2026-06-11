@@ -340,6 +340,14 @@ export function startSession(filePath: string, isTest = false): void {
   _sessions.set(filePath, session);
   log(`[SCAM] 새 1:1 대화 감지: ${path.basename(filePath)}${isTest ? ' [테스트]' : ''}`);
   broadcastSessionUpdate();
+
+  if (config.load().scamDetectorEnabled) {
+    try {
+      wm.openScamDetectorWindow();
+    } catch (e) {
+      log(`[SCAM] 사기꾼 탐지 창 자동 열기 실패: ${e}`);
+    }
+  }
 }
 
 export function triggerAnalyze(filePath: string): void {

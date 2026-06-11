@@ -54,6 +54,35 @@ class ChatLogProcessor {
   }
 
   /**
+   * 채팅 히스토리 저장 버퍼스토어 초기화
+   */
+  public clearHistoryStore(): void {
+    this._chatHistoryStore = {
+      Basic: [],
+      General: [],
+      Team: [],
+      Club: [],
+      Shout: [],
+      Whisper: [],
+      System: []
+    };
+    log('[CHAT_PROCESSOR] 채팅 히스토리 저장 버퍼스토어가 초기화되었습니다.');
+  }
+
+  /**
+   * 모든 채팅 오버레이 창에 히스토리 청소/갱신 이벤트 브로드캐스트
+   */
+  public broadcastHistoryCleared(): void {
+    const allWindows = BrowserWindow.getAllWindows();
+    for (const win of allWindows) {
+      if (!win.isDestroyed() && win.webContents.getURL().includes('chat-overlay.html')) {
+        win.webContents.send('chat-history-cleared');
+      }
+    }
+    log('[CHAT_PROCESSOR] 모든 채팅 오버레이 창에 히스토리 갱신 이벤트를 전송했습니다.');
+  }
+
+  /**
    * 앱 시작 시 오늘 로그에서 읽어온 기존 채팅을 히스토리에만 추가 (알림/DB 저장 없이)
    */
   public replayChat(

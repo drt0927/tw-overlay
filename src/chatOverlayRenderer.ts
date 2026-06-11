@@ -198,7 +198,21 @@ function createChatRow(chat: any): HTMLDivElement {
   // 4. Sender
   const senderSpan = document.createElement('span');
   senderSpan.className = 'chat-sender';
-  senderSpan.textContent = chat.sender ? `${chat.sender}:` : '';
+
+  const hasSuspiciousColon = chat.sender && chat.sender.includes('：');
+  const shouldHighlight = hasSuspiciousColon && (chatOverlayAppConfig?.chatOverlayHighlightScamNicknames !== false);
+
+  senderSpan.textContent = chat.sender ? chat.sender : '';
+
+  if (shouldHighlight) {
+    senderSpan.className = 'chat-sender suspicious-sender';
+
+    const warningBadge = document.createElement('span');
+    warningBadge.className = 'suspicious-badge';
+    warningBadge.textContent = '⚠️ 사칭주의';
+    row.appendChild(warningBadge);
+  }
+
   if (chat.sender && chat.sender !== '시스템') {
     senderSpan.addEventListener('click', () => copyNickname(chat.sender));
   } else {
@@ -206,6 +220,18 @@ function createChatRow(chat: any): HTMLDivElement {
     senderSpan.style.textDecoration = 'none';
   }
   row.appendChild(senderSpan);
+
+  // Append separator outside of senderSpan
+  if (chat.sender) {
+    const separatorSpan = document.createElement('span');
+    separatorSpan.className = 'chat-sender-separator';
+    separatorSpan.textContent = ':';
+    separatorSpan.style.color = '#94a3b8';
+    separatorSpan.style.fontWeight = '700';
+    separatorSpan.style.marginRight = '2px';
+    separatorSpan.style.flexShrink = '0';
+    row.appendChild(separatorSpan);
+  }
 
   // 5. Message Content
   const textSpan = document.createElement('span');

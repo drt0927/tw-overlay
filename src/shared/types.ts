@@ -345,6 +345,7 @@ export interface AppConfig {
     chatOverlaySub2Height?: number;
     chatOverlaySub2Tab?: string;
     chatOverlayShowNpcChat?: boolean;
+    chatOverlayHighlightScamNicknames?: boolean;
 }
 
 export interface GalleryPost {

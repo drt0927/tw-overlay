@@ -662,3 +662,32 @@ body[data-sidebar-pos="left"] .boss-toast.show {
   background: rgba(239, 68, 68, 0.2) !important;
   color: #f87171 !important;
 }
+
+/* 사칭 의심 닉네임 하이라이트 및 배지 */
+.suspicious-sender {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px dashed rgba(239, 68, 68, 0.5) !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.25) !important;
+}
+.suspicious-badge {
+  background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+  color: white !important;
+  font-size: 0.75em !important;
+  font-weight: 800 !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+  margin-right: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}

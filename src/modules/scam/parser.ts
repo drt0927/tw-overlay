@@ -245,4 +245,14 @@ export const TEST_SCENARIOS: Record<string, (h: number, m: number) => string[]> 
     makeLogLine(h, m, 40, '#ffffff', '밍키: 감사합니다 좋은 하루 되세요'),
     makeLogLine(h, m, 45, '#c8ffc8', '나: 감사합니다'),
   ],
+  scam_impersonation: (h, m) => [
+    makeLogLine(h, m, 0, '#ffffff', '대표：: 안녕하세요~ 아이템 거래하러 왔습니다.'),
+    makeLogLine(h, m, 5, '#c8ffc8', '나: 앗 대표님이시군요! 교환창 열겠습니다.'),
+    makeLogLine(h, m, 10, '#ffffff', '대표：: 네, 교환 신청했습니다.'),
+    makeLogLine(h, m, 15, '#c8ffc8', '나: 대표님 닉네임 상태가 좀 이상한데요? 뒤에 콜론이 붙어있네요.'),
+    makeLogLine(h, m, 20, '#ffffff', '대표：: 아, 제 부계정이라 닉네임 중복 때문에 특수문자가 붙은 거예요. 안심하셔도 됩니다.'),
+    makeLogLine(h, m, 25, '#c8ffc8', '나: 아 그렇군요...'),
+    makeLogLine(h, m, 30, '#ffffff', '대표：: 일단 제 본캐(대표)가 시드 지급해 드려야 하니까 보증으로 아이템 먼저 올려주세요.'),
+    makeLogLine(h, m, 35, '#c8ffc8', '나: 아무래도 사칭 사기 같은데요. 차단하겠습니다.'),
+  ],
 };

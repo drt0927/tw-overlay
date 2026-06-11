@@ -173,6 +173,11 @@ async function runMockAnalysis(session: ActiveSession): Promise<void> {
       detectedScamTypes = '가중치 거래 코드 유도 / Ctrl+1 키 입력 요구';
       analysisReason = '거래 전 "가중치 코드" 입력을 요구하며 특정 단축키(Ctrl+1)의 작동 방식을 오도하고 있습니다. 전형적인 권한 편취 및 해킹 사기 패턴입니다.';
       actionGuidance = '사기 위험 대화입니다. 대화를 즉시 중단하시고 거래 상대방을 차단하세요.';
+    } else if (senders.has('대표：')) {
+      verdict = 'SCAM';
+      detectedScamTypes = '특수문자(：) 이용 닉네임 사칭';
+      analysisReason = '닉네임 끝에 특수문자 콜론(：)을 붙여 일반 유저나 클럽장, 운영자 등 신뢰할 수 있는 대상을 사칭하는 대표적인 사칭 사기 패턴입니다.';
+      actionGuidance = '사기 및 사칭 위험 대화입니다. 거래 및 대화를 즉시 중단하시고 차단하세요.';
     } else if (senders.has('클럽장-햄찌') || senders.has('판매자햄찌')) {
       verdict = 'SCAM';
       detectedScamTypes = '3자 대화 유도 / 클럽장 사칭 사기';

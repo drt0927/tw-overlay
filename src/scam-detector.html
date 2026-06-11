@@ -425,6 +425,13 @@
             <div class="font-normal opacity-70" style="font-size:11px;">시드가 막혔다 / 네냐플 추가 구매 유도</div>
           </div>
         </button>
+        <button class="test-btn danger" onclick="injectTest('scam_impersonation')">
+          <i data-lucide="shield-alert" class="w-4 h-4 shrink-0"></i>
+          <div class="text-left">
+            <div>🚨 [사칭] 특수문자(：) 사칭 사기</div>
+            <div class="font-normal opacity-70" style="font-size:11px;">닉네임 뒤에 특수문자 콜론을 붙인 사칭 수법</div>
+          </div>
+        </button>
         <button class="test-btn warning" onclick="injectTest('suspicious')">
           <i data-lucide="eye" class="w-4 h-4 shrink-0"></i>
           <div class="text-left">
@@ -752,10 +759,20 @@
                 etaBadge = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-500 bg-slate-900 border border-slate-800 select-none">에타 -</span>`;
               }
 
+              const hasSuspiciousColon = msg.sender && msg.sender.includes('：');
+              const shouldHighlight = hasSuspiciousColon && (_config?.chatOverlayHighlightScamNicknames !== false);
+
+              let senderHtml = '';
+              if (shouldHighlight) {
+                senderHtml = `<span class="suspicious-badge select-none">⚠️ 사칭주의</span><span class="chat-sender suspicious-sender font-bold select-none">${escapeHtml(msg.sender)}</span>`;
+              } else {
+                senderHtml = `<span class="font-bold text-slate-300 select-none">${escapeHtml(msg.sender)}</span>`;
+              }
+
               return `<div class="flex flex-col items-start gap-1 my-1.5">
                 <div class="flex items-center gap-1.5 text-[11px]">
                   ${etaBadge}
-                  <span class="font-bold text-slate-300 select-none">${escapeHtml(msg.sender)}</span>
+                  ${senderHtml}
                   ${timeStr}
                 </div>
                 <div class="bg-slate-800/40 border border-slate-700/40 text-slate-200 rounded-lg rounded-tl-none px-2.5 py-1.5 max-w-[85%] text-left text-[13px] break-all leading-relaxed">
@@ -1025,6 +1042,7 @@
         scam_keyword: '가중치/별전 사기',
         scam_duo: '2인 1조 사칭',
         scam_seed: '추가 시드 유도',
+        scam_impersonation: '특수문자 사칭',
         suspicious: '의심 행동',
         safe: '정상 거래',
       };

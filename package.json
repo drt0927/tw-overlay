@@ -1,6 +1,6 @@
 {
   "name": "tw-overlay",
-  "version": "1.17.12",
+  "version": "1.18.0",
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {

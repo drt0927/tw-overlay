@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' file:">
   <title>진화 재료 비용 계산기</title>
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
@@ -578,6 +579,58 @@
       updateTotalCost();
     }
 
+    function handleAutoSelect(data) {
+      if (!data) return;
+
+      try {
+        // Rebuild category selection
+        currentCategory = data.category;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const activeTab = document.querySelector(`[data-category="${currentCategory}"]`);
+        if (activeTab) activeTab.classList.add('active');
+
+        const partSel = document.getElementById('part-selector');
+        if (currentCategory === 'equipment') {
+          partSel.classList.remove('hidden');
+          currentPart = data.part;
+          document.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
+          const activePart = document.querySelector(`[data-part="${currentPart}"]`);
+          if (activePart) activePart.classList.add('active');
+        } else {
+          partSel.classList.add('hidden');
+        }
+
+        rebuildStepSelectors();
+
+        // Auto-detect step-from based on name
+        const itemName = data.itemName || '';
+        let matchedTierIndex = -1;
+        const chain = getChain();
+        const sortedChain = [...chain]
+          .map((name, index) => ({ name, originalIndex: index }))
+          .sort((a, b) => b.name.length - a.name.length);
+        
+        for (let entry of sortedChain) {
+          if (itemName.includes(entry.name)) {
+            matchedTierIndex = entry.originalIndex;
+            break;
+          }
+        }
+        
+        if (matchedTierIndex >= 0 && matchedTierIndex < chain.length - 1) {
+          const fromSel = document.getElementById('step-from');
+          if (fromSel) {
+            fromSel.value = matchedTierIndex.toString();
+          }
+        }
+        updateMaterials();
+      } catch (e) {
+        console.error('Failed to handle auto select:', e);
+      }
+    }
+
+    let pendingEvoData = null;
+
     // 초기화
     async function init() {
       try {
@@ -585,10 +638,28 @@
         evolutionData = await res.json();
         rebuildStepSelectors();
         updateMaterials();
+
+        if (pendingEvoData) {
+          handleAutoSelect(pendingEvoData);
+          pendingEvoData = null;
+        }
+        if (window.electronAPI && window.electronAPI.sendRendererReady) {
+          window.electronAPI.sendRendererReady('evolutionCalculator');
+        }
       } catch (e) {
         document.getElementById('material-list').innerHTML =
           `<div class="text-center text-red-400 text-xs font-bold py-10">데이터 로드 실패<br><span class="text-[10px] text-slate-600">${e.message}</span></div>`;
       }
+    }
+
+    if (window.electronAPI && window.electronAPI.onAutoSelectEvolution) {
+      window.electronAPI.onAutoSelectEvolution((data) => {
+        if (!evolutionData) {
+          pendingEvoData = data;
+        } else {
+          handleAutoSelect(data);
+        }
+      });
     }
 
     window.addEventListener('keydown', e => { if (e.key === 'Escape') window.close(); });

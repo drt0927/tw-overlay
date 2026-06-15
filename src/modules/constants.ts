@@ -178,7 +178,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlayColorTeam: '#f7b73c',
   chatOverlayColorClub: '#94ddfa',
   chatOverlayColorShout: '#c896c8',
-  chatOverlayColorSystem: '#a8a8a8',
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

@@ -352,7 +352,6 @@ export interface AppConfig {
     chatOverlayColorTeam?: string;
     chatOverlayColorClub?: string;
     chatOverlayColorShout?: string;
-    chatOverlayColorSystem?: string;
 }
 
 export interface GalleryPost {

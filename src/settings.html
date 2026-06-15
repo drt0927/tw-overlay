@@ -720,10 +720,6 @@
                       <span class="text-[11px] font-bold text-slate-300">외치기</span>
                       <div id="chat-picker-shout" class="chat-color-picker-btn"></div>
                     </div>
-                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
-                      <span class="text-[11px] font-bold text-slate-300">시스템</span>
-                      <div id="chat-picker-system" class="chat-color-picker-btn"></div>
-                    </div>
                   </div>
                 </div>
 
@@ -1215,7 +1211,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.17.12</span></p>
+                        class="text-purple-400">1.18.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1848,12 +1844,11 @@
         whisper: '#64ff64',
         team: '#f7b73c',
         club: '#94ddfa',
-        shout: '#c896c8',
-        system: '#a8a8a8'
+        shout: '#c896c8'
       };
 
       function initChatColorPickers(cfg) {
-        ['general', 'whisper', 'team', 'club', 'shout', 'system'].forEach(ch => {
+        ['general', 'whisper', 'team', 'club', 'shout'].forEach(ch => {
           const key = 'chatOverlayColor' + ch.charAt(0).toUpperCase() + ch.slice(1);
           const initialColor = cfg[key] || channelColors[ch];
 
@@ -2333,7 +2328,6 @@
           chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
           chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
           chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
-          chatOverlayColorSystem: window.chatPickers && window.chatPickers['system'] ? window.chatPickers['system'].getColor().toHEXA().toString(0) : '#a8a8a8',
           chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
             const cb = document.getElementById(`chat-overlay-channel-${ch}`);
             return cb ? cb.checked : false;
@@ -2382,7 +2376,6 @@
           chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
           chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
           chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
-          chatOverlayColorSystem: window.chatPickers && window.chatPickers['system'] ? window.chatPickers['system'].getColor().toHEXA().toString(0) : '#a8a8a8',
           chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
             const cb = document.getElementById(`chat-overlay-channel-${ch}`);
             return cb ? cb.checked : false;

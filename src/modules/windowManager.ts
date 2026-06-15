@@ -14,6 +14,8 @@ import { buffTimerManager } from './buffTimerManager';
 
 // --- 상태 관리 ---
 let activeWindowsStack: BrowserWindow[] = [];
+let pendingCoefficientItem: any = null;
+let pendingEvolutionItem: any = null;
 
 /** 공통 창 생성 옵션 (DRY) */
 function getStandardOptions(width: number, height: number, extraProps: any = {}): any {
@@ -92,7 +94,7 @@ function createGameOverlayWindow(): void {
   gameOverlayWindow.setIgnoreMouseEvents(true);
   gameOverlayWindow.loadFile(path.join(__dirname, '..', 'game-overlay.html'));
   attachStackListeners(gameOverlayWindow);
-  
+
   // 개발 환경에서만 테스트 편의를 위해 개발자 도구 자동 활성화
   if (IS_DEV) {
     gameOverlayWindow.webContents.openDevTools({ mode: 'detach' });
@@ -142,11 +144,12 @@ const windowRegistry: Record<string, ManagedWindow> = {
   },
   gallery: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'gallery', html: 'gallery.html', width: 450, height: 600 },
   abbreviation: { ref: null, pos: { offsetX: -510, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 500, height: 700 },
+  equipmentDic: { ref: null, pos: { offsetX: -1120, offsetY: 40 }, key: 'equipmentDic', html: 'equipment-dic.html', width: 1120, height: 800 },
   buffs: { ref: null, pos: { offsetX: -1000, offsetY: 40 }, key: 'buffs', html: 'buffs.html', width: 1000, height: 700 },
   bossSettings: { ref: null, pos: { offsetX: -410, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 410, height: 750 },
   etaRanking: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 400, height: 600 },
   trade: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 450, height: 600 },
-  coefficientCalculator: { ref: null, pos: { offsetX: -1360, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1350, height: 1080 },
+  coefficientCalculator: { ref: null, pos: { offsetX: -1430, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1420, height: 860 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
@@ -316,6 +319,7 @@ export const getOverlayWindow = () => overlayWindow;
 export const getSettingsWindow = () => windowRegistry.settings.ref;
 export const getGalleryWindow = () => windowRegistry.gallery.ref;
 export const getAbbreviationWindow = () => windowRegistry.abbreviation.ref;
+export const getEquipmentDicWindow = () => windowRegistry.equipmentDic.ref;
 export const getBuffsWindow = () => windowRegistry.buffs.ref;
 export const getBossSettingsWindow = () => windowRegistry.bossSettings.ref;
 export const getEtaRankingWindow = () => windowRegistry.etaRanking.ref;
@@ -478,11 +482,11 @@ function createToggleableWindow(key: string, callbacks?: {
   }
 
   // 현재 게임 창이 있는 모니터(없으면 주 모니터)의 작업 영역 높이 확인
-  const display = gameRect 
-    ? screen.getDisplayNearestPoint({ x: gameRect.x, y: gameRect.y }) 
+  const display = gameRect
+    ? screen.getDisplayNearestPoint({ x: gameRect.x, y: gameRect.y })
     : screen.getPrimaryDisplay();
   const maxH = display.workAreaSize.height;
-  
+
   // 설정된 높이가 모니터 높이보다 크면 클램핑
   let finalW = winCfg.width;
   let finalH = winCfg.height;
@@ -512,24 +516,24 @@ function createToggleableWindow(key: string, callbacks?: {
       let { x, y } = (callbacks?.calcPosition || winCfg.calcPosition)
         ? (callbacks?.calcPosition || winCfg.calcPosition)!(gameRect, winCfg.pos)
         : { x: Math.round(gameRect.x + gameRect.width + winCfg.pos.offsetX), y: Math.round(gameRect.y + winCfg.pos.offsetY) };
-      
+
       // 채팅 오버레이 창(Main/Sub1/Sub2)의 경우
       if (key === 'chatOverlay' || key === 'chatOverlaySub' || key === 'chatOverlaySub2') {
         const cfg = config.load();
         const hasSavedPos = cfg.positions && cfg.positions[key as keyof typeof cfg.positions];
-        
+
         // 사용자가 수동 드래그하여 저장한 위치가 없을 때(최초 오픈)만 게임창 내부 범위로 강제 클램핑 처리
         if (!hasSavedPos) {
           const minY = gameRect.y;
           const maxY = Math.max(minY, gameRect.y + gameRect.height - finalH);
           y = Math.max(minY, Math.min(y, maxY));
-          
+
           const minX = gameRect.x;
           const maxX = Math.max(minX, gameRect.x + gameRect.width - finalW);
           x = Math.max(minX, Math.min(x, maxX));
         }
       }
-      
+
       win.setPosition(x, y);
     } else {
       win.center();
@@ -548,6 +552,7 @@ function createToggleableWindow(key: string, callbacks?: {
     } else if (key === 'chatOverlaySub2') {
       win.webContents.send('chat-overlay-mode', 'sub2');
     }
+
   });
   win.on('move', () => {
     if (consumeProgrammaticMove(key) || !winCfg.ref || !gameRect) return;
@@ -558,6 +563,11 @@ function createToggleableWindow(key: string, callbacks?: {
   win.on('closed', () => {
     if (winCfg.onClose) winCfg.onClose();
     winCfg.ref = null;
+
+    // 창이 renderer-ready를 보내기 전에 닫히면 pending 항목이 남아
+    // 다음 오픈 시 잘못 자동 선택될 수 있으므로 정리한다.
+    if (key === 'coefficientCalculator') pendingCoefficientItem = null;
+    if (key === 'evolutionCalculator') pendingEvolutionItem = null;
 
     // 창이 닫힐 때(사용자가 X를 누르거나, ESC로 닫거나 등) 게임으로 포커스 복구
     // 3단계 방어: isQuitting(앱 종료) → suppressFocusRestore(hideAll) → gameRect(게임 미추적)
@@ -595,6 +605,7 @@ export function toggleGalleryWindow(): boolean {
   });
 }
 export function toggleAbbreviationWindow(): boolean { return createToggleableWindow('abbreviation'); }
+export function toggleEquipmentDicWindow(): boolean { return createToggleableWindow('equipmentDic'); }
 export function toggleBuffsWindow(): boolean { return createToggleableWindow('buffs'); }
 export function toggleBossSettingsWindow(): boolean {
   return createToggleableWindow('bossSettings', {
@@ -613,7 +624,61 @@ export function toggleTradeWindow(): boolean {
   });
 }
 export function toggleCoefficientCalculatorWindow(): boolean { return createToggleableWindow('coefficientCalculator'); }
+export function openCoefficientCalculatorWindow(): void {
+  const winCfg = windowRegistry['coefficientCalculator'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    return;
+  }
+  createToggleableWindow('coefficientCalculator');
+}
+export function sendEquipmentToCoefficient(item: any): void {
+  const winCfg = windowRegistry['coefficientCalculator'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.webContents.send('auto-select-equipment', item);
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    return;
+  }
+  pendingCoefficientItem = item;
+  openCoefficientCalculatorWindow();
+}
+export function sendEquipmentToEvolution(item: any): void {
+  const winCfg = windowRegistry['evolutionCalculator'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.webContents.send('auto-select-evolution', item);
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    return;
+  }
+  pendingEvolutionItem = item;
+  openEvolutionCalculatorWindow();
+}
+export function handleRendererReady(windowKey: string, webContents: any): void {
+  // ready 신호는 우리가 소유한 창(레지스트리 ref)에서 온 것만 신뢰한다.
+  // 임의 렌더러가 windowKey를 위조해 pending payload를 가로채는 것을 방지.
+  const winCfg = windowRegistry[windowKey];
+  if (!winCfg || !winCfg.ref || winCfg.ref.isDestroyed() || winCfg.ref.webContents !== webContents) return;
+
+  if (windowKey === 'coefficientCalculator' && pendingCoefficientItem) {
+    winCfg.ref.webContents.send('auto-select-equipment', pendingCoefficientItem);
+    pendingCoefficientItem = null;
+  } else if (windowKey === 'evolutionCalculator' && pendingEvolutionItem) {
+    winCfg.ref.webContents.send('auto-select-evolution', pendingEvolutionItem);
+    pendingEvolutionItem = null;
+  }
+}
 export function toggleEvolutionCalculatorWindow(): boolean { return createToggleableWindow('evolutionCalculator'); }
+export function openEvolutionCalculatorWindow(): void {
+  const winCfg = windowRegistry['evolutionCalculator'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    return;
+  }
+  createToggleableWindow('evolutionCalculator');
+}
 export function toggleMagicStoneCalculatorWindow(): boolean { return createToggleableWindow('magicStoneCalculator'); }
 export function toggleCustomAlertWindow(): boolean { return createToggleableWindow('customAlert'); }
 export function toggleUniformColorWindow(): void {
@@ -729,7 +794,7 @@ export function toggleChatOverlayWindow(): boolean {
     if (!chatWinCfg.ref || chatWinCfg.ref.isDestroyed()) {
       createToggleableWindow('chatOverlay');
     }
-    
+
     // Main 창이 켜질 때, 설정에 저장되어 있던 활성화 상태에 따라 sub1, sub2도 복원
     const cfg = config.load();
     if (cfg.chatOverlaySubEnabled) {
@@ -765,7 +830,7 @@ export function broadcastConfig(): void {
   const chatWin = windowRegistry['chatOverlay'];
   const sub1Win = windowRegistry['chatOverlaySub'];
   const sub2Win = windowRegistry['chatOverlaySub2'];
-  
+
   [mainWindow, dockCfg?.ref, chatWin?.ref, sub1Win?.ref, sub2Win?.ref].forEach(win => {
     if (win && !win.isDestroyed()) {
       win.webContents.send('config-data', cfg);
@@ -1051,7 +1116,7 @@ export function syncOverlay(currentRect: GameRect): void {
         const { x, y } = (winCfg.calcPosition)
           ? winCfg.calcPosition(scaledGameRect, winCfg.pos)
           : { x: Math.round(gX + gW + winCfg.pos.offsetX), y: Math.round(gY + winCfg.pos.offsetY) };
-        
+
         const b = winCfg.ref.getBounds();
         if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
           setProgrammaticMove(key);
@@ -1094,7 +1159,7 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
           const { x, y } = winCfg.calcPosition
             ? winCfg.calcPosition(gameRect!, winCfg.pos)
             : { x: Math.round(gameRect!.x + gameRect!.width + winCfg.pos.offsetX), y: Math.round(gameRect!.y + winCfg.pos.offsetY) };
-          
+
           const b = winCfg.ref.getBounds();
           if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
             setProgrammaticMove(key);
@@ -1344,7 +1409,7 @@ export function showGameExitReminder(): void {
 
   const presets = cfg.characterPresets || [{ id: MAIN_CHAR_ID, name: DEFAULT_CHAR_NAME }];
   const items = cfg.contentsCheckerItems || [];
-  
+
   const incompleteItems: any[] = [];
 
   // 모든 캐릭터를 순회하며 미완료 숙제 수집

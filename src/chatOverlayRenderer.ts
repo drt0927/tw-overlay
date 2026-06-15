@@ -250,8 +250,6 @@ function createChatRow(chat: any): HTMLDivElement {
       customColor = chatOverlayAppConfig.chatOverlayColorClub;
     } else if (chat.type === 'shout' && chatOverlayAppConfig.chatOverlayColorShout) {
       customColor = chatOverlayAppConfig.chatOverlayColorShout;
-    } else if (chat.type === 'system' && chatOverlayAppConfig.chatOverlayColorSystem) {
-      customColor = chatOverlayAppConfig.chatOverlayColorSystem;
     }
   }
 
@@ -504,8 +502,7 @@ window.electronAPI.onConfigData((config) => {
       'chatOverlayColorWhisper',
       'chatOverlayColorTeam',
       'chatOverlayColorClub',
-      'chatOverlayColorShout',
-      'chatOverlayColorSystem'
+      'chatOverlayColorShout'
     ];
     for (const key of colorKeys) {
       if (lastKnownConfig[key] !== config[key]) {

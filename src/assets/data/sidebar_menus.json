@@ -48,6 +48,14 @@
     "api": "toggleAbbreviation"
   },
   {
+    "id": "equipment-dic-btn",
+    "label": "장비 사전",
+    "icon": "book-marked",
+    "tooltip": "테일즈위버 장비 사전",
+    "color": "sky-400",
+    "api": "toggleEquipmentDic"
+  },
+  {
     "id": "buffs-btn",
     "label": "버프 백과 & 계산기",
     "icon": "zap",

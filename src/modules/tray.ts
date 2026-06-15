@@ -27,11 +27,14 @@ function buildMenuTemplate(): any[] {
         hiddenMenuIds = [];
       }
 
-      const apiMapping: Record<string, () => void> = {
+       const apiMapping: Record<string, () => void> = {
         'openGallery': wm.toggleGalleryWindow,
         'toggleTrade': wm.toggleTradeWindow,
         'toggleShoutHistory': wm.toggleShoutHistoryWindow,
+        'toggleWordAlarm': wm.toggleWordAlarmWindow,
+        'toggleDiscordAlarm': wm.toggleDiscordAlarmWindow,
         'toggleAbbreviation': wm.toggleAbbreviationWindow,
+        'toggleEquipmentDic': wm.toggleEquipmentDicWindow,
         'toggleBuffs': wm.toggleBuffsWindow,
         'toggleCoefficientCalculator': wm.toggleCoefficientCalculatorWindow,
         'toggleBossSettings': wm.toggleBossSettingsWindow,

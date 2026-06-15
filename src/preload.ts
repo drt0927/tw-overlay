@@ -10,11 +10,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleSettings: (tabId?: string) => ipcRenderer.send('toggle-settings', tabId),
   toggleGallery: () => ipcRenderer.send('toggle-gallery'),
   toggleAbbreviation: () => ipcRenderer.send('toggle-abbreviation'),
+  toggleEquipmentDic: () => ipcRenderer.send('toggle-equipment-dic'),
   toggleBuffs: () => ipcRenderer.send('toggle-buffs'),
   toggleBossSettings: () => ipcRenderer.send('toggle-boss-settings'),
   toggleEtaRanking: () => ipcRenderer.send('toggle-eta-ranking'),
   toggleTrade: () => ipcRenderer.send('toggle-trade'),
   toggleCoefficientCalculator: () => ipcRenderer.send('toggle-coefficient-calculator'),
+  openCoefficientCalculator: () => ipcRenderer.send('open-coefficient-calculator'),
+  sendEquipmentToCoefficient: (item: any) => ipcRenderer.send('send-to-coefficient', item),
+  sendEquipmentToEvolution: (item: any) => ipcRenderer.send('send-to-evolution', item),
   toggleContentsChecker: () => ipcRenderer.send('toggle-contents-checker'),
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
   toggleMagicStoneCalculator: () => ipcRenderer.send('toggle-magic-stone-calculator'),
@@ -25,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
   toggleSienaAura: () => ipcRenderer.send('toggle-siena-aura'),
   resetXp: () => ipcRenderer.send('xp-reset'),
+  sendRendererReady: (windowKey: string) => ipcRenderer.send('renderer-ready', windowKey),
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 
   contentsToggleItem: (id: string, characterId?: string) => ipcRenderer.send('contents-toggle-item', id, characterId),
@@ -306,6 +311,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('scam-analysis-token');
     ipcRenderer.on('scam-analysis-token', (_event, data) => callback(data));
   },
+  onAutoSelectEquipment: (callback: (item: any) => void) => {
+    ipcRenderer.removeAllListeners('auto-select-equipment');
+    ipcRenderer.on('auto-select-equipment', (_event, item) => callback(item));
+  },
+  onAutoSelectEvolution: (callback: (data: any) => void) => {
+    ipcRenderer.removeAllListeners('auto-select-evolution');
+    ipcRenderer.on('auto-select-evolution', (_event, data) => callback(data));
+  },
   onAbandonedUpdate: (callback: (state: any) => void) => {
     ipcRenderer.removeAllListeners('abandoned-update');
     ipcRenderer.on('abandoned-update', (_event, state) => callback(state));
@@ -346,6 +359,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
+      'auto-select-equipment', 'auto-select-evolution'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

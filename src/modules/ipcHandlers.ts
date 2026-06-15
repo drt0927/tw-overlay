@@ -79,6 +79,7 @@ export function register(): void {
     'toggle-scam-detector': wm.toggleScamDetectorWindow,
     'toggle-gallery': wm.toggleGalleryWindow,
     'toggle-abbreviation': wm.toggleAbbreviationWindow,
+    'toggle-equipment-dic': wm.toggleEquipmentDicWindow,
     'toggle-buffs': wm.toggleBuffsWindow,
     'toggle-boss-settings': wm.toggleBossSettingsWindow,
     'toggle-eta-ranking': wm.toggleEtaRankingWindow,
@@ -170,6 +171,23 @@ export function register(): void {
     const eventName = tabId ? `toggle_settings_${tabId}` : 'toggle_settings';
     analytics.trackEvent(eventName, { tabId });
     wm.toggleSettingsWindow(tabId);
+  });
+
+  ipcMain.on('open-coefficient-calculator', () => {
+    analytics.trackEvent('open_coefficient_calculator');
+    wm.openCoefficientCalculatorWindow();
+  });
+
+  ipcMain.on('send-to-coefficient', (_event, item) => {
+    wm.sendEquipmentToCoefficient(item);
+  });
+
+  ipcMain.on('send-to-evolution', (_event, item) => {
+    wm.sendEquipmentToEvolution(item);
+  });
+
+  ipcMain.on('renderer-ready', (_event, windowKey) => {
+    wm.handleRendererReady(windowKey, _event.sender);
   });
 
   // 네트워크 최적화 (Fast Ping) 핸들러

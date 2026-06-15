@@ -539,6 +539,11 @@ class ChatLogProcessor {
     chatParser.on('PRAVA_DEFENSE_CLEAR', (data) => {
       contentsChecker.queuePendingHomework('weekly-prava-defense', 1, true);
     });
+
+    // 19-2. 오를리 방어전 클리어 처리
+    chatParser.on('ORLY_DEFENSE_CLEAR', (data) => {
+      contentsChecker.queuePendingHomework('weekly-orly-defense', 1, true);
+    });
  
     // 20. 망각의 카타콤 (지옥) 클리어 처리
     chatParser.on('CATACOMB_CLEAR', (data) => {

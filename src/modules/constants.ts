@@ -131,6 +131,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     'util_ampoule': true,
     'dmg_izabel': true,
     'util_illumination': true,
+    'insight_elixir_large': true,
+    'insight_elixir_special': true,
   },
   buffTimerCenterAlert: true,
   buffTimerHudPos: { left: 350, bottom: 0 },
@@ -171,6 +173,12 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlaySub2Tab: 'Basic',
   chatOverlayShowNpcChat: true,
   chatOverlayHighlightScamNicknames: true,
+  chatOverlayColorGeneral: '#ffffff',
+  chatOverlayColorWhisper: '#64ff64',
+  chatOverlayColorTeam: '#f7b73c',
+  chatOverlayColorClub: '#94ddfa',
+  chatOverlayColorShout: '#c896c8',
+  chatOverlayColorSystem: '#a8a8a8',
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

@@ -4,7 +4,36 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/pickr-nano.min.css">
   <style>
+    /* Pickr 커스텀 다크 테마 스타일링 */
+    .pcr-app {
+      background: #1e1e2f !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+      border-radius: 8px !important;
+    }
+    .pcr-app .pcr-interaction input {
+      background: rgba(0, 0, 0, 0.3) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #e2e8f0 !important;
+      border-radius: 4px !important;
+    }
+    .pcr-app .pcr-interaction .pcr-save {
+      background: #4f46e5 !important;
+      color: #ffffff !important;
+    }
+    .pickr .pcr-button {
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 6px !important;
+      width: 32px !important;
+      height: 22px !important;
+      transition: border-color 0.2s;
+    }
+    .pickr .pcr-button:hover {
+      border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+
     .settings-wrapper {
       display: flex;
       height: 100vh;
@@ -665,6 +694,39 @@
                   </div>
                 </div>
 
+                <!-- 채팅 채널별 글자 색상 설정 (Pickr) -->
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-3">
+                  <h4 class="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                    <i data-lucide="palette" class="w-3.5 h-3.5 text-indigo-400"></i> 채널별 글씨색 설정
+                  </h4>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
+                      <span class="text-[11px] font-bold text-slate-300">일반</span>
+                      <div id="chat-picker-general" class="chat-color-picker-btn"></div>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
+                      <span class="text-[11px] font-bold text-slate-300">귓속말</span>
+                      <div id="chat-picker-whisper" class="chat-color-picker-btn"></div>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
+                      <span class="text-[11px] font-bold text-slate-300">팀</span>
+                      <div id="chat-picker-team" class="chat-color-picker-btn"></div>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
+                      <span class="text-[11px] font-bold text-slate-300">클럽</span>
+                      <div id="chat-picker-club" class="chat-color-picker-btn"></div>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
+                      <span class="text-[11px] font-bold text-slate-300">외치기</span>
+                      <div id="chat-picker-shout" class="chat-color-picker-btn"></div>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5">
+                      <span class="text-[11px] font-bold text-slate-300">시스템</span>
+                      <div id="chat-picker-system" class="chat-color-picker-btn"></div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- 통합(Basic) 탭 노출 채널 선택 -->
                 <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-3">
                   <h4 class="text-xs font-bold text-slate-400">통합 탭 노출 채널 선택</h4>
@@ -1153,7 +1215,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.17.11</span></p>
+                        class="text-purple-400">1.17.12</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1232,6 +1294,7 @@
 
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/pickr.min.js"></script>
   <script src="assets/ui-utils.js"></script>
 
   <script>
@@ -1776,6 +1839,74 @@
         document.getElementById('chat-overlay-sub2-height-input').value = config.chatOverlaySub2Height ?? 400;
       }
 
+      // Pickr 초기화 및 관리
+      if (typeof window.chatPickers === 'undefined') {
+        window.chatPickers = {};
+      }
+      const channelColors = {
+        general: '#ffffff',
+        whisper: '#64ff64',
+        team: '#f7b73c',
+        club: '#94ddfa',
+        shout: '#c896c8',
+        system: '#a8a8a8'
+      };
+
+      function initChatColorPickers(cfg) {
+        ['general', 'whisper', 'team', 'club', 'shout', 'system'].forEach(ch => {
+          const key = 'chatOverlayColor' + ch.charAt(0).toUpperCase() + ch.slice(1);
+          const initialColor = cfg[key] || channelColors[ch];
+
+          const el = document.getElementById(`chat-picker-${ch}`);
+          if (el) {
+            el.innerHTML = '';
+            const pickerTarget = document.createElement('div');
+            el.appendChild(pickerTarget);
+
+            if (window.chatPickers[ch]) {
+              try {
+                window.chatPickers[ch].destroyAndRemoveEl();
+              } catch(e) {}
+            }
+
+            window.chatPickers[ch] = Pickr.create({
+              el: pickerTarget,
+              theme: 'nano',
+              default: initialColor,
+              swatches: [
+                '#ffffff',
+                '#64ff64',
+                '#f7b73c',
+                '#94ddfa',
+                '#c896c8',
+                '#a8a8a8',
+                '#f43f5e',
+                '#3b82f6'
+              ],
+              components: {
+                preview: true,
+                opacity: false,
+                hue: true,
+                interaction: {
+                  hex: true,
+                  input: true,
+                  save: true
+                }
+              },
+              i18n: {
+                'btn:save': '선택'
+              }
+            });
+
+            window.chatPickers[ch].on('save', (color, instance) => {
+              instance.hide();
+            });
+          }
+        });
+      }
+
+      initChatColorPickers(config);
+
       // 채널 설정 바인딩
       const selectedChannels = config.chatOverlaySelectedChannels || ['general', 'whisper', 'team', 'club', 'shout', 'system'];
       ['general', 'whisper', 'team', 'club', 'shout', 'system'].forEach(ch => {
@@ -2197,6 +2328,12 @@
           chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
           chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
           chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
+          chatOverlayColorGeneral: window.chatPickers && window.chatPickers['general'] ? window.chatPickers['general'].getColor().toHEXA().toString(0) : '#ffffff',
+          chatOverlayColorWhisper: window.chatPickers && window.chatPickers['whisper'] ? window.chatPickers['whisper'].getColor().toHEXA().toString(0) : '#64ff64',
+          chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
+          chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
+          chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
+          chatOverlayColorSystem: window.chatPickers && window.chatPickers['system'] ? window.chatPickers['system'].getColor().toHEXA().toString(0) : '#a8a8a8',
           chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
             const cb = document.getElementById(`chat-overlay-channel-${ch}`);
             return cb ? cb.checked : false;
@@ -2240,6 +2377,12 @@
           chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
           chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
           chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
+          chatOverlayColorGeneral: window.chatPickers && window.chatPickers['general'] ? window.chatPickers['general'].getColor().toHEXA().toString(0) : '#ffffff',
+          chatOverlayColorWhisper: window.chatPickers && window.chatPickers['whisper'] ? window.chatPickers['whisper'].getColor().toHEXA().toString(0) : '#64ff64',
+          chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
+          chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
+          chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
+          chatOverlayColorSystem: window.chatPickers && window.chatPickers['system'] ? window.chatPickers['system'].getColor().toHEXA().toString(0) : '#a8a8a8',
           chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
             const cb = document.getElementById(`chat-overlay-channel-${ch}`);
             return cb ? cb.checked : false;

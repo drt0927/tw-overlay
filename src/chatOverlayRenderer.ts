@@ -237,7 +237,27 @@ function createChatRow(chat: any): HTMLDivElement {
   const textSpan = document.createElement('span');
   textSpan.className = 'chat-text';
   textSpan.textContent = ` ${chat.message}`;
-  if (chat.color) {
+
+  let customColor = '';
+  if (chatOverlayAppConfig) {
+    if (chat.type === 'general' && chatOverlayAppConfig.chatOverlayColorGeneral) {
+      customColor = chatOverlayAppConfig.chatOverlayColorGeneral;
+    } else if (chat.type === 'whisper' && chatOverlayAppConfig.chatOverlayColorWhisper) {
+      customColor = chatOverlayAppConfig.chatOverlayColorWhisper;
+    } else if (chat.type === 'team' && chatOverlayAppConfig.chatOverlayColorTeam) {
+      customColor = chatOverlayAppConfig.chatOverlayColorTeam;
+    } else if (chat.type === 'club' && chatOverlayAppConfig.chatOverlayColorClub) {
+      customColor = chatOverlayAppConfig.chatOverlayColorClub;
+    } else if (chat.type === 'shout' && chatOverlayAppConfig.chatOverlayColorShout) {
+      customColor = chatOverlayAppConfig.chatOverlayColorShout;
+    } else if (chat.type === 'system' && chatOverlayAppConfig.chatOverlayColorSystem) {
+      customColor = chatOverlayAppConfig.chatOverlayColorSystem;
+    }
+  }
+
+  if (customColor) {
+    textSpan.style.color = customColor;
+  } else if (chat.color) {
     textSpan.style.color = chat.color;
   }
   row.appendChild(textSpan);
@@ -476,6 +496,27 @@ window.electronAPI.onConfigData((config) => {
     npcChatSettingChanged = true;
   }
 
+  // 색상 변경 감지
+  let colorChanged = false;
+  if (lastKnownConfig) {
+    const colorKeys = [
+      'chatOverlayColorGeneral',
+      'chatOverlayColorWhisper',
+      'chatOverlayColorTeam',
+      'chatOverlayColorClub',
+      'chatOverlayColorShout',
+      'chatOverlayColorSystem'
+    ];
+    for (const key of colorKeys) {
+      if (lastKnownConfig[key] !== config[key]) {
+        colorChanged = true;
+        break;
+      }
+    }
+  } else {
+    colorChanged = true;
+  }
+
   applyConfigStyles(config);
   lastKnownConfig = config;
 
@@ -487,9 +528,9 @@ window.electronAPI.onConfigData((config) => {
   const tabChangedExternally = (currentConfigTab !== chatOverlayCurrentTab);
   if (tabChangedExternally) {
     selectTab(currentConfigTab, false);
-  } else if ((channelsChanged || npcChatSettingChanged) && chatOverlayCurrentTab === 'Basic') {
+  } else if ((channelsChanged || npcChatSettingChanged || colorChanged) && chatOverlayCurrentTab === 'Basic') {
     loadHistory();
-  } else if (npcChatSettingChanged) {
+  } else if (npcChatSettingChanged || colorChanged) {
     loadHistory();
   }
 });

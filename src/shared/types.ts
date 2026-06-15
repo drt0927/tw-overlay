@@ -42,6 +42,7 @@ export interface ChatParserEventMap {
 
     VESTIGE_CLEAR: { date: string; timestamp: string; message: string };
     APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    ORLY_DEFENSE_CLEAR: { date: string; timestamp: string; message: string };
     NORMAL_CHAT: { date: string; timestamp: string; sender: string; message: string; color: string };
     ABYSS_APOSTLE_PATTERN: { date: string; timestamp: string; message: string };
     WAVE_MONSTER_WARNING: { date: string; timestamp: string; message: string };
@@ -346,6 +347,12 @@ export interface AppConfig {
     chatOverlaySub2Tab?: string;
     chatOverlayShowNpcChat?: boolean;
     chatOverlayHighlightScamNicknames?: boolean;
+    chatOverlayColorGeneral?: string;
+    chatOverlayColorWhisper?: string;
+    chatOverlayColorTeam?: string;
+    chatOverlayColorClub?: string;
+    chatOverlayColorShout?: string;
+    chatOverlayColorSystem?: string;
 }
 
 export interface GalleryPost {

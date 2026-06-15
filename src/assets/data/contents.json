@@ -218,6 +218,14 @@
     "resetRule": { "type": "daily", "hour": 0 }
   },
   {
+    "id": "daily-club-dungeon",
+    "name": "클럽던전",
+    "category": "클럽",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 }
+  },
+  {
     "id": "weekly-power-root",
     "name": "힘의 근원",
     "category": "재화",
@@ -440,7 +448,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-vestige",

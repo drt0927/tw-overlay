@@ -349,6 +349,16 @@ class ChatParser extends EventEmitter {
       return;
     }
 
+    // 15-2. 오를리 방어전 지옥 난이도 클리어
+    if (/미션을\s*완료했습니다\.\s*:\s*오를리\s*방어전\s*지옥\s*난이도\s*클리어/.test(cleanMsg)) {
+      this.emit('ORLY_DEFENSE_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
     // 16. 망각의 카타콤 (지옥)
     if (/\[카타콤\s*훈장\]\s*을\(를\)\s*\d+개\s*획득하였습니다\./.test(cleanMsg)) {
       this.emit('CATACOMB_CLEAR', {

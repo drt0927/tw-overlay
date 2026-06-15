@@ -726,6 +726,8 @@
       { id: 'util_ampoule', name: '속성 앰플', duration: '1시간 유지', cat: 'util', image: 'assets/img/buffs/속성앰플.png' },
       { id: 'dmg_izabel', name: '이자벨의 비법 (대미지)', duration: '30분 유지', cat: 'damage', image: 'assets/img/buffs/이자벨의비법_대미지.png' },
       { id: 'util_illumination', name: '일루미네이션 축제 음료', duration: '2시간 유지', cat: 'util', image: 'assets/img/buffs/일루미네이션축체음료.png' },
+      { id: 'insight_elixir_large', name: '통찰의 비약(대)', duration: '5분 유지', cat: 'util', image: 'assets/img/buffs/통찰대.png' },
+      { id: 'insight_elixir_special', name: '통찰의 비약(특대)', duration: '1분 유지', cat: 'util', image: 'assets/img/buffs/통찰특대.png' },
     ];
 
     const CAT_LABELS = { exp: 'E', drop: 'R', stats: 'S', damage: 'D', util: 'U' };
@@ -953,7 +955,7 @@
       if (volVal) volVal.textContent = vol;
       
       warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
-      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true }) };
+      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true, insight_elixir_large: true, insight_elixir_special: true }) };
       
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
       const posLeft = document.getElementById('hud-pos-left');

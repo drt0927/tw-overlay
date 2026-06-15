@@ -127,9 +127,9 @@ function notify(bossName: string, soundFile: string, spawnTime: string, offset: 
   const content = `[${bossName}] ${spawnTime} 스폰 처치 완료`;
   const isAlreadyRecorded = diaryDb.isActivityLogged(dateStr, content);
 
-  // 게임창이 최소화되어 있거나 종료된 상태일 때 Windows 알림 발송
+  // 게임창이 최소화되어 있는 상태일 때 Windows 알림 발송
   const gameStatus = getGameStatus();
-  if (gameStatus === 'minimized' || gameStatus === 'not-running') {
+  if (gameStatus === 'minimized') {
     const title = '🕒 필드보스 출현 알림';
     const body = offset === 0
       ? `지금 [${bossName}]이(가) 출현했습니다!`

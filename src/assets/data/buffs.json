@@ -577,5 +577,37 @@
       { "pattern": "EFFECT_APPLIED", "keyword": "신속 포션" }
     ],
     "description": "이벤트 기간 획득."
+  },
+  {
+    "id": "insight_elixir_large",
+    "name": "통찰의 비약(대)",
+    "category": "Utility",
+    "effect": "명중률 보정",
+    "duration": "5분",
+    "durationMs": 300000,
+    "group": "insight_elixir",
+    "removeOnExit": true,
+    "image": "assets/img/buffs/통찰대.png",
+    "chatTriggers": [
+      { "pattern": "SELF_USE", "keyword": "통찰의 비약(대)" },
+      { "pattern": "PARTY_ITEM", "keyword": "통찰의 비약(대)" }
+    ],
+    "description": "통찰의 비약(대) 사용 시 명중률 상승."
+  },
+  {
+    "id": "insight_elixir_special",
+    "name": "통찰의 비약(특대)",
+    "category": "Utility",
+    "effect": "명중률 보정 (극대화)",
+    "duration": "1분",
+    "durationMs": 60000,
+    "group": "insight_elixir",
+    "removeOnExit": true,
+    "image": "assets/img/buffs/통찰특대.png",
+    "chatTriggers": [
+      { "pattern": "SELF_USE", "keyword": "통찰의 비약(특대)" },
+      { "pattern": "PARTY_ITEM", "keyword": "통찰의 비약(특대)" }
+    ],
+    "description": "통찰의 비약(특대) 사용 시 명중률 극대화."
   }
 ]

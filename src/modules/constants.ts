@@ -178,6 +178,13 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlayColorTeam: '#f7b73c',
   chatOverlayColorClub: '#94ddfa',
   chatOverlayColorShout: '#c896c8',
+  chatOverlayNicknameColorMode: 'same',
+  chatOverlayNicknameColorGeneral: '#94a3b8',
+  chatOverlayNicknameColorWhisper: '#94a3b8',
+  chatOverlayNicknameColorTeam: '#94a3b8',
+  chatOverlayNicknameColorClub: '#94a3b8',
+  chatOverlayNicknameColorShout: '#94a3b8',
+  forgeQuestHudPos: { left: 50, bottom: 215 },
 };
 
 /** 앱 전역 공유 상태 (any 캐스팅 대체) */

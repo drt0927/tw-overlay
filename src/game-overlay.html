@@ -14,6 +14,109 @@
       pointer-events: none;
     }
 
+    /* ── 도전과제 HUD ── */
+    .quest-hud {
+      position: fixed;
+      left: 50px;
+      bottom: 215px;
+      padding: 10px 16px;
+      background: rgba(22, 16, 35, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(168, 85, 247, 0.45);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+      z-index: 100;
+    }
+
+    .quest-hud.hidden {
+      display: none;
+    }
+
+    .quest-hud-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: #c084fc;
+      letter-spacing: 0.05em;
+    }
+
+    .quest-hud-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    /* ── 도전과제 완료 대형 알림 ── */
+    .quest-alert-overlay {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      pointer-events: none;
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(24, 14, 38, 0.97) 0%, rgba(14, 7, 26, 0.97) 100%);
+      border: 1.5px solid rgba(168, 85, 247, 0.65);
+      border-radius: 24px;
+      padding: 28px 52px 24px;
+      box-shadow:
+        0 0 0 1px rgba(168, 85, 247, 0.12) inset,
+        0 0 36px rgba(168, 85, 247, 0.4),
+        0 0 80px rgba(168, 85, 247, 0.14),
+        0 24px 64px rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(20px);
+      white-space: nowrap;
+    }
+
+    .quest-alert-overlay.show {
+      animation: ar-alert-show 5.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .quest-icon-wrap {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(168, 85, 247, 0.1);
+      border: 1.5px solid rgba(168, 85, 247, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+    }
+
+    .quest-icon {
+      width: 30px;
+      height: 30px;
+      color: #c084fc;
+    }
+
+    .quest-title {
+      font-size: 1.5em;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .quest-badge {
+      font-size: 0.85em;
+      font-weight: 700;
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 3px 12px;
+      border-radius: 9999px;
+      box-shadow: 0 2px 10px rgba(168, 85, 247, 0.1);
+    }
+
     /* ── XP HUD ── */
     .xp-hud {
       position: fixed;
@@ -1019,6 +1122,25 @@
     <div class="pitta-badge">SS 등급 보상 5회 획득</div>
   </div>
 
+  <!-- 도전과제 HUD -->
+  <div id="quest-hud" class="quest-hud hidden">
+    <div id="quest-hud-title" class="quest-hud-title">도전과제 진행 중</div>
+    <div class="quest-hud-stats">
+      <span id="quest-kills" class="text-xs font-bold text-white">0 / 0 마리</span>
+      <span id="quest-timer" class="text-xs font-bold text-purple-400">20:00</span>
+    </div>
+  </div>
+
+  <!-- 도전과제 완료 알림 카드 -->
+  <div id="quest-alert" class="quest-alert-overlay">
+    <div class="quest-icon-wrap">
+      <i id="quest-alert-icon" data-lucide="hammer" class="quest-icon"></i>
+    </div>
+    <div class="alert-crown-label">✦ 도전과제 목표 달성 ✦</div>
+    <div id="quest-alert-title" class="quest-title">도전과제 완료</div>
+    <div id="quest-alert-badge" class="quest-badge">몬스터 0마리 처치 완료</div>
+  </div>
+
   <!-- 경험의 정수 버프 경고 알람 -->
   <div id="essence-alert" class="essence-alert-overlay">
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444"
@@ -1225,6 +1347,16 @@
           buffHud.style.bottom = `${config.buffTimerHudPos.bottom}px`;
         }
       }
+
+      // 도전과제 HUD 위치 제어
+      const questHud = document.getElementById('quest-hud');
+      if (questHud) {
+        const questHudPos = config.questHudPos || config.forgeQuestHudPos;
+        if (questHudPos) {
+          questHud.style.left = `${questHudPos.left}px`;
+          questHud.style.bottom = `${questHudPos.bottom}px`;
+        }
+      }
     });
 
     // 경험치 데이터 수신
@@ -1403,6 +1535,106 @@
       alertEl.classList.remove('show');
       void alertEl.offsetWidth;
       alertEl.classList.add('show');
+    });
+
+    // 도전과제 실시간 타이머 및 수치 제어
+    let questTimerInterval = null;
+    let questTarget = 1500;
+    const QUEST_NAMES = {
+      forge: '대장간',
+      golgotha: '골고다',
+      void: '공허'
+    };
+    const QUEST_ICONS = {
+      forge: 'hammer',
+      golgotha: 'shield',
+      void: 'orbit'
+    };
+
+    window.electronAPI.onQuestStarted((data) => {
+      const hudEl = document.getElementById('quest-hud');
+      const hudTitleEl = document.getElementById('quest-hud-title');
+      const killsEl = document.getElementById('quest-kills');
+      const timerEl = document.getElementById('quest-timer');
+      if (!hudEl || !killsEl || !timerEl) return;
+
+      questTarget = data.targetKills || 1500;
+      const questName = QUEST_NAMES[data.questType] || '도전과제';
+
+      // 초기 UI 설정
+      if (hudTitleEl) {
+        hudTitleEl.textContent = `${questName} 도전과제 진행 중`;
+      }
+      killsEl.textContent = `0 / ${questTarget.toLocaleString()} 마리`;
+      hudEl.classList.remove('hidden');
+
+      if (questTimerInterval) clearInterval(questTimerInterval);
+
+      const durationMs = data.duration || 1200000;
+      const endTime = data.startTime + durationMs;
+
+      const updateTimer = () => {
+        const remainMs = endTime - Date.now();
+        if (remainMs <= 0) {
+          timerEl.textContent = '00:00';
+          clearInterval(questTimerInterval);
+          hudEl.classList.add('hidden');
+          return;
+        }
+        const totalSec = Math.ceil(remainMs / 1000);
+        const min = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const sec = String(totalSec % 60).padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+      };
+
+      updateTimer();
+      questTimerInterval = setInterval(updateTimer, 1000);
+    });
+
+    window.electronAPI.onQuestUpdate((data) => {
+      const killsEl = document.getElementById('quest-kills');
+      if (killsEl) {
+        killsEl.textContent = `${data.currentKills.toLocaleString()} / ${questTarget.toLocaleString()} 마리`;
+      }
+    });
+
+    window.electronAPI.onQuestComplete((data) => {
+      const hudEl = document.getElementById('quest-hud');
+      if (hudEl) hudEl.classList.add('hidden');
+      if (questTimerInterval) clearInterval(questTimerInterval);
+
+      const alertEl = document.getElementById('quest-alert');
+      const iconEl = document.getElementById('quest-alert-icon');
+      const titleEl = document.getElementById('quest-alert-title');
+      const badgeEl = document.getElementById('quest-alert-badge');
+      if (!alertEl) return;
+
+      const type = data.questType || 'forge';
+      const questName = QUEST_NAMES[type] || '도전과제';
+      const target = type === 'forge' ? 1500 : type === 'golgotha' ? 1000 : 800;
+      const iconName = QUEST_ICONS[type] || 'hammer';
+
+      // 완료 알림 정보 동적 설정
+      if (iconEl) {
+        iconEl.setAttribute('data-lucide', iconName);
+        refreshIcons();
+      }
+      if (titleEl) {
+        titleEl.textContent = `${questName} 도전과제 완료`;
+      }
+      if (badgeEl) {
+        badgeEl.textContent = `몬스터 ${target.toLocaleString()}마리 처치 완료`;
+      }
+
+      alertEl.classList.remove('show');
+      void alertEl.offsetWidth;
+      alertEl.classList.add('show');
+    });
+
+    window.electronAPI.onQuestCancelled(() => {
+      const hudEl = document.getElementById('quest-hud');
+      if (hudEl) hudEl.classList.add('hidden');
+      if (questTimerInterval) clearInterval(questTimerInterval);
     });
 
     // 에토스 기믹 알림

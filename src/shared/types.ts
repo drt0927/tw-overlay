@@ -352,6 +352,13 @@ export interface AppConfig {
     chatOverlayColorTeam?: string;
     chatOverlayColorClub?: string;
     chatOverlayColorShout?: string;
+    chatOverlayNicknameColorMode?: 'same' | 'custom';
+    chatOverlayNicknameColorGeneral?: string;
+    chatOverlayNicknameColorWhisper?: string;
+    chatOverlayNicknameColorTeam?: string;
+    chatOverlayNicknameColorClub?: string;
+    chatOverlayNicknameColorShout?: string;
+    forgeQuestHudPos?: { left: number; bottom: number };
 }
 
 export interface GalleryPost {

@@ -219,6 +219,43 @@ function createChatRow(chat: any): HTMLDivElement {
     senderSpan.style.cursor = 'default';
     senderSpan.style.textDecoration = 'none';
   }
+
+  let nicknameColor = '';
+  if (chatOverlayAppConfig) {
+    const mode = chatOverlayAppConfig.chatOverlayNicknameColorMode || 'same';
+    if (mode === 'custom') {
+      if (chat.type === 'general' && chatOverlayAppConfig.chatOverlayNicknameColorGeneral) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayNicknameColorGeneral;
+      } else if (chat.type === 'whisper' && chatOverlayAppConfig.chatOverlayNicknameColorWhisper) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayNicknameColorWhisper;
+      } else if (chat.type === 'team' && chatOverlayAppConfig.chatOverlayNicknameColorTeam) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayNicknameColorTeam;
+      } else if (chat.type === 'club' && chatOverlayAppConfig.chatOverlayNicknameColorClub) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayNicknameColorClub;
+      } else if (chat.type === 'shout' && chatOverlayAppConfig.chatOverlayNicknameColorShout) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayNicknameColorShout;
+      }
+    } else {
+      if (chat.type === 'general' && chatOverlayAppConfig.chatOverlayColorGeneral) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayColorGeneral;
+      } else if (chat.type === 'whisper' && chatOverlayAppConfig.chatOverlayColorWhisper) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayColorWhisper;
+      } else if (chat.type === 'team' && chatOverlayAppConfig.chatOverlayColorTeam) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayColorTeam;
+      } else if (chat.type === 'club' && chatOverlayAppConfig.chatOverlayColorClub) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayColorClub;
+      } else if (chat.type === 'shout' && chatOverlayAppConfig.chatOverlayColorShout) {
+        nicknameColor = chatOverlayAppConfig.chatOverlayColorShout;
+      }
+    }
+  }
+
+  if (nicknameColor) {
+    senderSpan.style.color = nicknameColor;
+  } else if (chat.color) {
+    senderSpan.style.color = chat.color;
+  }
+
   row.appendChild(senderSpan);
 
   // Append separator outside of senderSpan
@@ -502,7 +539,13 @@ window.electronAPI.onConfigData((config) => {
       'chatOverlayColorWhisper',
       'chatOverlayColorTeam',
       'chatOverlayColorClub',
-      'chatOverlayColorShout'
+      'chatOverlayColorShout',
+      'chatOverlayNicknameColorMode',
+      'chatOverlayNicknameColorGeneral',
+      'chatOverlayNicknameColorWhisper',
+      'chatOverlayNicknameColorTeam',
+      'chatOverlayNicknameColorClub',
+      'chatOverlayNicknameColorShout'
     ];
     for (const key of colorKeys) {
       if (lastKnownConfig[key] !== config[key]) {

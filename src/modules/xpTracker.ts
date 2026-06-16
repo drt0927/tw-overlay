@@ -5,6 +5,12 @@ import { Notification, BrowserWindow } from 'electron';
 import { buffTimerManager } from './buffTimerManager';
 import * as diaryDb from './diaryDb';
 
+export const QUEST_DEFINITIONS = {
+  forge: { name: '대장간', target: 1500, icon: 'hammer' },
+  golgotha: { name: '골고다', target: 1000, icon: 'shield' },
+  void: { name: '공허', target: 800, icon: 'orbit' }
+};
+
 /**
  * XP 추적 모듈 — 경험치 세션 통계, 분당 히스토리, 경험의 정수 알림, 팔색조 언덕 추적
  */
@@ -28,10 +34,28 @@ class XpTracker {
   private _pittaSsCount = 0;
   private _pittaLastDate = '';
 
+  // 도전과제 추적 상태
+  private _questActive = false;
+  private _questType: 'forge' | 'golgotha' | 'void' | null = null;
+  private _questStartKills = 0;
+  private _questStartTime = 0;
+  private _questTimer: NodeJS.Timeout | null = null;
+
   public start(): void {
     // 히스토리 갱신 타이머 (10초마다 분 롤오버 체크)
     if (this._historyTimer) clearInterval(this._historyTimer);
     this._historyTimer = setInterval(() => this.checkMinuteRollover(), 10000);
+
+    // 도전과제 매크로 감지
+    chatParser.on('NORMAL_CHAT', (data) => {
+      if (data.message.includes('[twOverlay] 대장간 도전과제 시작')) {
+        this.startQuest('forge');
+      } else if (data.message.includes('[twOverlay] 골고다 도전과제 시작')) {
+        this.startQuest('golgotha');
+      } else if (data.message.includes('[twOverlay] 공허 도전과제 시작')) {
+        this.startQuest('void');
+      }
+    });
 
     // 경험치 변동
     chatParser.on('XP_CHANGED', (data) => {
@@ -65,6 +89,21 @@ class XpTracker {
       if (amount > 0) {
         this._sessionKills++;
         this._xpSinceLastExchange += amount;
+
+        // 도전과제 킬 카운트 갱신 및 완료 검사
+        if (this._questActive && this._questType) {
+          const currentKills = this._sessionKills - this._questStartKills;
+          const target = QUEST_DEFINITIONS[this._questType].target;
+          if (currentKills >= target) {
+            this.finishQuest();
+          } else {
+            const allWindows = BrowserWindow.getAllWindows();
+            const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+            if (gameOverlay) {
+              gameOverlay.webContents.send('quest-update', { currentKills });
+            }
+          }
+        }
 
         if (this._xpSinceLastExchange >= XpTracker.ESSENCE_XP + XpTracker.ESSENCE_BUFFER) {
           this._fireEssenceAlert();
@@ -165,7 +204,86 @@ class XpTracker {
     }
   }
 
+  private startQuest(type: 'forge' | 'golgotha' | 'void'): void {
+    if (this._questTimer) clearTimeout(this._questTimer);
+    
+    this._questActive = true;
+    this._questType = type;
+    this._questStartKills = this._sessionKills;
+    this._questStartTime = Date.now();
+    
+    const questName = QUEST_DEFINITIONS[type].name;
+    const targetKills = QUEST_DEFINITIONS[type].target;
+    log(`[XP_TRACKER] ${questName} 도전과제 추적 시작: 현재 킬수 ${this._questStartKills}, 목표 ${targetKills}`);
+    
+    // 20분 제한 시간 타이머 등록 (20분 = 1200000 ms)
+    this._questTimer = setTimeout(() => {
+      log(`[XP_TRACKER] ${questName} 도전과제 시간 초과 (20분 경과) - 취소 처리`);
+      this.cancelQuest();
+    }, 1200000);
+
+    const allWindows = BrowserWindow.getAllWindows();
+    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+    if (gameOverlay) {
+      gameOverlay.webContents.send('quest-started', {
+        questType: type,
+        startTime: this._questStartTime,
+        duration: 1200000,
+        startKills: this._questStartKills,
+        targetKills: targetKills
+      });
+    }
+  }
+
+  private cancelQuest(): void {
+    if (this._questTimer) {
+      clearTimeout(this._questTimer);
+      this._questTimer = null;
+    }
+    const questName = this._questType ? QUEST_DEFINITIONS[this._questType].name : '도전과제';
+    this._questActive = false;
+    this._questType = null;
+    log(`[XP_TRACKER] ${questName} 도전과제 추적 취소됨`);
+    
+    const allWindows = BrowserWindow.getAllWindows();
+    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+    if (gameOverlay) {
+      gameOverlay.webContents.send('quest-cancelled');
+    }
+  }
+
+  private finishQuest(): void {
+    if (this._questTimer) {
+      clearTimeout(this._questTimer);
+      this._questTimer = null;
+    }
+    const type = this._questType;
+    const questName = type ? QUEST_DEFINITIONS[type].name : '도전과제';
+    const targetKills = type ? QUEST_DEFINITIONS[type].target : 1500;
+    this._questActive = false;
+    this._questType = null;
+    log(`[XP_TRACKER] ${questName} 도전과제 추적 완료! (${targetKills}마리 처치 달성)`);
+
+    const allWindows = BrowserWindow.getAllWindows();
+    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+    if (gameOverlay) {
+      gameOverlay.webContents.send('quest-complete', { questType: type });
+    }
+
+    // 완료 알림 사운드 재생
+    const cfg = config.load();
+    const soundFile = cfg.essenceAlertSound || 'orb.mp3';
+    const volume = cfg.essenceAlertVolume ?? 70;
+    const sidebar = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
+    if (sidebar) {
+      sidebar.webContents.send('play-sound', { label: `${questName} 도전과제 완료`, soundFile, volume });
+    }
+  }
+
   public resetXp(): void {
+    if (this._questActive) {
+      this.cancelQuest();
+    }
     this._sessionXP = 0;
     this._sessionKills = 0;
     this._startTime = Date.now();

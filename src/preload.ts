@@ -291,6 +291,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('wave-warning-alert');
     ipcRenderer.on('wave-warning-alert', () => callback());
   },
+  onQuestStarted: (callback: (data: { questType: 'forge' | 'golgotha' | 'void', startTime: number, duration: number, startKills: number, targetKills: number }) => void) => {
+    ipcRenderer.removeAllListeners('quest-started');
+    ipcRenderer.on('quest-started', (_event, data) => callback(data));
+  },
+  onQuestUpdate: (callback: (data: { currentKills: number }) => void) => {
+    ipcRenderer.removeAllListeners('quest-update');
+    ipcRenderer.on('quest-update', (_event, data) => callback(data));
+  },
+  onQuestComplete: (callback: (data: { questType: 'forge' | 'golgotha' | 'void' }) => void) => {
+    ipcRenderer.removeAllListeners('quest-complete');
+    ipcRenderer.on('quest-complete', (_event, data) => callback(data));
+  },
+  onQuestCancelled: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('quest-cancelled');
+    ipcRenderer.on('quest-cancelled', () => callback());
+  },
   onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
     ipcRenderer.removeAllListeners('scam-alert');
     ipcRenderer.on('scam-alert', (_event, result) => callback(result));
@@ -359,7 +375,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
-      'auto-select-equipment', 'auto-select-evolution'
+      'auto-select-equipment', 'auto-select-evolution',
+      'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }
@@ -376,4 +393,17 @@ contextBridge.exposeInMainWorld('testEssence', (count: number = 1) => {
   const formattedXp = xpAmount.toLocaleString();
   // 파서의 시간 정규식 매칭을 위해 오전/오후 단어를 제거하고 24시간 형식의 [22시 50분 00초] 형태로 보냅니다.
   ipcRenderer.send('inject-test-chat', `[22시 50분 00초] 경험치가 ${formattedXp} 감소하였습니다.`);
+});
+
+contextBridge.exposeInMainWorld('testQuestStart', (type: 'forge' | 'golgotha' | 'void' = 'forge') => {
+  const questName = type === 'forge' ? '대장간' : type === 'golgotha' ? '골고다' : '공허';
+  ipcRenderer.send('inject-test-chat', `[22시 50분 00초] [twOverlay] ${questName} 도전과제 시작`);
+});
+
+contextBridge.exposeInMainWorld('testQuestKill', (count: number = 100) => {
+  const today = new Date().toISOString().split('T')[0];
+  ipcRenderer.send('inject-test-chat', `Date : ${today}`);
+  for (let i = 0; i < count; i++) {
+    ipcRenderer.send('inject-test-chat', `[22시 50분 00초] 경험치가 1,000 올랐습니다.`);
+  }
 });

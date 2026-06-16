@@ -18,6 +18,7 @@ import {
 import { log } from './logger';
 import * as tracker from './tracker';
 import * as wm from './windowManager';
+import * as config from './config';
 
 let pollingTimer: NodeJS.Timeout | null = null;
 let gameWasEverFound = false;
@@ -112,8 +113,20 @@ export function start(): void {
             }).catch(e => log(`[POLL] boostGameProcess failed: ${e}`));
         }
 
-        const mainWin = wm.getMainWindow();
-        const isVisible = mainWin && !mainWin.isDestroyed() && mainWin.isVisible();
+        const cfg = config.load();
+        const sidebarPos = cfg.sidebarPosition || 'right';
+        let isVisible = false;
+        if (sidebarPos === 'dock') {
+            if (wm.getIsDockVisible()) {
+                const dockWin = wm.getDockWindow();
+                isVisible = !!(dockWin && !dockWin.isDestroyed() && dockWin.isVisible());
+            } else {
+                isVisible = true; // 독바가 꺼진 상태는 정상 가시성 상태로 간주하여 100ms 동기화 루프 방지
+            }
+        } else {
+            const mainWin = wm.getMainWindow();
+            isVisible = !!(mainWin && !mainWin.isDestroyed() && mainWin.isVisible());
+        }
 
         // Z-Order 관리
         if (currentRect && 'gameHwnd' in currentRect) {

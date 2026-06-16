@@ -262,6 +262,9 @@ const windowRegistry: Record<string, ManagedWindow> = {
     onOpen: (_win) => {
       sendActiveWindowsStatus();
     },
+    onClose: () => {
+      isDockVisible = false;
+    },
     calcPosition: (gr, _pos) => {
       const targetX = Math.round(gr.x + (gr.width - 800) / 2);
       const targetY = Math.round(gr.y + gr.height - 380 - 20); // 하단 내부 중앙 배치 (20px 여백)
@@ -272,6 +275,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
 
 let gameRect: GameRect | null = null;
 let physicalGameRect: GameRect | null = null; // syncOverlay 재호출용 물리(Win32) 좌표 — DIP 이중 변환 방지
+let lastForegroundSize: { width: number; height: number } | null = null;
 let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
 let isTracking = false;
 const programmaticMoveTimeMap: Record<string, number> = {};
@@ -333,6 +337,8 @@ export const getScamDetectorWindow = () => windowRegistry.scamDetector.ref;
 export const getView = () => { if (overlayWindow) return view; return null; };
 export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
+export const getDockWindow = () => windowRegistry.dock.ref;
+export const getIsDockVisible = () => isDockVisible;
 
 export function onOverlayWindowReady(callback: () => void): void { onOverlayReady = callback; }
 
@@ -389,6 +395,7 @@ export function createMainWindow(): BrowserWindow {
 function createOverlayWindow(targetUrl?: string): void {
   if (overlayWindow) return;
   const cfg = config.load();
+  let isClosing = false;
   overlayWindow = new BrowserWindow(getStandardOptions(cfg.width, cfg.height, { minWidth: MIN_W, minHeight: MIN_H, skipTaskbar: true }));
   overlayWindow.setOpacity(cfg.opacity);
   overlayWindow.loadFile(path.join(__dirname, '..', 'overlay.html'));
@@ -405,8 +412,11 @@ function createOverlayWindow(targetUrl?: string): void {
   };
   view.webContents.on('did-navigate', updateUrl);
   view.webContents.on('did-navigate-in-page', updateUrl);
+  overlayWindow.on('close', () => {
+    isClosing = true;
+  });
   overlayWindow.on('move', () => {
-    if (consumeProgrammaticMove('overlay') || isApplyingSize || !overlayWindow) return;
+    if (isClosing || consumeProgrammaticMove('overlay') || isApplyingSize || !overlayWindow) return;
     const b = overlayWindow.getBounds();
     if (isTracking && gameRect) {
       overlayPos.offsetX = b.x - gameRect.x;
@@ -449,6 +459,7 @@ function createOverlayWindow(targetUrl?: string): void {
     updateViewBounds();
     if (isOverlayVisible) {
       overlayWindow?.show();
+      sendActiveWindowsStatus();
       if (physicalGameRect) { isTracking = false; syncOverlay(physicalGameRect); }
     }
     overlayWindow?.webContents.send('config-data', config.load());
@@ -459,6 +470,7 @@ function createOverlayWindow(targetUrl?: string): void {
     if (toolbarHideTimeout) { clearTimeout(toolbarHideTimeout); toolbarHideTimeout = null; }
     if (view) { try { view.webContents.close(); } catch (e) { } view = null; }
     overlayWindow = null; isTracking = false; isClickThrough = false;
+    sendActiveWindowsStatus();
   });
   attachStackListeners(overlayWindow);
 }
@@ -505,12 +517,16 @@ function createToggleableWindow(key: string, callbacks?: {
   }
   finalH = Math.min(finalH, maxH - 40); // 상단 여백 등 고려하여 약간의 여유(40px) 둠
 
+  let isClosing = false;
   const win = new BrowserWindow(getStandardOptions(finalW, finalH, {
     skipTaskbar: !!winCfg.skipTaskbar
   }));
   winCfg.ref = win;
   attachStackListeners(win);
   win.loadFile(path.join(__dirname, '..', winCfg.html));
+  win.on('close', () => {
+    isClosing = true;
+  });
   win.on('ready-to-show', () => {
     if (gameRect) {
       let { x, y } = (callbacks?.calcPosition || winCfg.calcPosition)
@@ -541,6 +557,7 @@ function createToggleableWindow(key: string, callbacks?: {
     win.webContents.send('config-data', config.load());
     if (callbacks?.onReady || winCfg.onOpen) (callbacks?.onReady || winCfg.onOpen)!(win);
     win.show();
+    sendActiveWindowsStatus();
     if (IS_DEV) win.webContents.openDevTools({ mode: 'detach' });
   });
   win.webContents.on('did-finish-load', () => {
@@ -555,7 +572,7 @@ function createToggleableWindow(key: string, callbacks?: {
 
   });
   win.on('move', () => {
-    if (consumeProgrammaticMove(key) || !winCfg.ref || !gameRect) return;
+    if (isClosing || consumeProgrammaticMove(key) || !winCfg.ref || !gameRect) return;
     const b = winCfg.ref.getBounds();
     winCfg.pos = { offsetX: b.x - (gameRect.x + gameRect.width), offsetY: b.y - gameRect.y };
     savePosition(key, winCfg.pos);
@@ -563,6 +580,7 @@ function createToggleableWindow(key: string, callbacks?: {
   win.on('closed', () => {
     if (winCfg.onClose) winCfg.onClose();
     winCfg.ref = null;
+    sendActiveWindowsStatus();
 
     // 창이 renderer-ready를 보내기 전에 닫히면 pending 항목이 남아
     // 다음 오픈 시 잘못 자동 선택될 수 있으므로 정리한다.
@@ -989,16 +1007,24 @@ export function syncOverlay(currentRect: GameRect): void {
     }
 
     if (overlayWindow && isOverlayVisible && !overlayWindow.isVisible()) overlayWindow.show();
+
+    // 포커스 상태에 따른 게임 해상도 크기 보정 (비활성화 시 해상도 축소 방어)
+    if (currentRect.isForeground) {
+      lastForegroundSize = { width: currentRect.width, height: currentRect.height };
+    }
+    const finalWidth = lastForegroundSize ? lastForegroundSize.width : currentRect.width;
+    const finalHeight = lastForegroundSize ? lastForegroundSize.height : currentRect.height;
+
     // 물리 좌표를 보존 — applySettings에서 syncOverlay 재호출 시 이중 DIP 변환 방지
-    physicalGameRect = { x: currentRect.x, y: currentRect.y, width: currentRect.width, height: currentRect.height, isForeground: currentRect.isForeground };
+    physicalGameRect = { x: currentRect.x, y: currentRect.y, width: finalWidth, height: finalHeight, isForeground: currentRect.isForeground };
     // Win32 물리 좌표를 Electron 논리 좌표(DIP)로 변환
     // null을 전달하면 rect에 가장 가까운 모니터(= 게임 창이 있는 모니터)의 DPI를 자동 적용함.
     // mainWindow(사이드바)를 전달하면 사이드바가 다른 모니터에 있을 때 잘못된 DPI가 적용되므로 부적합.
     const dipRect = screen.screenToDipRect(null, {
       x: currentRect.x,
       y: currentRect.y,
-      width: currentRect.width,
-      height: currentRect.height
+      width: finalWidth,
+      height: finalHeight
     });
     const gX = dipRect.x, gY = dipRect.y, gW = dipRect.width, gH = dipRect.height;
     if (overlayWindow && isOverlayVisible) {

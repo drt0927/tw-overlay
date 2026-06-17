@@ -298,6 +298,7 @@ function calculate() {
       const s = document.getElementById(`gear-${cat.id}`) as HTMLSelectElement;
       const pmEl = document.getElementById(`preview-${cat.id}-main`);
       const psEl = document.getElementById(`preview-${cat.id}-sub`);
+      const pdEl = document.getElementById(`preview-${cat.id}-dex`);
       const rcEl = document.getElementById(`row-coeff-${cat.id}`);
       
       if (s && s.value) {
@@ -309,7 +310,8 @@ function calculate() {
         }
         if (item) {
           const abilS = getV(`abil-${cat.id}-stat`), abilH = getV(`abil-${cat.id}-hit`);
-          gHit += (item.hit || 0) + abilH;
+          const iH = item.hit || 0;
+          gHit += iH + abilH;
           let iM = 0, iS = 0;
           if (['stab', 'phycomp'].includes(currentType)) { iM = item.stab || 0; iS = item.hack || 0; }
           else if (currentType === 'hack')   { iM = item.hack || 0;    iS = item.stab || 0; }
@@ -323,6 +325,7 @@ function calculate() {
           
           if (pmEl) { pmEl.textContent = iM > 0 ? String(iM) : '—'; pmEl.className = iM > 0 ? 'av has' : 'av'; }
           if (psEl) { psEl.textContent = iS > 0 ? String(iS) : '—'; psEl.className = iS > 0 ? 'av has' : 'av'; }
+          if (pdEl) { pdEl.textContent = iH > 0 ? String(iH) : '—'; pdEl.className = iH > 0 ? 'av has' : 'av'; }
           if (rcEl) { 
             const rc = rowCoeff(iM + abilS, upgM, iS, upgS); 
             rcEl.textContent = fmtC(rc); 
@@ -331,11 +334,13 @@ function calculate() {
         } else {
           if (pmEl) { pmEl.textContent = '—'; pmEl.className = 'av'; }
           if (psEl) { psEl.textContent = '—'; psEl.className = 'av'; }
+          if (pdEl) { pdEl.textContent = '—'; pdEl.className = 'av'; }
           if (rcEl) { rcEl.textContent = '—'; rcEl.className = 'cc'; }
         }
       } else {
         if (pmEl) { pmEl.textContent = '—'; pmEl.className = 'av'; }
         if (psEl) { psEl.textContent = '—'; psEl.className = 'av'; }
+        if (pdEl) { pdEl.textContent = '—'; pdEl.className = 'av'; }
         if (rcEl) { rcEl.textContent = '—'; rcEl.className = 'cc'; }
       }
     });
@@ -347,6 +352,8 @@ function calculate() {
       gHit += getV(`bonus-${k}-hit`); 
     });
     gMain += getV('bonus-title');
+    gSub += getV('bonus-title-sub');
+    gHit += getV('bonus-title-hit');
 
     // Avatar: base stats are fixed at +15 (main/sub/DEX), inputs are upgrade-only
     const avMain = getV('bonus-avatar-main');
@@ -402,7 +409,7 @@ function calculate() {
     setT('row-coeff-cuff', fmtC(rowCoeff(getV('bonus-cuff-main'), 0, getV('bonus-cuff-sub'), 0)));
     setT('row-coeff-effect', fmtC(rowCoeff(efBaseMain, efMain, efBaseSub, efSub)));
     setT('row-coeff-relic', fmtC(rowCoeff(getV('bonus-relic-main'), 0, getV('bonus-relic-sub'), 0)));
-    setT('row-coeff-title', fmtC(rowCoeff(getV('bonus-title'), 0, 0, 0)));
+    setT('row-coeff-title', fmtC(rowCoeff(getV('bonus-title'), 0, getV('bonus-title-sub'), 0)));
 
     // Core row
     const selectedCoreCoeff = coreCoeffs[selectedCore] || 0;
@@ -594,6 +601,8 @@ function captureCurrentData() {
   });
   
   d.bonuses.title = (document.getElementById('bonus-title') as HTMLInputElement)?.value;
+  d.bonuses.titleSub = (document.getElementById('bonus-title-sub') as HTMLInputElement)?.value;
+  d.bonuses.titleHit = (document.getElementById('bonus-title-hit') as HTMLInputElement)?.value;
   d.bonuses.effectBaseMain = (document.getElementById('bonus-effect-base-main') as HTMLInputElement)?.value;
   d.bonuses.effectBaseSub = (document.getElementById('bonus-effect-base-sub') as HTMLInputElement)?.value;
   d.bonuses.coreMercurial = (document.getElementById('bonus-core-mercurial') as HTMLInputElement)?.value;
@@ -796,6 +805,7 @@ function renderEquipmentOptions() {
       </td>
       <td><span id="preview-${cat.id}-main" class="av">—</span></td>
       <td><span id="preview-${cat.id}-sub"  class="av">—</span></td>
+      <td><span id="preview-${cat.id}-dex"  class="av">—</span></td>
       <td class="px-1"><input type="number" id="upg-${cat.id}-main"  class="ci upg"  placeholder="0"></td>
       <td class="px-1"><input type="number" id="upg-${cat.id}-sub"   class="ci upg"  placeholder="0"></td>
       <td class="px-1"><input type="number" id="abil-${cat.id}-stat" class="ci abil" placeholder="0"></td>

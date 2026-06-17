@@ -117,3 +117,4 @@ export async function setOptimization(enable: boolean): Promise<{ success: boole
     return { success: false, message: `설정 적용 중 오류가 발생했습니다.\n관리자 권한 여부를 다시 확인해주세요. (Timeout: 15s)` };
   }
 }
+

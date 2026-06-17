@@ -199,7 +199,6 @@ export function register(): void {
     analytics.trackEvent(eventName, { enable });
     return await optimizer.setOptimization(enable);
   });
-
   ipcMain.on('check-for-updates', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     import('./updater').then(mod => mod.manualCheckForUpdate(win));

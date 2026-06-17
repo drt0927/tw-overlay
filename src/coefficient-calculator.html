@@ -355,6 +355,7 @@
           <col>                      <!-- 장비명 (유연하게 남은 너비 모두 흡수) -->
           <col style="width:75px">   <!-- 기본 주 -->
           <col style="width:75px">   <!-- 기본 부 -->
+          <col style="width:75px">   <!-- 기본 DEX -->
           <col style="width:75px">   <!-- 강화 주 -->
           <col style="width:75px">   <!-- 강화 부 -->
           <col style="width:75px">   <!-- 어빌 -->
@@ -367,6 +368,7 @@
             <th style="text-align:left; padding-left:6px;">장비명</th>
             <th>기본<br><span class="bonus-label-main text-indigo-400/90">STAB</span></th>
             <th>기본<br><span class="bonus-label-sub text-slate-500/80">HACK</span></th>
+            <th class="text-yellow-500/70">기본<br>DEX</th>
             <th class="text-emerald-500/80">강화<br><span class="bonus-label-main2">STAB</span></th>
             <th class="text-emerald-500/80">강화<br><span class="bonus-label-sub2">HACK</span></th>
             <th class="text-violet-400/80">어빌<br><span class="bonus-label-main3">STAB</span></th>
@@ -379,7 +381,7 @@
         <tbody id="gear-tbody"></tbody>
 
         <!-- Section divider -->
-        <tbody><tr class="tr-div"><td colspan="9"></td></tr></tbody>
+        <tbody><tr class="tr-div"><td colspan="10"></td></tr></tbody>
 
         <!-- Bonus rows -->
         <tbody id="bonus-tbody">
@@ -387,6 +389,7 @@
           <tr class="tr-bonus">
             <td><span class="part-lbl tooltip-wrap" data-tooltip="기본 세트 스탯(주/부/DEX 각 +15)은 자동 가산됩니다.">아바타 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
             <td class="text-[10px] text-slate-700 italic pl-1">(기본+15 자동)</td>
+            <td><span class="av has">15</span></td>
             <td><span class="av has">15</span></td>
             <td><span class="av has">15</span></td>
             <td class="px-1"><input type="number" id="bonus-avatar-main" class="ci upg" value="50" placeholder="0"></td>
@@ -401,10 +404,11 @@
             <td class="text-[10px] text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-cuff-main" class="ci bas" value="140" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-cuff-sub"  class="ci bas" value="140" placeholder="0"></td>
-            <td class="dash">—</td>
-            <td class="dash">—</td>
-            <td class="dash">—</td>
             <td class="px-1"><input type="number" id="bonus-cuff-hit"  class="ci dex" value="0"   placeholder="0"></td>
+            <td class="dash">—</td>
+            <td class="dash">—</td>
+            <td class="dash">—</td>
+            <td class="dash">—</td>
             <td class="cc" id="row-coeff-cuff">—</td>
           </tr>
           <!-- 효과 -->
@@ -413,10 +417,11 @@
             <td class="text-[10px] text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-effect-base-main" class="ci bas" value="20" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-effect-base-sub"  class="ci bas" value="5"  placeholder="0"></td>
-            <td class="px-1"><input type="number" id="bonus-effect-main" class="ci upg" value="235" placeholder="0"></td>
-            <td class="px-1"><input type="number" id="bonus-effect-sub"  class="ci upg" value="0"   placeholder="0"></td>
+            <td class="px-1"><input type="number" id="bonus-effect-hit"       class="ci dex" value="0"  placeholder="0"></td>
+            <td class="px-1"><input type="number" id="bonus-effect-main"      class="ci upg" value="235" placeholder="0"></td>
+            <td class="px-1"><input type="number" id="bonus-effect-sub"       class="ci upg" value="0"  placeholder="0"></td>
             <td class="dash">—</td>
-            <td class="px-1"><input type="number" id="bonus-effect-hit"  class="ci dex" value="0"   placeholder="0"></td>
+            <td class="dash">—</td>
             <td class="cc" id="row-coeff-effect">—</td>
           </tr>
           <!-- 렐릭 -->
@@ -425,10 +430,11 @@
             <td class="text-[10px] text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-relic-main" class="ci bas" value="50" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-relic-sub"  class="ci bas" value="50" placeholder="0"></td>
-            <td class="dash">—</td>
-            <td class="dash">—</td>
-            <td class="dash">—</td>
             <td class="px-1"><input type="number" id="bonus-relic-hit"  class="ci dex" value="0"  placeholder="0"></td>
+            <td class="dash">—</td>
+            <td class="dash">—</td>
+            <td class="dash">—</td>
+            <td class="dash">—</td>
             <td class="cc" id="row-coeff-relic">—</td>
           </tr>
           <!-- 칭호 -->
@@ -436,7 +442,8 @@
             <td><span class="part-lbl">칭호</span></td>
             <td class="text-[10px] text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-title" class="ci bas" value="80" placeholder="0"></td>
-            <td class="dash">—</td>
+            <td class="px-1"><input type="number" id="bonus-title-sub" class="ci bas" value="0" placeholder="0"></td>
+            <td class="px-1"><input type="number" id="bonus-title-hit" class="ci dex" value="0" placeholder="0"></td>
             <td class="dash">—</td>
             <td class="dash">—</td>
             <td class="dash">—</td>
@@ -446,7 +453,7 @@
         </tbody>
 
         <!-- Section divider -->
-        <tbody><tr class="tr-div"><td colspan="9"></td></tr></tbody>
+        <tbody><tr class="tr-div"><td colspan="10"></td></tr></tbody>
 
         <!-- Core + Total -->
         <tbody>
@@ -460,7 +467,7 @@
                 </div>
               </div>
             </td>
-            <td colspan="7" class="px-2">
+            <td colspan="8" class="px-2">
               <div class="flex items-center gap-5">
                 <div class="flex items-center gap-1.5">
                   <span class="text-[9px] font-black text-slate-600 uppercase tooltip-wrap cursor-help" data-tooltip="머큐리얼 케이브 지역 코어 강화 능력치 합을 입력해 주세요.">머큐리얼 <i data-lucide="help-circle" class="inline-block w-2.5 h-2.5 text-slate-500 hover:text-slate-300 ml-0.5"></i></span>
@@ -484,7 +491,7 @@
           </tr>
           <!-- 합계 -->
           <tr class="tr-total">
-            <td colspan="8" style="text-align:right; padding-right:12px; font-size:12px; color:#64748b;">합계</td>
+            <td colspan="9" style="text-align:right; padding-right:12px; font-size:12px; color:#64748b;">합계</td>
             <td class="text-indigo-400 text-base" id="total-coefficient-table">—</td>
           </tr>
         </tbody>

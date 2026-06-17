@@ -5,18 +5,17 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.18.1-violet.svg)
+![Version](https://img.shields.io/badge/version-1.18.3-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.18.2 (2026.06.16)
-이번 업데이트는 **독바(Dock) 모드에서 채팅 오버레이 위치가 저장되지 않고 화면 중앙으로 자꾸 초기화되던 버그**를 수정하고, 백그라운드 가시성 검사 루프를 개선하여 **CPU 리소스 소모를 대폭 줄였습니다.**
+## 🚀 최신 버전: v1.18.3 (2026.06.17)
+이번 업데이트는 **계수계산기 DEX(명중) 연동 및 칭호 입력란 매치**와 함께 **게임 내 경험치 HUD 오버레이에 세션 경과 시간 실시간 표시 기능**이 새롭게 보강되었습니다.
 
-- **💬 채팅 오버레이 위치 초기화 및 튕김 버그 수정**: 독바(Dock) 모드 사용 시 100ms마다 돌던 불필요한 위치 스냅백 루프와 닫힐 때 좌표 오염을 차단하고, 포커스가 풀릴 때 테일즈위버 해상도가 축소되어도 오프셋이 정상 유지되도록 보정했습니다.
-- **⚡ 백그라운드 성능 최적화**: 100ms 주기 강제 동기화 루프 대신 수명 주기 이벤트를 직접 쏘도록 개선하여 CPU 자원 소모량을 대폭 낮췄습니다.
-- **🔧 독바 무한 재생성(무한 부활) 방지**: 독바가 닫힐 때 예외 처리를 통해 제멋대로 다시 켜지는 불안정성을 해결했습니다.
+- **📊 계수계산기 DEX(명중) 열 추가 및 칭호 스탯 매치**: 계수계산기 테이블에 장비별 기본 명중 스탯(`item.hit`)을 나타내는 `기본 DEX` 열을 추가하고, 기존 칭호(Title) 입력란에 부스탯 및 DEX 입력칸을 더해 엑셀 수식과 프로필 저장을 완벽히 매치시켰습니다.
+- **⏱️ 게임 오버레이 경험치 HUD 경과 시간 표시**: 게임 오버레이 화면에 표시되는 경험치 HUD 하단에 세션의 `경과 시간`을 추가하여 1초 단위로 실시간 업데이트해 주도록 기능을 개선하였습니다.
 
 ---
 
@@ -64,7 +63,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.18.1.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.18.3.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

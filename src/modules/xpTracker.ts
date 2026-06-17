@@ -188,6 +188,7 @@ class XpTracker {
       kills: this._sessionKills,
       essenceCount: this._sessionEssenceCount,
       xpSinceLastExchange: this._xpSinceLastExchange,
+      startTime: this._startTime,
     };
   }
 
@@ -299,7 +300,7 @@ class XpTracker {
     const allWindows = BrowserWindow.getAllWindows();
     const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
     if (gameOverlay) {
-      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0 });
+      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0, startTime: this._startTime });
     }
     const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
     if (xpHud) {

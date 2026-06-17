@@ -1076,6 +1076,10 @@
       <span class="text-[9px] text-rose-400 font-black uppercase">잡은 몬스터</span>
       <span id="xp-kills" class="text-xs font-bold text-white">0</span>
     </div>
+    <div class="flex items-center gap-2">
+      <span class="text-[9px] text-amber-400 font-black uppercase">경과 시간</span>
+      <span id="xp-elapsed" class="text-xs font-bold text-white">00:00:00</span>
+    </div>
   </div>
 
   <!-- 어벤던로드 위젯 -->
@@ -1310,6 +1314,23 @@
     }
 
     let showXpWidget = true;
+    let sessionStartTime = Date.now();
+
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // 1초마다 경과 시간 실시간 업데이트
+    setInterval(() => {
+      const elapsedEl = document.getElementById('xp-elapsed');
+      if (elapsedEl && showXpWidget) {
+        elapsedEl.innerText = formatTime(Date.now() - sessionStartTime);
+      }
+    }, 1000);
 
     // 설정 데이터 수신
     window.electronAPI.onConfigData((config) => {
@@ -1362,9 +1383,16 @@
     // 경험치 데이터 수신
     window.electronAPI.onXpUpdate((data) => {
       if (!showXpWidget) return;
+      if (data.startTime) {
+        sessionStartTime = data.startTime;
+      }
       document.getElementById('xp-total').innerText = formatXP(data.total);
       document.getElementById('xp-epm').innerText = formatXP(data.epm);
       document.getElementById('xp-kills').innerText = (data.kills || 0).toLocaleString();
+      const elapsedEl = document.getElementById('xp-elapsed');
+      if (elapsedEl) {
+        elapsedEl.innerText = formatTime(Date.now() - sessionStartTime);
+      }
     });
 
     // 버프 타이머 HUD 업데이트
@@ -1833,6 +1861,24 @@
         window.electronAPI.abandonedGetState().then(state => {
           updateAbandonedUI(state);
         }).catch(err => console.error('Failed to get abandoned state:', err));
+      }
+
+      // 경험치 초기 데이터 가져오기 (경과 시간 시작 시점 동기화)
+      if (window.electronAPI && window.electronAPI.invoke) {
+        window.electronAPI.invoke('xp-get-stats').then(stats => {
+          if (stats) {
+            if (stats.startTime) {
+              sessionStartTime = stats.startTime;
+            }
+            document.getElementById('xp-total').innerText = formatXP(stats.total || 0);
+            document.getElementById('xp-epm').innerText = formatXP(stats.epm || 0);
+            document.getElementById('xp-kills').innerText = (stats.kills || 0).toLocaleString();
+            const elapsedEl = document.getElementById('xp-elapsed');
+            if (elapsedEl) {
+              elapsedEl.innerText = formatTime(Date.now() - sessionStartTime);
+            }
+          }
+        }).catch(err => console.error('Failed to get initial XP stats:', err));
       }
     };
   </script>

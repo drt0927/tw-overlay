@@ -154,6 +154,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   scamInjectTest: (scenario?: string): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-inject-test', scenario),
   scamDownloadBinaryVariant: (variant: string): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('scam-download-binary-variant', variant),
 
+  // 이스터애그
+  triggerJellyppyRainGlobal: () => ipcRenderer.send('trigger-jellyppy-rain-global'),
+  onTriggerJellyppyRain: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('trigger-jellyppy-rain');
+    ipcRenderer.on('trigger-jellyppy-rain', () => callback());
+  },
+  triggerFireworkGlobal: () => ipcRenderer.send('trigger-firework-global'),
+  onTriggerFirework: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('trigger-firework');
+    ipcRenderer.on('trigger-firework', () => callback());
+  },
+
   // 이벤트 리스너 (중복 등록 방지를 위해 기존 리스너 제거 후 재등록)
   onSidebarStatus: (callback: (isCollapsed: boolean) => void) => {
     ipcRenderer.removeAllListeners('sidebar-status');
@@ -381,7 +393,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'lokagos-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
       'auto-select-equipment', 'auto-select-evolution',
-      'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled'
+      'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled',
+      'trigger-jellyppy-rain', 'trigger-firework'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

@@ -83,7 +83,7 @@ let view: WebContentsView | null = null;
 let uniformColorView: WebContentsView | null = null;
 let gameOverlayWindow: BrowserWindow | null = null;
 
-function createGameOverlayWindow(): void {
+export function createGameOverlayWindow(): void {
   if (gameOverlayWindow) return;
   gameOverlayWindow = new BrowserWindow(getStandardOptions(0, 0, {
     skipTaskbar: true,
@@ -339,6 +339,7 @@ export const getIsOverlayVisible = () => isOverlayVisible;
 export const getGameRect = () => gameRect;
 export const getDockWindow = () => windowRegistry.dock.ref;
 export const getIsDockVisible = () => isDockVisible;
+export const getGameOverlayWindow = () => gameOverlayWindow;
 
 export function onOverlayWindowReady(callback: () => void): void { onOverlayReady = callback; }
 

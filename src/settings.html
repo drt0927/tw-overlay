@@ -1460,8 +1460,8 @@
                 <div class="flex items-center gap-4">
                   <div
                     class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 overflow-hidden">
-                    <img src="icons/icon.ico" alt="App Icon"
-                      class="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                    <img id="app-logo-easter" src="icons/icon.ico" alt="App Icon"
+                      class="w-12 h-12 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)] cursor-pointer hover:scale-110 active:scale-95 transition-transform duration-200">
                   </div>
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
@@ -2837,6 +2837,33 @@
         else window.close();
       }
     });
+
+    // 앱 아이콘 7회 연속 클릭 감지 리스너
+    (function() {
+      let logoClickCount = 0;
+      let logoClickTimer = null;
+      
+      window.addEventListener('DOMContentLoaded', () => {
+        const logo = document.getElementById('app-logo-easter');
+        if (logo) {
+          logo.addEventListener('click', () => {
+            logoClickCount++;
+            if (logoClickTimer) clearTimeout(logoClickTimer);
+            logoClickTimer = setTimeout(() => {
+              logoClickCount = 0;
+            }, 3000);
+
+            if (logoClickCount >= 7) {
+              logoClickCount = 0;
+              // 게임 오버레이 창에 젤리삐 비 내리기 요청
+              if (window.electronAPI && window.electronAPI.triggerJellyppyRainGlobal) {
+                window.electronAPI.triggerJellyppyRainGlobal();
+              }
+            }
+          });
+        }
+      });
+    })();
   </script>
 </body>
 

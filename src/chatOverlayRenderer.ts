@@ -15,6 +15,7 @@ interface Window {
     setChatOverlaySize: (mode: 'main' | 'sub1' | 'sub2', width: number, height: number) => void;
     applySettings: (settings: any) => void;
     toggleSettings: (tabId?: string) => void;
+    triggerFireworkGlobal?: () => void;
   };
   lucide?: {
     createIcons: () => void;
@@ -214,7 +215,23 @@ function createChatRow(chat: any): HTMLDivElement {
   }
 
   if (chat.sender && chat.sender !== '시스템') {
-    senderSpan.addEventListener('click', () => copyNickname(chat.sender));
+    senderSpan.addEventListener('click', () => {
+      copyNickname(chat.sender);
+      
+      // 폭죽 이스터에그를 트리거할 대상 닉네임 목록 배열
+      const fireworkNicknames = ['전기세비싸', '오화싸개']; 
+      const isTarget = fireworkNicknames.some(nick => chat.sender.includes(nick));
+      
+      if (isTarget) {
+        console.log('[EasterEgg] Clicking target nickname detected. Sender:', chat.sender);
+        if (window.electronAPI && window.electronAPI.triggerFireworkGlobal) {
+          console.log('[EasterEgg] Sending triggerFireworkGlobal IPC...');
+          window.electronAPI.triggerFireworkGlobal();
+        } else {
+          console.error('[EasterEgg] window.electronAPI.triggerFireworkGlobal is undefined! Please completely RESTART the Electron app.');
+        }
+      }
+    });
   } else {
     senderSpan.style.cursor = 'default';
     senderSpan.style.textDecoration = 'none';

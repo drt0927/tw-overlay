@@ -1,7 +1,7 @@
 /**
  * IPC 이벤트 핸들러 모듈
  */
-import { ipcMain, shell, app, BrowserWindow, dialog } from 'electron';
+import { ipcMain, shell, app, BrowserWindow, dialog, screen } from 'electron';
 import * as config from './config';
 import { AppConfig, QuickSlotItem } from './constants';
 import * as wm from './windowManager';
@@ -31,6 +31,48 @@ export function register(): void {
   ipcMain.on('set-ignore-mouse-events', (event, ignore: boolean, options: { forward?: boolean }) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) win.setIgnoreMouseEvents(ignore, options || {});
+  });
+
+  ipcMain.on('trigger-jellyppy-rain-global', () => {
+    let overlayWin = wm.getGameOverlayWindow();
+    if (!overlayWin || overlayWin.isDestroyed()) {
+      wm.createGameOverlayWindow();
+      overlayWin = wm.getGameOverlayWindow();
+    }
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      const bounds = overlayWin.getBounds();
+      if (bounds.width === 0 || bounds.height === 0 || !overlayWin.isVisible()) {
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const { width, height } = primaryDisplay.workAreaSize;
+        overlayWin.setBounds({ x: 0, y: 0, width, height });
+        overlayWin.showInactive();
+      }
+      overlayWin.webContents.send('trigger-jellyppy-rain');
+    }
+  });
+
+  ipcMain.on('trigger-firework-global', () => {
+    console.log('[IPC] trigger-firework-global event received from renderer in Main Process.');
+    let overlayWin = wm.getGameOverlayWindow();
+    if (!overlayWin || overlayWin.isDestroyed()) {
+      console.log('[IPC] gameOverlayWindow not active. Creating window...');
+      wm.createGameOverlayWindow();
+      overlayWin = wm.getGameOverlayWindow();
+    }
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      const bounds = overlayWin.getBounds();
+      if (bounds.width === 0 || bounds.height === 0 || !overlayWin.isVisible()) {
+        console.log('[IPC] gameOverlayWindow size is 0 or hidden. Setting full screen bounds...');
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const { width, height } = primaryDisplay.workAreaSize;
+        overlayWin.setBounds({ x: 0, y: 0, width, height });
+        overlayWin.showInactive();
+      }
+      console.log('[IPC] Forwarding trigger-firework to gameOverlayWindow webContents.');
+      overlayWin.webContents.send('trigger-firework');
+    } else {
+      console.warn('[IPC] Failed to forward event: gameOverlayWindow is null or destroyed.');
+    }
   });
 
   ipcMain.on('set-opacity', (_e, opacity: number) => {

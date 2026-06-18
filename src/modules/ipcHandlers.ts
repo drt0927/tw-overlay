@@ -445,11 +445,13 @@ export function register(): void {
     }
   });
 
-  // 버프 타이머 테스트 — 7개 버프 강제 활성화
+  // 버프 타이머 테스트 — 모든 감지 대상 버프 강제 활성화
   ipcMain.on('buff-timer-test', (event, seconds?: number) => {
    const TEST_BUFFS = [
      'exp_heart', 'rare_heart', 'stat_exorcist',
-     'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination'
+     'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination',
+     'insight_elixir_large', 'insight_elixir_special',
+     'exp_eos_supreme', 'exp_sweetpotato_legend', 'exp_earlybird'
    ];
    const durationMs = (seconds && seconds > 0) ? seconds * 1000 : undefined;
    TEST_BUFFS.forEach(buffId => buffTimerManager.activateBuff(buffId, 'test', durationMs));
@@ -457,6 +459,10 @@ export function register(): void {
   // 버프 타이머 테스트 종료 — 테스트 버프 제거
   ipcMain.on('buff-timer-clear-test', () => {
     buffTimerManager.clearTestBuffs();
+  });
+  // 버프 타이머 모든 버프 삭제
+  ipcMain.on('buff-timer-clear-all', () => {
+    buffTimerManager.clearAllBuffs();
   });
   // 버프 타이머 강제 비활성화
   ipcMain.on('buff-timer-deactivate', (_e, buffId: string) => {

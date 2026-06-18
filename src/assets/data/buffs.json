@@ -26,6 +26,24 @@
     "description": "이벤트 지급. 자신만 사용 가능. 경험의 심장/군고구마와 중복 불가."
   },
   {
+    "id": "exp_sweetpotato_legend",
+    "name": "전설의 군고구마",
+    "category": "Experience",
+    "effect": "경험치 +1000%",
+    "duration": "30분",
+    "durationMs": 1800000,
+    "group": "potato",
+    "removeOnExit": true,
+    "image": "assets/img/buffs/전설의_군고구마.png",
+    "chatTriggers": [
+      {
+        "pattern": "PARTY_ITEM",
+        "keyword": "전설의 군고구마"
+      }
+    ],
+    "description": "이벤트 지급. 자신만 사용 가능. 경험의 심장/군고구마와 중복 불가."
+  },
+  {
     "id": "exp_heart",
     "name": "경험의 심장",
     "category": "Experience",
@@ -91,6 +109,24 @@
     "image": "",
     "chatTriggers": [],
     "description": "모험가 서포트 상자 등에서 획득. 클럽 상점 버프와 중복 불가."
+  },
+  {
+    "id": "exp_eos_supreme",
+    "name": "최상급 에오스의 파편",
+    "category": "Experience",
+    "effect": "경험치 +200%",
+    "duration": "1시간",
+    "durationMs": 3600000,
+    "group": "club_eos",
+    "removeOnExit": false,
+    "image": "assets/img/buffs/최상급_에오스의_파편.png",
+    "chatTriggers": [
+      {
+        "pattern": "PARTY_ITEM",
+        "keyword": "최상급 에오스의 파편"
+      }
+    ],
+    "description": "이벤트 획득 등. 에오스/스승의 증표와 중복 불가."
   },
   {
     "id": "exp_club",
@@ -166,8 +202,13 @@
     "durationMs": 3600000,
     "group": "none",
     "removeOnExit": false,
-    "image": "",
-    "chatTriggers": [],
+    "image": "assets/img/buffs/얼리버드_경험치_부스터.png",
+    "chatTriggers": [
+      {
+        "pattern": "PARTY_ITEM",
+        "keyword": "얼리버드 경험치 부스터"
+      }
+    ],
     "description": "이벤트 기간 지급."
   },
   {

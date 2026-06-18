@@ -266,6 +266,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
   buffTimerTest: (seconds?: number) => ipcRenderer.send('buff-timer-test', seconds),
   buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
+  buffTimerClearAll: () => ipcRenderer.send('buff-timer-clear-all'),
   buffTimerDeactivate: (buffId: string) => ipcRenderer.send('buff-timer-deactivate', buffId),
   onXpResetDone: (callback: (data: { startTime: number }) => void) => {
     ipcRenderer.removeAllListeners('xp-reset-done');

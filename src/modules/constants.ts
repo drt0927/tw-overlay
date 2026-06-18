@@ -101,7 +101,9 @@ export const DEFAULT_CONFIG: AppConfig = {
     toggleContentsChecker: 'CommandOrControl+Shift+C',
     toggleBuffHud: 'CommandOrControl+Shift+B',
     toggleDock: 'CommandOrControl+Shift+D',
-    toggleChatOverlaySync: 'CommandOrControl+Shift+H'
+    toggleChatOverlaySync: 'CommandOrControl+Shift+H',
+    resetXpSession: 'CommandOrControl+Shift+X',
+    clearAllBuffs: 'CommandOrControl+Shift+E'
   },
   volumeContentsChecker: 50,
   volumeCalculators: 50,
@@ -133,6 +135,9 @@ export const DEFAULT_CONFIG: AppConfig = {
     'util_illumination': true,
     'insight_elixir_large': true,
     'insight_elixir_special': true,
+    'exp_eos_supreme': true,
+    'exp_sweetpotato_legend': true,
+    'exp_earlybird': true,
   },
   buffTimerCenterAlert: true,
   buffTimerHudPos: { left: 350, bottom: 0 },

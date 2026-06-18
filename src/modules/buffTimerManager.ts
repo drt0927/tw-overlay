@@ -117,7 +117,8 @@ class BuffTimerManager {
     }
 
     // 동일한 group에 속한 기존 활성 버프 제거 (none 제외)
-    if (def.group && def.group !== 'none') {
+    // 단, 테스트 모드(usedBy === 'test') 일 때는 중복 제거를 우회하여 모든 버프를 동시에 테스트할 수 있게 합니다.
+    if (usedBy !== 'test' && def.group && def.group !== 'none') {
       for (const [activeBuffId, activeBuff] of this._activeBuffs) {
         if (activeBuffId === buffId) continue;
         const activeDef = this._buffDefs.get(activeBuffId);
@@ -326,6 +327,17 @@ class BuffTimerManager {
     if (changed) {
       this._sendHudUpdate();
       log('[BUFF_TIMER] 테스트 버프 제거 완료');
+    }
+  }
+
+  /**
+   * 활성화된 모든 버프 제거
+   */
+  public clearAllBuffs(): void {
+    if (this._activeBuffs.size > 0) {
+      this._activeBuffs.clear();
+      log('[BUFF_TIMER] 모든 버프 제거 완료');
+      this._sendHudUpdate();
     }
   }
 }

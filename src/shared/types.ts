@@ -133,6 +133,10 @@ export interface ShortcutsConfig {
     toggleDock?: string;
     /** 채팅창 오버레이 토글/싱크 */
     toggleChatOverlaySync?: string;
+    /** 경험치 세션 초기화 */
+    resetXpSession?: string;
+    /** 버프 타이머 버프 전체 삭제 */
+    clearAllBuffs?: string;
 }
 
 /** 채팅 로그 버프 감지 트리거 */

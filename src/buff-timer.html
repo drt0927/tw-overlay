@@ -685,9 +685,12 @@
     </div>
 
     <!-- 오른쪽: 활성 버프 관리 -->
-    <div class="panel">
-      <div class="panel-title">현재 활성화된 버프</div>
-      <div class="active-buff-list" id="active-buff-list">
+    <div class="panel flex flex-col">
+      <div class="flex justify-between items-center mb-2">
+        <div class="panel-title mb-0">현재 활성화된 버프</div>
+        <button class="btn-sm btn-danger py-1 px-2.5 text-[10px]" id="btn-clear-all-buffs">전체 삭제</button>
+      </div>
+      <div class="active-buff-list flex-1" id="active-buff-list">
         <div class="flex flex-col items-center justify-center py-12 px-4 text-center" id="active-buff-empty">
           <i data-lucide="info" class="w-6 h-6 text-slate-500 mb-2"></i>
           <span class="text-[11px] text-slate-500 font-semibold">현재 활성화된 버프가 없습니다.</span>
@@ -728,6 +731,9 @@
       { id: 'util_illumination', name: '일루미네이션 축제 음료', duration: '2시간 유지', cat: 'util', image: 'assets/img/buffs/일루미네이션축체음료.png' },
       { id: 'insight_elixir_large', name: '통찰의 비약(대)', duration: '5분 유지', cat: 'util', image: 'assets/img/buffs/통찰대.png' },
       { id: 'insight_elixir_special', name: '통찰의 비약(특대)', duration: '1분 유지', cat: 'util', image: 'assets/img/buffs/통찰특대.png' },
+      { id: 'exp_eos_supreme', name: '최상급 에오스의 파편', duration: '1시간 유지', cat: 'exp', image: 'assets/img/buffs/최상급_에오스의_파편.png' },
+      { id: 'exp_sweetpotato_legend', name: '전설의 군고구마', duration: '30분 유지', cat: 'exp', image: 'assets/img/buffs/전설의_군고구마.png' },
+      { id: 'exp_earlybird', name: '얼리버드 경험치 부스터', duration: '1시간 유지', cat: 'exp', image: 'assets/img/buffs/얼리버드_경험치_부스터.png' },
     ];
 
     const CAT_LABELS = { exp: 'E', drop: 'R', stats: 'S', damage: 'D', util: 'U' };
@@ -868,6 +874,10 @@
       });
     };
 
+    document.getElementById('btn-clear-all-buffs').onclick = () => {
+      window.electronAPI.buffTimerClearAll();
+    };
+
     function formatMs(ms) {
       if (ms <= 0) return '0초';
       const totalSecs = Math.ceil(ms / 1000);
@@ -955,7 +965,7 @@
       if (volVal) volVal.textContent = vol;
       
       warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
-      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true, insight_elixir_large: true, insight_elixir_special: true }) };
+      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true, insight_elixir_large: true, insight_elixir_special: true, exp_eos_supreme: true, exp_sweetpotato_legend: true, exp_earlybird: true }) };
       
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
       const posLeft = document.getElementById('hud-pos-left');

@@ -4,6 +4,8 @@ import * as wm from './windowManager';
 import * as tracker from './tracker';
 import { FOCUS_DELAY_MS } from './constants';
 import { log } from './logger';
+import { chatLogProcessor } from './chatLogProcessor';
+import { buffTimerManager } from './buffTimerManager';
 
 let _isFocused = false;
 
@@ -74,6 +76,28 @@ export function registerAll(): void {
     });
     if (!registered) {
       log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleChatOverlaySync}`);
+    }
+  }
+
+  // 6. 경험치 세션 초기화
+  if (shortcuts.resetXpSession) {
+    const registered = globalShortcut.register(shortcuts.resetXpSession, () => {
+      log('[SHORTCUT] Reset XP Session');
+      chatLogProcessor.resetXp();
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.resetXpSession}`);
+    }
+  }
+
+  // 7. 버프 타이머 버프 전체 삭제
+  if (shortcuts.clearAllBuffs) {
+    const registered = globalShortcut.register(shortcuts.clearAllBuffs, () => {
+      log('[SHORTCUT] Clear All Buffs');
+      buffTimerManager.clearAllBuffs();
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.clearAllBuffs}`);
     }
   }
 

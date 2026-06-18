@@ -123,12 +123,14 @@ class XpTracker {
     chatParser.on('BUFF_USED', (data) => {
       const allowedKeywords = [
         '경험의 심장', '레어의 심장', '퇴마사의 은총',
-        '로토의 부적', '속성 앰플', '앰플', '이자벨의 비법', '일루미네이션 축제 음료'
+        '로토의 부적', '속성 앰플', '앰플', '이자벨의 비법', '일루미네이션 축제 음료',
+        '최상급 에오스의 파편', '전설의 군고구마', '얼리버드 경험치 부스터'
       ];
       const isAllowed = allowedKeywords.some(k => data.message.includes(k)) ||
         [
           'exp_heart', 'rare_heart', 'stat_exorcist',
-          'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination'
+          'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination',
+          'exp_eos_supreme', 'exp_sweetpotato_legend', 'exp_earlybird'
         ].includes(data.buffId);
       if (isAllowed) {
         const startTime = this.parseLogTimestamp(data.date, data.timestamp);

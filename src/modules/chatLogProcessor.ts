@@ -416,6 +416,18 @@ class ChatLogProcessor {
       }
     });
 
+    // 4-4. 로카고스 기믹 알림 처리
+    chatParser.on('LOKAGOS_PATTERN', (data) => {
+      const cfg = config.load();
+      if (!cfg.lokagosAlertEnabled) return;
+
+      const allWindows = BrowserWindow.getAllWindows();
+      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+      if (gameOverlay) {
+        gameOverlay.webContents.send('lokagos-alert', data);
+      }
+    });
+
     // 5. 이클립스 보스 클리어 처리
     chatParser.on('ECLIPSE_BOSS_CLEAR', (data) => {
       const bossMapping: Record<string, string> = {

@@ -960,6 +960,193 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     }
 
+    /* ── 로카고스 기믹 경고 알림 CSS ── */
+    .lokagos-border-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 109;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      box-shadow: inset 0 0 0px rgba(0, 0, 0, 0);
+    }
+    
+    .lokagos-border-flash.show {
+      opacity: 1;
+      animation: lokagos-border-pulse 1.2s infinite alternate ease-in-out;
+    }
+
+    @keyframes lokagos-border-pulse {
+      0% {
+        box-shadow: inset 0 0 30px var(--lokagos-neon-color, rgba(255, 0, 255, 0.6));
+      }
+      100% {
+        box-shadow: inset 0 0 80px var(--lokagos-neon-color, rgba(255, 0, 255, 0.9));
+      }
+    }
+
+    .lokagos-alert-overlay {
+      position: fixed;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      pointer-events: none;
+      z-index: 110;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(15, 10, 25, 0.96) 0%, rgba(5, 2, 10, 0.96) 100%);
+      border: 2px solid var(--lokagos-neon-color, rgba(255, 0, 255, 0.75));
+      border-radius: 24px;
+      padding: 32px 56px;
+      box-shadow:
+        0 0 40px var(--lokagos-neon-shadow, rgba(255, 0, 255, 0.3)),
+        0 16px 48px rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(20px);
+      white-space: nowrap;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .lokagos-alert-overlay.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .lokagos-alert-overlay.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+      transition: all 0.3s ease-in;
+    }
+
+    .lokagos-card-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid var(--lokagos-neon-color, rgba(255, 0, 255, 0.4));
+      box-shadow: 0 0 16px var(--lokagos-neon-shadow, rgba(255, 0, 255, 0.2));
+    }
+
+    .lokagos-card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lokagos-title {
+      font-size: 38px;
+      font-weight: 950;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-shadow: 0 0 24px var(--lokagos-neon-color, rgba(255, 0, 255, 0.8)), 0 2px 4px rgba(0, 0, 0, 0.9);
+      line-height: 1.1;
+    }
+
+    .lokagos-subtitle {
+      font-size: 16px;
+      font-weight: 800;
+      color: #f1f5f9;
+      opacity: 0.9;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lokagos-color-chips {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .lokagos-chip {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 10px;
+      border-radius: 8px;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    }
+
+    /* ── 로카고스 네온 뱃지 스타일 추가 ── */
+    .lokagos-badge-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 4px;
+      position: relative;
+    }
+    
+    .lokagos-badge-main {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 950;
+      color: #ffffff;
+      border: 3px solid var(--lokagos-neon-color, rgba(255, 0, 255, 1));
+      background-color: rgba(var(--lokagos-neon-rgb, 255, 0, 255), 0.15);
+      box-shadow: 
+        0 0 20px var(--lokagos-neon-shadow, rgba(255, 0, 255, 0.4)),
+        inset 0 0 15px var(--lokagos-neon-shadow, rgba(255, 0, 255, 0.3));
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9);
+      position: relative;
+    }
+
+    .lokagos-badge-ban {
+      position: absolute;
+      width: 82px;
+      height: 82px;
+      border: 6px solid #ef4444;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+    }
+    
+    .lokagos-badge-ban::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -6px;
+      right: -6px;
+      height: 6px;
+      background-color: #ef4444;
+      transform: translateY(-50%) rotate(-45deg);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+    }
+
+    .lokagos-badge-mini-list {
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .lokagos-badge-mini {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      color: #ffffff;
+      border: 2px solid var(--mini-border-color);
+      background-color: var(--mini-bg-color);
+      box-shadow: 0 0 8px var(--mini-shadow-color);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
     /* ── 버프 타이머 대형 만료 경고 알람 컨테이너 ── */
     .buff-alert-container {
       position: fixed;
@@ -1183,6 +1370,16 @@
   <div id="wave-warning-alert" class="wave-warning-alert-overlay hide">
     <div class="wave-warning-title">몬스터 처치 대기!</div>
     <div class="wave-warning-subtitle">잔존 몬스터를 퇴치해야 다음 웨이브로 진행됩니다.</div>
+  </div>
+
+  <!-- 로카고스 기믹 알림 -->
+  <div id="lokagos-border-flash" class="lokagos-border-flash hide"></div>
+  <div id="lokagos-alert" class="lokagos-alert-overlay hide">
+    <div id="lokagos-card-icon" class="lokagos-card-icon"></div>
+    <div class="lokagos-card-content">
+      <div id="lokagos-title" class="lokagos-title"></div>
+      <div id="lokagos-subtitle" class="lokagos-subtitle"></div>
+    </div>
   </div>
 
   <!-- 버프 타이머 HUD -->
@@ -1764,6 +1961,109 @@
       });
     }
 
+    // ── 로카고스 기믹 알림 연동 ──
+    let lokagosAlertTimeout = null;
+    
+    // 컬러 매핑
+    const LOKAGOS_COLORS = {
+      '알파': { color: 'rgba(255, 0, 255, 1)', shadow: 'rgba(255, 0, 255, 0.4)', bg: '#FF00FF', text: '자주색 (A)' },
+      '브라보': { color: 'rgba(0, 136, 255, 1)', shadow: 'rgba(0, 136, 255, 0.4)', bg: '#0088FF', text: '파랑색 (B)' },
+      '찰리': { color: 'rgba(0, 255, 136, 1)', shadow: 'rgba(0, 255, 136, 0.4)', bg: '#00FF88', text: '초록색 (C)' },
+      '델타': { color: 'rgba(255, 255, 0, 1)', shadow: 'rgba(255, 255, 0, 0.4)', bg: '#FFFF00', text: '노랑색 (D)' }
+    };
+    const WARN_RED_COLOR = 'rgba(255, 50, 50, 1)';
+    const WARN_RED_SHADOW = 'rgba(255, 50, 50, 0.4)';
+
+    function triggerLokagosAlert(type, zone) {
+      const overlay = document.getElementById('lokagos-alert');
+      const flash = document.getElementById('lokagos-border-flash');
+      const iconEl = document.getElementById('lokagos-card-icon');
+      const titleEl = document.getElementById('lokagos-title');
+      const subtitleEl = document.getElementById('lokagos-subtitle');
+      if (!overlay || !flash || !iconEl || !titleEl || !subtitleEl) return;
+
+      if (lokagosAlertTimeout) clearTimeout(lokagosAlertTimeout);
+
+      const zoneInfo = LOKAGOS_COLORS[zone];
+      if (!zoneInfo) return;
+
+      // RGB 값 매핑 (배경 불투명도 조절용)
+      const rgbMap = {
+        '알파': '255, 0, 255',
+        '브라보': '0, 136, 255',
+        '찰리': '0, 255, 136',
+        '델타': '255, 255, 0'
+      };
+
+      // 알파벳 문자
+      const letter = zone === '알파' ? 'A' : zone === '브라보' ? 'B' : zone === '찰리' ? 'C' : 'D';
+
+      if (type === 'EXCLUDE') {
+        // ~ 제외 구역 대피 -> 지정 구역이 안전
+        document.documentElement.style.setProperty('--lokagos-neon-color', zoneInfo.color);
+        document.documentElement.style.setProperty('--lokagos-neon-shadow', zoneInfo.shadow);
+        document.documentElement.style.setProperty('--lokagos-neon-rgb', rgbMap[zone]);
+
+        iconEl.className = 'lokagos-badge-container';
+        iconEl.innerHTML = `<div class="lokagos-badge-main">${letter}</div>`;
+
+        titleEl.innerHTML = `<span style="color:${zoneInfo.bg}; text-shadow: 0 0 15px ${zoneInfo.color};">${zoneInfo.text}</span>으로 이동!`;
+        subtitleEl.innerHTML = `안전 구역: <span style="color:${zoneInfo.bg}; font-weight:900;">${zone} (${zoneInfo.text})</span>`;
+      } else {
+        // ~ 구역 폭격 -> 지정 구역을 피해서 대피
+        document.documentElement.style.setProperty('--lokagos-neon-color', WARN_RED_COLOR);
+        document.documentElement.style.setProperty('--lokagos-neon-shadow', WARN_RED_SHADOW);
+        document.documentElement.style.setProperty('--lokagos-neon-rgb', '255, 50, 50');
+
+        iconEl.className = 'lokagos-badge-container';
+        iconEl.innerHTML = `
+          <div class="lokagos-badge-container" style="--lokagos-neon-color: ${zoneInfo.color}; --lokagos-neon-shadow: ${zoneInfo.shadow}; --lokagos-neon-rgb: ${rgbMap[zone]}">
+            <div class="lokagos-badge-main">${letter}</div>
+            <div class="lokagos-badge-ban"></div>
+          </div>
+        `;
+
+        titleEl.innerHTML = `<span style="color:#ef4444; text-decoration:line-through; text-shadow: 0 0 15px rgba(239, 68, 68, 0.8);">${zoneInfo.text} 피하세요!</span>`;
+        
+        // 안전한 구역들 미니 뱃지로 나열
+        const safeZones = Object.keys(LOKAGOS_COLORS).filter(z => z !== zone);
+        const miniBadgesHtml = safeZones.map(z => {
+          const info = LOKAGOS_COLORS[z];
+          const l = z === '알파' ? 'A' : z === '브라보' ? 'B' : z === '찰리' ? 'C' : 'D';
+          return `
+            <div class="lokagos-badge-mini" style="--mini-border-color:${info.bg}; --mini-bg-color:rgba(${rgbMap[z]},0.2); --mini-shadow-color:${info.shadow}">
+              ${l}
+            </div>
+          `;
+        }).join('');
+
+        subtitleEl.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <span style="font-weight:700;">안전 구역 (아래 3곳 중 하나로 이동):</span>
+            <div class="lokagos-badge-mini-list">${miniBadgesHtml}</div>
+          </div>
+        `;
+      }
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      // 표출
+      flash.className = 'lokagos-border-flash show';
+      overlay.className = 'lokagos-alert-overlay show';
+
+      // 5초 유지 후 종료
+      lokagosAlertTimeout = setTimeout(() => {
+        flash.className = 'lokagos-border-flash';
+        overlay.className = 'lokagos-alert-overlay hide';
+      }, 5000);
+    }
+
+    if (window.electronAPI.onLokagosAlert) {
+      window.electronAPI.onLokagosAlert((data) => {
+        triggerLokagosAlert(data.type, data.zone);
+      });
+    }
+
     // ── 테스트 가이드 (Console) ──
     console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
     console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
@@ -1772,9 +2072,22 @@
     console.log(`testEthos('번개') // N, NE, E, SE, S, SW, W, NW 중 택1 혹은 암호 입력`);
     console.log('%c3. 심연의 제2사도 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
     console.log(`testAbyssApostle()`);
+    console.log('%c4. 로카고스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testLokagos('EXCLUDE', '알파') // EXCLUDE(대피), TARGET(폭격) 및 알파, 브라보, 찰리, 델타 중 택1`);
     console.log('----------------------------------------------------');
 
     // [DevTools 전용 글로벌 테스트 함수]
+    window.testLokagos = function(type = 'EXCLUDE', zone = '알파') {
+      const validTypes = ['EXCLUDE', 'TARGET'];
+      const validZones = ['알파', '브라보', '찰리', '델타'];
+      if (!validTypes.includes(type) || !validZones.includes(zone)) {
+        console.error('올바르지 않은 파라미터입니다. 예: testLokagos("EXCLUDE", "알파") 또는 testLokagos("TARGET", "브라보")');
+        return;
+      }
+      triggerLokagosAlert(type, zone);
+      console.log(`✅ 로카고스 기믹 테스트: ${type === 'EXCLUDE' ? zone + ' 제외 구역 대피' : zone + ' 구역 회피'} (${zone})`);
+    };
+
     window.testEthos = function(passwordOrDir = '번개') {
       const data = {
         password: passwordOrDir,

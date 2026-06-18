@@ -292,6 +292,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('wave-warning-alert');
     ipcRenderer.on('wave-warning-alert', () => callback());
   },
+  onLokagosAlert: (callback: (data: { type: 'EXCLUDE' | 'TARGET'; zone: '알파' | '브라보' | '찰리' | '델타'; message: string }) => void) => {
+    ipcRenderer.removeAllListeners('lokagos-alert');
+    ipcRenderer.on('lokagos-alert', (_event, data) => callback(data));
+  },
   onQuestStarted: (callback: (data: { questType: 'forge' | 'golgotha' | 'void', startTime: number, duration: number, startKills: number, targetKills: number }) => void) => {
     ipcRenderer.removeAllListeners('quest-started');
     ipcRenderer.on('quest-started', (_event, data) => callback(data));
@@ -375,7 +379,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
       'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
-      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
+      'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'lokagos-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
       'auto-select-equipment', 'auto-select-evolution',
       'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled'
     ];

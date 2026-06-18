@@ -46,6 +46,7 @@ export interface ChatParserEventMap {
     NORMAL_CHAT: { date: string; timestamp: string; sender: string; message: string; color: string };
     ABYSS_APOSTLE_PATTERN: { date: string; timestamp: string; message: string };
     WAVE_MONSTER_WARNING: { date: string; timestamp: string; message: string };
+    LOKAGOS_PATTERN: { date: string; timestamp: string; type: 'EXCLUDE' | 'TARGET'; zone: '알파' | '브라보' | '찰리' | '델타'; message: string };
 }
 
 // ── 어벤던로드 상태 타입 ──
@@ -286,6 +287,7 @@ export interface AppConfig {
     waveMonsterWarningEnabled?: boolean;
     waveMonsterWarningSound?: string;
     waveMonsterWarningVolume?: number;
+    lokagosAlertEnabled?: boolean;
 
     // --- Buff Timer Settings ---
     buffTimerEnabled?: boolean;

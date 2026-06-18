@@ -1025,6 +1025,17 @@
                   </label>
                 </div>
 
+                <!-- 3. 로카고스 -->
+                <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="lokagos-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                    <div>
+                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">이클립스 로카고스 기믹 알림</span>
+                      <p class="text-[10px] text-slate-500 mt-0.5">로카고스의 대사를 인식하여 안전/회피 구역 색상을 화면 중앙 및 테두리에 표시합니다.</p>
+                    </div>
+                  </label>
+                </div>
+
                 <!-- 3. 웨이브 종료 대기 알림 -->
                 <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
                   <div class="flex items-center gap-4">
@@ -1455,7 +1466,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.18.4</span></p>
+                        class="text-purple-400">1.18.5</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2061,6 +2072,9 @@
       }
       if (document.getElementById('abyss-apostle-alert-enabled')) {
         document.getElementById('abyss-apostle-alert-enabled').checked = !!config.abyssApostleAlertEnabled;
+      }
+      if (document.getElementById('lokagos-alert-enabled')) {
+        document.getElementById('lokagos-alert-enabled').checked = !!config.lokagosAlertEnabled;
       }
       if (document.getElementById('wave-warning-enabled')) {
         document.getElementById('wave-warning-enabled').checked = !!config.waveMonsterWarningEnabled;
@@ -2685,6 +2699,7 @@
           shoutKeywords: shoutKeywordsList,
           ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
           abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+          lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
           waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
           waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
           waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
@@ -2735,6 +2750,7 @@
           shoutKeywords: shoutKeywordsList,
           ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
           abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+          lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
           waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
           waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
           waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,

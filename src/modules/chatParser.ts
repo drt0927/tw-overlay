@@ -496,6 +496,25 @@ class ChatParser extends EventEmitter {
         return;
     }
 
+    // L. 로카고스 기믹 특화 패턴
+    if (cleanMsg.includes('선봉대장, 로카고스')) {
+        if (cleanMsg.includes('제외한 구역에 마법 공격 지원 바란다!')) {
+            const match = cleanMsg.match(/(알파|브라보|찰리|델타)를 제외한 구역/);
+            if (match) {
+                const zone = match[1].trim() as '알파' | '브라보' | '찰리' | '델타';
+                this.emit('LOKAGOS_PATTERN', { date: this._currentDate, timestamp, type: 'EXCLUDE', zone, message: cleanMsg });
+                return;
+            }
+        } else if (cleanMsg.includes('구역에 마법 공격 지원 바란다!')) {
+            const match = cleanMsg.match(/(알파|브라보|찰리|델타) 구역에/);
+            if (match) {
+                const zone = match[1].trim() as '알파' | '브라보' | '찰리' | '델타';
+                this.emit('LOKAGOS_PATTERN', { date: this._currentDate, timestamp, type: 'TARGET', zone, message: cleanMsg });
+                return;
+            }
+        }
+    }
+
     // A. SEED 획득 (콘텐츠 보상 및 일반 습득 모두 대응)
     if (cleanMsg.includes('SEED를') || cleanMsg.includes('Seed를') || cleanMsg.includes('시드를')) {
         // "보상으로 1500만 SEED", "[300000]SEED", "1500만 SEED를 획득" 등

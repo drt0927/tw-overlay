@@ -1198,7 +1198,8 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     return;
   }
   const current = config.load(), updated = { ...current, ...newSettings };
-  config.saveImmediate(updated);
+  const { isSidebarResize, ...saveSettings } = newSettings;
+  config.save(saveSettings);
   if (overlayWindow) {
     isApplyingSize = true;
     const b = overlayWindow.getBounds();

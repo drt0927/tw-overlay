@@ -2245,7 +2245,7 @@
     // --- 폭죽 이스터애그 (CSS/DOM 기반 초대형 축제 피날레 버전) ---
     function triggerFirework() {
       const container = document.body;
-      const fireworkCount = 45; // 축제 피날레급 45발 공습
+      const fireworkCount = 20; // 축제 피날레급 20발 공습 (렉 최적화)
       
       // 실행 중 일시적으로 배경을 더 어둡게 페이드 (5초 지속)
       document.body.style.backgroundColor = 'rgba(0, 0, 0, 0.55)';
@@ -2253,6 +2253,15 @@
       window._fireworkBgTimeout = setTimeout(() => {
         document.body.style.backgroundColor = 'transparent';
       }, 5000);
+
+      // 가운데 thx.png 이미지 추가
+      const centerImg = document.createElement('img');
+      centerImg.src = 'assets/img/thx.png';
+      centerImg.className = 'firework-center-image';
+      container.appendChild(centerImg);
+      setTimeout(() => {
+        centerImg.remove();
+      }, 5200);
       
       // 스타일 정의 (처음 1회만 추가)
       if (!document.getElementById('firework-style')) {
@@ -2306,6 +2315,24 @@
               opacity: 0;
             }
           }
+          @keyframes centerImageFade {
+            0% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.6);
+            }
+            15% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1.0);
+            }
+            80% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1.0);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.85);
+            }
+          }
           .firework-rocket {
             position: fixed;
             left: var(--sx);
@@ -2317,6 +2344,7 @@
             box-shadow: 0 0 25px #ffeedd, 0 0 10px #ffffff, 0 0 4px #ffaa66;
             z-index: 99999;
             pointer-events: none;
+            will-change: transform, opacity;
             animation: rocketLaunch 0.62s cubic-bezier(0.1, 0.85, 0.25, 1) forwards;
           }
           .firework-particle {
@@ -2326,6 +2354,7 @@
             border-radius: 50%;
             z-index: 99998;
             pointer-events: none;
+            will-change: transform, opacity;
             animation: particleBlow 1.6s cubic-bezier(0.05, 0.95, 0.15, 1) forwards;
           }
           .firework-sparkle {
@@ -2335,7 +2364,20 @@
             border-radius: 50%;
             z-index: 99997;
             pointer-events: none;
+            will-change: transform, opacity;
             animation: sparkleTrail 2.2s cubic-bezier(0.1, 0.8, 0.1, 1) forwards;
+          }
+          .firework-center-image {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100000;
+            max-width: 50%;
+            max-height: 50%;
+            pointer-events: none;
+            will-change: transform, opacity;
+            animation: centerImageFade 5.2s ease-in-out forwards;
           }
         `;
         document.head.appendChild(style);
@@ -2357,7 +2399,7 @@
           const x = rect.left;
           const y = rect.top;
           
-          const particleNum = 100; // 폭죽 한 발당 입자 수 100개 극대화
+          const particleNum = 35; // 폭죽 한 발당 입자 수 35개로 최적화 (렉 대폭 완화)
           const colors = [
             '#ff0055', '#ff00ff', '#00ffcc', '#00ffff', 
             '#ffff00', '#ffaa00', '#ff3300', '#9d4edd', 
@@ -2380,7 +2422,9 @@
             const size = isSparkle ? (Math.random() * 3.5 + 2) : (Math.random() * 6.5 + 3.5);
             p.style.width = `${size}px`;
             p.style.height = `${size}px`;
-            p.style.boxShadow = `0 0 ${size * 2.8}px ${p.style.backgroundColor}, 0 0 ${size / 1.5}px #fff`;
+            
+            // box-shadow 그림자 연산 최적화 (단일 그림자로 과도한 GPU 픽셀 렌더링 방지)
+            p.style.boxShadow = `0 0 ${size * 1.5}px ${p.style.backgroundColor}`;
             
             p.style.setProperty('--x', `${x}px`);
             p.style.setProperty('--y', `${y}px`);
@@ -2411,7 +2455,7 @@
         container.appendChild(rocket);
       }
 
-      // 동시 다발 발사 루프 (더 촘촘하게 50ms~110ms 딜레이 설정 및 멀티 런치 확률 극대화)
+      // 동시 다발 발사 루프 (렉을 최소화하도록 150ms~300ms 딜레이 완화)
       let launched = 0;
       function step() {
         if (launched >= fireworkCount) return;
@@ -2427,7 +2471,7 @@
           }
         }
         
-        setTimeout(step, Math.random() * 60 + 50); // 50ms ~ 110ms 사이 초고속 딜레이
+        setTimeout(step, Math.random() * 150 + 150); // 150ms ~ 300ms 사이 안정적인 딜레이
       }
       
       step();

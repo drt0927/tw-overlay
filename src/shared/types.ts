@@ -352,6 +352,8 @@ export interface AppConfig {
     chatOverlaySub2Height?: number;
     chatOverlaySub2Tab?: string;
     chatOverlayShowNpcChat?: boolean;
+    chatOverlayShowXpGain?: boolean;
+    chatOverlayShowElsoGain?: boolean;
     chatOverlayHighlightScamNicknames?: boolean;
     chatOverlayColorGeneral?: string;
     chatOverlayColorWhisper?: string;

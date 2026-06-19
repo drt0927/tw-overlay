@@ -150,6 +150,13 @@ class ChatLogProcessor {
     // 2. 아이템 획득 처리
     chatParser.on('ITEM_LOOTED', (data) => {
       const cfg = config.load();
+
+      // 엘소(Elso) 습득 필터링 (오직 "[엘소 N포인트]을(를) [K]개 획득하였습니다." 패턴만 체크)
+      const isTargetElso = /\[엘소\s*\d+포인트\]을\(를\)\s*\[\d+\]개\s*획득하였습니다/.test(data.message);
+      if (isTargetElso && cfg.chatOverlayShowElsoGain === false) {
+        return;
+      }
+
       const keywords = cfg.lootKeywords || [];
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       if (matchedKeyword) {
@@ -162,6 +169,28 @@ class ChatLogProcessor {
           diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
         }
         this.sendNotification('아이템 획득 알림', data.message);
+      }
+
+      const chatItem = {
+        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'system',
+        timestamp: data.timestamp,
+        sender: '시스템',
+        message: data.message,
+        color: '#ffd700',
+        level: null,
+        characterCode: null
+      };
+      this.addChatToHistory('Basic', chatItem);
+      this.addChatToHistory('System', chatItem);
+      this.broadcastChatUpdate(chatItem);
+    });
+
+    // 2-2. 경험치 변동 처리
+    chatParser.on('XP_CHANGED', (data) => {
+      const cfg = config.load();
+      if (cfg.chatOverlayShowXpGain === false) {
+        return;
       }
 
       const chatItem = {

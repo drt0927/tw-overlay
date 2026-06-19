@@ -179,6 +179,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlaySub2Height: 400,
   chatOverlaySub2Tab: 'Basic',
   chatOverlayShowNpcChat: true,
+  chatOverlayShowXpGain: false,
+  chatOverlayShowElsoGain: false,
   chatOverlayHighlightScamNicknames: true,
   chatOverlayColorGeneral: '#ffffff',
   chatOverlayColorWhisper: '#64ff64',

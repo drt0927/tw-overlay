@@ -32,7 +32,7 @@
     "effect": "경험치 +1000%",
     "duration": "30분",
     "durationMs": 1800000,
-    "group": "potato",
+    "group": "none",
     "removeOnExit": true,
     "image": "assets/img/buffs/전설의_군고구마.png",
     "chatTriggers": [
@@ -41,7 +41,7 @@
         "keyword": "전설의 군고구마"
       }
     ],
-    "description": "이벤트 지급. 자신만 사용 가능. 경험의 심장/군고구마와 중복 불가."
+    "description": "캐시 상품. 자신만 사용 가능. 경험의 심장과 중복 가능."
   },
   {
     "id": "exp_heart",
@@ -117,7 +117,7 @@
     "effect": "경험치 +200%",
     "duration": "30분",
     "durationMs": 1800000,
-    "group": "club_eos",
+    "group": "none",
     "removeOnExit": false,
     "image": "assets/img/buffs/최상급_에오스의_파편.png",
     "chatTriggers": [
@@ -126,7 +126,7 @@
         "keyword": "최상급 에오스의 파편"
       }
     ],
-    "description": "이벤트 획득 등. 에오스/스승의 증표와 중복 불가."
+    "description": "캐시 상품."
   },
   {
     "id": "exp_club",
@@ -209,7 +209,7 @@
         "keyword": "얼리버드 경험치 부스터"
       }
     ],
-    "description": "이벤트 기간 지급."
+    "description": "캐시 상품."
   },
   {
     "id": "exp_izabel_secret",

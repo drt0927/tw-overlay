@@ -619,8 +619,12 @@
                   class="input-field flex-1 py-3 px-4 bg-black/40 text-xs text-slate-400" placeholder="자동 탐색 중..."
                   readonly>
                 <button onclick="selectLogFolder()"
-                  class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition-all text-xs flex items-center gap-2">
+                  class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition-all text-xs flex items-center gap-2 shrink-0">
                   <i data-lucide="folder-open" class="w-3.5 h-3.5"></i> 폴더 선택
+                </button>
+                <button onclick="applyAndStartChatLog()"
+                  class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all text-xs flex items-center gap-2 shrink-0">
+                  <i data-lucide="play" class="w-3.5 h-3.5"></i> 인식 시작
                 </button>
               </div>
               <p class="text-[10px] text-slate-500 italic ml-1">* 테일즈위버가 설치된 폴더 내의 ChatLog 폴더를 선택해주세요.</p>
@@ -1503,7 +1507,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.18.8</span></p>
+                        class="text-purple-400">1.18.9</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1604,6 +1608,18 @@
       if (result) {
         document.getElementById('chat-log-path-input').value = result;
       }
+    }
+
+    async function applyAndStartChatLog() {
+      const pathInput = document.getElementById('chat-log-path-input');
+      const rawPath = pathInput.value ? pathInput.value.trim() : '';
+      if (!rawPath) {
+        alert('챗로그 폴더를 먼저 선택해주세요.');
+        return;
+      }
+      window.electronAPI.applySettings({ chatLogPath: rawPath });
+      window.electronAPI.startChatLogWatch();
+      alert('챗로그 인식을 시작했습니다.');
     }
 
     function renderLootKeywordList() {

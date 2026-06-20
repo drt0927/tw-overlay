@@ -397,6 +397,46 @@
 
     init();
 
+    // 챗로그 설정 점검 배너 표시
+    if (window.electronAPI && window.electronAPI.checkChatLogStatus) {
+      window.electronAPI.checkChatLogStatus().then(isValid => {
+        if (!isValid) {
+          showChatLogWarningBanner();
+        }
+      });
+      if (window.electronAPI.onChatLogStatusChanged) {
+        window.electronAPI.onChatLogStatusChanged(isValid => {
+          if (isValid) {
+            const b = document.getElementById('chatlog-warning-banner');
+            if (b) b.remove();
+          } else {
+            showChatLogWarningBanner();
+          }
+        });
+      }
+    }
+
+    function showChatLogWarningBanner() {
+      if (document.getElementById('chatlog-warning-banner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'chatlog-warning-banner';
+      banner.className = 'w-full bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-200 z-[9999] shrink-0';
+      banner.style.cssText = 'position: relative; top: 0; left: 0;';
+      banner.innerHTML = `
+        <div class="flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
+        </div>
+        <button onclick="window.electronAPI.toggleSettings('chatlog')" 
+          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-[10px] shrink-0">
+          설정으로 이동
+        </button>
+      `;
+      document.body.insertBefore(banner, document.body.firstChild);
+      if (typeof refreshIcons === 'function') refreshIcons();
+      else if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         window.close();

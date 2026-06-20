@@ -4,6 +4,8 @@
 import { ipcMain, shell, app, BrowserWindow, dialog, screen } from 'electron';
 import * as config from './config';
 import { AppConfig, QuickSlotItem } from './constants';
+import * as fs from 'fs';
+import { chatLogManager } from './chatLogManager';
 import * as wm from './windowManager';
 import * as gallery from './galleryMonitor';
 import * as trade from './tradeMonitor';
@@ -114,7 +116,28 @@ export function register(): void {
     // 설정 변경 후 모니터러 상태 갱신 (윈도우 참조 없이 설정 재로드만)
     gallery.updateWindows(null, null, null);
     trade.updateWindows(null, null);
+    
+    // 챗로그 상태 변경 여부를 모든 창에 브로드캐스트
+    broadcastChatLogStatus();
   });
+
+  function broadcastChatLogStatus(): void {
+    const cfg = config.load();
+    const chatLogPath = cfg.chatLogPath;
+    let isValid = false;
+    try {
+      if (chatLogPath && fs.existsSync(chatLogPath)) {
+        const files = fs.readdirSync(chatLogPath);
+        isValid = files.some(file => file.startsWith('TWChatLog_') && file.endsWith('.html'));
+      }
+    } catch {}
+
+    BrowserWindow.getAllWindows().forEach(win => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('chat-log-status-changed', isValid);
+      }
+    });
+  }
 
   // 창 토글 핸들러 일괄 등록
   const toggleHandlers: Record<string, () => void> = {
@@ -517,6 +540,36 @@ export function register(): void {
   });
   ipcMain.on('xp-reset', () => {
     import('./chatLogProcessor').then(mod => mod.chatLogProcessor.resetXp());
+  });
+
+  // 어벤던로드 세션 제어
+  ipcMain.on('abandoned-reset', () => {
+    import('./chatLogProcessor').then(mod => mod.chatLogProcessor.resetAbandoned());
+  });
+
+  // 챗로그 감시 재기동
+  ipcMain.on('start-chat-log-watch', () => {
+    chatLogManager.start();
+    broadcastChatLogStatus();
+  });
+
+  // 챗로그 경로 유효성 검사
+  ipcMain.handle('check-chat-log-status', () => {
+    const cfg = config.load();
+    const chatLogPath = cfg.chatLogPath;
+    if (!chatLogPath) return false;
+    
+    try {
+      if (!fs.existsSync(chatLogPath)) return false;
+      const stat = fs.statSync(chatLogPath);
+      if (!stat.isDirectory()) return false;
+      
+      const files = fs.readdirSync(chatLogPath);
+      const hasChatLog = files.some(file => file.startsWith('TWChatLog_') && file.endsWith('.html'));
+      return hasChatLog;
+    } catch (e) {
+      return false;
+    }
   });
 
   ipcMain.on('request-game-focus', () => {

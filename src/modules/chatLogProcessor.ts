@@ -619,8 +619,12 @@ class ChatLogProcessor {
 
   public resetXp(): void {
     xpTracker.resetXp();
+    log('[CHAT_PROCESSOR] XP 세션 초기화됨');
+  }
+
+  public resetAbandoned(): void {
     abandonedTracker.reset();
-    log('[CHAT_PROCESSOR] XP 및 어벤던로드 세션 초기화됨');
+    log('[CHAT_PROCESSOR] 어벤던로드 세션 초기화됨');
 
     const allWindows = BrowserWindow.getAllWindows();
     const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));

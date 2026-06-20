@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
   toggleSienaAura: () => ipcRenderer.send('toggle-siena-aura'),
   resetXp: () => ipcRenderer.send('xp-reset'),
+  abandonedReset: () => ipcRenderer.send('abandoned-reset'),
+  startChatLogWatch: () => ipcRenderer.send('start-chat-log-watch'),
+  checkChatLogStatus: () => ipcRenderer.invoke('check-chat-log-status'),
   sendRendererReady: (windowKey: string) => ipcRenderer.send('renderer-ready', windowKey),
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 
@@ -376,6 +379,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('chat-overlay-mode');
     ipcRenderer.on('chat-overlay-mode', (_event, mode) => callback(mode));
   },
+  onChatLogStatusChanged: (callback: (isValid: boolean) => void) => {
+    ipcRenderer.removeAllListeners('chat-log-status-changed');
+    ipcRenderer.on('chat-log-status-changed', (_event, isValid) => callback(isValid));
+  },
   abandonedGetState: () => ipcRenderer.invoke('abandoned-get-state'),
   abandonedForceVisible: (visible: boolean) => ipcRenderer.send('abandoned-force-visible', visible),
   abandonedSetEnabled: (enabled: boolean) => ipcRenderer.send('abandoned-set-enabled', enabled),
@@ -394,7 +401,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'lokagos-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
       'auto-select-equipment', 'auto-select-evolution',
       'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled',
-      'trigger-jellyppy-rain', 'trigger-firework'
+      'trigger-jellyppy-rain', 'trigger-firework', 'chat-log-status-changed'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

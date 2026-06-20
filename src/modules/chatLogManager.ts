@@ -7,6 +7,7 @@ import { log } from './logger';
 import { chatParser } from './chatParser';
 import * as config from './config';
 import { chatLogProcessor } from './chatLogProcessor';
+import { findChatLogPath } from './chatLogPathFinder';
 
 class ChatLogManager {
   private _tail: Tail | null = null;
@@ -533,9 +534,21 @@ class ChatLogManager {
    * 날짜 변경 또는 파일 생성 감지
    */
   private checkFileChange(): void {
+    let cfg = config.load();
+
+    // 1. 만약 config에 chatLogPath가 없거나, 설정된 경로가 실제로 존재하지 않는 경우 자동 탐색을 재시도
+    if (!cfg.chatLogPath || !fs.existsSync(cfg.chatLogPath)) {
+      const foundPath = findChatLogPath();
+      if (foundPath) {
+        config.save({ chatLogPath: foundPath });
+        cfg = config.load(); // 최신 config 반영
+        log(`[CHAT_LOG] 주기적 탐색을 통해 로그 경로 설정 완료: ${foundPath}`);
+      }
+    }
+
     const todayPath = this.getTodayFilePath();
 
-    // 파일 경로가 바뀌었거나(자정), 이전에 파일이 없었는데 새로 생겼을 경우
+    // 2. 파일 경로가 바뀌었거나(자정), 이전에 파일이 없었는데 새로 생겼을 경우
     if (todayPath !== this._currentFilePath || (todayPath && !this._tail && fs.existsSync(todayPath))) {
       log('[CHAT_LOG] 로그 파일 변경 감지, 재연결 시도');
       // 날짜가 바뀐 시점(자정)에 오래된 로그 정리도 함께 실행

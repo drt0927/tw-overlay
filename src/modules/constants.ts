@@ -22,7 +22,7 @@ export const POLLING_IDLE_MS = 3000;
 export const STABLE_THRESHOLD_COUNT = 10;
 export const SIDEBAR_HEIGHT = 800;
 export const SIDEBAR_WIDTH = 400;
-export const OVERLAY_TOOLBAR_HEIGHT = 40;
+export const OVERLAY_TOOLBAR_HEIGHT = 70;
 
 // --- 매직 넘버 상수화 ---
 /** 창 좌표가 이 값 이하이면 최소화 상태로 판정 */

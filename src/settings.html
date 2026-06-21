@@ -309,8 +309,9 @@
         <div class="nav-item" onclick="showSection('data', this)">
           <i data-lucide="database" class="w-4 h-4"></i> 데이터 관리
         </div>
-        <div class="nav-item" onclick="showSection('about', this)">
+        <div class="nav-item relative" onclick="showSection('about', this)">
           <i data-lucide="info" class="w-4 h-4"></i> 앱 정보
+          <span id="update-badge" class="absolute top-1/2 right-4 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
         </div>
       </div>
 
@@ -1507,7 +1508,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.18.9</span></p>
+                        class="text-purple-400">1.18.10</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2425,6 +2426,16 @@
       updateMessageArea.classList.remove('hidden');
       updateProgressContainer.classList.add('hidden');
       updatePercent.innerText = '';
+
+      // 앱 정보 메뉴의 업데이트 레드닷 표시 제어
+      const badge = document.getElementById('update-badge');
+      if (badge) {
+        if (state === 'available' || state === 'ready' || state === 'mandatory') {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
 
       // 릴리즈 노트 처리
       if (releaseNotes && (state === 'available' || state === 'ready' || state === 'mandatory')) {

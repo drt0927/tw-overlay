@@ -5,13 +5,13 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.18.9-violet.svg)
+![Version](https://img.shields.io/badge/version-1.18.10-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.18.9 (2026.06.20)
+## 🚀 최신 버전: v1.18.10 (2026.06.21)
 이번 업데이트는 **챗로그 실시간 인식 재연결 지원, 11개 챗로그 의존 기능 실시간 가이드 배너 탑재 및 브라우저 오버레이 드래그 UX 개선**이 적용되었습니다.
 
 - **⚡ 챗로그 경로 설정 즉시 인식 및 재연결**:

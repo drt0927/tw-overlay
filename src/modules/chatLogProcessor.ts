@@ -158,6 +158,7 @@ class ChatLogProcessor {
       }
 
       const keywords = cfg.lootKeywords || [];
+      // String.prototype.includes는 기본적으로 대소문자를 구분(Case-sensitive)합니다.
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       if (matchedKeyword) {
         const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
@@ -218,6 +219,7 @@ class ChatLogProcessor {
       }
       const cfg = config.load();
       const keywords = cfg.shoutKeywords || [];
+      // String.prototype.includes는 기본적으로 대소문자를 구분(Case-sensitive)합니다.
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       if (keywords.length > 0 && matchedKeyword) {
         this.sendNotification(`외치기 알림: [${data.sender}]`, data.message);
@@ -326,8 +328,11 @@ class ChatLogProcessor {
         diaryDb.addWordAlarmContextLine(active.alarmId, now, data.sender, data.message, data.color);
       }
 
+      // 시스템 탭으로 분류되는 로그 또는 시스템 발신인의 메시지는 시스템 로그로 판단하여 알람 제외
+      const isSystemLog = type === 'system' || data.sender === '시스템' || data.sender === '시스템 공지' || data.sender === '시스템 알림';
+
       // 디스코드 전용 알림 처리 (독립 동작)
-      if (cfg.discordAlertEnabled && cfg.discordWebhookUrl) {
+      if (cfg.discordAlertEnabled && cfg.discordWebhookUrl && !isSystemLog) {
         // 기존 discordKeywords 필드만 있고 discordRules가 없는 구버전 설정을 위한 마이그레이션
         let rules = cfg.discordRules || [];
         if (rules.length === 0 && cfg.discordKeywords && cfg.discordKeywords.length > 0) {
@@ -340,6 +345,7 @@ class ChatLogProcessor {
         }
 
         for (const rule of rules) {
+          // String.prototype.includes는 기본적으로 대소문자를 구분(Case-sensitive)합니다.
           if (!data.message.includes(rule.keyword)) continue;
 
           // 1. 발송 대상(대화 유형별) 필터링
@@ -361,10 +367,11 @@ class ChatLogProcessor {
 
       // 4. 지정 단어 알림 처리
       if (!cfg.wordAlarmEnabled) return;
-      if (type === 'system') return;
+      if (isSystemLog) return;
       if (data.sender === '클럽 공지') return;
 
       const keywords = cfg.wordAlarmKeywords || [];
+      // String.prototype.includes는 기본적으로 대소문자를 구분(Case-sensitive)합니다.
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       
       if (keywords.length > 0 && matchedKeyword) {

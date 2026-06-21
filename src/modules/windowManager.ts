@@ -132,7 +132,7 @@ interface ManagedWindow {
 
 const windowRegistry: Record<string, ManagedWindow> = {
   settings: {
-    ref: null, pos: { offsetX: -1010, offsetY: 40 }, key: 'settings', html: 'settings.html', width: 1000, height: 650,
+    ref: null, pos: { offsetX: -1010, offsetY: 40 }, key: 'settings', html: 'settings.html', width: 1000, height: 720,
     calcPosition: (gr, pos) => {
       const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
       let targetX = Math.round(gr.x + gr.width + pos.offsetX);
@@ -275,6 +275,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
 
 let gameRect: GameRect | null = null;
 let physicalGameRect: GameRect | null = null; // syncOverlay 재호출용 물리(Win32) 좌표 — DIP 이중 변환 방지
+let isGameFullscreen = false;
 let lastForegroundSize: { width: number; height: number } | null = null;
 let overlayPos: WindowPosition = { offsetX: 10, offsetY: 10 };
 let isTracking = false;
@@ -417,7 +418,8 @@ function createOverlayWindow(targetUrl?: string): void {
     isClosing = true;
   });
   overlayWindow.on('move', () => {
-    if (isClosing || consumeProgrammaticMove('overlay') || isApplyingSize || !overlayWindow) return;
+    // 전체화면(isGameFullscreen) 상태일 때는 사용자 이동 오프셋을 덮어쓰거나 저장하지 않음 (창모드 복귀 시 위치 유지를 위해)
+    if (isClosing || consumeProgrammaticMove('overlay') || isApplyingSize || !overlayWindow || isGameFullscreen) return;
     const b = overlayWindow.getBounds();
     if (isTracking && gameRect) {
       overlayPos.offsetX = b.x - gameRect.x;
@@ -573,7 +575,8 @@ function createToggleableWindow(key: string, callbacks?: {
 
   });
   win.on('move', () => {
-    if (isClosing || consumeProgrammaticMove(key) || !winCfg.ref || !gameRect) return;
+    // 전체화면(isGameFullscreen) 상태일 때는 사용자 이동 오프셋을 덮어쓰거나 저장하지 않음 (창모드 복귀 시 위치 유지를 위해)
+    if (isClosing || consumeProgrammaticMove(key) || !winCfg.ref || !gameRect || isGameFullscreen) return;
     const b = winCfg.ref.getBounds();
     winCfg.pos = { offsetX: b.x - (gameRect.x + gameRect.width), offsetY: b.y - gameRect.y };
     savePosition(key, winCfg.pos);
@@ -749,7 +752,8 @@ export function toggleUniformColorWindow(): void {
   });
 
   win.on('move', () => {
-    if (consumeProgrammaticMove('uniformColor') || !winCfg.ref || !gameRect) return;
+    // 전체화면(isGameFullscreen) 상태일 때는 사용자 이동 오프셋을 덮어쓰거나 저장하지 않음 (창모드 복귀 시 위치 유지를 위해)
+    if (consumeProgrammaticMove('uniformColor') || !winCfg.ref || !gameRect || isGameFullscreen) return;
     const b = winCfg.ref.getBounds();
     winCfg.pos = { offsetX: b.x - (gameRect.x + gameRect.width), offsetY: b.y - gameRect.y };
     savePosition('uniformColor', winCfg.pos);
@@ -1028,17 +1032,32 @@ export function syncOverlay(currentRect: GameRect): void {
       height: finalHeight
     });
     const gX = dipRect.x, gY = dipRect.y, gW = dipRect.width, gH = dipRect.height;
+
+    // 게임 창이 올라가 있는 디스플레이 전체을 차지하는지 확인 (전체 화면 / Alt + Enter 대응)
+    const display = screen.getDisplayMatching(dipRect);
+    const isFullscreen = (
+      gX === display.bounds.x &&
+      gY === display.bounds.y &&
+      gW === display.bounds.width &&
+      gH === display.bounds.height
+    );
+    // 이전 프레임(before) 또는 현재 프레임(after)이 전체화면인 경우 위치 동기화 스킵 (Alt+Enter 복귀/진입 시 위치 뒤틀림 방지)
+    const skipPositionSync = isGameFullscreen || isFullscreen;
+    isGameFullscreen = isFullscreen; // 전역 전체화면 플래그 동기화
+
     if (overlayWindow && isOverlayVisible) {
       const b = overlayWindow.getBounds();
       let newW = b.width, newH = b.height;
       if (!isTracking) isTracking = true;
       const finalX = Math.round(gX + overlayPos.offsetX), finalY = Math.round(gY + overlayPos.offsetY);
-      if (Math.abs(b.x - finalX) > POSITION_THRESHOLD || Math.abs(b.y - finalY) > POSITION_THRESHOLD || Math.abs(b.width - newW) > POSITION_THRESHOLD || Math.abs(b.height - newH) > POSITION_THRESHOLD) {
+      // 전체화면 과도기 상태(skipPositionSync)일 때는 사용자 오버레이 창 위치 조정을 건너뜀
+      if (!skipPositionSync && (Math.abs(b.x - finalX) > POSITION_THRESHOLD || Math.abs(b.y - finalY) > POSITION_THRESHOLD || Math.abs(b.width - newW) > POSITION_THRESHOLD || Math.abs(b.height - newH) > POSITION_THRESHOLD)) {
         setProgrammaticMove('overlay'); overlayWindow.setBounds({ x: finalX, y: finalY, width: newW, height: newH });
       }
     } else if (isOverlayVisible && !overlayWindow) createOverlayWindow();
 
     // --- 게임 전용 오버레이 동기화 ---
+    // 게임 전용 오버레이는 게임 화면을 그대로 덮어야 하므로 전체화면 여부와 무관하게 항상 해상도를 맞춰야 합니다.
     if (!gameOverlayWindow) createGameOverlayWindow();
     if (gameOverlayWindow) {
       const b = gameOverlayWindow.getBounds();
@@ -1110,6 +1129,7 @@ export function syncOverlay(currentRect: GameRect): void {
         } else {
           if (!dockCfg.ref.isVisible()) dockCfg.ref.showInactive();
           const b = dockCfg.ref.getBounds();
+          // 독바는 전체화면 모드일 때도 게임 창 가장자리에 항상 도킹되어 보여야 함
           if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
             setProgrammaticMove('dock');
             dockCfg.ref.setPosition(x, y);
@@ -1126,6 +1146,7 @@ export function syncOverlay(currentRect: GameRect): void {
       const newSidebarY = gY + 30; // 상단 제목 표시줄 만큼 아래로 오프셋
       const newSidebarH = gH - 30; // 제목 표시줄 두께만큼 높이 축소
 
+      // 사이드바는 전체화면 모드일 때도 게임 창 가장자리에 항상 도킹되어 보여야 함
       if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD ||
         Math.abs(currentSidebarB.y - newSidebarY) > POSITION_THRESHOLD ||
         Math.abs(currentSidebarB.height - newSidebarH) > POSITION_THRESHOLD) {
@@ -1145,7 +1166,8 @@ export function syncOverlay(currentRect: GameRect): void {
           : { x: Math.round(gX + gW + winCfg.pos.offsetX), y: Math.round(gY + winCfg.pos.offsetY) };
 
         const b = winCfg.ref.getBounds();
-        if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
+        // 전체화면 과도기 상태(skipPositionSync)일 때는 개별 오버레이 창들의 위치 조정을 건너뜀
+        if (!skipPositionSync && (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD)) {
           setProgrammaticMove(key);
           winCfg.ref.setPosition(x, y);
         }

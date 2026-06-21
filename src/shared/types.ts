@@ -273,6 +273,7 @@ export interface AppConfig {
     chatLogPath?: string;
     chatLogAutoDeleteDays?: number;
     lootKeywords?: string[];
+    lootKeywordsMigratedV2?: boolean;
     shoutKeywords?: string[];
     ethosAlertEnabled?: boolean;
     abyssApostleAlertEnabled?: boolean;

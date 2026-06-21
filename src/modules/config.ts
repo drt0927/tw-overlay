@@ -2,7 +2,7 @@
  * 설정 관리 모듈 - 로드/저장/디바운스 + 메모리 캐시
  */
 import * as fs from 'fs';
-import { get_CONFIG_PATH, DEFAULT_CONFIG, SAVE_DEBOUNCE_MS, AppConfig } from './constants';
+import { get_CONFIG_PATH, DEFAULT_CONFIG, SAVE_DEBOUNCE_MS, AppConfig, get_RESOURCE_PATH } from './constants';
 import { log } from './logger';
 
 let _saveTimer: NodeJS.Timeout | null = null;
@@ -34,6 +34,22 @@ export function load(): AppConfig {
       if (parsed.chatOverlaySub2Opacity !== undefined && parsed.chatOverlaySub2Opacity < 0.2) {
         parsed.chatOverlaySub2Opacity = 0.2;
         migrated = true;
+      }
+
+      // 득템 키워드 2차 마이그레이션 (기존 데이터를 74종 기본값으로 강제 덮어쓰기)
+      if (parsed.lootKeywordsMigratedV2 !== true) {
+        try {
+          const defaultJsonPath = get_RESOURCE_PATH('assets', 'data', 'contents_items_default.json');
+          if (fs.existsSync(defaultJsonPath)) {
+            const defaultItems = JSON.parse(fs.readFileSync(defaultJsonPath, 'utf-8'));
+            parsed.lootKeywords = defaultItems.map((item: any) => item.name);
+            parsed.lootKeywordsMigratedV2 = true;
+            migrated = true;
+          }
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          log(`[CONFIG] 득템 키워드 마이그레이션 실패: ${errMsg}`);
+        }
       }
 
       _cachedConfig = {

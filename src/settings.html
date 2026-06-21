@@ -996,22 +996,55 @@
           <!-- 서브 탭 3: 득템 & 외치기 -->
           <div id="sub-tab-loot" class="sub-tab-content space-y-6">
             <!-- 득템 알림 키워드 -->
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
-              <label class="section-label flex items-center gap-2 mb-4">
-                <i data-lucide="gem" class="w-4 h-4 text-indigo-400"></i> 득템 알림 및 모험일지 기록 키워드
-              </label>
-              <div class="flex gap-2 mb-4">
-                <input type="text" id="loot-keyword-input" class="input-field flex-1 py-3 px-4 bg-black/40"
-                  placeholder="예: 에오니스, 파편, 조각..." onkeypress="if(event.key==='Enter')addLootKeyword()">
-                <button onclick="addLootKeyword()"
-                  class="btn-primary !bg-indigo-600 hover:!bg-indigo-500 px-6 font-black shadow-lg shadow-indigo-900/20">추가</button>
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <div class="flex items-center justify-between">
+                <label class="section-label flex items-center gap-2">
+                  <i data-lucide="gem" class="w-4 h-4 text-indigo-400"></i> 득템 알림 및 모험일지 기록 키워드
+                </label>
+                
+                <!-- 대량 작업 제어 도구 모음 -->
+                <div class="flex gap-1.5">
+                  <button type="button" onclick="restoreDefaultLootKeywords()" class="px-2.5 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 hover:border-indigo-500/50 text-[10px] font-black rounded-lg transition-all flex items-center gap-1 active:scale-95">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> 기본값 복원
+                  </button>
+                  <button type="button" onclick="addAllLootKeywords()" class="px-2.5 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/50 text-[10px] font-black rounded-lg transition-all flex items-center gap-1 active:scale-95">
+                    <i data-lucide="plus-circle" class="w-3 h-3"></i> 모두 등록
+                  </button>
+                  <button type="button" onclick="clearAllLootKeywords()" class="px-2.5 py-1.5 bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/30 hover:border-rose-500/50 text-[10px] font-black rounded-lg transition-all flex items-center gap-1 active:scale-95">
+                    <i data-lucide="minus-circle" class="w-3 h-3"></i> 모두 해제
+                  </button>
+                </div>
               </div>
-              <div id="loot-keyword-list"
-                class="flex flex-wrap gap-2 p-4 bg-black/30 rounded-2xl border border-white/5 min-h-[100px] align-content-start">
+
+              <!-- 2단 컬럼 컨테이너 -->
+              <div class="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                <!-- 1. 좌측: 미등록 아이템 목록 -->
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-400">미등록 아이템 (<span id="unregistered-count">0</span>)</span>
+                    <input type="text" id="item-search-input" class="w-36 py-1 px-2.5 bg-black/40 text-[10px] rounded-lg border border-white/10 text-slate-300 focus:border-indigo-500/50 outline-none transition-all"
+                      placeholder="이름 검색..." oninput="filterItemList()">
+                  </div>
+                  <div id="unregistered-item-list" class="h-[320px] overflow-y-auto p-2 bg-black/20 border border-white/5 rounded-2xl space-y-1 custom-scrollbar">
+                    <!-- JS 동적 렌더링 -->
+                  </div>
+                </div>
+
+                <!-- 2. 우측: 등록된 아이템 목록 -->
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-400">등록된 아이템 (<span id="registered-count">0</span>)</span>
+                    <span class="text-[9px] text-slate-500 font-bold">클릭 시 해제</span>
+                  </div>
+                  <div id="registered-item-list" class="h-[320px] overflow-y-auto p-2 bg-black/20 border border-white/5 rounded-2xl space-y-1 custom-scrollbar">
+                    <!-- JS 동적 렌더링 -->
+                  </div>
+                </div>
               </div>
-              <p class="text-[10px] text-slate-500 mt-3 font-bold italic ml-1 flex items-center gap-1">
+
+              <p class="text-[10px] text-slate-500 mt-2 font-bold italic ml-1 flex items-center gap-1">
                 <i data-lucide="info" class="w-3 h-3 text-indigo-400"></i>
-                * <span class="text-indigo-400/80">부분 일치(포함 검색):</span> 아이템 이름에 키워드가 포함되면 알림이 울리고 일지에 기록됩니다.
+                * <span class="text-indigo-400/80">목록 전송 방식:</span> 왼쪽 목록의 아이템을 누르면 모험일지에 등록되고, 오른쪽 목록의 아이템을 누르면 해제됩니다.
               </p>
             </div>
 
@@ -1596,6 +1629,9 @@
     let tradeKeywordsList = [];
     let lootKeywordsList = [];
     let shoutKeywordsList = [];
+    let allContentsItems = [];
+    let hasCustomLootKeywords = true;
+    let defaultLootKeywords = [];
 
     let activeEditIndex = -1;
     let ALL_ICONS = [];
@@ -1624,35 +1660,130 @@
     }
 
     function renderLootKeywordList() {
-      const list = document.getElementById('loot-keyword-list');
-      if (!list) return;
-      list.innerHTML = '';
-      if (lootKeywordsList.length === 0) {
-        list.innerHTML = '<span class="text-xs text-slate-600 p-2">등록된 득템 키워드가 없습니다.</span>';
-        return;
-      }
-      lootKeywordsList.forEach((kw, i) => {
-        const span = document.createElement('span');
-        span.className = 'keyword-tag !border-indigo-500/30 !text-indigo-400 !bg-indigo-500/10';
-        span.innerHTML = `${kw} <button onclick="removeLootKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
-        list.appendChild(span);
-      });
-      window.refreshIcons();
-    }
-
-    function addLootKeyword() {
-      const input = document.getElementById('loot-keyword-input');
-      const val = input.value.trim();
-      if (val && !lootKeywordsList.includes(val)) {
-        lootKeywordsList.push(val);
-        renderLootKeywordList();
-        input.value = '';
-      }
+      // 2단 목록 전송(Transfer List) 구조 렌더링을 호출
+      renderItemTransferLists();
     }
 
     function removeLootKeyword(index) {
+      // 혹시 다른 곳에서 호출될 때를 대비해 호환성 유지
       lootKeywordsList.splice(index, 1);
       renderLootKeywordList();
+    }
+
+    async function initContentsItems() {
+      try {
+        const response = await fetch('assets/data/contents_items.json');
+        allContentsItems = await response.json();
+
+        const resDef = await fetch('assets/data/contents_items_default.json');
+        const defItems = await resDef.json();
+        defaultLootKeywords = defItems.map(item => item.name);
+
+        // 최초 실행 사용자일 경우 기본값으로 셋업
+        if (!hasCustomLootKeywords && lootKeywordsList.length === 0) {
+          lootKeywordsList = [...defaultLootKeywords];
+        }
+
+        renderLootKeywordList();
+      } catch (e) {
+        console.error('Failed to load contents items:', e);
+      }
+    }
+
+    function renderItemTransferLists() {
+      const unregisteredContainer = document.getElementById('unregistered-item-list');
+      const registeredContainer = document.getElementById('registered-item-list');
+      if (!unregisteredContainer || !registeredContainer) return;
+
+      unregisteredContainer.innerHTML = '';
+      registeredContainer.innerHTML = '';
+
+      const searchVal = document.getElementById('item-search-input')
+        ? document.getElementById('item-search-input').value.trim().toLowerCase()
+        : '';
+
+      let unregisteredCount = 0;
+      let registeredCount = 0;
+
+      allContentsItems.forEach(item => {
+        const isSelected = lootKeywordsList.includes(item.name);
+
+        if (isSelected) {
+          registeredCount++;
+          // 등록된 아이템 렌더링
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-2 px-3 py-1.5 hover:bg-rose-500/10 cursor-pointer text-xs font-bold text-slate-200 hover:text-white rounded-lg transition-colors group';
+          row.onclick = () => toggleItemLoot(item.name);
+          row.innerHTML = `
+            <img src="assets/items/${item.image}" class="w-5 h-5 object-contain drop-shadow" onerror="this.src='assets/img/젤리삐.png'">
+            <span class="truncate flex-1 text-indigo-300 group-hover:text-rose-300 transition-colors">${item.name}</span>
+            <i data-lucide="x" class="w-3.5 h-3.5 text-slate-500 group-hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"></i>
+          `;
+          registeredContainer.appendChild(row);
+        } else {
+          // 검색어 필터링 적용 (미등록 리스트에만 적용)
+          if (searchVal && !item.name.toLowerCase().includes(searchVal)) {
+            return;
+          }
+
+          unregisteredCount++;
+          // 미등록 아이템 렌더링
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-500/10 cursor-pointer text-xs font-bold text-slate-300 hover:text-white rounded-lg transition-colors group';
+          row.onclick = () => toggleItemLoot(item.name);
+          row.innerHTML = `
+            <img src="assets/items/${item.image}" class="w-5 h-5 object-contain drop-shadow" onerror="this.src='assets/img/젤리삐.png'">
+            <span class="truncate flex-1">${item.name}</span>
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 opacity-0 group-hover:opacity-100 transition-all"></i>
+          `;
+          unregisteredContainer.appendChild(row);
+        }
+      });
+
+      // 개수 라벨 업데이트
+      const unregCountEl = document.getElementById('unregistered-count');
+      const regCountEl = document.getElementById('registered-count');
+      if (unregCountEl) unregCountEl.innerText = unregisteredCount;
+      if (regCountEl) regCountEl.innerText = registeredCount;
+
+      if (window.refreshIcons) {
+        window.refreshIcons();
+      }
+    }
+
+    function toggleItemLoot(name) {
+      const idx = lootKeywordsList.indexOf(name);
+      if (idx > -1) {
+        lootKeywordsList.splice(idx, 1);
+      } else {
+        lootKeywordsList.push(name);
+      }
+      renderLootKeywordList();
+    }
+
+    function filterItemList() {
+      renderItemTransferLists();
+    }
+
+    function restoreDefaultLootKeywords() {
+      if (confirm('모험일지 기록 키워드를 기본 74종 상태로 복원하시겠습니까?')) {
+        lootKeywordsList = [...defaultLootKeywords];
+        renderLootKeywordList();
+      }
+    }
+
+    function addAllLootKeywords() {
+      if (confirm('모든 아이템(100종)을 모험일지 기록 키워드로 등록하시겠습니까?')) {
+        lootKeywordsList = allContentsItems.map(item => item.name);
+        renderLootKeywordList();
+      }
+    }
+
+    function clearAllLootKeywords() {
+      if (confirm('등록된 모든 모험일지 기록 키워드를 해제하시겠습니까?')) {
+        lootKeywordsList = [];
+        renderLootKeywordList();
+      }
     }
 
     function renderShoutKeywordList() {
@@ -1828,7 +1959,24 @@
       if (['CONTROL', 'ALT', 'SHIFT', 'META'].includes(keyChar)) return;
 
       // 특수 키 이름 매핑 (Electron globalShortcut 규격)
-      if (keyCode.startsWith('Key')) keyChar = keyCode.replace('Key', '');
+      if (keyCode.startsWith('Numpad')) {
+        if (keyCode.length === 7 && keyCode[6] >= '0' && keyCode[6] <= '9') {
+          keyChar = 'num' + keyCode[6];
+        } else if (keyCode === 'NumpadDecimal') {
+          keyChar = 'numdec';
+        } else if (keyCode === 'NumpadAdd') {
+          keyChar = 'numadd';
+        } else if (keyCode === 'NumpadSubtract') {
+          keyChar = 'numsub';
+        } else if (keyCode === 'NumpadMultiply') {
+          keyChar = 'nummult';
+        } else if (keyCode === 'NumpadDivide') {
+          keyChar = 'numdiv';
+        } else {
+          keyChar = keyCode;
+        }
+      }
+      else if (keyCode.startsWith('Key')) keyChar = keyCode.replace('Key', '');
       else if (keyCode.startsWith('Digit')) keyChar = keyCode.replace('Digit', '');
       else if (keyCode === 'Space') keyChar = 'Space';
       else if (keyCode === 'ArrowUp') keyChar = 'Up';
@@ -1905,6 +2053,7 @@
       initIconList();
       await initDynamicMenuManagement();
       await checkOptimizeStatus();
+      await initContentsItems();
 
       _initReady = true;
       hideLoading();
@@ -2114,6 +2263,7 @@
       currentSlots = JSON.parse(JSON.stringify(config.quickSlots || []));
       currentKeywords = JSON.parse(JSON.stringify(config.galleryKeywords || []));
       tradeKeywordsList = JSON.parse(JSON.stringify(config.tradeKeywords || []));
+      hasCustomLootKeywords = config.lootKeywords !== undefined;
       lootKeywordsList = JSON.parse(JSON.stringify(config.lootKeywords || []));
       shoutKeywordsList = JSON.parse(JSON.stringify(config.shoutKeywords || []));
 

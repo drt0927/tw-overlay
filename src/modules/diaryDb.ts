@@ -438,7 +438,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
   const totalDays = new Date(year, month, 0).getDate();
 
   // 1. 기본 로그 가져오기
-  const logs = db.prepare("SELECT date, type, content, amount FROM activity_logs WHERE date LIKE ?").all(`${yearMonth}-%`) as { date: string, type: string, content: string, amount: number }[];
+  const logs = db.prepare("SELECT date, time, type, content, amount FROM activity_logs WHERE date LIKE ?").all(`${yearMonth}-%`) as { date: string, time: string, type: string, content: string, amount: number }[];
 
   // 2. 출석일수 (활동 로그가 있는 고유 날짜 수)
   const attendanceDays = new Set(logs.map(l => l.date)).size;
@@ -450,6 +450,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
   let totalSeed = 0;
   const bossCounts: Record<string, number> = {};
   const weeklyActivity = [0, 0, 0, 0, 0, 0, 0]; // 월~일 (0~6)
+  const hourlyActivity = [0, 0, 0, 0]; // 아침/오전(06-12), 오후(12-18), 저녁/밤(18-24), 새벽/심야(00-06)
   const heatmap: Record<string, number> = {};
   const weeklySeedList = [0, 0, 0, 0, 0, 0]; // 최대 6주
   const firstDay = (new Date(year, month - 1, 1).getDay() + 6) % 7; // 1일의 요일 (0: 월요일)
@@ -459,6 +460,22 @@ export function getMonthlyStatistics(yearMonth: string): any {
     const day = new Date(log.date).getDay();
     const dayIdx = day === 0 ? 6 : day - 1; // 월요일(0) ~ 일요일(6)로 변환
     weeklyActivity[dayIdx]++;
+
+    // 시간대별 활동량 계산
+    if (log.time) {
+      const hour = parseInt(log.time.split(':')[0], 10);
+      if (!isNaN(hour)) {
+        if (hour >= 6 && hour < 12) {
+          hourlyActivity[0]++;
+        } else if (hour >= 12 && hour < 18) {
+          hourlyActivity[1]++;
+        } else if (hour >= 18 && hour < 24) {
+          hourlyActivity[2]++;
+        } else {
+          hourlyActivity[3]++;
+        }
+      }
+    }
 
     // 히트맵용 일별 활동량
     heatmap[log.date] = (heatmap[log.date] || 0) + 1;
@@ -511,7 +528,8 @@ export function getMonthlyStatistics(yearMonth: string): any {
     weeklyActivity,
     weeklySeedList,
     heatmap: heatmapList,
-    grade
+    grade,
+    hourlyActivity
   };
 }
 

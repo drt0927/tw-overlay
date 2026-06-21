@@ -27,32 +27,33 @@
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
-      gap: 6px;
+      gap: 8px;
     }
 
     .calendar-cell {
-      aspect-ratio: 1 / 1;
+      min-height: 120px;
       border-radius: 12px;
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid rgba(51, 65, 85, 0.6);
+      background: rgba(30, 41, 59, 0.35);
+      border: 1px solid rgba(51, 65, 85, 0.45);
       padding: 8px;
       display: flex;
       flex-direction: column;
       position: relative;
-      transition: all 0.2s ease;
-      overflow: hidden;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .calendar-cell:hover {
-      border-color: rgba(20, 184, 166, 0.5);
-      background: rgba(20, 184, 166, 0.1);
+      border-color: rgba(20, 184, 166, 0.6);
+      background: rgba(20, 184, 166, 0.06);
       transform: translateY(-2px);
+      box-shadow: 0 8px 20px -6px rgba(20, 184, 166, 0.15);
       z-index: 10;
     }
 
     .calendar-cell.active {
       border-color: #14b8a6;
-      box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+      background: rgba(20, 184, 166, 0.08);
+      box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.15);
     }
 
     .calendar-cell.empty {
@@ -62,41 +63,59 @@
 
     .calendar-cell.empty:hover {
       transform: none;
+      box-shadow: none;
+    }
+
+    /* Week Cell (주간 뷰 셀) 스타일 */
+    .calendar-cell.week {
+      background: rgba(168, 85, 247, 0.04);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+    
+    .calendar-cell.week:hover {
+      background: rgba(168, 85, 247, 0.1);
+      border-color: rgba(168, 85, 247, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -6px rgba(168, 85, 247, 0.25);
+      z-index: 10;
+    }
+    
+    .calendar-cell.week.active {
+      border-color: rgb(168, 85, 247);
+      background: rgba(168, 85, 247, 0.16);
+      box-shadow: 0 0 0 2.5px rgba(168, 85, 247, 0.45);
+      transform: translateY(-2px);
+      z-index: 10;
     }
 
     /* Score Levels */
-    .level-1 { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); }
-    .level-2 { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2); }
-    .level-3 { background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); }
-    .level-4 { background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2); }
+    .level-1 { background: rgba(34, 197, 94, 0.04); border-color: rgba(34, 197, 94, 0.2); }
+    .level-2 { background: rgba(59, 130, 246, 0.04); border-color: rgba(59, 130, 246, 0.2); }
+    .level-3 { background: rgba(168, 85, 247, 0.04); border-color: rgba(168, 85, 247, 0.25); }
+    .level-4 { background: rgba(249, 115, 22, 0.04); border-color: rgba(249, 115, 22, 0.25); }
 
     .date-num {
       font-weight: 800;
       font-size: 13px;
-      color: #94a3b8;
+      color: #64748b;
       z-index: 2;
     }
 
     .calendar-cell.today .date-num {
-      color: #a855f7;
+      color: #c084fc;
     }
 
     .calendar-cell.other-month {
-      opacity: 0.3;
-      background: rgba(15, 23, 42, 0.1);
+      opacity: 0.32;
     }
 
     .monster-icon {
-      width: 44px;
-      height: 44px;
+      width: 24px;
+      height: 24px;
+      opacity: 0.85;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: absolute;
-      top: 55%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 1;
       pointer-events: none;
     }
@@ -105,12 +124,12 @@
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
     }
 
     .detail-monster-box {
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -118,6 +137,30 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 16px;
       padding: 8px;
+    }
+
+    /* Loot Stack and Badges */
+    .loot-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 6px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .loot-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 2px 4px;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Timeline */
@@ -158,7 +201,8 @@
     /* Scrollbar */
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
 
     /* Grouping Styles */
     .auto-group-header {
@@ -194,14 +238,47 @@
       border-radius: 8px;
       font-size: 11px;
       color: #cbd5e1;
-      white-space: nowrap;
-      z-index: 9999;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-      pointer-events: none;
+      width: max-content;
+      max-width: 220px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+      z-index: 50;
       opacity: 0;
-      transition: all 0.2s ease;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
     }
-    .tooltip-container:hover .tooltip-content { opacity: 1; top: 140%; }
+    .tooltip-container:hover .tooltip-content {
+      opacity: 1;
+    }
+
+    /* CSS data-tooltip 공통 스타일 */
+    [data-tooltip] {
+      position: relative !important;
+    }
+    [data-tooltip]::after {
+      content: attr(data-tooltip) !important;
+      --tw-content: attr(data-tooltip) !important;
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(51, 65, 85, 0.85);
+      color: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      z-index: 99999 !important;
+    }
+    [data-tooltip]:hover::after {
+      opacity: 1 !important;
+      transform: translateX(-50%) scale(1) !important;
+    }
   </style>
 </head>
 
@@ -242,62 +319,55 @@
 
     <!-- View: Activity Log -->
     <div id="view-log" class="flex-1 flex overflow-hidden">
-      <!-- Left: Calendar & Summary -->
-      <div class="w-[480px] flex flex-col border-r border-slate-800 bg-[#0f172a]/50 shrink-0">
-        <div class="flex items-center justify-between p-4">
-          <button onclick="changeMonth(-1)" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
-            <i data-lucide="chevron-left" class="w-5 h-5"></i>
-          </button>
-          <div id="current-month" class="text-lg font-black text-slate-100 tracking-wider font-mono">2024. 03</div>
-          <button onclick="changeMonth(1)" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
-            <i data-lucide="chevron-right" class="w-5 h-5"></i>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-8 gap-1 px-4 pb-2 text-center text-[11px] font-bold text-slate-500">
-          <div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div class="text-blue-400/80">SAT</div><div class="text-red-400/80">SUN</div><div class="text-purple-400/80">W</div>
-        </div>
-
-        <div id="calendar-grid" class="calendar-grid px-4 pb-4"></div>
-
-        <!-- Monthly Detailed Record -->
-        <div class="flex-1 flex flex-col border-t border-slate-800 bg-slate-900/30 overflow-hidden">
-          <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between text-[13px] font-bold text-slate-400">
-            <div class="flex items-center gap-1.5"><i data-lucide="list-tree" class="w-3.5 h-3.5 text-slate-300"></i> 이번 달 상세 기록</div>
+      <!-- Left: Calendar (expanded view) -->
+      <div class="flex-1 flex flex-col bg-[#0b0f19]/30 overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-slate-800/60 bg-[#0f172a]/60 select-none shrink-0">
+          <div class="flex items-center gap-2">
+            <button onclick="changeMonth(-1)" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+              <i data-lucide="chevron-left" class="w-4.5 h-4.5"></i>
+            </button>
+            <div id="current-month" class="text-base font-black text-slate-100 tracking-wider font-mono px-2">2024. 03</div>
+            <button onclick="changeMonth(1)" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+              <i data-lucide="chevron-right" class="w-4.5 h-4.5"></i>
+            </button>
           </div>
-          <div class="flex-1 overflow-y-auto custom-scroll p-3 flex flex-col gap-3">
-            <!-- Loots -->
-            <div class="flex-1 min-h-[120px] flex flex-col border border-amber-500/10 rounded-xl overflow-hidden bg-black/20">
-              <div class="text-[12px] font-black text-amber-400 bg-amber-500/10 px-3 py-1.5 border-b border-amber-500/10 flex justify-between items-center">
-                <span>✨ 득템 내역</span>
-                <span id="monthly-total-loot-badge" class="text-[12px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-300">0개</span>
-              </div>
-              <div id="monthly-loot-list" class="flex-1 overflow-y-auto custom-scroll p-2 flex flex-col gap-1"></div>
+          
+          <!-- Summary Badges in calendar header -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-amber-500/8 border border-amber-500/20 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>이번 달 득템:</span>
+              <span id="monthly-total-loot-badge" class="text-amber-200 font-black">0개</span>
             </div>
-            <!-- Seeds -->
-            <div class="flex-1 min-h-[120px] flex flex-col border border-orange-500/10 rounded-xl overflow-hidden bg-black/20">
-              <div class="text-[12px] font-black text-orange-400 bg-orange-500/10 px-3 py-1.5 border-b border-orange-500/10 flex justify-between items-center">
-                <span>💰 수익 내역</span>
-                <span id="monthly-total-seed-badge" class="text-[12px] bg-orange-500/20 px-1.5 py-0.5 rounded text-orange-300">0 Seed</span>
-              </div>
-              <div id="monthly-seed-list" class="flex-1 overflow-y-auto custom-scroll p-2 flex flex-col gap-1"></div>
+            <div class="flex items-center gap-2 bg-orange-500/8 border border-orange-500/20 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-400">
+              <i data-lucide="gem" class="w-3.5 h-3.5"></i>
+              <span>이번 달 수익:</span>
+              <span id="monthly-total-seed-badge" class="text-orange-200 font-black">0 Seed</span>
             </div>
           </div>
+        </div>
+
+        <div class="grid grid-cols-8 gap-2 px-5 py-2.5 text-center text-[10px] font-black text-slate-500 border-b border-slate-800/40 bg-slate-900/10 shrink-0">
+          <div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div class="text-blue-400/80">SAT</div><div class="text-red-400/80">SUN</div><div class="text-purple-400/80">WEEK</div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scroll p-5">
+          <div id="calendar-grid" class="calendar-grid"></div>
         </div>
       </div>
 
-      <!-- Right: Detail Panel -->
-      <div class="flex-1 flex flex-col bg-[#131b2f] overflow-hidden" style="scrollbar-gutter: stable;">
+      <!-- Right: Detail Panel (Fixed width) -->
+      <div class="w-[400px] flex flex-col bg-[#131b2f] border-l border-slate-800 shrink-0 overflow-y-auto custom-scroll" style="scrollbar-gutter: stable;">
         <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
           <i data-lucide="mouse-pointer-click" class="w-12 h-12 opacity-50"></i>
           <div class="text-sm font-semibold">달력에서 날짜를 선택하세요</div>
         </div>
 
         <div id="detail-view" class="flex-1 flex flex-col hidden overflow-hidden">
-          <div class="p-5 border-b border-slate-800/50 bg-slate-900/30 flex justify-between items-center">
+          <div class="p-5 border-b border-slate-800/50 bg-slate-900/30 flex justify-between items-center shrink-0">
             <div>
-              <div id="detail-date" class="text-xl font-black text-white font-mono tracking-tight">2024-03-29</div>
-              <div class="text-xs font-bold text-slate-400 mt-1 flex items-center gap-2">
+              <div id="detail-date" class="text-lg font-black text-white font-mono tracking-tight">2024-03-29</div>
+              <div class="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-2">
                 <span id="detail-score" class="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-[10px]">0 pt</span>
                 <span id="detail-hw">숙제 0/0</span>
               </div>
@@ -306,32 +376,32 @@
           </div>
 
           <!-- Daily Summary Area -->
-          <div id="daily-summary-area" class="px-5 py-3 border-b border-slate-800/50 bg-teal-500/5 hidden flex justify-between items-center"></div>
+          <div id="daily-summary-area" class="px-5 py-3 border-b border-slate-800/50 bg-teal-500/5 hidden flex justify-between items-center shrink-0"></div>
 
           <!-- Weekly Summary Area -->
-          <div id="weekly-summary-area" class="px-5 py-3 border-b border-slate-800/50 bg-purple-500/5 hidden flex justify-between items-center"></div>
+          <div id="weekly-summary-area" class="px-5 py-3 border-b border-slate-800/50 bg-purple-500/5 hidden flex justify-between items-center shrink-0"></div>
 
           <!-- Add Record Area -->
-          <div id="add-record-area" class="p-4 border-b border-slate-800/50 flex flex-col gap-3">
+          <div id="add-record-area" class="p-4 border-b border-slate-800/50 flex flex-col gap-3.5 shrink-0">
             <div>
-              <div class="flex items-center gap-2 mb-1.5 text-[13px] font-bold text-amber-400/80">
+              <div class="flex items-center gap-1.5 mb-1.5 text-[11px] font-bold text-amber-400/80">
                 <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> 득템 기록
               </div>
               <div class="flex gap-2">
-                <input type="text" id="loot-name" class="flex-1 bg-black/40 border border-slate-700/50 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:border-amber-500/50" placeholder="아이템 이름">
-                <input type="number" id="loot-count" value="1" min="1" class="w-14 bg-black/40 border border-slate-700/50 rounded-xl px-2 py-1.5 text-sm text-white text-center focus:outline-none">
-                <button onclick="saveLoot(this)" class="w-14 px-4 py-1.5 bg-slate-800 hover:bg-amber-500 hover:text-black text-slate-300 text-xs font-bold rounded-xl transition-all shadow-sm">추가</button>
+                <input type="text" id="loot-name" class="flex-1 bg-black/40 border border-slate-700/50 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50" placeholder="아이템 이름">
+                <input type="number" id="loot-count" value="1" min="1" class="w-12 bg-black/40 border border-slate-700/50 rounded-xl px-1.5 py-1.5 text-xs text-white text-center focus:outline-none">
+                <button onclick="saveLoot(this)" class="px-4 py-1.5 bg-slate-800 hover:bg-amber-500 hover:text-black text-slate-300 text-[11px] font-bold rounded-xl transition-all shadow-sm">추가</button>
               </div>
             </div>
             <div class="flex flex-col gap-1.5">
-              <div class="flex items-center gap-2 text-[13px] font-bold text-orange-400/80">
+              <div class="flex items-center gap-1.5 mb-1.5 text-[11px] font-bold text-orange-400/80">
                 <i data-lucide="gem" class="w-3 h-3 text-orange-400"></i> 수익 기록 (수동)
               </div>
-              <input type="text" id="manual-seed-desc" class="w-full bg-black/40 border border-slate-700/50 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:border-orange-500/50" placeholder="내용 (예: 장사 수익)">
+              <input type="text" id="manual-seed-desc" class="w-full bg-black/40 border border-slate-700/50 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 mb-1.5" placeholder="내용 (예: 장사 수익)">
               <div class="flex flex-col gap-1">
                 <div class="flex gap-2">
-                  <input type="number" id="manual-seed-amount" class="flex-1 bg-black/40 border border-slate-700/50 rounded-xl px-3 py-1.5 text-sm text-white text-right focus:outline-none focus:border-orange-500/50" placeholder="금액" oninput="updateSeedPreview(this.value)">
-                  <button onclick="saveManualSeed(this)" class="px-6 py-1.5 bg-slate-800 hover:bg-orange-500 hover:text-black text-slate-300 text-xs font-bold rounded-xl transition-all shadow-sm">추가</button>
+                  <input type="number" id="manual-seed-amount" class="flex-1 bg-black/40 border border-slate-700/50 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-slate-500 focus:outline-none focus:border-orange-500/50" placeholder="금액" oninput="updateSeedPreview(this.value)">
+                  <button onclick="saveManualSeed(this)" class="px-4 py-1.5 bg-slate-800 hover:bg-orange-500 hover:text-black text-slate-300 text-[11px] font-bold rounded-xl transition-all shadow-sm">추가</button>
                 </div>
                 <div id="manual-seed-preview" class="text-right text-[10px] font-bold text-orange-500/60 min-h-[14px]"></div>
               </div>
@@ -339,12 +409,14 @@
           </div>
 
           <!-- Timeline Area -->
-          <div class="flex-1 overflow-y-auto custom-scroll p-4">
-            <div class="text-[13px] font-bold text-slate-400 mb-4 flex items-center gap-2">
-              <i data-lucide="list-tree" class="w-3 h-3"></i> 활동 타임라인
+          <div class="flex-1 p-4 min-h-[220px] flex flex-col overflow-hidden">
+            <div class="text-[12px] font-bold text-slate-400 mb-3 flex items-center gap-1.5 shrink-0">
+              <i data-lucide="list-tree" class="w-3.5 h-3.5"></i> 활동 타임라인
             </div>
-            <div id="timeline-list" class="flex flex-col"></div>
+            <div id="timeline-list" class="flex flex-col flex-1 overflow-y-auto custom-scroll pr-1"></div>
           </div>
+
+
         </div>
       </div>
     </div>
@@ -393,20 +465,76 @@
         </div>
       </div>
 
-      <!-- Main Statistics Grid -->
-      <div class="grid grid-cols-2 gap-6">
+      <!-- Main Statistics Grid (상단 3열: 정적 통계) -->
+      <div class="grid grid-cols-3 gap-6">
+        <!-- 1st Column: Heatmap -->
         <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
           <h3 class="text-sm font-black text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="layout-grid" class="w-4 h-4 text-teal-500"></i> 활동 히트맵</h3>
           <div id="stats-heatmap" class="grid grid-cols-7 gap-2"></div>
         </div>
+
+        <!-- 2nd Column: Rhythm & Golden Time -->
+        <div class="flex flex-col gap-6">
+          <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-sm font-black text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> 요일별 활동 리듬</h3>
+            <div id="stats-weekly-rhythm" class="flex items-end justify-between h-24 px-2"></div>
+          </div>
+          <!-- Golden Time Card -->
+          <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-sm font-black text-slate-300 mb-4 flex items-center gap-2">
+              <i data-lucide="timer" class="w-4 h-4 text-emerald-400"></i> 나의 모험 골든 타임
+            </h3>
+            <div id="stats-golden-time-insight" class="text-[11px] text-slate-400 font-bold italic mb-4 min-h-[16px] leading-relaxed">활동 분석 중...</div>
+            <div class="flex flex-col gap-3">
+              <!-- Morning -->
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>🌅 아침/오전 (06-12시)</span>
+                  <span id="golden-time-morning-pct">0%</span>
+                </div>
+                <div class="w-full bg-slate-950/40 rounded-full h-1.5 overflow-hidden">
+                  <div id="golden-time-morning-bar" class="bg-teal-500/80 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+              <!-- Afternoon -->
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>☀️ 오후 (12-18시)</span>
+                  <span id="golden-time-afternoon-pct">0%</span>
+                </div>
+                <div class="w-full bg-slate-950/40 rounded-full h-1.5 overflow-hidden">
+                  <div id="golden-time-afternoon-bar" class="bg-blue-500/80 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+              <!-- Evening -->
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>🌙 저녁/밤 (18-24시)</span>
+                  <span id="golden-time-evening-pct">0%</span>
+                </div>
+                <div class="w-full bg-slate-950/40 rounded-full h-1.5 overflow-hidden">
+                  <div id="golden-time-evening-bar" class="bg-purple-500/80 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+              <!-- Night -->
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>🌌 새벽/심야 (00-06시)</span>
+                  <span id="golden-time-night-pct">0%</span>
+                </div>
+                <div class="w-full bg-slate-950/40 rounded-full h-1.5 overflow-hidden">
+                  <div id="golden-time-night-bar" class="bg-slate-500/80 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3rd Column: Top Bosses & Weekly Summary -->
         <div class="flex flex-col gap-6">
           <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
             <h3 class="text-sm font-black text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i> 최애 보스 Top 3</h3>
             <div id="stats-top-bosses" class="flex flex-col gap-5"></div>
-          </div>
-          <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
-            <h3 class="text-sm font-black text-slate-300 mb-6 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> 요일별 활동 리듬</h3>
-            <div id="stats-weekly-rhythm" class="flex items-end justify-between h-24 px-2"></div>
           </div>
           <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6">
             <h3 class="text-sm font-black text-slate-300 mb-4 flex items-center gap-2"><i data-lucide="gem" class="w-4 h-4 text-orange-500"></i> 주차별 수익 요약</h3>
@@ -422,6 +550,31 @@
           <div><div class="text-xs font-bold text-orange-400 mb-0.5">이번 달 총 수익</div><div id="stats-total-seed" class="text-xl font-black text-white">0 Seed</div></div>
         </div>
         <div id="stats-insight-text" class="text-sm font-medium text-slate-400 italic">"부지런한 모험가에게 행운이 따릅니다!"</div>
+      </div>
+
+      <!-- Monthly Accumulated Lists (중단 2열: 동적 리스트) -->
+      <div class="grid grid-cols-2 gap-6 mt-6">
+        <!-- Monthly Loots Card -->
+        <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6 flex flex-col h-[320px]">
+          <h3 class="text-sm font-black text-slate-300 mb-4 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i> 이번 달 누적 득템 리스트
+            </span>
+            <span id="monthly-loot-badge" class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] text-amber-300 font-mono">0개</span>
+          </h3>
+          <div id="monthly-loot-list" class="flex-1 overflow-y-auto custom-scroll pr-1 text-xs flex flex-col gap-1.5"></div>
+        </div>
+
+        <!-- Monthly Seeds Card -->
+        <div class="bg-slate-800/20 border border-slate-800 rounded-2xl p-6 flex flex-col h-[320px]">
+          <h3 class="text-sm font-black text-slate-300 mb-4 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <i data-lucide="gem" class="w-4 h-4 text-orange-400"></i> 이번 달 누적 수익 리스트
+            </span>
+            <span id="monthly-seed-badge" class="bg-orange-500/20 px-2 py-0.5 rounded text-[10px] text-orange-300 font-mono">0 Seed</span>
+          </h3>
+          <div id="monthly-seed-list" class="flex-1 overflow-y-auto custom-scroll pr-1 text-xs flex flex-col gap-1.5"></div>
+        </div>
       </div>
 
       <!-- Revenue Chart -->
@@ -440,6 +593,7 @@
     let currentDate = new Date();
     let selectedDateStr = null;
     let monthlyData = [];
+    let currentSummary = null;
     let currentTab = 'log';
     let revenueChart = null;
 
@@ -447,6 +601,51 @@
       0: 'assets/monster/1step.png', 1: 'assets/monster/2step.png',
       2: 'assets/monster/3step.png', 3: 'assets/monster/4step.png',
       4: 'assets/monster/5step.png', 5: 'assets/monster/6step.png'
+    };
+
+
+
+    /** 득템 로그 파싱 헬퍼 함수 */
+    function parseLootItem(content) {
+      const clean = content.replace('[득템] ', '').trim();
+      
+      let name = clean;
+      let count = '';
+      
+      // 1단계: 채팅 자동 수집 로그 매칭 (예: "[태양의 눈물]을(를) [2]개 획득하였습니다.")
+      const chatLootMatch = clean.match(/^\[(.*?)\]을\(를\)\s*\[(\d+)\]개\s*획득하였습니다/);
+      if (chatLootMatch) {
+        name = chatLootMatch[1].trim();
+        count = chatLootMatch[2];
+      } else {
+        // 2단계: 수동 및 트래커 입력 로그 매칭 (예: "경험의 정수 5개", "강화 주문서")
+        const manualLootMatch = clean.match(/^(.*?)\s*(\d+개)?$/);
+        if (manualLootMatch) {
+          name = manualLootMatch[1].trim();
+          count = manualLootMatch[2] ? manualLootMatch[2].replace('개', '') : '';
+        }
+      }
+      
+      let img = '';
+      if (name === '경험의 정수') {
+        img = 'assets/img/경험의정수.png';
+      } else {
+        img = `assets/items/${name}.png`;
+      }
+      return { name, count, img };
+    }
+
+    /** 득템 이미지 로드 실패 시 폴백 아이콘 처리 */
+    window.handleLootImageError = function(imgEl, icon, color) {
+      const parent = imgEl.parentNode;
+      if (!parent) return;
+      
+      const iEl = document.createElement('i');
+      iEl.setAttribute('data-lucide', icon);
+      iEl.className = `w-3 h-3 text-${color} absolute -left-0.5 top-[1px]`;
+      
+      parent.replaceChild(iEl, imgEl);
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
     /** 전역 함수: 자동 그룹 접기/펴기 */
@@ -537,7 +736,7 @@
         const dayData = stats.heatmap.find(h => h.date === dStr);
         const count = dayData ? dayData.count : 0;
         let colorClass = count > 15 ? 'bg-teal-400' : (count > 8 ? 'bg-teal-500/80' : (count > 3 ? 'bg-teal-700/60' : (count > 0 ? 'bg-teal-900/40' : 'bg-slate-800')));
-        heatmapEl.innerHTML += `<div class="aspect-square rounded-sm ${colorClass} transition-all hover:ring-1 hover:ring-teal-300" title="${dStr}: ${count}개 활동"></div>`;
+        heatmapEl.innerHTML += `<div class="aspect-square rounded-sm ${colorClass} transition-all hover:ring-1 hover:ring-teal-300 cursor-help" data-tooltip="${dStr}: ${count}개 활동"></div>`;
       }
 
       const bossEl = document.getElementById('stats-top-bosses');
@@ -554,10 +753,13 @@
       const rhythmEl = document.getElementById('stats-weekly-rhythm');
       rhythmEl.innerHTML = '';
       const maxRhythm = Math.max(...stats.weeklyActivity, 1);
+      const WEEKS = ['월', '화', '수', '목', '금', '토', '일'];
       stats.weeklyActivity.forEach((val, idx) => {
         const height = Math.max(Math.round((val / maxRhythm) * 100), 5);
-        const color = val === maxRhythm && val > 0 ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]' : 'bg-slate-700';
-        rhythmEl.innerHTML += `<div class="w-6 ${color} rounded-t-md transition-all duration-500" style="height: ${height}%" title="${val}개"></div>`;
+        const color = val === maxRhythm && val > 0 
+          ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)] hover:bg-blue-300' 
+          : 'bg-slate-700 hover:bg-slate-600';
+        rhythmEl.innerHTML += `<div class="w-6 ${color} rounded-t-md transition-all duration-300 cursor-help" style="height: ${height}%" data-tooltip="${WEEKS[idx]}요일: ${val}개 활동"></div>`;
       });
 
       // 주차별 수익 요약 렌더링
@@ -574,6 +776,42 @@
         });
       } else {
         weeklySeedEl.innerHTML = '<div class="text-xs text-slate-600 italic py-2">수익 기록이 없습니다.</div>';
+      }
+
+      // 나의 모험 골든 타임 렌더링
+      const goldenTimeEl = document.getElementById('stats-golden-time-insight');
+      const hourly = stats.hourlyActivity || [0, 0, 0, 0];
+      const totalHours = hourly.reduce((a, b) => a + b, 0);
+      
+      const pctMorning = totalHours > 0 ? Math.round((hourly[0] / totalHours) * 100) : 0;
+      const pctAfternoon = totalHours > 0 ? Math.round((hourly[1] / totalHours) * 100) : 0;
+      const pctEvening = totalHours > 0 ? Math.round((hourly[2] / totalHours) * 100) : 0;
+      const pctNight = totalHours > 0 ? Math.round((hourly[3] / totalHours) * 100) : 0;
+      
+      document.getElementById('golden-time-morning-pct').innerText = `${pctMorning}%`;
+      document.getElementById('golden-time-morning-bar').style.width = `${pctMorning}%`;
+      
+      document.getElementById('golden-time-afternoon-pct').innerText = `${pctAfternoon}%`;
+      document.getElementById('golden-time-afternoon-bar').style.width = `${pctAfternoon}%`;
+      
+      document.getElementById('golden-time-evening-pct').innerText = `${pctEvening}%`;
+      document.getElementById('golden-time-evening-bar').style.width = `${pctEvening}%`;
+      
+      document.getElementById('golden-time-night-pct').innerText = `${pctNight}%`;
+      document.getElementById('golden-time-night-bar').style.width = `${pctNight}%`;
+      
+      if (totalHours > 0) {
+        const maxVal = Math.max(...hourly);
+        const maxIdx = hourly.indexOf(maxVal);
+        let zoneStr = '';
+        if (maxIdx === 0) zoneStr = '상쾌한 아침과 오전 (06:00 ~ 12:00)';
+        else if (maxIdx === 1) zoneStr = '나른한 오후 시간대 (12:00 ~ 18:00)';
+        else if (maxIdx === 2) zoneStr = '이른 저녁과 밤 시간대 (18:00 ~ 24:00)';
+        else zoneStr = '고요한 새벽과 심야 (00:00 ~ 06:00)';
+        
+        goldenTimeEl.innerText = `"${zoneStr}"에 가장 활발히 모험을 펼치셨습니다.`;
+      } else {
+        goldenTimeEl.innerText = '"기록된 활동이 없어 골든 타임을 분석할 수 없습니다."';
       }
 
       renderRevenueChart(await window.electronAPI.diaryGetMonthlyRevenue(yearMonth));
@@ -613,17 +851,48 @@
 
       try {
         monthlyData = await window.electronAPI.diaryGetByMonth(yearMonth);
-        const summary = await window.electronAPI.diaryGetMonthlySummary(yearMonth);
+        currentSummary = await window.electronAPI.diaryGetMonthlySummary(yearMonth);
 
-        document.getElementById('monthly-total-seed-badge').innerText = formatSeed(summary.totalSeed);
-        document.getElementById('monthly-total-loot-badge').innerText = summary.totalLoots.toLocaleString() + '개';
+        document.getElementById('monthly-total-seed-badge').innerText = formatSeed(currentSummary.totalSeed);
+        document.getElementById('monthly-total-loot-badge').innerText = currentSummary.totalLoots.toLocaleString() + '개';
+
+        // 아코디언 내부 뱃지 갱신
+        const accLootBadge = document.getElementById('monthly-loot-badge');
+        const accSeedBadge = document.getElementById('monthly-seed-badge');
+        if (accLootBadge) accLootBadge.innerText = currentSummary.totalLoots.toLocaleString() + '개';
+        if (accSeedBadge) accSeedBadge.innerText = formatSeed(currentSummary.totalSeed).replace(' 시드', ' Seed');
 
         const lootListEl = document.getElementById('monthly-loot-list');
-        lootListEl.innerHTML = (summary.lootList || []).map(item => `<div class="flex items-baseline justify-between py-2 border-b border-amber-500/5 last:border-0 gap-2"><span class="text-[13px] font-mono text-slate-500 shrink-0">${item.date.slice(5)}</span><span class="text-[13px] font-black text-amber-200/90 truncate flex-1 text-right">${item.content.replace('[득템] ', '')}</span></div>`).join('') || '<div class="text-[13px] text-slate-600 italic py-6 text-center">기록 없음</div>';
+        // 일자별/아이템명별로 그룹화하여 수량 누적 합산
+        const monthlyLootGroup = {};
+        (currentSummary.lootList || []).forEach(item => {
+          const parsed = parseLootItem(item.content);
+          const amt = parsed.count ? parseInt(parsed.count, 10) : 1;
+          const key = `${item.date}|${parsed.name}`;
+          if (monthlyLootGroup[key]) {
+            monthlyLootGroup[key].count += amt;
+          } else {
+            monthlyLootGroup[key] = { date: item.date, name: parsed.name, count: amt, img: parsed.img };
+          }
+        });
+
+        lootListEl.innerHTML = Object.values(monthlyLootGroup).sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name)).map(item => {
+          const imgHtml = item.img ? `<img src="${item.img}" class="w-3.5 h-3.5 object-contain select-none shrink-0" onerror="this.style.display='none'">` : '';
+          const displayCount = item.count > 1 ? ` <span class="text-slate-400 font-bold ml-1 font-mono">${item.count}개</span>` : '';
+          return `
+            <div class="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0 gap-2">
+              <span class="text-[11px] font-mono text-slate-500 shrink-0">${item.date.slice(5)}</span>
+              <div class="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
+                ${imgHtml}
+                <span class="text-xs font-bold text-amber-200/90 truncate">${item.name}</span>
+                ${displayCount}
+              </div>
+            </div>`;
+        }).join('') || '<div class="text-xs text-slate-600 italic py-6 text-center">기록 없음</div>';
 
         const seedListEl = document.getElementById('monthly-seed-list');
-        const manualSeeds = (summary.seedList || []).filter(s => !s.content.includes('[자동]'));
-        const autoSeeds = (summary.seedList || []).filter(s => s.content.includes('[자동]'));
+        const manualSeeds = (currentSummary.seedList || []).filter(s => !s.content.includes('[자동]'));
+        const autoSeeds = (currentSummary.seedList || []).filter(s => s.content.includes('[자동]'));
 
         const autoGroups = {};
         autoSeeds.forEach(s => {
@@ -684,7 +953,56 @@
         const div = document.createElement('div');
         div.className = `calendar-cell ${isOther ? 'other-month' : ''} level-${level} ${dStr === todayStr ? 'today' : ''} ${dStr === selectedDateStr ? 'active' : ''}`;
         div.onclick = () => selectDate(dStr, div);
-        div.innerHTML = `<div class="date-num">${d}</div><div class="monster-icon">${score > 0 ? `<img src="${MONSTERS[level]}">` : ''}</div>`;
+
+        let cellHtml = `
+          <div class="flex justify-between items-center shrink-0">
+            <span class="date-num">${d}</span>
+            <div class="monster-icon">${score > 0 ? `<img src="${MONSTERS[level]}">` : ''}</div>
+          </div>
+        `;
+
+        let lootStackHtml = `<div class="loot-stack custom-scroll">`;
+        if (currentSummary && currentSummary.lootList) {
+          const dayLoots = currentSummary.lootList.filter(l => l.date === dStr);
+          
+          // 동일 아이템 이름별로 수량 누적 집계
+          const lootMap = {};
+          dayLoots.forEach(loot => {
+            const parsed = parseLootItem(loot.content);
+            const amt = parsed.count ? parseInt(parsed.count, 10) : 1;
+            if (lootMap[parsed.name]) {
+              lootMap[parsed.name].count += amt;
+            } else {
+              lootMap[parsed.name] = { count: amt, img: parsed.img };
+            }
+          });
+
+          Object.entries(lootMap).forEach(([name, info]) => {
+            const imgHtml = info.img ? `<img src="${info.img}" class="w-3.5 h-3.5 object-contain shrink-0 select-none" onerror="this.style.display='none'">` : '';
+            const countStr = info.count > 1 ? ` <span class="text-white/60 ml-0.5">${info.count}</span>` : '';
+            
+            let badgeBg = 'bg-amber-500/10 border border-amber-500/20 text-amber-300';
+            if (name === '경험의 정수') {
+              badgeBg = 'bg-amber-500/8 border border-amber-500/20 text-amber-300';
+            } else if (name.includes('심장') || name.includes('기운')) {
+              badgeBg = 'bg-red-500/15 border border-red-500/25 text-red-300';
+            } else if (name.includes('결정체')) {
+              badgeBg = 'bg-purple-500/15 border border-purple-500/25 text-purple-300';
+            } else {
+              badgeBg = 'bg-slate-500/10 border border-slate-500/20 text-slate-300';
+            }
+            
+            lootStackHtml += `
+              <div class="loot-badge ${badgeBg} truncate shadow-sm" title="${name}${info.count > 1 ? ' ' + info.count + '개' : ''}">
+                ${imgHtml}
+                <span class="truncate">${name}${countStr}</span>
+              </div>
+            `;
+          });
+        }
+        lootStackHtml += `</div>`;
+
+        div.innerHTML = cellHtml + lootStackHtml;
         grid.appendChild(div);
       };
 
@@ -699,8 +1017,7 @@
           const myWeekDates = [...currentWeekDates];
           const myWeekIdx = weekIndex++;
           const myHwDone = weekWDone, myHwTotal = weekWTotal;
-          wDiv.className = 'calendar-cell empty flex flex-col items-center justify-center cursor-pointer hover:bg-purple-500/10 transition-colors'; 
-          wDiv.style.background = 'rgba(168, 85, 247, 0.05)'; wDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
+          wDiv.className = 'calendar-cell week flex flex-col items-center justify-center cursor-pointer transition-all'; 
           wDiv.innerHTML = myHwTotal > 0 ? `<div class="text-[10px] font-black text-center ${myHwDone === myHwTotal ? 'text-purple-400' : 'text-slate-400'}">주간<br/><span class="text-xs">${myHwDone}/${myHwTotal}</span></div>` : `<div class="text-[10px] font-bold text-slate-600">주간<br/>상세</div>`;
           wDiv.onclick = (e) => { e.stopPropagation(); selectWeek(myWeekIdx, myWeekDates, wDiv, myHwDone, myHwTotal); };
           grid.appendChild(wDiv); 
@@ -840,7 +1157,19 @@
         } else {
           let icon = log.type === 'boss' ? 'sword' : (log.type === 'calc' ? 'gem' : (log.type === 'homework' ? 'check-square' : 'sparkles'));
           let color = log.type === 'boss' ? 'red-400' : (log.type === 'calc' ? 'orange-400' : (log.type === 'homework' ? 'blue-400' : 'amber-400'));
-          list.innerHTML += `<div class="timeline-item flex items-start pr-2"><i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i><div class="flex items-baseline gap-2 pl-1 flex-1 pt-[2px]"><span class="text-[10px] font-bold text-slate-500 font-mono w-24 shrink-0">${log.displayTime}</span><span class="text-xs font-medium text-slate-200 leading-snug">${formatLogContent(log.content)}</span></div></div>`;
+          
+          let iconHtml = '';
+          if (log.type === 'loot') {
+            const parsed = parseLootItem(log.content);
+            if (parsed.img) {
+              iconHtml = `<img src="${parsed.img}" class="w-3.5 h-3.5 object-contain absolute -left-0.5 top-[2px] select-none" onerror="handleLootImageError(this, '${icon}', '${color}')">`;
+            } else {
+              iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+            }
+          } else {
+            iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+          }
+          list.innerHTML += `<div class="timeline-item flex items-start pr-2">${iconHtml}<div class="flex items-baseline gap-2 pl-1 flex-1 pt-[2px]"><span class="text-[10px] font-bold text-slate-500 font-mono w-24 shrink-0">${log.displayTime}</span><span class="text-xs font-medium text-slate-200 leading-snug">${formatLogContent(log.content)}</span></div></div>`;
         }
       });
       lucide.createIcons();
@@ -951,11 +1280,18 @@
           let icon = log.type === 'boss' ? 'sword' : (log.type === 'calc' ? 'gem' : (log.type === 'homework' ? 'check-square' : 'sparkles'));
           let color = log.type === 'boss' ? 'red-400' : (log.type === 'calc' ? 'orange-400' : (log.type === 'homework' ? 'blue-400' : 'amber-400'));
           const isEssence = log.content.includes('경험의 정수');
-          const del = ((log.type === 'calc' || log.type === 'loot') && !isEssence) ? `<button onclick="deleteTimelineItem('${log.type}', '${log.content.replace(/'/g, "\\'")}')" class="h-[20px] ml-2 p-1 text-slate-500 hover:text-red-400 bg-slate-800/50 rounded transition-colors shrink-0 -mt-0.5"><i data-lucide="x" class="w-3 h-3"></i></button>` : '';
+          const del = ((log.type === 'calc' || log.type === 'loot') && !isEssence) ? `<button onclick="deleteTimelineItem('${log.type}', '${log.content.replace(/'/g, "\\'")}')" class="w-5 h-5 flex items-center justify-center ml-2 text-slate-500 hover:text-red-400 bg-slate-800/50 rounded transition-colors shrink-0"><i data-lucide="x" class="w-3 h-3"></i></button>` : '';
           
           let iconHtml = '';
-          if (isEssence) {
-            iconHtml = `<img src="assets/img/경험의정수.png" class="w-3 h-3 object-contain absolute -left-0.5 top-[2px] select-none">`;
+          if (log.type === 'loot') {
+            const parsed = parseLootItem(log.content);
+            if (parsed.img) {
+              iconHtml = `<img src="${parsed.img}" class="w-3.5 h-3.5 object-contain absolute -left-0.5 top-[2px] select-none" onerror="handleLootImageError(this, '${icon}', '${color}')">`;
+            } else {
+              iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+            }
+          } else if (isEssence) {
+            iconHtml = `<img src="assets/img/경험의정수.png" class="w-3.5 h-3.5 object-contain absolute -left-0.5 top-[2px] select-none">`;
           } else {
             iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
           }

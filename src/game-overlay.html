@@ -1335,12 +1335,15 @@
 
   <!-- 경험의 정수 버프 경고 알람 -->
   <div id="essence-alert" class="essence-alert-overlay">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="essence-alert-icon">
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-    </svg>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="essence-alert-icon">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </svg>
+      <img src="assets/img/경험의정수.png" style="width:40px; height:40px; object-fit:contain; filter: drop-shadow(0 0 6px rgba(239,68,68,0.45));">
+    </div>
     <div class="essence-alert-title">경험의 정수 버프 확인!</div>
     <div class="essence-alert-sub">경험치 100억 달성 — 자동 교환 버프가 꺼져 있을 수 있습니다</div>
   </div>
@@ -2075,9 +2078,23 @@
     console.log(`testAbyssApostle()`);
     console.log('%c4. 로카고스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
     console.log(`testLokagos('EXCLUDE', '알파') // EXCLUDE(대피), TARGET(폭격) 및 알파, 브라보, 찰리, 델타 중 택1`);
+    console.log('%c5. 경험의 정수 버프 경고 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testEssenceAlert()`);
     console.log('----------------------------------------------------');
 
     // [DevTools 전용 글로벌 테스트 함수]
+    window.testEssenceAlert = function() {
+      const alertEl = document.getElementById('essence-alert');
+      if (!alertEl) {
+        console.error('essence-alert 엘리먼트를 찾을 수 없습니다.');
+        return;
+      }
+      alertEl.classList.remove('show');
+      void alertEl.offsetWidth;
+      alertEl.classList.add('show');
+      console.log('✅ 경험의 정수 버프 경고 테스트 실행');
+    };
+
     window.testLokagos = function(type = 'EXCLUDE', zone = '알파') {
       const validTypes = ['EXCLUDE', 'TARGET'];
       const validZones = ['알파', '브라보', '찰리', '델타'];

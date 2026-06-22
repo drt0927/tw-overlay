@@ -164,11 +164,7 @@ class ChatLogProcessor {
         const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
         const amountMatch = data.message.match(/(\d+)개/);
         const amount = amountMatch ? parseInt(amountMatch[1], 10) : 1;
-        // 경험의 정수 교환 기록은 xpTracker에서 직접 계산해 처리하므로 중복 방지를 위해 스킵합니다.
-        const isEssence = data.message.includes('경험의 정수') || data.message.includes('경험의정수');
-        if (!isEssence) {
-          diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
-        }
+        diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
         this.sendNotification('아이템 획득 알림', data.message);
       }
 
@@ -401,6 +397,16 @@ class ChatLogProcessor {
               volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70
             });
           }
+          if (cfg.sidebarPosition === 'dock') {
+            const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+            if (gameOverlay) {
+              gameOverlay.webContents.send('play-sound', {
+                label: '지정 단어 알림',
+                soundFile: cfg.wordAlarmSound,
+                volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70
+              });
+            }
+          }
         }
       }
     });
@@ -448,6 +454,16 @@ class ChatLogProcessor {
             soundFile: cfg.waveMonsterWarningSound,
             volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70
           });
+        }
+        if (cfg.sidebarPosition === 'dock') {
+          const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+          if (gameOverlay) {
+            gameOverlay.webContents.send('play-sound', {
+              label: '몬스터 웨이브 종료 대기 알림',
+              soundFile: cfg.waveMonsterWarningSound,
+              volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70
+            });
+          }
         }
       }
     });

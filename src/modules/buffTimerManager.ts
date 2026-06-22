@@ -307,6 +307,15 @@ class BuffTimerManager {
       try { return w.webContents.getURL().includes('index.html'); } catch { return false; }
     });
     if (main) main.webContents.send(channel, data);
+
+    const cfg = config.load();
+    if (cfg.sidebarPosition === 'dock') {
+      const overlay = wins.find(w => {
+        if (w.isDestroyed()) return false;
+        try { return w.webContents.getURL().includes('game-overlay.html'); } catch { return false; }
+      });
+      if (overlay) overlay.webContents.send(channel, data);
+    }
   }
 
   public getActiveBuffs(): ActiveBuff[] {

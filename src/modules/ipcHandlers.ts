@@ -35,6 +35,18 @@ export function register(): void {
     if (win) win.setIgnoreMouseEvents(ignore, options || {});
   });
 
+  ipcMain.on('welcome-guide-close', () => {
+    config.save({ hasSeenWelcomeGuide: true });
+    const guideWin = wm.getWelcomeGuideWindow();
+    if (guideWin && !guideWin.isDestroyed()) {
+      guideWin.close();
+    }
+  });
+
+  ipcMain.on('welcome-guide-open', () => {
+    wm.createWelcomeGuideWindow();
+  });
+
   ipcMain.on('trigger-jellyppy-rain-global', () => {
     let overlayWin = wm.getGameOverlayWindow();
     if (!overlayWin || overlayWin.isDestroyed()) {

@@ -32,6 +32,8 @@
 
     .calendar-cell {
       min-height: 120px;
+      min-width: 0;
+      overflow: hidden;
       border-radius: 12px;
       background: rgba(30, 41, 59, 0.35);
       border: 1px solid rgba(51, 65, 85, 0.45);
@@ -158,6 +160,7 @@
       border-radius: 6px;
       padding: 2px 4px;
       max-width: 100%;
+      min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -166,7 +169,7 @@
     /* Timeline */
     .timeline-item {
       position: relative;
-      padding-left: 20px;
+      padding-left: 24px;
       margin-bottom: 12px;
     }
 
@@ -187,7 +190,7 @@
     .timeline-item::before {
       content: '';
       position: absolute;
-      left: 5px;
+      left: 8px;
       top: 6px;
       bottom: -18px;
       width: 2px;
@@ -283,6 +286,9 @@
 </head>
 
 <body class="bg-[#0f172a] text-slate-200 w-full h-screen border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl flex flex-col">
+  <!-- 글로벌 툴팁 (이쁜 툴팁 제공용) -->
+  <div id="global-tooltip" class="fixed hidden z-[99999] px-2.5 py-1.5 bg-slate-900/95 border border-white/10 text-slate-200 text-[10px] font-bold rounded-lg pointer-events-none transition-opacity duration-150 shadow-2xl opacity-0"></div>
+
   <!-- Header -->
   <div class="win-header">
     <div class="win-title-area">
@@ -596,6 +602,16 @@
     let currentSummary = null;
     let currentTab = 'log';
     let revenueChart = null;
+    let allItems = [];
+
+    async function loadItemsData() {
+      try {
+        const response = await fetch('assets/data/contents_items.json');
+        allItems = await response.json();
+      } catch (e) {
+        console.error('Failed to load contents items:', e);
+      }
+    }
 
     const MONSTERS = {
       0: 'assets/monster/1step.png', 1: 'assets/monster/2step.png',
@@ -630,7 +646,13 @@
       if (name === '경험의 정수') {
         img = 'assets/img/경험의정수.png';
       } else {
-        img = `assets/items/${name}.png`;
+        const matched = allItems.find(it => it.name === name);
+        if (matched) {
+          img = `assets/items/${matched.image}`;
+        } else {
+          const cleanName = name.replace(/[^a-zA-Z0-9가-힣]/g, '');
+          img = `assets/items/${cleanName}.png`;
+        }
       }
       return { name, count, img };
     }
@@ -642,7 +664,7 @@
       
       const iEl = document.createElement('i');
       iEl.setAttribute('data-lucide', icon);
-      iEl.className = `w-3 h-3 text-${color} absolute -left-0.5 top-[1px]`;
+      iEl.className = `w-3 h-3 text-${color} absolute left-0.5 top-[1px]`;
       
       parent.replaceChild(iEl, imgEl);
       if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -978,8 +1000,8 @@
           });
 
           Object.entries(lootMap).forEach(([name, info]) => {
-            const imgHtml = info.img ? `<img src="${info.img}" class="w-3.5 h-3.5 object-contain shrink-0 select-none" onerror="this.style.display='none'">` : '';
-            const countStr = info.count > 1 ? ` <span class="text-white/60 ml-0.5">${info.count}</span>` : '';
+            const imgHtml = info.img ? `<img src="${info.img}" class="w-3.5 h-3.5 object-contain shrink-0 select-none pointer-events-none" onerror="this.style.display='none'">` : '';
+            const countStr = info.count > 1 ? ` <span class="text-white/60 ml-0.5 pointer-events-none">${info.count}</span>` : '';
             
             let badgeBg = 'bg-amber-500/10 border border-amber-500/20 text-amber-300';
             if (name === '경험의 정수') {
@@ -993,9 +1015,9 @@
             }
             
             lootStackHtml += `
-              <div class="loot-badge ${badgeBg} truncate shadow-sm" title="${name}${info.count > 1 ? ' ' + info.count + '개' : ''}">
+              <div class="loot-badge ${badgeBg} truncate shadow-sm cursor-help" data-diary-tooltip="${name}${info.count > 1 ? ' ' + info.count + '개' : ''}">
                 ${imgHtml}
-                <span class="truncate">${name}${countStr}</span>
+                <span class="truncate pointer-events-none">${name}${countStr}</span>
               </div>
             `;
           });
@@ -1153,7 +1175,7 @@
       groupedLogs.forEach((log, gIdx) => {
         if (log.isAutoGroup) {
           const gid = `timeline-auto-week-${gIdx}`;
-          list.innerHTML += `<div class="timeline-item flex flex-col pr-2"><i data-lucide="gem" class="w-3 h-3 text-orange-400/50 absolute -left-0.5 top-[5px]"></i><div onclick="toggleAutoGroup('${gid}')" class="flex items-baseline gap-2 pl-1 pt-[2px] cursor-pointer hover:bg-white/5 rounded px-1 transition-colors"><span class="text-[10px] font-bold text-slate-600 font-mono w-24 shrink-0">${log.startTime}~${log.endTime}</span><span class="text-[11px] font-bold text-slate-500 shrink-0">[Auto]</span><span class="text-[11px] font-medium text-slate-400 flex-1">수익 합계 (${log.items.length}건)</span><span class="text-[11px] font-black text-orange-400/70">${formatSeed(log.totalAmount).replace(' 시드', '')}</span><i data-lucide="chevron-down" id="${gid}-icon" class="w-2.5 h-2.5 text-slate-600 rotate-icon"></i></div><div id="${gid}" class="auto-group-content ml-6 mt-1 bg-black/20 rounded border-l border-orange-500/20">${log.items.map(it => `<div class="flex justify-between py-1 px-2 text-[10px]"><span class="text-slate-500">${it.displayTime.split(' ')[1]}</span><span class="text-slate-400 truncate flex-1 px-2">${it.content.split('(')[0].replace('[자동] ', '').trim()}</span><span class="text-orange-300/50 font-mono">${(it.content.match(/\(([^)]+)\)/) || [])[1] || ''}</span></div>`).join('')}</div></div>`;
+          list.innerHTML += `<div class="timeline-item flex flex-col pr-2"><i data-lucide="gem" class="w-3 h-3 text-orange-400/50 absolute left-0.5 top-[5px]"></i><div onclick="toggleAutoGroup('${gid}')" class="flex items-baseline gap-2 pl-1 pt-[2px] cursor-pointer hover:bg-white/5 rounded px-1 transition-colors"><span class="text-[10px] font-bold text-slate-600 font-mono w-24 shrink-0">${log.startTime}~${log.endTime}</span><span class="text-[11px] font-bold text-slate-500 shrink-0">[Auto]</span><span class="text-[11px] font-medium text-slate-400 flex-1">수익 합계 (${log.items.length}건)</span><span class="text-[11px] font-black text-orange-400/70">${formatSeed(log.totalAmount).replace(' 시드', '')}</span><i data-lucide="chevron-down" id="${gid}-icon" class="w-2.5 h-2.5 text-slate-600 rotate-icon"></i></div><div id="${gid}" class="auto-group-content ml-6 mt-1 bg-black/20 rounded border-l border-orange-500/20">${log.items.map(it => `<div class="flex justify-between py-1 px-2 text-[10px]"><span class="text-slate-500">${it.displayTime.split(' ')[1]}</span><span class="text-slate-400 truncate flex-1 px-2">${it.content.split('(')[0].replace('[자동] ', '').trim()}</span><span class="text-orange-300/50 font-mono">${(it.content.match(/\(([^)]+)\)/) || [])[1] || ''}</span></div>`).join('')}</div></div>`;
         } else {
           let icon = log.type === 'boss' ? 'sword' : (log.type === 'calc' ? 'gem' : (log.type === 'homework' ? 'check-square' : 'sparkles'));
           let color = log.type === 'boss' ? 'red-400' : (log.type === 'calc' ? 'orange-400' : (log.type === 'homework' ? 'blue-400' : 'amber-400'));
@@ -1162,12 +1184,12 @@
           if (log.type === 'loot') {
             const parsed = parseLootItem(log.content);
             if (parsed.img) {
-              iconHtml = `<img src="${parsed.img}" class="w-3.5 h-3.5 object-contain absolute -left-0.5 top-[2px] select-none" onerror="handleLootImageError(this, '${icon}', '${color}')">`;
+              iconHtml = `<img src="${parsed.img}" class="w-3.5 h-3.5 object-contain absolute left-[1px] top-[2px] select-none" onerror="handleLootImageError(this, '${icon}', '${color}')">`;
             } else {
-              iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+              iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute left-0.5 top-[1px]"></i>`;
             }
           } else {
-            iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+            iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute left-0.5 top-[1px]"></i>`;
           }
           list.innerHTML += `<div class="timeline-item flex items-start pr-2">${iconHtml}<div class="flex items-baseline gap-2 pl-1 flex-1 pt-[2px]"><span class="text-[10px] font-bold text-slate-500 font-mono w-24 shrink-0">${log.displayTime}</span><span class="text-xs font-medium text-slate-200 leading-snug">${formatLogContent(log.content)}</span></div></div>`;
         }
@@ -1275,7 +1297,7 @@
       groupedLogs.forEach((log, gIdx) => {
         if (log.isAutoGroup) {
           const gid = `timeline-auto-${gIdx}`;
-          list.innerHTML += `<div class="timeline-item flex flex-col pr-2"><i data-lucide="gem" class="w-3 h-3 text-orange-400/50 absolute -left-0.5 top-[5px]"></i><div onclick="toggleAutoGroup('${gid}')" class="flex items-baseline gap-2 pl-1 pt-[2px] cursor-pointer hover:bg-white/5 rounded px-1 transition-colors"><span class="text-[11px] font-bold text-slate-600 font-mono w-20 shrink-0">${log.startTime}~${log.endTime}</span><span class="text-[11px] font-bold text-slate-500 shrink-0">[Auto]</span><span class="text-[11px] font-medium text-slate-400 flex-1">자동 수익 합계 (${log.items.length}건)</span><span class="text-[11px] font-black text-orange-400/70">${formatSeed(log.totalAmount).replace(' 시드', '')}</span><i data-lucide="chevron-down" id="${gid}-icon" class="w-2.5 h-2.5 text-slate-600 rotate-icon"></i></div><div id="${gid}" class="auto-group-content ml-6 mt-1 bg-black/20 rounded border-l border-orange-500/20">${log.items.map(it => `<div class="flex justify-between py-1 px-2 text-[10px]"><span class="text-slate-500">${it.time}</span><span class="text-slate-400 truncate flex-1 px-2">${it.content.split('(')[0].replace('[자동] ', '').trim()}</span><span class="text-orange-300/50 font-mono">${(it.content.match(/\(([^)]+)\)/) || [])[1] || ''}</span></div>`).join('')}</div></div>`;
+          list.innerHTML += `<div class="timeline-item flex flex-col pr-2"><i data-lucide="gem" class="w-3 h-3 text-orange-400/50 absolute left-0.5 top-[5px]"></i><div onclick="toggleAutoGroup('${gid}')" class="flex items-baseline gap-2 pl-1 pt-[2px] cursor-pointer hover:bg-white/5 rounded px-1 transition-colors"><span class="text-[11px] font-bold text-slate-600 font-mono w-20 shrink-0">${log.startTime}~${log.endTime}</span><span class="text-[11px] font-bold text-slate-500 shrink-0">[Auto]</span><span class="text-[11px] font-medium text-slate-400 flex-1">자동 수익 합계 (${log.items.length}건)</span><span class="text-[11px] font-black text-orange-400/70">${formatSeed(log.totalAmount).replace(' 시드', '')}</span><i data-lucide="chevron-down" id="${gid}-icon" class="w-2.5 h-2.5 text-slate-600 rotate-icon"></i></div><div id="${gid}" class="auto-group-content ml-6 mt-1 bg-black/20 rounded border-l border-orange-500/20">${log.items.map(it => `<div class="flex justify-between py-1 px-2 text-[10px]"><span class="text-slate-500">${it.time}</span><span class="text-slate-400 truncate flex-1 px-2">${it.content.split('(')[0].replace('[자동] ', '').trim()}</span><span class="text-orange-300/50 font-mono">${(it.content.match(/\(([^)]+)\)/) || [])[1] || ''}</span></div>`).join('')}</div></div>`;
         } else {
           let icon = log.type === 'boss' ? 'sword' : (log.type === 'calc' ? 'gem' : (log.type === 'homework' ? 'check-square' : 'sparkles'));
           let color = log.type === 'boss' ? 'red-400' : (log.type === 'calc' ? 'orange-400' : (log.type === 'homework' ? 'blue-400' : 'amber-400'));
@@ -1286,14 +1308,14 @@
           if (log.type === 'loot') {
             const parsed = parseLootItem(log.content);
             if (parsed.img) {
-              iconHtml = `<img src="${parsed.img}" class="w-3.5 h-3.5 object-contain absolute -left-0.5 top-[2px] select-none" onerror="handleLootImageError(this, '${icon}', '${color}')">`;
+              iconHtml = `<img src="${parsed.img}" class="w-3.5 h-3.5 object-contain absolute left-[1px] top-[2px] select-none" onerror="handleLootImageError(this, '${icon}', '${color}')">`;
             } else {
-              iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+              iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute left-0.5 top-[1px]"></i>`;
             }
           } else if (isEssence) {
-            iconHtml = `<img src="assets/img/경험의정수.png" class="w-3.5 h-3.5 object-contain absolute -left-0.5 top-[2px] select-none">`;
+            iconHtml = `<img src="assets/img/경험의정수.png" class="w-3.5 h-3.5 object-contain absolute left-[1px] top-[2px] select-none">`;
           } else {
-            iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute -left-0.5 top-[1px]"></i>`;
+            iconHtml = `<i data-lucide="${icon}" class="w-3 h-3 text-${color} absolute left-0.5 top-[1px]"></i>`;
           }
 
           list.innerHTML += `<div class="timeline-item flex items-start pr-2">${iconHtml}<div class="flex items-baseline gap-2 pl-1 flex-1 pt-[2px]"><span class="text-[13px] font-bold text-slate-500 font-mono w-10 shrink-0">${log.time}</span><span class="text-xs font-medium text-slate-200 leading-snug">${formatLogContent(log.content)}</span></div>${del}</div>`;
@@ -1340,7 +1362,7 @@
       });
     }
 
-    loadMonthData().then(() => {
+    loadItemsData().then(() => loadMonthData()).then(() => {
       const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
       const cells = document.querySelectorAll('.calendar-cell');
       for (const cell of cells) { if (cell.classList.contains('today')) { selectDate(today, cell); break; } }
@@ -1385,6 +1407,56 @@
       if (typeof refreshIcons === 'function') refreshIcons();
       else if (typeof lucide !== 'undefined') lucide.createIcons();
     }
+
+    // 글로벌 커스텀 툴팁 제어 로직 추가
+    (function() {
+      const tooltipEl = document.getElementById('global-tooltip');
+      if (!tooltipEl) return;
+
+      tooltipEl.addEventListener('transitionend', () => {
+        if (!tooltipEl.classList.contains('opacity-100')) {
+          tooltipEl.classList.add('hidden');
+        }
+      });
+
+      document.body.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-diary-tooltip]');
+        if (!target) return;
+
+        const text = target.getAttribute('data-diary-tooltip');
+        if (!text) return;
+
+        tooltipEl.innerText = text;
+        tooltipEl.classList.remove('hidden');
+        
+        void tooltipEl.offsetWidth;
+        tooltipEl.classList.add('opacity-100');
+
+        const rect = target.getBoundingClientRect();
+        const tooltipRect = tooltipEl.getBoundingClientRect();
+
+        let left = rect.left + (rect.width - tooltipRect.width) / 2;
+        let top = rect.top - tooltipRect.height - 6;
+
+        if (left < 4) left = 4;
+        if (left + tooltipRect.width > window.innerWidth - 4) {
+          left = window.innerWidth - tooltipRect.width - 4;
+        }
+        if (top < 4) {
+          top = rect.bottom + 6;
+        }
+
+        tooltipEl.style.left = `${left}px`;
+        tooltipEl.style.top = `${top}px`;
+      });
+
+      document.body.addEventListener('mouseout', (e) => {
+        const target = e.target.closest('[data-diary-tooltip]');
+        if (!target) return;
+
+        tooltipEl.classList.remove('opacity-100');
+      });
+    })();
   </script>
 </body>
 

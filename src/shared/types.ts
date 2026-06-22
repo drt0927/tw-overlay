@@ -227,6 +227,7 @@ export interface AppConfig {
     overlayVisible?: boolean;
     autoLaunch?: boolean;
     autoUpdateEnabled?: boolean;
+    hasSeenWelcomeGuide?: boolean;
     galleryKeywords?: string[];
     hiddenMenuIds?: string[];
     visibleMenuIds?: string[];

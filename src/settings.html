@@ -353,6 +353,21 @@
             </div>
 
             <div class="pt-6 border-t border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2 mb-2">
+                <i data-lucide="help-circle" class="w-4 h-4 text-purple-400"></i> 앱 사용 가이드
+              </label>
+              <div class="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5">
+                <div>
+                  <span class="text-sm font-bold text-slate-200">초기 사용 가이드 팝업</span>
+                  <p class="text-[10px] text-slate-500 mt-0.5">최초 기동 시 노출되었던 핵심 조작법 및 단축키 안내 창을 다시 띄웁니다.</p>
+                </div>
+                <button onclick="openWelcomeGuide()" class="btn-primary px-4 py-2.5 text-xs font-bold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors">
+                  가이드 열기
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/5 space-y-4">
               <label class="section-label flex items-center gap-2 mb-4">
                 <i data-lucide="layout" class="w-4 h-4 text-purple-400"></i> 사이드바 배치 설정
               </label>
@@ -1541,7 +1556,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.18.11</span></p>
+                        class="text-purple-400">1.18.12</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1639,6 +1654,12 @@
     let soundFiles = [];
     let loadedMenus = []; // 동적으로 로드된 메뉴 데이터
     let lastConfig = null; // 마지막으로 수신된 설정 데이터
+
+    function openWelcomeGuide() {
+      if (window.electronAPI && window.electronAPI.welcomeGuideOpen) {
+        window.electronAPI.welcomeGuideOpen();
+      }
+    }
 
     async function selectLogFolder() {
       const result = await window.electronAPI.openChatLogFolderDialog();

@@ -167,6 +167,13 @@ export async function sendAlert(result: ScamAnalysisResult): Promise<void> {
   sidebar?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 100 });
   sidebar?.webContents.send('scam-alert', result);
 
+  const cfg = config.load();
+  if (cfg.sidebarPosition === 'dock') {
+    const gameOverlay = wm.getGameOverlayWindow();
+    gameOverlay?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 100 });
+    gameOverlay?.webContents.send('scam-alert', result);
+  }
+
 
 }
 

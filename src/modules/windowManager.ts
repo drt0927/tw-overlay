@@ -82,6 +82,7 @@ let overlayWindow: BrowserWindow | null = null;
 let view: WebContentsView | null = null;
 let uniformColorView: WebContentsView | null = null;
 let gameOverlayWindow: BrowserWindow | null = null;
+let welcomeGuideWindow: BrowserWindow | null = null;
 
 export function createGameOverlayWindow(): void {
   if (gameOverlayWindow) return;
@@ -355,9 +356,41 @@ export function createSplashWindow(): BrowserWindow {
   return splashWindow;
 }
 
+export const getWelcomeGuideWindow = () => welcomeGuideWindow;
+
+export function createWelcomeGuideWindow(): void {
+  if (welcomeGuideWindow && !welcomeGuideWindow.isDestroyed()) {
+    welcomeGuideWindow.focus();
+    return;
+  }
+  welcomeGuideWindow = new BrowserWindow(getStandardOptions(870, 720, {
+    center: true,
+    resizable: false,
+    alwaysOnTop: true,
+    focusable: true
+  }));
+  welcomeGuideWindow.loadFile(path.join(__dirname, '..', 'welcome-guide.html'));
+  attachStackListeners(welcomeGuideWindow);
+  welcomeGuideWindow.once('ready-to-show', () => {
+    welcomeGuideWindow?.show();
+  });
+  welcomeGuideWindow.on('closed', () => {
+    welcomeGuideWindow = null;
+  });
+}
+
 export function closeSplashWindow(): void {
   if (mandatoryUpdateLock) return; // 필수 업데이트 진행 중에는 스플래시 유지
-  if (splashWindow) { splashWindow.close(); splashWindow = null; }
+  if (splashWindow) {
+    splashWindow.close();
+    splashWindow = null;
+
+    // 스플래시가 닫힌 후, 최초 실행이면 웰컴 가이드를 띄움
+    const cfg = config.load();
+    if (cfg.hasSeenWelcomeGuide === undefined || !cfg.hasSeenWelcomeGuide) {
+      createWelcomeGuideWindow();
+    }
+  }
 }
 
 /** 필수 업데이트 잠금 설정 — 잠금 중에는 스플래시만 표시 */

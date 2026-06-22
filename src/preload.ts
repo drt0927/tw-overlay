@@ -54,6 +54,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   contentsApplyPending: (characterId: string) => ipcRenderer.send('contents-apply-pending', characterId),
   contentsClearPending: () => ipcRenderer.send('contents-clear-pending'),
   setIgnoreMouseEvents: (ignore: boolean, options: { forward?: boolean }) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
+  welcomeGuideClose: () => ipcRenderer.send('welcome-guide-close'),
+  welcomeGuideOpen: () => ipcRenderer.send('welcome-guide-open'),
   closeApp: () => ipcRenderer.send('close-app'),
   toolbarMouseEnter: () => ipcRenderer.send('toolbar-mouse-enter'),
   toolbarMouseLeave: () => ipcRenderer.send('toolbar-mouse-leave'),

@@ -191,7 +191,7 @@
 
     function createToast(bossName, isCustomFromApi, spawnTime, offset, isAlreadyRecorded) {
       const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
-      const toastId = 'toast-' + Date.now();
+      const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
       const toast = document.createElement('div');
       toast.id = toastId;

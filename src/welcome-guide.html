@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>twOverlay Welcome Guide</title>
+  <script src="assets/lucide.min.js"></script>
+  <style>
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    
+    html, body {
+      width: 870px;
+      height: 720px;
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+    }
+    
+    /* Main Layout */
+    .guide-container {
+      width: 870px;
+      height: 720px;
+      background: rgba(15, 23, 42, 0.96); /* slate-900/96 */
+      border: 2px solid rgba(168, 85, 247, 0.4); /* purple-500/40 */
+      border-radius: 20px;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), 0 0 40px rgba(168, 85, 247, 0.2);
+      display: flex;
+      flex-direction: column;
+      color: #f1f5f9;
+      position: relative;
+    }
+    
+    /* Header Drag Area */
+    .guide-header {
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      -webkit-app-region: drag;
+    }
+    
+    .header-title-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .header-logo {
+      width: 28px;
+      height: 28px;
+      color: #a78bfa;
+    }
+    
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #cbd5e1;
+      letter-spacing: 0.5px;
+    }
+    
+    .close-btn {
+      -webkit-app-region: no-drag;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .close-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+    
+    /* Tab Buttons */
+    .guide-tabs {
+      -webkit-app-region: no-drag;
+      display: flex;
+      padding: 16px 30px 0;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tab-btn:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .tab-btn.active {
+      color: #c084fc; /* purple-400 */
+      border-bottom: 3px solid #a855f7;
+      background: rgba(168, 85, 247, 0.05);
+    }
+    
+    /* Content Panels */
+    .guide-content {
+      flex: 1;
+      padding: 30px 36px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .content-panel {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .content-panel.active {
+      display: flex;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .section-title {
+      font-size: 21.5px;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .section-desc {
+      font-size: 17.5px;
+      color: #94a3b8;
+      line-height: 1.65;
+    }
+    
+    /* Features Bullet Styling */
+    .features-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 10px;
+      background: rgba(30, 41, 59, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      padding: 20px;
+      border-radius: 16px;
+    }
+    
+    .feature-bullet {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 17px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    
+    .feature-bullet strong {
+      color: #e2e8f0;
+    }
+    
+    .bullet-icon {
+      color: #c084fc;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    
+    /* Setup Page Info Box */
+    .info-box {
+      background: rgba(168, 85, 247, 0.04);
+      border-left: 4px solid #a855f7;
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    
+    .info-icon {
+      color: #c084fc;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .info-title {
+      font-size: 17.5px;
+      font-weight: 700;
+      color: #d8b4fe;
+      margin-bottom: 4px;
+    }
+    
+    .info-desc {
+      font-size: 16px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    
+    .info-desc strong {
+      color: #e9d5ff;
+    }
+    
+    /* Screenshot Area placeholder */
+    .guide-screenshot-frame {
+      width: 100%;
+      min-height: 225px;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1.5px dashed rgba(168, 85, 247, 0.3);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #a78bfa;
+      font-size: 16px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    
+    .guide-screenshot-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    /* Shortcut Table */
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+    
+    .shortcut-table th, .shortcut-table td {
+      padding: 10px 15px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 16px;
+    }
+    
+    .shortcut-table th {
+      color: #94a3b8;
+      font-weight: 700;
+      background: rgba(30, 41, 59, 0.3);
+    }
+    
+    .shortcut-table td {
+      color: #cbd5e1;
+    }
+    
+    .key-badge {
+      font-family: 'Consolas', monospace;
+      font-size: 14px;
+      background: rgba(168, 85, 247, 0.15);
+      color: #e9d5ff;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-right: 4px;
+      display: inline-block;
+    }
+    
+    /* Footer & Submit Button */
+    .guide-footer {
+      padding: 20px 36px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .footer-tip {
+      font-size: 15px;
+      color: #64748b;
+    }
+    
+    .submit-btn {
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+      transition: all 0.2s;
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+    }
+    
+    .submit-btn:active {
+      transform: translateY(1px);
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #e9d5ff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    
+    .nav-btn:hover {
+      background: rgba(168, 85, 247, 0.1);
+      border-color: rgba(168, 85, 247, 0.5);
+      color: #fff;
+    }
+    
+    .nav-btn:active {
+      transform: translateY(1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="guide-container">
+    <!-- Header (Drag Area) -->
+    <header class="guide-header">
+      <div class="header-title-container">
+        <i data-lucide="help-circle" class="header-logo"></i>
+        <span class="header-title">twOverlay 사용 가이드</span>
+      </div>
+      <button class="close-btn" onclick="closeGuide()">
+        <i data-lucide="x" style="width:24px;height:24px;"></i>
+      </button>
+    </header>
+    
+    <!-- Tab Controls (4 Tabs) -->
+    <nav class="guide-tabs">
+      <button class="tab-btn active" onclick="switchTab(0)">
+        <i data-lucide="info" style="width:20px;height:20px;"></i>💡 앱 소개
+      </button>
+      <button class="tab-btn" onclick="switchTab(1)">
+        <i data-lucide="settings" style="width:20px;height:20px;"></i>⚙️ 필수 설정
+      </button>
+      <button class="tab-btn" onclick="switchTab(2)">
+        <i data-lucide="monitor" style="width:20px;height:20px;"></i>🖥️ 전체 창 모드 팁
+      </button>
+      <button class="tab-btn" onclick="switchTab(3)">
+        <i data-lucide="keyboard" style="width:20px;height:20px;"></i>⌨️ 단축키 요약
+      </button>
+    </nav>
+    
+    <!-- Content Area -->
+    <main class="guide-content">
+      <!-- Tab 0: 앱 소개 (제공 기능 나열) -->
+      <div id="panel-0" class="content-panel active">
+        <div class="section-title">
+          <i data-lucide="compass" style="width:22px;height:22px;color:#a855f7;"></i>
+          twOverlay(테일즈위버 오버레이) 제공 기능
+        </div>
+        <p class="section-desc">
+          twOverlay는 사냥과 레이드 등 플레이 전반에 걸쳐 필요한 핵심 편의 기능을 게임 화면에 자석처럼 붙여 실시간으로 모니터링할 수 있도록 돕습니다.
+        </p>
+        
+        <div class="features-list-container">
+          <div class="feature-bullet">
+            <i data-lucide="check" class="bullet-icon" style="width:18px;height:18px;"></i>
+            <div><strong>📈 실시간 경험치(XP) 미터기</strong>: 획득 경험치, 분당 효율(EPM), 킬 수 및 레벨업까지 남은 시간 실시간 계산 및 HUD 노출.</div>
+          </div>
+          <div class="feature-bullet">
+            <i data-lucide="check" class="bullet-icon" style="width:18px;height:18px;"></i>
+            <div><strong>📅 모험일지 자동 기록</strong>: 획득 득템 로그를 실시간 파싱하여 달력 스택 뷰 및 시간별 타임라인에 이미지와 함께 박제.</div>
+          </div>
+          <div class="feature-bullet">
+            <i data-lucide="check" class="bullet-icon" style="width:18px;height:18px;"></i>
+            <div><strong>🕒 필드 보스 출현 경고</strong>: 보스 타임라인 기반 알람 카드가 게임 화면 우측(Dock 설정 시) 또는 사이드바에 팝업 노출.</div>
+          </div>
+          <div class="feature-bullet">
+            <i data-lucide="check" class="bullet-icon" style="width:18px;height:18px;"></i>
+            <div><strong>🧪 지능형 버프 타이머</strong>: 중요 도핑 버프의 남은 시간(1분 전, 10초 전, 5초 전)을 감지해 오버레이 카드로 경고.</div>
+          </div>
+          <div class="feature-bullet">
+            <i data-lucide="check" class="bullet-icon" style="width:18px;height:18px;"></i>
+            <div><strong>💬 자석형 채팅 오버레이</strong>: 게임 화면 크기에 연동되어 게임 창을 가리지 않고 투명하게 채팅 창 모니터링 가능.</div>
+          </div>
+          <div class="feature-bullet">
+            <i data-lucide="check" class="bullet-icon" style="width:18px;height:18px;"></i>
+            <div><strong>📋 일일/주간 숙제 체크리스트</strong>: 잊기 쉬운 콘텐츠 클리어 횟수 현황을 빠르게 체크할 수 있는 위젯 제공.</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab 1: 필수 설정 -->
+      <div id="panel-1" class="content-panel">
+        <div class="section-title">
+          <i data-lucide="folder-key" style="width:22px;height:22px;color:#a855f7;"></i>
+          테일즈위버 로그(ChatLog) 폴더 지정
+        </div>
+        <p class="section-desc">
+          앱의 모든 자동화 기능이 게임 내 액션과 정상 반응하려면 반드시 본인의 테일즈위버 설치 경로 폴더를 앱에 올바르게 연동해주어야 합니다.
+        </p>
+        
+        <div class="info-box">
+          <i data-lucide="alert-circle" class="info-icon" style="width:22px;height:22px;"></i>
+          <div>
+            <div class="info-title">연동 폴더 정밀 가이드</div>
+            <div class="info-desc">
+              - <strong>ChatLog 폴더 지정</strong>: 실시간 경험치(XP) 미터기, 보스 스폰 알람, 모험일지 자동 득템 기록을 위해 필수 설정해야 하는 경로입니다.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Screenshot Frame (assets/img/guide_setup.png 매칭) -->
+        <div class="guide-screenshot-frame">
+          <img src="assets/img/guide_setup.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%;height:auto;display:block;">
+          <div style="display:none; flex-direction:column; align-items:center; gap:12px;">
+            <i data-lucide="image" style="width:30px;height:30px;opacity:0.6;"></i>
+            <span>설정 화면의 경로 지정 가이드 스크린샷 영역</span>
+            <span style="font-size:14px; opacity:0.5;">(assets/img/guide_setup.png 파일을 찾을 수 없습니다)</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab 2: 전체 창 모드 팁 -->
+      <div id="panel-2" class="content-panel">
+        <div class="section-title">
+          <i data-lucide="monitor-off" style="width:22px;height:22px;color:#a855f7;"></i>
+          전체 창 모드 실행 시 사이드바 가려짐 대처법
+        </div>
+        <p class="section-desc">
+          테일즈위버를 <strong>전체 창 모드(또는 전체화면)</strong>로 구동하시는 분들은 사이드바 창이 뒤로 가려져 보이지 않거나 꺼진 것처럼 느껴질 수 있습니다. 아래 팁을 확인하세요.
+        </p>
+        
+        <div class="info-box">
+          <i data-lucide="check-circle" class="info-icon" style="width:22px;height:22px;"></i>
+          <div>
+            <div class="info-title">사이드바 설정 위치를 Dock으로 변경하기</div>
+            <div class="info-desc">
+              1. 테일즈위버 게임을 임시로 <strong>창 모드</strong>로 변경하여 숨은 사이드바를 확인한 뒤, 하단 톱니바퀴(⚙️)를 눌러 설정에 들어갑니다.<br>
+              2. <strong>또는</strong> 바탕화면의 <strong>시스템 트레이 아이콘</strong>(시계 옆)을 우클릭하여 <strong>[환경설정]</strong> 메뉴를 즉시 열어줍니다.<br>
+              3. 설정 내 '사이드바 배치 설정'에서 위치를 <strong>Dock 배치</strong>로 변경합니다.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Screenshot Frame (assets/img/guide_dock.png 매칭) -->
+        <div class="guide-screenshot-frame">
+          <img src="assets/img/guide_dock.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%;height:auto;display:block;">
+          <div style="display:none; flex-direction:column; align-items:center; gap:12px;">
+            <i data-lucide="image" style="width:30px;height:30px;opacity:0.6;"></i>
+            <span>전체 창 모드용 Dock 설정 가이드 스크린샷 영역</span>
+            <span style="font-size:14px; opacity:0.5;">(assets/img/guide_dock.png 파일을 이 위치에 저장해 주세요)</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab 3: 단축키 요약 -->
+      <div id="panel-3" class="content-panel">
+        <div class="section-title">
+          <i data-lucide="command" style="width:22px;height:22px;color:#a855f7;"></i>
+          프로그램 지원 단축키 요약
+        </div>
+        <p class="section-desc">
+          플레이 중 아래의 단축키를 사용하여 각 윈도우 및 기능을 매우 빠르게 끄고 켤 수 있습니다.
+        </p>
+        
+        <table class="shortcut-table">
+          <thead>
+            <tr>
+              <th style="width: 60%;">기능 안내</th>
+              <th style="width: 40%;">단축키 입력</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>사이드바(주제어 창) 보이기 / 숨기기</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">D</span></td>
+            </tr>
+            <tr>
+              <td>오버레이 화면 마우스 클릭 투과 토글</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">T</span></td>
+            </tr>
+            <tr>
+              <td>일일 보스 / 숙제 체크리스트 토글</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">C</span></td>
+            </tr>
+            <tr>
+              <td>버프 타이머 HUD 보이기 / 숨기기</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">B</span></td>
+            </tr>
+            <tr>
+              <td>실시간 채팅 오버레이 토글</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">H</span></td>
+            </tr>
+            <tr>
+              <td>실시간 경험치(XP) 세션 측정치 초기화</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">X</span></td>
+            </tr>
+            <tr>
+              <td>기록된 버프 타이머 리스트 강제 전체 삭제</td>
+              <td><span class="key-badge">Ctrl</span><span class="key-badge">Shift</span><span class="key-badge">E</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="guide-footer">
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="prev-btn" class="nav-btn" onclick="prevPage()">
+          <i data-lucide="chevron-left" style="width:20px;height:20px;"></i>이전
+        </button>
+        <span class="footer-tip">※ 환경설정 ➡️ 일반 설정 메뉴에서 가이드를 언제든 다시 볼 수 있습니다.</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="next-btn" class="nav-btn" onclick="nextPage()">
+          다음<i data-lucide="chevron-right" style="width:20px;height:20px;"></i>
+        </button>
+        <button id="submit-btn" class="submit-btn" onclick="closeGuide()" style="display: none;">
+          <i data-lucide="check" style="width:20px;height:20px;"></i>확인
+        </button>
+      </div>
+    </footer>
+  </div>
+  
+  <script>
+    // Lucide Icons Initialization
+    lucide.createIcons();
+    
+    let currentTabIdx = 0;
+    const totalTabs = 4;
+    
+    // Sync buttons on load
+    updateFooterButtons();
+    
+    // Tab Switching Logic
+    function switchTab(index) {
+      currentTabIdx = index;
+      
+      // Deactivate all tabs and panels
+      const tabs = document.querySelectorAll('.tab-btn');
+      const panels = document.querySelectorAll('.content-panel');
+      
+      tabs.forEach(tab => tab.classList.remove('active'));
+      panels.forEach(panel => panel.classList.remove('active'));
+      
+      // Activate selected tab and panel
+      tabs[index].classList.add('active');
+      panels[index].classList.add('active');
+      
+      updateFooterButtons();
+    }
+    
+    function updateFooterButtons() {
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+      const submitBtn = document.getElementById('submit-btn');
+      
+      if (!prevBtn || !nextBtn || !submitBtn) return;
+      
+      // 이전 버튼: 첫 페이지(0)에서만 숨김 (visibility: hidden으로 공간 유지하여 레이아웃 깨짐 방지)
+      if (currentTabIdx === 0) {
+        prevBtn.style.visibility = 'hidden';
+      } else {
+        prevBtn.style.visibility = 'visible';
+      }
+      
+      // 마지막 페이지(3)에서는 다음 버튼 숨기고 확인 버튼 노출
+      if (currentTabIdx === totalTabs - 1) {
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'flex';
+      } else {
+        nextBtn.style.display = 'flex';
+        submitBtn.style.display = 'none';
+      }
+    }
+    
+    function prevPage() {
+      if (currentTabIdx > 0) {
+        switchTab(currentTabIdx - 1);
+      }
+    }
+    
+    function nextPage() {
+      if (currentTabIdx < totalTabs - 1) {
+        switchTab(currentTabIdx + 1);
+      }
+    }
+    
+    // Close Window Action
+    function closeGuide() {
+      // IPC를 통해 백엔드로 완료 신호 및 창 닫기 발송
+      if (window.electronAPI && window.electronAPI.welcomeGuideClose) {
+        window.electronAPI.welcomeGuideClose();
+      } else {
+        window.close();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -159,4 +159,18 @@ function notify(bossName: string, soundFile: string, spawnTime: string, offset: 
       isAlreadyRecorded // 이미 기록되었는지 여부 전달
     });
   }
+  const cfg = config.load();
+  if (cfg.sidebarPosition === 'dock') {
+    const gameOverlay = wm.getGameOverlayWindow();
+    if (gameOverlay) {
+      gameOverlay.webContents.send('play-sound', {
+        label: bossName,
+        soundFile,
+        spawnTime,
+        offset,
+        isCustom: false,
+        isAlreadyRecorded
+      });
+    }
+  }
 }

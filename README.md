@@ -5,14 +5,14 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.18.11-violet.svg)
+![Version](https://img.shields.io/badge/version-1.18.12-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.18.11 (2026.06.21)
-이번 업데이트는 **모험일지 뷰(1400x920) 대폭 확장 및 일자별 득템 스택 뷰 개편, 득템 설정 2컬럼 전송 UI 리뉴얼, 채팅 자동 수집 득템 파싱 및 중복 합산 개선**이 적용되었습니다.
+## 🚀 최신 버전: v1.18.12 (2026.06.22)
+이번 업데이트는 **모험일지 자동 득템 이미지 매핑 복구 및 타임라인 CSS 잘림 수정, 달력 내 아이템명 말줄임 및 글로벌 커스텀 툴팁 제공, Dock 모드용 오버레이 알림 토스트 연동 및 백엔드 IPC 최적화, 그리고 최초 실행 사용자를 위한 인터랙티브 무테 가이드 창 신설**이 적용되었습니다.
 
 - **⚡ 모험일지 창 크기 및 레이아웃 전면 리팩토링**:
   * 창 규격을 `1400x920`으로 확장하고 좌우 2단 레이아웃으로 변경하였으며, 통계 탭 하단의 누적 득템/수익 리스트를 `320px` 고정 높이와 전용 스크롤바로 다듬어 가독성을 높였습니다.

@@ -1245,10 +1245,27 @@
       color: #f87171;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     }
+
+    /* Dock 모드 전용 알림 토스트 컨테이너 */
+    .dock-toast-container {
+      position: fixed;
+      right: 31px;
+      top: 66.6%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      z-index: 10000;
+      pointer-events: none;
+      width: 320px;
+    }
   </style>
 </head>
 
 <body class="select-none">
+  <!-- Dock 모드 전용 알림 토스트 컨테이너 -->
+  <div id="dock-toast-container" class="dock-toast-container"></div>
 
   <!-- XP HUD -->
   <div id="xp-hud" class="xp-hud">
@@ -1516,6 +1533,7 @@
 
     let showXpWidget = true;
     let sessionStartTime = Date.now();
+    let currentConfig = null;
 
     function formatTime(ms) {
       const totalSec = Math.floor(ms / 1000);
@@ -1535,6 +1553,7 @@
 
     // 설정 데이터 수신
     window.electronAPI.onConfigData((config) => {
+      currentConfig = config;
       showXpWidget = config.showXpWidget !== false;
       const hud = document.getElementById('xp-hud');
       const arWidget = document.getElementById('abandoned-widget');
@@ -2498,6 +2517,116 @@
       window.electronAPI.onTriggerFirework(() => {
         console.log('[EasterEgg] trigger-firework event received in game-overlay. HTML load OK. Starting firework...');
         triggerFirework();
+      });
+    }
+
+    // ── Dock 모드 전용 알림 토스트 (읽기 전용) ──
+    const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
+
+    function createDockToast(bossName, isCustomFromApi, spawnTime, offset) {
+      if (!currentConfig || currentConfig.sidebarPosition !== 'dock') return;
+
+      const toastContainer = document.getElementById('dock-toast-container');
+      if (!toastContainer) return;
+
+      const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
+      const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = 'boss-toast show';
+
+      const iconName = isRealBoss ? 'skull' : 'bell-ring';
+      const iconColor = isRealBoss ? 'text-[#a855f7]' : 'text-amber-400';
+
+      let displayName = bossName;
+      const validSpawnTime = (spawnTime && spawnTime !== 'undefined' && spawnTime !== 'null') ? spawnTime : null;
+
+      if (isRealBoss && validSpawnTime) {
+        displayName = `[${validSpawnTime}] ${bossName}`;
+        if (offset > 0) displayName += ` <span class="text-[10px] text-slate-500 font-medium ml-1">${offset}분 전</span>`;
+      }
+
+      toast.innerHTML = `
+        <div class="flex items-start justify-between w-full gap-3">
+          <div class="flex items-start gap-2.5 pt-0.5">
+            <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor} mt-0.5 shrink-0"></i>
+            <span class="boss-toast-name flex-1 leading-snug break-keep">${displayName}</span>
+          </div>
+        </div>
+      `;
+
+      toastContainer.appendChild(toast);
+      refreshIcons();
+
+      // 자동 삭제 타이머
+      let duration = 5000;
+      if (isRealBoss) {
+        duration = (offset === 0) ? 60000 : 30000;
+      }
+      setTimeout(() => { removeDockToast(toastId); }, duration);
+    }
+
+    function removeDockToast(id) {
+      const toast = document.getElementById(id);
+      if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (toast.parentElement) toast.remove();
+        }, 300);
+      }
+    }
+
+    function createDockScamToast(result) {
+      if (!currentConfig || currentConfig.sidebarPosition !== 'dock') return;
+
+      const toastContainer = document.getElementById('dock-toast-container');
+      if (!toastContainer) return;
+
+      const isScam = result.verdict === 'SCAM';
+      const toastId = 'scam-toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = 'boss-toast show';
+      toast.style.borderLeft = isScam ? '3px solid #ef4444' : '3px solid #f59e0b';
+
+      const title = isScam ? '🚨 사기 위험 감지!' : '⚠️ 사기 의심 감지';
+      const colorClass = isScam ? 'text-red-400' : 'text-yellow-400';
+      const rawReason = result.analysisReason?.split('\n')[0]?.trim() || result.detectedScamTypes || '';
+      const reason = rawReason.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      toast.innerHTML = `
+        <div class="flex items-start justify-between w-full gap-3">
+          <div class="flex items-start gap-2.5 pt-0.5">
+            <i data-lucide="shield-alert" class="w-4 h-4 ${colorClass} mt-0.5 shrink-0"></i>
+            <div class="flex-1">
+              <div class="boss-toast-name leading-snug font-bold ${colorClass}">${title}</div>
+              ${reason ? `<div class="text-[10px] text-slate-400 mt-1 leading-snug line-clamp-2">${reason}</div>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 italic border-t border-slate-700/50 pt-2">
+          ※ AI 판정은 참고용. 100% 안전 보장 불가. 에타 레벨·교환창 아이템을 직접 확인하세요.
+        </div>
+      `;
+
+      toastContainer.appendChild(toast);
+      refreshIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => removeDockToast(toastId), 300);
+      }, 30000);
+    }
+
+    if (window.electronAPI) {
+      window.electronAPI.onPlaySound(({ label, isCustom, spawnTime, offset, isAlreadyRecorded }) => {
+        if (label === '미리보기') return;
+        createDockToast(label, isCustom, spawnTime, offset, isAlreadyRecorded);
+      });
+
+      window.electronAPI.onScamAlert((result) => {
+        createDockScamToast(result);
       });
     }
 

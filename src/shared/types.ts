@@ -11,6 +11,7 @@ export const DEFAULT_CHAR_NAME = '본캐';
 
 export interface ChatParserEventMap {
     SEED_GAINED: { date: string; timestamp: string; amount: number; message: string };
+    ESSENCE_GAINED: { date: string; timestamp: string; count: number; message: string };
     ABANDONED_FEE: { date: string; timestamp: string; amount: number; message: string };
     ABANDONED_ENTRY: { date: string; timestamp: string; region: string; count: number; message: string };
     MAGIC_STONE_GAIN: { date: string; timestamp: string; grade: string; count: number; message: string };

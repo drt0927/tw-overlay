@@ -57,6 +57,19 @@ class XpTracker {
       }
     });
 
+    // 경험의 정수 획득
+    chatParser.on('ESSENCE_GAINED', (data) => {
+      try {
+        const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
+        const count = data.count;
+        const content = count > 1 ? `[득템] 경험의 정수 ${count}개` : `[득템] 경험의 정수`;
+        diaryDb.addActivityLog(data.date, timeOnly, 'loot', content, count);
+        log(`[XP_TRACKER] 경험의 정수 획득 일지 기록 완료: ${count}개 (${data.message})`);
+      } catch (e) {
+        log(`[XP_TRACKER] 경험의 정수 일지 기록 중 에러 발생: ${e}`);
+      }
+    });
+
     // 경험치 변동
     chatParser.on('XP_CHANGED', (data) => {
       // 정수 교환 감지

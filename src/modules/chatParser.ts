@@ -528,6 +528,38 @@ class ChatParser extends EventEmitter {
         }
     }
 
+    // 경험의 정수 획득 감지 (3번 유형 및 중복 방지)
+    if (cleanMsg.includes('경험의 정수')) {
+        // 2번 유형 중복 방지: '경험치 100억이 차감되고' 메시지는 XP_CHANGED에서 이미 처리함
+        if (!cleanMsg.includes('경험치 100억이 차감되고')) {
+            const isGained = cleanMsg.includes('획득했습니다') || 
+                             cleanMsg.includes('획득하였습니다') || 
+                             cleanMsg.includes('획득 하였습니다');
+            
+            if (isGained) {
+                let count = 1;
+                // 1. "경험의 정수 N개" 패턴 매칭
+                const countMatch = cleanMsg.match(/경험의\s*정수\s*(\d+)개/);
+                // 2. "[경험의 정수] 아이템을 N개" 패턴 매칭
+                const itemMatch = cleanMsg.match(/\[경험의\s*정수\]\s*아이템을\s*(\d+)개/);
+                
+                if (countMatch) {
+                    count = parseInt(countMatch[1], 10);
+                } else if (itemMatch) {
+                    count = parseInt(itemMatch[1], 10);
+                }
+                
+                this.emit('ESSENCE_GAINED', { 
+                    date: this._currentDate, 
+                    timestamp, 
+                    count, 
+                    message: cleanMsg 
+                });
+                return;
+            }
+        }
+    }
+
     // B. 경험치 변동
     if (cleanMsg.includes('경험치가')) {
         const xpMatch = cleanMsg.match(/경험치가\s+([\[\]\d,억만\s]+)\s*(올랐|상승|감소|차감)/);

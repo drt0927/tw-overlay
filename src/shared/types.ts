@@ -150,6 +150,24 @@ export interface ChatTrigger {
     matchType?: 'exact' | 'contains'; // 기본값: 'exact'
 }
 
+export interface BuffEffects {
+    exp?: number;          // 경험치 (%)
+    expTeam?: number;      // 파티원 경험치 (%)
+    rare?: number;         // 레어 드랍율 (%)
+    stat?: number;         // 모든 능력치 고정값
+    statRate?: number;     // 모든 능력치 비율 (%)
+    damage?: number;       // 대미지 증가 (%)
+    critical?: number;     // 크리티컬 확률 (%)
+    speed?: number;        // 이동속도
+    attribute?: number;    // 속성 (화, 수, 풍 등)
+    accuracy?: number;     // 명중률 (%)
+    evasion?: number;      // 회피율 (%)
+    defense?: number;      // 방어력 / 피해 감소 (%)
+    maxHp?: number;        // 최대 HP 고정값/비율
+    maxMp?: number;        // 최대 MP 고정값/비율
+    maxSp?: number;        // 최대 SP 고정값/비율
+}
+
 /** buffs.json 단일 항목 타입 */
 export interface BuffDefinition {
     id: string;
@@ -164,6 +182,7 @@ export interface BuffDefinition {
     image: string;
     chatTriggers: ChatTrigger[];
     description: string;
+    effects?: BuffEffects;
 }
 
 

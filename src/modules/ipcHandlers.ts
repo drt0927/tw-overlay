@@ -525,7 +525,7 @@ export function register(): void {
   // 버프 타이머 테스트 — 모든 감지 대상 버프 강제 활성화
   ipcMain.on('buff-timer-test', (event, seconds?: number) => {
    const TEST_BUFFS = [
-     'exp_heart', 'rare_heart', 'stat_exorcist',
+     'exp_heart', 'rare_heart', 'stat_exorcist', 'stat_sami_sunryeong',
      'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination',
      'insight_elixir_large', 'insight_elixir_special',
      'exp_eos_supreme', 'exp_sweetpotato_legend', 'exp_earlybird'

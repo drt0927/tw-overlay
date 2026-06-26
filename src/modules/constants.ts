@@ -129,6 +129,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     'exp_heart': true,
     'rare_heart': true,
     'stat_exorcist': true,
+    'stat_sami_sunryeong': true,
     'rare_loto': true,
     'util_ampoule': true,
     'dmg_izabel': true,

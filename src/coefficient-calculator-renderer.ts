@@ -223,9 +223,9 @@ function calculate() {
     let bFix = 0, bPct = 0;
     buffIds.forEach(id => {
       const b = activeBuffs.find(x => x.id === id);
-      if (b) {
-        const f = b.effect.match(/능력치\s*\+?(\d+)(?!%)/); if (f) bFix += parseInt(f[1]);
-        const p = b.effect.match(/능력치\s*\+?(\d+)%/); if (p) bPct += parseInt(p[1]);
+      if (b && b.effects) {
+        if (b.effects.stat) bFix += b.effects.stat;
+        if (b.effects.statRate) bPct += b.effects.statRate;
       }
     });
 

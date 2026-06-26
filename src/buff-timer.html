@@ -725,6 +725,7 @@
       { id: 'exp_heart', name: '경험의 심장', duration: '20분 유지', cat: 'exp', image: 'assets/img/buffs/경험의심장.png' },
       { id: 'rare_heart', name: '레어의 심장', duration: '20분 유지', cat: 'drop', image: 'assets/img/buffs/레어의심장.png' },
       { id: 'stat_exorcist', name: '퇴마사의 은총', duration: '20분 유지', cat: 'stats', image: 'assets/img/buffs/퇴마사의은총.png' },
+      { id: 'stat_sami_sunryeong', name: '사미선령지채', duration: '5분 유지', cat: 'stats', image: 'assets/img/buffs/사미선령지채.png' },
       { id: 'rare_loto', name: '로토의 부적', duration: '30분 유지', cat: 'drop', image: 'assets/img/buffs/로토의부적.png' },
       { id: 'util_ampoule', name: '속성 앰플', duration: '1시간 유지', cat: 'util', image: 'assets/img/buffs/속성앰플.png' },
       { id: 'dmg_izabel', name: '이자벨의 비법 (대미지)', duration: '30분 유지', cat: 'damage', image: 'assets/img/buffs/이자벨의비법_대미지.png' },
@@ -965,7 +966,7 @@
       if (volVal) volVal.textContent = vol;
       
       warnSeconds = (config.buffTimerWarnSeconds ?? [60]).filter(s => s > 5);
-      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true, insight_elixir_large: true, insight_elixir_special: true, exp_eos_supreme: true, exp_sweetpotato_legend: true, exp_earlybird: true }) };
+      buffEnabled = { ...(config.buffTimerBuffs ?? { exp_heart: true, rare_heart: true, stat_exorcist: true, stat_sami_sunryeong: true, rare_loto: true, util_ampoule: true, dmg_izabel: true, util_illumination: true, insight_elixir_large: true, insight_elixir_special: true, exp_eos_supreme: true, exp_sweetpotato_legend: true, exp_earlybird: true }) };
       
       const hudPos = config.buffTimerHudPos ?? { left: 20, bottom: 140 };
       const posLeft = document.getElementById('hud-pos-left');

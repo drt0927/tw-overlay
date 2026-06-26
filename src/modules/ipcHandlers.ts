@@ -178,6 +178,7 @@ export function register(): void {
     'toggle-word-alarm': wm.toggleWordAlarmWindow,
     'toggle-discord-alarm': wm.toggleDiscordAlarmWindow,
     'toggle-chat-overlay': wm.toggleChatOverlayWindow,
+    'toggle-hunting-path-simulator': wm.toggleHuntingPathSimulatorWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -407,6 +408,19 @@ export function register(): void {
   ipcMain.on('diary-update-monster', (_e, date: string, monsterId: string) => {
     if (!isValidDate(date) || typeof monsterId !== 'string') return;
     diaryDb.updateDiaryMonster(date, monsterId);
+  });
+
+  // --- Hunting Path Simulator System ---
+  ipcMain.handle('get-hunting-grounds', () => {
+    return diaryDb.getHuntingGrounds();
+  });
+  ipcMain.handle('get-hunting-path', (_e, groundId: string) => {
+    if (typeof groundId !== 'string') return [];
+    return diaryDb.getHuntingPath(groundId);
+  });
+  ipcMain.on('save-hunting-path', (_e, groundId: string, points: Array<[number, number]>) => {
+    if (typeof groundId !== 'string' || !Array.isArray(points)) return;
+    diaryDb.saveHuntingPath(groundId, points);
   });
 
   // --- Shortcut Control ---

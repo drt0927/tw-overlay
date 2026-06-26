@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>사냥터 동선 시뮬레이션</title>
+  <link class="no-drag" rel="stylesheet" href="style.css">
+  <script src="assets/tailwind.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+  <style>
+    body {
+      background: transparent;
+      color: var(--text-main);
+      overflow: hidden;
+      font-family: 'Inter', 'Noto Sans KR', sans-serif;
+    }
+
+    .no-drag {
+      -webkit-app-region: no-drag;
+    }
+
+    /* 탭 버튼 스타일: siena-aura.html 패턴 차용 (에메랄드 톤 매핑) */
+    .tab-btn {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 0 20px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tab-btn:hover {
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: rgba(52, 211, 153, 0.2);
+      color: #f8fafc;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      box-shadow: 0 4px 12px rgba(52, 211, 153, 0.15);
+    }
+
+    .tab-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 캔버스 영역 */
+    .canvas-area {
+      position: relative;
+      background: #070913;
+      padding: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      align-self: center;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .map-container {
+      position: relative;
+      width: 828px;
+      height: 496px;
+      cursor: crosshair;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    img.map {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.8;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    svg.overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: all;
+    }
+
+    /* SVG 노드 및 경로 렌더링 (에메랄드 시그니처 톤) */
+    .path-line {
+      fill: none;
+      stroke: #34d399; /* Emerald 400 */
+      stroke-width: 3.5;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .path-hitbox {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 15;
+      cursor: copy;
+      pointer-events: all;
+    }
+
+    .path-hitbox:hover {
+      stroke: rgba(52, 211, 153, 0.15);
+    }
+
+    .node-hitbox {
+      fill: transparent;
+      cursor: grab;
+      pointer-events: all;
+    }
+
+    .node {
+      fill: #34d399;
+      stroke: #000000;
+      stroke-width: 1.5;
+      pointer-events: none;
+      transition: r 0.15s, fill 0.15s, stroke-width 0.15s;
+    }
+
+    .node-hitbox:hover + .node {
+      fill: #ffffff;
+      r: 9;
+      stroke-width: 2.5;
+    }
+
+    .node.active {
+      fill: #f87171 !important; /* Red 400 */
+      r: 9.5 !important;
+      stroke: #ffffff !important;
+    }
+
+    .node.start {
+      fill: #facc15; /* Yellow 400 */
+      r: 7;
+    }
+
+    .node.end {
+      fill: #f87171; /* Red 400 */
+      r: 7;
+    }
+
+    /* 단축키 정보 배너: boss-settings.html 가이드 배너 스타일 반영 */
+    .guide-banner {
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 844px;
+      align-self: center;
+    }
+  </style>
+</head>
+<body class="panel-glass p-0 h-screen flex flex-col">
+  <!-- Unified Window Header (Header 탭 내장 방식 동기화) -->
+  <div class="win-header shrink-0">
+    <div class="win-title-area">
+      <div class="win-icon-box bg-emerald-500/10 border-emerald-500/20">
+        <i data-lucide="map" class="w-5 h-5 text-emerald-400"></i>
+      </div>
+      <div class="win-title-text">
+        <span class="win-title-main text-emerald-100">사냥터 동선 시뮬레이션</span>
+        <span class="win-title-sub text-emerald-400/60 font-black">Hunting Path Simulator</span>
+      </div>
+      
+      <!-- siena-aura.html 방식의 헤더 내 탭 바 연동 -->
+      <nav class="flex h-10 ml-6 bg-black/40 rounded-xl p-1 border border-white/5" id="tabsContainer" style="-webkit-app-region: no-drag;">
+        <!-- 동적 탭 구성 영역 -->
+      </nav>
+    </div>
+    
+    <div class="win-controls">
+      <button onclick="window.electronAPI.toggleHuntingPathSimulator()" class="win-btn win-close-btn" title="닫기">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 본문 컨텐츠 영역 -->
+  <div class="flex-1 overflow-hidden flex flex-col no-drag p-6 space-y-4">
+    <!-- 맵 캔버스 영역 -->
+    <div class="canvas-area">
+      <div class="map-container" id="mapContainer">
+        <img id="mapImage" src="" class="map">
+        <svg class="overlay" id="svgOverlay"></svg>
+      </div>
+    </div>
+
+    <!-- 하단 단축키 가이드 배너 -->
+    <div class="guide-banner shrink-0">
+      <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+        <i data-lucide="info" class="w-4 h-4 text-emerald-400"></i>
+      </div>
+      <div class="flex-1">
+        <h4 class="text-xs font-bold text-slate-300 mb-1">[단축키 안내]</h4>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          노드 중간 삽입: 맵 위 <strong>경로 선(초록색)</strong>을 <strong>Ctrl + 클릭</strong><br/>
+          노드 끝에 추가: 맵의 <strong>빈 공간</strong>을 <strong>Ctrl + 클릭</strong><br/>
+          노드 삭제: 맵 위 노드 <strong>마우스 우클릭</strong>
+        </p>
+      </div>
+      <!-- 동선 초기화 버튼 -->
+      <div class="shrink-0 flex items-center justify-center ml-4">
+        <button onclick="clearCurrentPath()" class="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 text-[11px] font-black transition-all flex items-center gap-1.5 no-drag">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          동선 초기화
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 맵 데이터 및 상태 (DB 비동기 바인딩을 위해 빈 객체 선언)
+    let mapsConfig = {};
+    let activePoints = {};
+    let currentTab = "";
+
+    const mapContainer = document.getElementById('mapContainer');
+    const mapImage = document.getElementById('mapImage');
+    const svg = document.getElementById('svgOverlay');
+    const tabsContainer = document.getElementById('tabsContainer');
+    
+    let draggingIdx = -1;
+    let dragOffset = { x: 0, y: 0 };
+
+    // 탭 구성 생성
+    function initTabs() {
+      tabsContainer.innerHTML = '';
+      Object.keys(mapsConfig).forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn' + (key === currentTab ? ' active' : '');
+        btn.innerText = mapsConfig[key].name;
+        btn.onclick = () => switchTab(key);
+        tabsContainer.appendChild(btn);
+      });
+    }
+
+    // 탭 전환
+    function switchTab(tabKey) {
+      if (currentTab === tabKey) return;
+      currentTab = tabKey;
+      
+      // active 클래스 갱신
+      const btns = tabsContainer.querySelectorAll('.tab-btn');
+      Object.keys(mapsConfig).forEach((key, idx) => {
+        if (key === currentTab) btns[idx].classList.add('active');
+        else btns[idx].classList.remove('active');
+      });
+
+      draggingIdx = -1;
+      render();
+    }
+
+    // 게임 좌표 -> 픽셀 좌표 변환
+    function gameToPixel(gx, gy) {
+      const cfg = mapsConfig[currentTab];
+      let x = gx * cfg.fX;
+      let y = gy * cfg.fY;
+      if (cfg.isSwap) [x, y] = [y, x];
+      const px = (x - y) * cfg.S + cfg.Ox;
+      const py = (x + y) * (cfg.S / 2) + cfg.Oy;
+      return { x: px, y: py };
+    }
+
+    // 픽셀 좌표 -> 게임 좌표 변환
+    function pixelToGame(px, py) {
+      const cfg = mapsConfig[currentTab];
+      const x = (px - cfg.Ox) / (2 * cfg.S) + (py - cfg.Oy) / cfg.S;
+      const y = (py - cfg.Oy) / cfg.S - (px - cfg.Ox) / (2 * cfg.S);
+      let gx, gy;
+      if (cfg.isSwap) {
+        gy = x / cfg.fY;
+        gx = y / cfg.fX;
+      } else {
+        gx = x / cfg.fX;
+        gy = y / cfg.fY;
+      }
+      return [Math.round(gx), Math.round(gy)];
+    }
+
+    // 화면 렌더링
+    function render() {
+      const cfg = mapsConfig[currentTab];
+      if (!cfg) return;
+
+      const points = activePoints[currentTab] || [];
+      
+      // 맵 이미지 변경
+      mapImage.src = cfg.image;
+      svg.innerHTML = '';
+      
+      // 1. 경로 선 (삽입 영역 포함)
+      if (points.length > 1) {
+        for (let i = 0; i < points.length - 1; i++) {
+          const p1 = gameToPixel(points[i][0], points[i][1]);
+          const p2 = gameToPixel(points[i+1][0], points[i+1][1]);
+          
+          // 시각용 라인
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
+          line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
+          line.setAttribute("class", "path-line");
+          svg.appendChild(line);
+
+          // 삽입 감지용 두꺼운 투명 라인
+          const lineHitbox = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          lineHitbox.setAttribute("x1", p1.x); lineHitbox.setAttribute("y1", p1.y);
+          lineHitbox.setAttribute("x2", p2.x); lineHitbox.setAttribute("y2", p2.y);
+          lineHitbox.setAttribute("class", "path-hitbox");
+          lineHitbox.onmousedown = (e) => {
+            if (e.ctrlKey && e.button === 0) {
+              e.preventDefault(); e.stopPropagation();
+              const rect = mapContainer.getBoundingClientRect();
+              const newGameCoord = pixelToGame(e.clientX - rect.left, e.clientY - rect.top);
+              points.splice(i + 1, 0, newGameCoord); // 중간 삽입
+              render();
+              
+              // 실시간 DB 저장
+              window.electronAPI.saveHuntingPath(currentTab, points);
+            }
+          };
+          svg.appendChild(lineHitbox);
+        }
+      }
+
+      // 2. 경로 노드 그리기
+      points.forEach((p, i) => {
+        const pix = gameToPixel(p[0], p[1]);
+        
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", pix.x); circle.setAttribute("cy", pix.y);
+        circle.setAttribute("r", "4.5");
+        let cls = "node";
+        if (i === 0) cls += " start";
+        if (i === points.length - 1) cls += " end";
+        if (i === draggingIdx) cls += " active";
+        circle.setAttribute("class", cls);
+
+        const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        hitbox.setAttribute("cx", pix.x); hitbox.setAttribute("cy", pix.y);
+        hitbox.setAttribute("r", "15");
+        hitbox.setAttribute("class", "node-hitbox");
+        
+        hitbox.onmousedown = (e) => {
+          if (e.button === 0 && !e.ctrlKey) { 
+            e.preventDefault(); e.stopPropagation();
+            draggingIdx = i;
+            const rect = mapContainer.getBoundingClientRect();
+            dragOffset.x = (e.clientX - rect.left) - pix.x;
+            dragOffset.y = (e.clientY - rect.top) - pix.y;
+            render();
+          }
+        };
+
+        hitbox.oncontextmenu = (e) => {
+          e.preventDefault(); e.stopPropagation();
+          deleteNode(i);
+        };
+
+        svg.appendChild(hitbox);
+        svg.appendChild(circle);
+      });
+    }
+
+    // 맵 빈 공간 Ctrl+클릭 시 끝에 노드 추가
+    svg.onmousedown = (e) => {
+      if (e.ctrlKey && e.button === 0 && currentTab) {
+        const rect = mapContainer.getBoundingClientRect();
+        const newGameCoord = pixelToGame(e.clientX - rect.left, e.clientY - rect.top);
+        activePoints[currentTab].push(newGameCoord);
+        render();
+        
+        // 실시간 DB 저장
+        window.electronAPI.saveHuntingPath(currentTab, activePoints[currentTab]);
+      }
+    };
+
+    // 노드 삭제 (최소 노드 수 제한 제거)
+    function deleteNode(index) {
+      const points = activePoints[currentTab];
+      if (points && points.length > 0) {
+        points.splice(index, 1);
+        if (draggingIdx === index) draggingIdx = -1;
+        render();
+        
+        // 실시간 DB 저장
+        window.electronAPI.saveHuntingPath(currentTab, points);
+      }
+    }
+
+    // 현재 사냥터 동선 전체 초기화
+    function clearCurrentPath() {
+      if (!currentTab) return;
+      if (confirm('현재 사냥터의 모든 동선을 초기화하시겠습니까?')) {
+        activePoints[currentTab] = [];
+        draggingIdx = -1;
+        render();
+        
+        // DB 저장 (빈 배열)
+        window.electronAPI.saveHuntingPath(currentTab, []);
+      }
+    }
+
+    // 드래그 감지
+    window.addEventListener('mousemove', (e) => {
+      if (draggingIdx === -1) return;
+      const rect = mapContainer.getBoundingClientRect();
+      const px = (e.clientX - rect.left) - dragOffset.x;
+      const py = (e.clientY - rect.top) - dragOffset.y;
+      activePoints[currentTab][draggingIdx] = pixelToGame(px, py);
+      render();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (draggingIdx !== -1) {
+        draggingIdx = -1;
+        render();
+        
+        // 드래그 종료 시 실시간 DB 저장
+        window.electronAPI.saveHuntingPath(currentTab, activePoints[currentTab]);
+      }
+    });
+
+    // 초기화 함수
+    window.onload = async () => {
+      try {
+        if (window.bindEscapeClose) window.bindEscapeClose();
+      } catch (e) {
+        console.error('Failed to bind escape close:', e);
+      }
+
+      // 1. DB에서 사냥터 설정 정보 조회
+      try {
+        const grounds = await window.electronAPI.getHuntingGrounds();
+        if (grounds && grounds.length > 0) {
+          grounds.forEach(g => {
+            mapsConfig[g.id] = {
+              name: g.name,
+              image: g.image_path,
+              zoom: g.zoom,
+              S: g.s,
+              Ox: g.ox,
+              Oy: g.oy,
+              fX: g.fx,
+              fY: g.fy,
+              isSwap: !!g.is_swap
+            };
+          });
+          currentTab = grounds[0].id;
+        }
+      } catch (e) {
+        console.error('Failed to fetch hunting grounds:', e);
+      }
+
+      // 2. DB에서 저장된 경로 정보 조회
+      for (let key in mapsConfig) {
+        try {
+          const savedPoints = await window.electronAPI.getHuntingPath(key);
+          activePoints[key] = savedPoints || [];
+        } catch (e) {
+          console.error(`Failed to fetch hunting path for ${key}:`, e);
+          activePoints[key] = [];
+        }
+      }
+
+      initTabs();
+      render();
+      
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    };
+  </script>
+</body>
+</html>

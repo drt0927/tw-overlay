@@ -93,7 +93,35 @@ export function initDb(): void {
         color TEXT NOT NULL,
         FOREIGN KEY (alarm_id) REFERENCES word_alarm_history(id) ON DELETE CASCADE
       );
+
+      CREATE TABLE IF NOT EXISTS hunting_grounds (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        image_path TEXT NOT NULL,
+        zoom REAL NOT NULL,
+        s REAL NOT NULL,
+        ox REAL NOT NULL,
+        oy REAL NOT NULL,
+        fx REAL NOT NULL,
+        fy REAL NOT NULL,
+        is_swap INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS hunting_paths (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        hunting_ground_id TEXT NOT NULL,
+        seq INTEGER NOT NULL,
+        x INTEGER NOT NULL,
+        y INTEGER NOT NULL,
+        FOREIGN KEY (hunting_ground_id) REFERENCES hunting_grounds(id) ON DELETE CASCADE
+      );
     `);
+
+    // 사냥터 기본 맵 정보 초기 삽입
+    db.prepare(`
+      INSERT OR IGNORE INTO hunting_grounds (id, name, image_path, zoom, s, ox, oy, fx, fy, is_swap)
+      VALUES ('forge', '대장간', 'assets/img/field-macro/맵.png', 2.0, 1.0, -340.0, 300.0, -1.0, 1.0, 1)
+    `).run();
 
     // 마이그레이션: amount 컬럼이 없는 경우 추가 (이미 테이블이 생성된 경우 대비)
     try {
@@ -730,5 +758,45 @@ export function clearWordAlarmHistory(): void {
 
   db.prepare('DELETE FROM word_alarm_history').run();
   notifyUpdate();
+}
+
+export function getHuntingGrounds(): any[] {
+  if (!db) initDb();
+  if (!db) return [];
+  try {
+    return db.prepare('SELECT * FROM hunting_grounds').all();
+  } catch (e) {
+    log(`[DiaryDB] getHuntingGrounds failed: ${e}`);
+    return [];
+  }
+}
+
+export function getHuntingPath(groundId: string): Array<[number, number]> {
+  if (!db) initDb();
+  if (!db) return [];
+  try {
+    const rows = db.prepare('SELECT x, y FROM hunting_paths WHERE hunting_ground_id = ? ORDER BY seq ASC').all(groundId) as any[];
+    return rows.map(r => [r.x, r.y]);
+  } catch (e) {
+    log(`[DiaryDB] getHuntingPath failed (groundId: ${groundId}): ${e}`);
+    return [];
+  }
+}
+
+export function saveHuntingPath(groundId: string, points: Array<[number, number]>): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    const transaction = db.transaction(() => {
+      db!.prepare('DELETE FROM hunting_paths WHERE hunting_ground_id = ?').run(groundId);
+      const stmt = db!.prepare('INSERT INTO hunting_paths (hunting_ground_id, seq, x, y) VALUES (?, ?, ?, ?)');
+      points.forEach((p, idx) => {
+        stmt.run(groundId, idx, p[0], p[1]);
+      });
+    });
+    transaction();
+  } catch (e) {
+    log(`[DiaryDB] saveHuntingPath failed (groundId: ${groundId}): ${e}`);
+  }
 }
 

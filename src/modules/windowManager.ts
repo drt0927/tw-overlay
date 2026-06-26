@@ -165,6 +165,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
   wordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'wordAlarm', html: 'word-alarm.html', width: 450, height: 950 },
   discordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'discordAlarm', html: 'discord-alarm.html', width: 450, height: 950 },
+  huntingPathSimulator: { ref: null, pos: { offsetX: -860, offsetY: 40 }, key: 'huntingPathSimulator', html: 'hunting-path-simulator.html', width: 860, height: 750 },
   chatOverlay: {
     ref: null,
     pos: { offsetX: -460, offsetY: 450 },
@@ -414,6 +415,7 @@ export function setMandatoryUpdateLock(lock: boolean): void {
 export function createMainWindow(): BrowserWindow {
   const cfg = config.load();
   isOverlayVisible = cfg.overlayVisible !== false;
+  isClickThrough = !!cfg.chatOverlayClickThrough;
   // focusable: true로 변경하여 클릭 신호 수신 안정화
   mainWindow = new BrowserWindow(getStandardOptions(SIDEBAR_WIDTH, SIDEBAR_HEIGHT, { skipTaskbar: true, resizable: false, thickFrame: false, focusable: true, acceptFirstMouse: true }));
   mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
@@ -659,6 +661,7 @@ export function toggleGalleryWindow(): boolean {
     onReady: (win) => { gallery.updateWindows(null, win, null); if (onOverlayReady) onOverlayReady(); }
   });
 }
+export function toggleHuntingPathSimulatorWindow(): boolean { return createToggleableWindow('huntingPathSimulator'); }
 export function toggleAbbreviationWindow(): boolean { return createToggleableWindow('abbreviation'); }
 export function toggleEquipmentDicWindow(): boolean { return createToggleableWindow('equipmentDic'); }
 export function toggleBuffsWindow(): boolean { return createToggleableWindow('buffs'); }

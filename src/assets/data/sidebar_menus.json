@@ -168,6 +168,14 @@
     "api": "toggleSienaAura"
   },
   {
+    "id": "hunting-path-simulator-btn",
+    "label": "사냥터 동선 시뮬레이션",
+    "icon": "map",
+    "tooltip": "사냥터 동선 시뮬레이션",
+    "color": "emerald-500",
+    "api": "toggleHuntingPathSimulator"
+  },
+  {
     "id": "home-btn",
     "label": "홈 페이지",
     "icon": "home",

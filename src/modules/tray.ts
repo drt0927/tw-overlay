@@ -49,6 +49,7 @@ function buildMenuTemplate(): any[] {
         'toggleUniformColor': wm.toggleUniformColorWindow,
         'toggleScamDetector': wm.toggleScamDetectorWindow,
         'toggleSienaAura': wm.toggleSienaAuraWindow,
+        'toggleHuntingPathSimulator': wm.toggleHuntingPathSimulatorWindow,
         'toggleOverlay': wm.toggleOverlay,
         'toggleClickThrough': wm.toggleClickThrough
       };

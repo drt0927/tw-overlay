@@ -120,7 +120,15 @@ export function initDb(): void {
     // 사냥터 기본 맵 정보 초기 삽입
     db.prepare(`
       INSERT OR IGNORE INTO hunting_grounds (id, name, image_path, zoom, s, ox, oy, fx, fy, is_swap)
-      VALUES ('forge', '대장간', 'assets/img/field-macro/맵.png', 2.0, 1.0, -340.0, 300.0, -1.0, 1.0, 1)
+      VALUES ('forge', '시오칸하임 대장간', 'assets/img/field-map/대장간.png', 2.0, 1.0, -340.0, 300.0, -1.0, 1.0, 1)
+    `).run();
+    db.prepare(`
+      INSERT OR IGNORE INTO hunting_grounds (id, name, image_path, zoom, s, ox, oy, fx, fy, is_swap)
+      VALUES ('golgotha', '골고다의 협곡', 'assets/img/field-map/골고다의협곡.png', 2.0, 1.0, -340.0, 300.0, -1.0, 1.0, 1)
+    `).run();
+    db.prepare(`
+      INSERT OR IGNORE INTO hunting_grounds (id, name, image_path, zoom, s, ox, oy, fx, fy, is_swap)
+      VALUES ('void', '공허의 영역', 'assets/img/field-map/공허의영역.png', 2.0, 1.0, -340.0, 300.0, -1.0, 1.0, 1)
     `).run();
 
     // 마이그레이션: amount 컬럼이 없는 경우 추가 (이미 테이블이 생성된 경우 대비)
@@ -134,6 +142,29 @@ export function initDb(): void {
       }
     } catch (e) {
       log(`[DiaryDB] Migration check failed: ${e}`);
+    }
+
+    // 마이그레이션: 기존 대장간 이미지 경로를 최신 경로(대장간.png)로 업데이트 및 탭 이름 변경
+    try {
+      db.prepare(`
+        UPDATE hunting_grounds 
+        SET image_path = 'assets/img/field-map/대장간.png',
+            name = '시오칸하임 대장간'
+        WHERE id = 'forge'
+      `).run();
+      db.prepare(`
+        UPDATE hunting_grounds 
+        SET name = '골고다의 협곡'
+        WHERE id = 'golgotha'
+      `).run();
+      db.prepare(`
+        UPDATE hunting_grounds 
+        SET name = '공허의 영역'
+        WHERE id = 'void'
+      `).run();
+      log('[DiaryDB] Hunting grounds names and paths migrated successfully.');
+    } catch (e) {
+      log(`[DiaryDB] Hunting grounds migration failed: ${e}`);
     }
 
     // 마이그레이션: 이클립스 셀피나 -> 로카고스 데이터 인계

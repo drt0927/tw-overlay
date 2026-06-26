@@ -125,24 +125,34 @@
 
     .node-hitbox:hover + .node {
       fill: #ffffff;
-      r: 9;
+      r: 11;
       stroke-width: 2.5;
     }
 
     .node.active {
       fill: #f87171 !important; /* Red 400 */
-      r: 9.5 !important;
+      r: 11.5 !important;
       stroke: #ffffff !important;
     }
 
     .node.start {
       fill: #facc15; /* Yellow 400 */
-      r: 7;
+      r: 8;
     }
 
     .node.end {
       fill: #f87171; /* Red 400 */
-      r: 7;
+      r: 8;
+    }
+
+    .node-text {
+      font-size: 9px;
+      font-weight: 900;
+      fill: #0f172a; /* 어두운 색상으로 밝은 노드 배경 위에 글씨 가독성 확보 */
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      user-select: none;
     }
 
     /* 단축키 정보 배너: boss-settings.html 가이드 배너 스타일 반영 */
@@ -338,12 +348,18 @@
         
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle.setAttribute("cx", pix.x); circle.setAttribute("cy", pix.y);
-        circle.setAttribute("r", "4.5");
+        circle.setAttribute("r", "8");
         let cls = "node";
         if (i === 0) cls += " start";
         if (i === points.length - 1) cls += " end";
         if (i === draggingIdx) cls += " active";
         circle.setAttribute("class", cls);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", pix.x);
+        text.setAttribute("y", pix.y);
+        text.setAttribute("class", "node-text");
+        text.textContent = i + 1;
 
         const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         hitbox.setAttribute("cx", pix.x); hitbox.setAttribute("cy", pix.y);
@@ -368,6 +384,7 @@
 
         svg.appendChild(hitbox);
         svg.appendChild(circle);
+        svg.appendChild(text);
       });
     }
 

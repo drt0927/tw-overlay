@@ -1234,7 +1234,8 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     }
 
     // 열려있는 자식 창들도 재배치 (사이드바 X 변경에 따른 오프셋 보정)
-    if (gameRect) {
+    // 전체화면(isGameFullscreen) 상태일 때는 개별 오버레이 창들의 위치 조정을 건너뜁니다.
+    if (gameRect && !isGameFullscreen) {
       Object.keys(windowRegistry).forEach(key => {
         const winCfg = windowRegistry[key];
         if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {

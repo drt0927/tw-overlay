@@ -33,6 +33,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getHuntingPath: (groundId: string) => ipcRenderer.invoke('get-hunting-path', groundId),
   saveHuntingPath: (groundId: string, points: Array<[number, number, string?]>) => ipcRenderer.send('save-hunting-path', groundId, points),
   resetXp: () => ipcRenderer.send('xp-reset'),
+  startXpSession: () => ipcRenderer.send('xp-start-session'),
+  stopXpSession: () => ipcRenderer.send('xp-stop-session'),
   abandonedReset: () => ipcRenderer.send('abandoned-reset'),
   startChatLogWatch: () => ipcRenderer.send('start-chat-log-watch'),
   checkChatLogStatus: () => ipcRenderer.invoke('check-chat-log-status'),

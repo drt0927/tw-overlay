@@ -137,6 +137,8 @@ export interface ShortcutsConfig {
     toggleChatOverlaySync?: string;
     /** 경험치 세션 초기화 */
     resetXpSession?: string;
+    /** 경험치 세션 시작/중지 토글 */
+    toggleXpSession?: string;
     /** 버프 타이머 버프 전체 삭제 */
     clearAllBuffs?: string;
 }
@@ -304,6 +306,7 @@ export interface AppConfig {
     wordAlarmVolume?: number;
     wordAlarmHistoryEnabled?: boolean;
     showXpWidget?: boolean;
+    xpAutoStart?: boolean;
     ignoreNegativeXp?: boolean;
     xpWidgetPos?: { left: number; bottom: number };
     waveMonsterWarningEnabled?: boolean;

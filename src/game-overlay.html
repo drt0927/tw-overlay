@@ -1533,6 +1533,8 @@
 
     let showXpWidget = true;
     let sessionStartTime = Date.now();
+    let sessionAccumulatedTime = 0;
+    let sessionIsActive = false;
     let currentConfig = null;
 
     function formatTime(ms) {
@@ -1547,7 +1549,11 @@
     setInterval(() => {
       const elapsedEl = document.getElementById('xp-elapsed');
       if (elapsedEl && showXpWidget) {
-        elapsedEl.innerText = formatTime(Date.now() - sessionStartTime);
+        let elapsed = sessionAccumulatedTime;
+        if (sessionIsActive) {
+          elapsed += Date.now() - sessionStartTime;
+        }
+        elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
       }
     }, 1000);
 
@@ -1603,15 +1609,30 @@
     // 경험치 데이터 수신
     window.electronAPI.onXpUpdate((data) => {
       if (!showXpWidget) return;
-      if (data.startTime) {
+      if (data.startTime !== undefined) {
         sessionStartTime = data.startTime;
+      }
+      if (data.accumulatedTime !== undefined) {
+        sessionAccumulatedTime = data.accumulatedTime;
+      }
+      if (data.isActive !== undefined) {
+        sessionIsActive = data.isActive;
       }
       document.getElementById('xp-total').innerText = formatXP(data.total);
       document.getElementById('xp-epm').innerText = formatXP(data.epm);
       document.getElementById('xp-kills').innerText = (data.kills || 0).toLocaleString();
       const elapsedEl = document.getElementById('xp-elapsed');
       if (elapsedEl) {
-        elapsedEl.innerText = formatTime(Date.now() - sessionStartTime);
+        let elapsed = sessionAccumulatedTime;
+        if (sessionIsActive) {
+          elapsed += Date.now() - sessionStartTime;
+          elapsedEl.classList.remove('text-slate-400');
+          elapsedEl.classList.add('text-white');
+        } else {
+          elapsedEl.classList.remove('text-white');
+          elapsedEl.classList.add('text-slate-400');
+        }
+        elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
       }
     });
 
@@ -2642,15 +2663,31 @@
       if (window.electronAPI && window.electronAPI.invoke) {
         window.electronAPI.invoke('xp-get-stats').then(stats => {
           if (stats) {
-            if (stats.startTime) {
+            if (stats.startTime !== undefined) {
               sessionStartTime = stats.startTime;
+            }
+            if (stats.accumulatedTime !== undefined) {
+              sessionAccumulatedTime = stats.accumulatedTime;
+            }
+            if (stats.isActive !== undefined) {
+              sessionIsActive = stats.isActive;
             }
             document.getElementById('xp-total').innerText = formatXP(stats.total || 0);
             document.getElementById('xp-epm').innerText = formatXP(stats.epm || 0);
             document.getElementById('xp-kills').innerText = (stats.kills || 0).toLocaleString();
+            
             const elapsedEl = document.getElementById('xp-elapsed');
             if (elapsedEl) {
-              elapsedEl.innerText = formatTime(Date.now() - sessionStartTime);
+              let elapsed = sessionAccumulatedTime;
+              if (sessionIsActive) {
+                elapsed += Date.now() - sessionStartTime;
+                elapsedEl.classList.remove('text-slate-400');
+                elapsedEl.classList.add('text-white');
+              } else {
+                elapsedEl.classList.remove('text-white');
+                elapsedEl.classList.add('text-slate-400');
+              }
+              elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
             }
           }
         }).catch(err => console.error('Failed to get initial XP stats:', err));

@@ -567,6 +567,12 @@ export function register(): void {
   ipcMain.on('xp-reset', () => {
     import('./chatLogProcessor').then(mod => mod.chatLogProcessor.resetXp());
   });
+  ipcMain.on('xp-start-session', () => {
+    import('./xpTracker').then(mod => mod.xpTracker.startSession());
+  });
+  ipcMain.on('xp-stop-session', () => {
+    import('./xpTracker').then(mod => mod.xpTracker.stopSession());
+  });
 
   // 어벤던로드 세션 제어
   ipcMain.on('abandoned-reset', () => {

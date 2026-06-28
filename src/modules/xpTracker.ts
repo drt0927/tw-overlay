@@ -22,6 +22,8 @@ class XpTracker {
   private _lastMinuteTimestamp = Math.floor(Date.now() / 60000);
   private _currentMinuteXP = 0;
   private _historyTimer: NodeJS.Timeout | null = null;
+  private _isActive = true;
+  private _accumulatedTime = 0;
 
   // 경험의 정수 자동 교환 버프 미감지 알람
   private static readonly ESSENCE_XP = 10_000_000_000;
@@ -40,9 +42,14 @@ class XpTracker {
   private _questTimer: NodeJS.Timeout | null = null;
 
   public start(): void {
+    const cfg = config.load();
+    this._isActive = cfg.xpAutoStart !== false;
+
     // 히스토리 갱신 타이머 (10초마다 분 롤오버 체크)
     if (this._historyTimer) clearInterval(this._historyTimer);
-    this._historyTimer = setInterval(() => this.checkMinuteRollover(), 10000);
+    this._historyTimer = setInterval(() => {
+      if (this._isActive) this.checkMinuteRollover();
+    }, 10000);
 
     // 도전과제 매크로 감지
     chatParser.on('NORMAL_CHAT', (data) => {
@@ -70,6 +77,8 @@ class XpTracker {
 
     // 경험치 변동
     chatParser.on('XP_CHANGED', (data) => {
+      if (!this._isActive) return;
+
       // 정수 교환 감지
       if (data.amount <= -9_000_000_000) {
         this._xpSinceLastExchange = 0;
@@ -160,8 +169,15 @@ class XpTracker {
     });
   }
 
+  private getElapsedMs(): number {
+    if (!this._isActive) {
+      return this._accumulatedTime;
+    }
+    return this._accumulatedTime + (Date.now() - this._startTime);
+  }
+
   private buildXpPayload(lastGain: number) {
-    const elapsedMins = (Date.now() - this._startTime) / 60000;
+    const elapsedMins = this.getElapsedMs() / 60000;
     const epm = Math.floor(this._sessionXP / Math.max(1, elapsedMins));
     const recentMins = Math.min(5, this._minuteHistory.length);
     let movingEpm = epm;
@@ -177,6 +193,8 @@ class XpTracker {
       essenceCount: this._sessionEssenceCount,
       xpSinceLastExchange: this._xpSinceLastExchange,
       startTime: this._startTime,
+      accumulatedTime: this._accumulatedTime,
+      isActive: this._isActive
     };
   }
 
@@ -276,6 +294,7 @@ class XpTracker {
     this._sessionXP = 0;
     this._sessionKills = 0;
     this._startTime = Date.now();
+    this._accumulatedTime = 0;
     this._minuteHistory = [];
     this._currentMinuteXP = 0;
     this._lastMinuteTimestamp = Math.floor(Date.now() / 60000);
@@ -287,17 +306,22 @@ class XpTracker {
     const allWindows = BrowserWindow.getAllWindows();
     const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
     if (gameOverlay) {
-      gameOverlay.webContents.send('xp-update', { total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0, startTime: this._startTime });
+      gameOverlay.webContents.send('xp-update', {
+        total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0,
+        startTime: this._startTime, accumulatedTime: 0, isActive: this._isActive
+      });
     }
     const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
     if (xpHud) {
-      xpHud.webContents.send('xp-reset-done', { startTime: this._startTime });
+      xpHud.webContents.send('xp-reset-done', { startTime: this._startTime, accumulatedTime: 0, isActive: this._isActive });
     }
   }
 
   public getStats() {
-    this.checkMinuteRollover();
-    const elapsedMins = (Date.now() - this._startTime) / 60000;
+    if (this._isActive) {
+      this.checkMinuteRollover();
+    }
+    const elapsedMins = this.getElapsedMs() / 60000;
     const epm = Math.floor(this._sessionXP / Math.max(1, elapsedMins));
     const recentMins = Math.min(5, this._minuteHistory.length);
     let movingEpm = epm;
@@ -312,7 +336,42 @@ class XpTracker {
       kills: this._sessionKills,
       essenceCount: this._sessionEssenceCount,
       xpSinceLastExchange: this._xpSinceLastExchange,
+      accumulatedTime: this._accumulatedTime,
+      isActive: this._isActive
     };
+  }
+
+  public startSession(): void {
+    if (this._isActive) return;
+    this._isActive = true;
+    this._startTime = Date.now();
+    log('[XP_TRACKER] XP 세션 측정 시작');
+    this.broadcastUpdate();
+  }
+
+  public stopSession(): void {
+    if (!this._isActive) return;
+    this._isActive = false;
+    this._accumulatedTime += Date.now() - this._startTime;
+    log('[XP_TRACKER] XP 세션 측정 중지');
+    this.broadcastUpdate();
+  }
+
+  public toggleSession(): void {
+    if (this._isActive) {
+      this.stopSession();
+    } else {
+      this.startSession();
+    }
+  }
+
+  private broadcastUpdate(): void {
+    const payload = this.buildXpPayload(0);
+    const allWindows = BrowserWindow.getAllWindows();
+    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+    if (gameOverlay) gameOverlay.webContents.send('xp-update', payload);
+    const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
+    if (xpHud) xpHud.webContents.send('xp-update', payload);
   }
 
   private parseLogTimestamp(dateStr: string, timestampStr: string): number {

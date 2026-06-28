@@ -103,6 +103,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     toggleDock: 'CommandOrControl+Shift+D',
     toggleChatOverlaySync: 'CommandOrControl+Shift+H',
     resetXpSession: 'CommandOrControl+Shift+X',
+    toggleXpSession: 'CommandOrControl+Shift+Z',
     clearAllBuffs: 'CommandOrControl+Shift+E'
   },
   volumeContentsChecker: 30,
@@ -117,6 +118,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   wordAlarmVolume: 40,
   wordAlarmHistoryEnabled: true,
   showXpWidget: true,
+  xpAutoStart: true,
   ignoreNegativeXp: true,
   xpWidgetPos: { left: 200, bottom: 0 },
   buffTimerEnabled: true,

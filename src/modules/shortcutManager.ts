@@ -90,6 +90,17 @@ export function registerAll(): void {
     }
   }
 
+  // 6-2. 경험치 세션 측정 시작/중지 토글
+  if (shortcuts.toggleXpSession) {
+    const registered = globalShortcut.register(shortcuts.toggleXpSession, () => {
+      log('[SHORTCUT] Toggle XP Session');
+      import('./xpTracker').then(mod => mod.xpTracker.toggleSession());
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleXpSession}`);
+    }
+  }
+
   // 7. 버프 타이머 버프 전체 삭제
   if (shortcuts.clearAllBuffs) {
     const registered = globalShortcut.register(shortcuts.clearAllBuffs, () => {

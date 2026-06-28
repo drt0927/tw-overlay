@@ -352,9 +352,19 @@
 
       <div class="stat-card">
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <div class="stat-label">세션 경과 시간</div>
-            <div style="font-size:16px;font-weight:900;color:var(--text);margin-top:2px;" id="elapsed-timer">00:00:00
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button id="btn-session-control" 
+              style="width:36px;height:36px;border-radius:50%;border:none;background:var(--accent-dim);border:1px solid rgba(52,211,153,0.3);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;"
+              title="세션 측정 시작/중지">
+              <i data-lucide="play" class="w-4 h-4" id="icon-session-control"></i>
+            </button>
+            <div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="stat-label">세션 경과 시간</span>
+                <span id="session-status-badge" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f87171;"></span>
+              </div>
+              <div style="font-size:16px;font-weight:900;color:var(--text);margin-top:2px;" id="elapsed-timer">00:00:00
+              </div>
             </div>
           </div>
           <div style="text-align:right;">
@@ -450,6 +460,16 @@
         </div>
         <label class="toggle-wrap">
           <input type="checkbox" id="toggle-show" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row mt-2">
+        <div>
+          <div class="setting-row-label">경험치 세션 자동 시작</div>
+          <div class="setting-row-sub">앱 실행 시 경험치 측정을 자동으로 시작합니다.</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="toggle-xp-auto-start" checked>
           <span class="toggle-slider"></span>
         </label>
       </div>
@@ -586,17 +606,70 @@
 
     // ── 상태 ──
     let _startTime = Date.now();
+    let _accumulatedTime = 0;
+    let _isActive = false;
     let _elapsedTimer = null;
 
     function startElapsedTimer() {
       if (_elapsedTimer) clearInterval(_elapsedTimer);
       _elapsedTimer = setInterval(() => {
-        document.getElementById('elapsed-timer').textContent = formatTime(Date.now() - _startTime);
+        let elapsed = _accumulatedTime;
+        if (_isActive) {
+          elapsed += Date.now() - _startTime;
+        }
+        document.getElementById('elapsed-timer').textContent = formatTime(elapsed);
       }, 1000);
     }
 
     function updateStats(data, isInitial = false) {
       if (!data) return;
+
+      if (data.isActive !== undefined) {
+        _isActive = data.isActive;
+        const btn = document.getElementById('btn-session-control');
+        const icon = document.getElementById('icon-session-control');
+        const badge = document.getElementById('session-status-badge');
+
+        if (_isActive) {
+          if (icon) {
+            icon.setAttribute('data-lucide', 'pause');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+          }
+          if (badge) {
+            badge.style.backgroundColor = 'var(--accent)';
+            badge.classList.add('animate-pulse');
+          }
+          if (btn) {
+            btn.style.background = 'rgba(248, 113, 113, 0.12)';
+            btn.style.borderColor = 'rgba(248, 113, 113, 0.3)';
+            btn.style.color = 'var(--danger)';
+            btn.title = '세션 측정 중지';
+          }
+        } else {
+          if (icon) {
+            icon.setAttribute('data-lucide', 'play');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+          }
+          if (badge) {
+            badge.style.backgroundColor = 'var(--danger)';
+            badge.classList.remove('animate-pulse');
+          }
+          if (btn) {
+            btn.style.background = 'var(--accent-dim)';
+            btn.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+            btn.style.color = 'var(--accent)';
+            btn.title = '세션 측정 시작';
+          }
+        }
+      }
+
+      if (data.startTime !== undefined) {
+        _startTime = data.startTime;
+        const startTimeEl = document.getElementById('stat-start-time');
+        if (startTimeEl) startTimeEl.textContent = formatStartTime(_startTime);
+      }
+      if (data.accumulatedTime !== undefined) _accumulatedTime = data.accumulatedTime;
+
       if (document.getElementById('stat-total')) document.getElementById('stat-total').innerHTML = formatXP(data.total || 0);
       if (document.getElementById('stat-epm')) document.getElementById('stat-epm').innerHTML = formatXP(data.epm || 0);
       if (document.getElementById('stat-moving-epm')) document.getElementById('stat-moving-epm').innerHTML = formatXP(data.movingEpm || 0);
@@ -649,8 +722,22 @@
 
     window.electronAPI.onXpResetDone((data) => {
       _startTime = data.startTime;
-      updateStats({ total: 0, epm: 0, movingEpm: 0, history: [], kills: 0, essenceCount: 0, xpSinceLastExchange: 0 }, true);
-      document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
+      _accumulatedTime = data.accumulatedTime || 0;
+      _isActive = data.isActive || false;
+      updateStats({
+        total: 0, epm: 0, movingEpm: 0, history: [], kills: 0, essenceCount: 0,
+        xpSinceLastExchange: 0, isActive: _isActive, startTime: _startTime, accumulatedTime: _accumulatedTime
+      }, true);
+      const startTimeEl = document.getElementById('stat-start-time');
+      if (startTimeEl) startTimeEl.textContent = formatStartTime(_startTime);
+    });
+
+    document.getElementById('btn-session-control').addEventListener('click', () => {
+      if (_isActive) {
+        window.electronAPI.stopXpSession();
+      } else {
+        window.electronAPI.startXpSession();
+      }
     });
 
     document.getElementById('btn-reset').addEventListener('click', () => {
@@ -659,6 +746,10 @@
 
     document.getElementById('toggle-show').addEventListener('change', (e) => {
       window.electronAPI.applySettings({ showXpWidget: e.target.checked });
+    });
+
+    document.getElementById('toggle-xp-auto-start').addEventListener('change', (e) => {
+      window.electronAPI.applySettings({ xpAutoStart: e.target.checked });
     });
 
     document.getElementById('toggle-ignore-negative').addEventListener('change', (e) => {
@@ -693,6 +784,7 @@
 
     window.electronAPI.onConfigData((config) => {
       if (config.showXpWidget !== undefined) document.getElementById('toggle-show').checked = config.showXpWidget;
+      if (config.xpAutoStart !== undefined) document.getElementById('toggle-xp-auto-start').checked = config.xpAutoStart;
       if (config.ignoreNegativeXp !== undefined) document.getElementById('toggle-ignore-negative').checked = config.ignoreNegativeXp;
       if (config.xpWidgetPos) {
         document.getElementById('pos-left').value = config.xpWidgetPos.left;
@@ -749,7 +841,10 @@
         window.electronAPI.invoke('xp-get-stats').then(stats => {
           if (stats) {
             _startTime = stats.startTime;
-            document.getElementById('stat-start-time').textContent = formatStartTime(_startTime);
+            _accumulatedTime = stats.accumulatedTime || 0;
+            _isActive = stats.isActive || false;
+            const startTimeEl = document.getElementById('stat-start-time');
+            if (startTimeEl) startTimeEl.textContent = formatStartTime(_startTime);
             updateStats(stats, true); // true 인자를 주어 초기 렌더링 강제화
           }
         });

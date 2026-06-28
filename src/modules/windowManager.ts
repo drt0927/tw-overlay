@@ -56,6 +56,18 @@ function attachStackListeners(win: BrowserWindow): void {
   });
   win.on('show', () => pushToStack(win));
   win.on('closed', () => removeFromStack(win));
+
+  // 프로덕션 빌드에서는 단축키 등으로 개발자 도구가 열리는 것을 즉각 감지하여 강제 종료
+  if (!IS_DEV) {
+    win.webContents.on('devtools-opened', () => {
+      try {
+        win.webContents.closeDevTools();
+      } catch {
+        // 무시
+      }
+    });
+  }
+
   pushToStack(win);
 }
 

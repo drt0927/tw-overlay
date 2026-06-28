@@ -8,7 +8,7 @@ import type { MessengerMessage, ScamAnalysisResult } from '../../shared/types';
 
 // ── 상수 ──
 export const MAX_MESSAGES_FOR_PROMPT = 80;
-export const SCAM_ALERT_SOUND = 'gongseubgyeongbo-gongseubgyeongbo.mp3';
+export const SCAM_ALERT_SOUND = 'orb.mp3';
 export const END_KEYWORDS = ['종료', '나가셨습니다', '대화를 마쳤습니다', '채팅이 종료'];
 
 // ── HTML 파싱 ──
@@ -164,13 +164,13 @@ export async function sendAlert(result: ScamAnalysisResult): Promise<void> {
 
   const sidebar = wm.getMainWindow();
   const alertSound = config.load().scamAlertSound || SCAM_ALERT_SOUND;
-  sidebar?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 100 });
+  sidebar?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 50 });
   sidebar?.webContents.send('scam-alert', result);
 
   const cfg = config.load();
   if (cfg.sidebarPosition === 'dock') {
     const gameOverlay = wm.getGameOverlayWindow();
-    gameOverlay?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 100 });
+    gameOverlay?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 50 });
     gameOverlay?.webContents.send('scam-alert', result);
   }
 

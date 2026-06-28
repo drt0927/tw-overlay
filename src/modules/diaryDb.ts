@@ -113,6 +113,7 @@ export function initDb(): void {
         seq INTEGER NOT NULL,
         x INTEGER NOT NULL,
         y INTEGER NOT NULL,
+        color TEXT,
         FOREIGN KEY (hunting_ground_id) REFERENCES hunting_grounds(id) ON DELETE CASCADE
       );
     `);
@@ -165,6 +166,18 @@ export function initDb(): void {
       log('[DiaryDB] Hunting grounds names and paths migrated successfully.');
     } catch (e) {
       log(`[DiaryDB] Hunting grounds migration failed: ${e}`);
+    }
+
+    // 마이그레이션: hunting_paths 테이블에 color 컬럼이 없는 경우 추가
+    try {
+      const columns = db.prepare("PRAGMA table_info(hunting_paths)").all() as any[];
+      const hasColor = columns.some(c => c.name === 'color');
+      if (!hasColor) {
+        db.exec("ALTER TABLE hunting_paths ADD COLUMN color TEXT");
+        log('[DiaryDB] hunting_paths table updated with color column.');
+      }
+    } catch (e) {
+      log(`[DiaryDB] hunting_paths migration check failed: ${e}`);
     }
 
     // 마이그레이션: 이클립스 셀피나 -> 로카고스 데이터 인계
@@ -802,27 +815,27 @@ export function getHuntingGrounds(): any[] {
   }
 }
 
-export function getHuntingPath(groundId: string): Array<[number, number]> {
+export function getHuntingPath(groundId: string): Array<[number, number, string?]> {
   if (!db) initDb();
   if (!db) return [];
   try {
-    const rows = db.prepare('SELECT x, y FROM hunting_paths WHERE hunting_ground_id = ? ORDER BY seq ASC').all(groundId) as any[];
-    return rows.map(r => [r.x, r.y]);
+    const rows = db.prepare('SELECT x, y, color FROM hunting_paths WHERE hunting_ground_id = ? ORDER BY seq ASC').all(groundId) as any[];
+    return rows.map(r => [r.x, r.y, r.color || undefined]);
   } catch (e) {
     log(`[DiaryDB] getHuntingPath failed (groundId: ${groundId}): ${e}`);
     return [];
   }
 }
 
-export function saveHuntingPath(groundId: string, points: Array<[number, number]>): void {
+export function saveHuntingPath(groundId: string, points: Array<[number, number, string?]>): void {
   if (!db) initDb();
   if (!db) return;
   try {
     const transaction = db.transaction(() => {
       db!.prepare('DELETE FROM hunting_paths WHERE hunting_ground_id = ?').run(groundId);
-      const stmt = db!.prepare('INSERT INTO hunting_paths (hunting_ground_id, seq, x, y) VALUES (?, ?, ?, ?)');
+      const stmt = db!.prepare('INSERT INTO hunting_paths (hunting_ground_id, seq, x, y, color) VALUES (?, ?, ?, ?, ?)');
       points.forEach((p, idx) => {
-        stmt.run(groundId, idx, p[0], p[1]);
+        stmt.run(groundId, idx, p[0], p[1], p[2] || null);
       });
     });
     transaction();

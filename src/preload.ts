@@ -31,7 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleHuntingPathSimulator: () => ipcRenderer.send('toggle-hunting-path-simulator'),
   getHuntingGrounds: () => ipcRenderer.invoke('get-hunting-grounds'),
   getHuntingPath: (groundId: string) => ipcRenderer.invoke('get-hunting-path', groundId),
-  saveHuntingPath: (groundId: string, points: Array<[number, number]>) => ipcRenderer.send('save-hunting-path', groundId, points),
+  saveHuntingPath: (groundId: string, points: Array<[number, number, string?]>) => ipcRenderer.send('save-hunting-path', groundId, points),
   resetXp: () => ipcRenderer.send('xp-reset'),
   abandonedReset: () => ipcRenderer.send('abandoned-reset'),
   startChatLogWatch: () => ipcRenderer.send('start-chat-log-watch'),

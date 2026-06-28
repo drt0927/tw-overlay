@@ -30,9 +30,7 @@ class XpTracker {
   private _xpSinceLastExchange = 0;
   private _sessionEssenceCount = 0;
 
-  // 팔색조 언덕 상태
-  private _pittaSsCount = 0;
-  private _pittaLastDate = '';
+
 
   // 도전과제 추적 상태
   private _questActive = false;
@@ -151,38 +149,13 @@ class XpTracker {
       }
     });
 
-    // 팔색조 언덕 진입
+    // 팔색조 언덕 진입 (5회차 진입 시 남은 에너지 16 감지하여 즉시 알람 전송)
     chatParser.on('PITTA_ENTRY', (data) => {
-      if (this._pittaLastDate !== data.date) {
-        this._pittaLastDate = data.date;
-        this._pittaSsCount = 0;
-      }
-      if (data.grade === 'SS') {
-        const currentDoneCount = 20 - data.energy;
-        if (currentDoneCount >= 0 && currentDoneCount < 5) {
-          if (this._pittaSsCount < currentDoneCount) {
-            log(`[XP_TRACKER] 팔색조 언덕 횟수 동기화: ${this._pittaSsCount} -> ${currentDoneCount} (에너지: ${data.energy})`);
-            this._pittaSsCount = currentDoneCount;
-          }
-        }
-      }
-    });
-
-    // 팔색조 언덕 클리어
-    chatParser.on('PITTA_CLEAR', (data) => {
-      if (this._pittaLastDate !== data.date) {
-        this._pittaLastDate = data.date;
-        this._pittaSsCount = 0;
-      }
-      if (data.grade === 'SS') {
-        this._pittaSsCount++;
-        log(`[XP_TRACKER] 팔색조 언덕 SS 클리어 감지: 현재 ${this._pittaSsCount}회`);
-        if (this._pittaSsCount === 5) {
-          log('[XP_TRACKER] 팔색조 언덕 SS 5회 완료 - 오버레이 알림 전송');
-          const allWindows = BrowserWindow.getAllWindows();
-          const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-          if (gameOverlay) gameOverlay.webContents.send('pitta-alert');
-        }
+      if (data.grade === 'SS' && data.energy === 16) {
+        log('[XP_TRACKER] 팔색조 언덕 SS 5회차 진입 감지 (남은 에너지 16) - 오버레이 알림 전송');
+        const allWindows = BrowserWindow.getAllWindows();
+        const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
+        if (gameOverlay) gameOverlay.webContents.send('pitta-alert');
       }
     });
   }
@@ -308,7 +281,6 @@ class XpTracker {
     this._lastMinuteTimestamp = Math.floor(Date.now() / 60000);
     this._xpSinceLastExchange = 0;
     this._sessionEssenceCount = 0;
-    this._pittaSsCount = 0;
 
     log('[XP_TRACKER] XP 세션 초기화됨');
 

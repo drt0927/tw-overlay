@@ -88,13 +88,16 @@
       pointer-events: all;
     }
 
-    /* SVG 노드 및 경로 렌더링 (에메랄드 시그니처 톤) */
+    :root {
+      --path-color: #34d399;
+    }
+
+    /* SVG 노드 및 경로 렌더링 */
     .path-line {
       fill: none;
-      stroke: #34d399; /* Emerald 400 */
+      stroke: var(--path-color);
       stroke-width: 3.5;
       pointer-events: none;
-      opacity: 0.6;
     }
 
     .path-hitbox {
@@ -106,7 +109,8 @@
     }
 
     .path-hitbox:hover {
-      stroke: rgba(52, 211, 153, 0.15);
+      stroke: var(--path-color);
+      opacity: 0.15;
     }
 
     .node-hitbox {
@@ -116,7 +120,7 @@
     }
 
     .node {
-      fill: #34d399;
+      fill: var(--path-color);
       stroke: #000000;
       stroke-width: 1.5;
       pointer-events: none;
@@ -205,6 +209,53 @@
       </div>
     </div>
 
+    <!-- 동선 옵션 컨트롤러 -->
+    <div class="panel-glass rounded-xl p-3 flex items-center justify-between text-xs border border-white/5 bg-slate-900/40 shrink-0 max-w-[828px] w-full self-center">
+      <div class="flex items-center gap-6">
+        <!-- 선 색상 선택 -->
+        <div class="flex items-center gap-2.5">
+          <span class="text-slate-400 font-bold flex items-center gap-1">
+            <i data-lucide="palette" class="w-3.5 h-3.5 text-slate-400"></i>
+            선 색상
+          </span>
+          <div class="flex items-center gap-2" id="colorPresetContainer">
+            <button onclick="setPathColor('#34d399')" class="preset-btn w-6 h-6 rounded-full border border-white/10 transition-all hover:scale-110 active:scale-95" style="background-color: #34d399;" title="초록"></button>
+            <button onclick="setPathColor('#f87171')" class="preset-btn w-6 h-6 rounded-full border border-white/10 transition-all hover:scale-110 active:scale-95" style="background-color: #f87171;" title="빨강"></button>
+            <button onclick="setPathColor('#60a5fa')" class="preset-btn w-6 h-6 rounded-full border border-white/10 transition-all hover:scale-110 active:scale-95" style="background-color: #60a5fa;" title="파랑"></button>
+            <button onclick="setPathColor('#facc15')" class="preset-btn w-6 h-6 rounded-full border border-white/10 transition-all hover:scale-110 active:scale-95" style="background-color: #facc15;" title="노랑"></button>
+            <button onclick="setPathColor('#c084fc')" class="preset-btn w-6 h-6 rounded-full border border-white/10 transition-all hover:scale-110 active:scale-95" style="background-color: #c084fc;" title="보라"></button>
+            <!-- 커스텀 컬러 피커 -->
+            <div class="relative w-6 h-6 flex items-center justify-center rounded-full bg-black/40 border border-white/10 ml-1 overflow-hidden transition-all hover:scale-105 active:scale-95">
+              <input type="color" id="pathColorPicker" oninput="setPathColor(this.value)" class="absolute opacity-0 cursor-pointer w-full h-full">
+              <i data-lucide="plus" class="w-4 h-4 text-slate-400 pointer-events-none"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="h-4 w-px bg-white/10"></div>
+
+        <!-- 진행 방향 화살표 토글 -->
+        <label class="flex items-center gap-2 cursor-pointer select-none text-slate-400 hover:text-slate-200 transition-colors">
+          <input type="checkbox" id="toggleArrows" onchange="setArrowsEnabled(this.checked)" class="w-3.5 h-3.5 accent-emerald-500 rounded border-white/10 bg-black/30 cursor-pointer">
+          <span class="font-bold flex items-center gap-1">
+            <i data-lucide="move-right" class="w-3.5 h-3.5"></i>
+            진행 방향 표시
+          </span>
+        </label>
+
+        <div class="h-4 w-px bg-white/10"></div>
+
+        <!-- 시작-끝 연결 토글 -->
+        <label class="flex items-center gap-2 cursor-pointer select-none text-slate-400 hover:text-slate-200 transition-colors">
+          <input type="checkbox" id="toggleLoop" onchange="setLoopEnabled(this.checked)" class="w-3.5 h-3.5 accent-emerald-500 rounded border-white/10 bg-black/30 cursor-pointer">
+          <span class="font-bold flex items-center gap-1">
+            <i data-lucide="infinity" class="w-3.5 h-3.5"></i>
+            시작-끝 연결
+          </span>
+        </label>
+      </div>
+    </div>
+
     <!-- 하단 단축키 가이드 배너 -->
     <div class="guide-banner shrink-0">
       <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
@@ -213,9 +264,10 @@
       <div class="flex-1">
         <h4 class="text-xs font-bold text-slate-300 mb-1">[단축키 안내]</h4>
         <p class="text-[11px] text-slate-500 leading-relaxed">
-          노드 중간 삽입: 맵 위 <strong>경로 선(초록색)</strong>을 <strong>Ctrl + 클릭</strong><br/>
+          노드 중간 삽입: 맵 위 <strong>경로 선</strong>을 <strong>Ctrl + 클릭</strong><br/>
           노드 끝에 추가: 맵의 <strong>빈 공간</strong>을 <strong>Ctrl + 클릭</strong><br/>
-          노드 삭제: 맵 위 노드 <strong>마우스 우클릭</strong>
+          노드 삭제: 맵 위 노드 <strong>마우스 우클릭</strong><br/>
+          선 색상 변경: 맵 위 <strong>경로 선</strong>을 <strong>마우스 우클릭</strong>
         </p>
       </div>
       <!-- 동선 초기화 버튼 -->
@@ -233,6 +285,11 @@
     let mapsConfig = {};
     let activePoints = {};
     let currentTab = "";
+
+    // 신규 추가 설정 변수
+    let pathColor = localStorage.getItem('hps-path-color') || '#34d399';
+    let isArrowsEnabled = localStorage.getItem('hps-arrows-enabled') === 'true';
+    let isLoopEnabled = localStorage.getItem('hps-loop-enabled') === 'true';
 
     const mapContainer = document.getElementById('mapContainer');
     const mapImage = document.getElementById('mapImage');
@@ -297,6 +354,153 @@
       return [Math.round(gx), Math.round(gy)];
     }
 
+    // 개별 세그먼트 색상 제어 변수 및 팝업 제어
+    let selectedSegmentIdx = -1;
+
+    function showSegmentColorPopup(x, y, segmentIdx) {
+      const popup = document.getElementById('segmentColorPopup');
+      if (!popup) return;
+      selectedSegmentIdx = segmentIdx;
+      
+      // 크기 측정을 위해 화면에 먼저 노출시킴
+      popup.classList.remove('hidden');
+
+      const popupWidth = popup.offsetWidth;
+      const popupHeight = popup.offsetHeight;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      // 화면 가장자리 이탈 방지 보정 (12px의 세이프 여백 확보)
+      let left = x;
+      let top = y;
+
+      if (x + popupWidth > windowWidth) {
+        left = windowWidth - popupWidth - 12;
+      }
+      if (y + popupHeight > windowHeight) {
+        top = windowHeight - popupHeight - 12;
+      }
+
+      // 최소 좌표값(12) 방어
+      left = Math.max(12, left);
+      top = Math.max(12, top);
+
+      popup.style.left = `${left}px`;
+      popup.style.top = `${top}px`;
+
+      // 기존 색상을 미니 컬러 피커 인풋에 동기화
+      const points = activePoints[currentTab];
+      const picker = document.getElementById('segmentColorPicker');
+      if (picker && points && points[segmentIdx]) {
+        picker.value = points[segmentIdx][2] || pathColor;
+      }
+    }
+
+    function hideSegmentColorPopup() {
+      const popup = document.getElementById('segmentColorPopup');
+      if (popup) popup.classList.add('hidden');
+      selectedSegmentIdx = -1;
+    }
+
+    function changeSelectedSegmentColor(color, shouldClosePopup = true) {
+      if (selectedSegmentIdx === -1) return;
+      const points = activePoints[currentTab];
+      if (points && points[selectedSegmentIdx]) {
+        // [gx, gy, color] 로 색상 정보 업데이트
+        points[selectedSegmentIdx][2] = color;
+        render();
+        window.electronAPI.saveHuntingPath(currentTab, points);
+      }
+      
+      if (shouldClosePopup) {
+        hideSegmentColorPopup();
+      } else {
+        // 팝업은 닫지 않지만 미니 컬러 피커 인풋에 현재 바뀐 색상을 세팅
+        const picker = document.getElementById('segmentColorPicker');
+        if (picker) picker.value = color;
+      }
+    }
+
+    // 마우스 클릭 시 팝업 영역 밖이면 닫기
+    window.addEventListener('mousedown', (e) => {
+      const popup = document.getElementById('segmentColorPopup');
+      if (popup && !popup.contains(e.target)) {
+        // 즉시 닫지 않고 0ms 지연하여 닫아 버튼의 mousedown 이벤트 소실 방지
+        setTimeout(() => {
+          hideSegmentColorPopup();
+        }, 0);
+      }
+    });
+
+    // 색상 설정 및 반영 (글로벌 기본 색상 변경)
+    function setPathColor(color) {
+      pathColor = color;
+      localStorage.setItem('hps-path-color', color);
+      document.documentElement.style.setProperty('--path-color', color);
+      
+      const presets = document.querySelectorAll('.preset-btn');
+      presets.forEach(btn => {
+        if (bgToHex(btn.style.backgroundColor) === color.toLowerCase()) {
+          btn.classList.add('ring-2', 'ring-white', 'scale-110');
+        } else {
+          btn.classList.remove('ring-2', 'ring-white', 'scale-110');
+        }
+      });
+      const picker = document.getElementById('pathColorPicker');
+      if (picker) picker.value = color;
+
+      render();
+    }
+
+    function bgToHex(rgb) {
+      if (!rgb) return "";
+      if (rgb.startsWith('#')) return rgb.toLowerCase();
+      const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+      if (!match) return rgb.toLowerCase();
+      const r = parseInt(match[1]).toString(16).padStart(2, '0');
+      const g = parseInt(match[2]).toString(16).padStart(2, '0');
+      const b = parseInt(match[3]).toString(16).padStart(2, '0');
+      return `#${r}${g}${b}`;
+    }
+
+    function setArrowsEnabled(enabled) {
+      isArrowsEnabled = enabled;
+      localStorage.setItem('hps-arrows-enabled', enabled ? 'true' : 'false');
+      const chk = document.getElementById('toggleArrows');
+      if (chk) chk.checked = enabled;
+      render();
+    }
+
+    // 루프 활성화 토글
+    function setLoopEnabled(enabled) {
+      isLoopEnabled = enabled;
+      localStorage.setItem('hps-loop-enabled', enabled ? 'true' : 'false');
+      const chk = document.getElementById('toggleLoop');
+      if (chk) chk.checked = enabled;
+      render();
+    }
+
+    // 초기 UI 설정 적용
+    function applyInitialSettings() {
+      document.documentElement.style.setProperty('--path-color', pathColor);
+      const presets = document.querySelectorAll('.preset-btn');
+      presets.forEach(btn => {
+        if (bgToHex(btn.style.backgroundColor) === pathColor.toLowerCase()) {
+          btn.classList.add('ring-2', 'ring-white', 'scale-110');
+        } else {
+          btn.classList.remove('ring-2', 'ring-white', 'scale-110');
+        }
+      });
+      const picker = document.getElementById('pathColorPicker');
+      if (picker) picker.value = pathColor;
+
+      const chkArrows = document.getElementById('toggleArrows');
+      if (chkArrows) chkArrows.checked = isArrowsEnabled;
+
+      const chkLoop = document.getElementById('toggleLoop');
+      if (chkLoop) chkLoop.checked = isLoopEnabled;
+    }
+
     // 화면 렌더링
     function render() {
       const cfg = mapsConfig[currentTab];
@@ -304,21 +508,46 @@
 
       const points = activePoints[currentTab] || [];
       
-      // 맵 이미지 변경
+      // 고유 색상 수집 및 화살표 마커 defs 동적 생성
+      const uniqueColors = new Set();
+      uniqueColors.add(pathColor);
+      points.forEach(p => {
+        if (p[2]) uniqueColors.add(p[2]);
+      });
+
+      let markersHtml = '';
+      uniqueColors.forEach(color => {
+        const markerId = `arrow-${color.replace('#', '')}`;
+        markersHtml += `
+          <marker id="${markerId}" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${color}" />
+          </marker>
+        `;
+      });
+
       mapImage.src = cfg.image;
-      svg.innerHTML = '';
+      svg.innerHTML = `<defs>${markersHtml}</defs>`;
       
       // 1. 경로 선 (삽입 영역 포함)
       if (points.length > 1) {
-        for (let i = 0; i < points.length - 1; i++) {
+        const segmentsCount = isLoopEnabled ? points.length : points.length - 1;
+        for (let i = 0; i < segmentsCount; i++) {
+          const nextIdx = (i + 1) % points.length;
           const p1 = gameToPixel(points[i][0], points[i][1]);
-          const p2 = gameToPixel(points[i+1][0], points[i+1][1]);
+          const p2 = gameToPixel(points[nextIdx][0], points[nextIdx][1]);
           
+          const segColor = points[i][2] || pathColor;
+          const markerId = `arrow-${segColor.replace('#', '')}`;
+
           // 시각용 라인
           const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
           line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
           line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
           line.setAttribute("class", "path-line");
+          line.style.stroke = segColor; // 인라인 스타일로 오버라이딩 적용
+          if (isArrowsEnabled) {
+            line.setAttribute("marker-end", `url(#${markerId})`);
+          }
           svg.appendChild(line);
 
           // 삽입 감지용 두꺼운 투명 라인
@@ -331,13 +560,27 @@
               e.preventDefault(); e.stopPropagation();
               const rect = mapContainer.getBoundingClientRect();
               const newGameCoord = pixelToGame(e.clientX - rect.left, e.clientY - rect.top);
-              points.splice(i + 1, 0, newGameCoord); // 중간 삽입
+              
+              if (i === points.length - 1) {
+                // 루프 선인 경우(마지막 -> 첫번째 연결선) 끝에 노드 추가 (색상=undefined)
+                points.push([newGameCoord[0], newGameCoord[1]]);
+              } else {
+                // 중간 삽입: 앞선 세그먼트의 색상을 분할된 뒷선에도 승계
+                points.splice(i + 1, 0, [newGameCoord[0], newGameCoord[1], points[i][2]]);
+              }
               render();
               
               // 실시간 DB 저장
               window.electronAPI.saveHuntingPath(currentTab, points);
             }
           };
+
+          // 선 우클릭 시 미니 컬러 팔레트 팝업 호출
+          lineHitbox.oncontextmenu = (e) => {
+            e.preventDefault(); e.stopPropagation();
+            showSegmentColorPopup(e.clientX, e.clientY, i);
+          };
+
           svg.appendChild(lineHitbox);
         }
       }
@@ -354,6 +597,12 @@
         if (i === points.length - 1) cls += " end";
         if (i === draggingIdx) cls += " active";
         circle.setAttribute("class", cls);
+        
+        // 중간 일반 노드의 색상은 해당 세그먼트 선 색상과 일치하게 연동
+        if (i !== 0 && i !== points.length - 1 && i !== draggingIdx) {
+          const segColor = p[2] || pathColor;
+          circle.setAttribute("fill", segColor);
+        }
 
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
         text.setAttribute("x", pix.x);
@@ -393,7 +642,7 @@
       if (e.ctrlKey && e.button === 0 && currentTab) {
         const rect = mapContainer.getBoundingClientRect();
         const newGameCoord = pixelToGame(e.clientX - rect.left, e.clientY - rect.top);
-        activePoints[currentTab].push(newGameCoord);
+        activePoints[currentTab].push([newGameCoord[0], newGameCoord[1]]); // 튜플로 푸시
         render();
         
         // 실시간 DB 저장
@@ -433,7 +682,10 @@
       const rect = mapContainer.getBoundingClientRect();
       const px = (e.clientX - rect.left) - dragOffset.x;
       const py = (e.clientY - rect.top) - dragOffset.y;
-      activePoints[currentTab][draggingIdx] = pixelToGame(px, py);
+      
+      const oldColor = activePoints[currentTab][draggingIdx][2];
+      const [gx, gy] = pixelToGame(px, py);
+      activePoints[currentTab][draggingIdx] = [gx, gy, oldColor];
       render();
     });
 
@@ -490,6 +742,7 @@
       }
 
       initTabs();
+      applyInitialSettings();
       render();
       
       if (window.lucide) {
@@ -497,5 +750,19 @@
       }
     };
   </script>
+  <!-- 미니 컬러 팔레트 팝업 -->
+  <div id="segmentColorPopup" class="fixed hidden panel-glass rounded-2xl p-2.5 border border-white/10 bg-slate-955/95 shadow-2xl z-50 flex items-center gap-2 no-drag">
+    <button onmousedown="changeSelectedSegmentColor('#34d399', true)" class="w-7 h-7 rounded-full border border-white/10 transition-transform hover:scale-110 active:scale-95" style="background-color: #34d399;" title="초록"></button>
+    <button onmousedown="changeSelectedSegmentColor('#f87171', true)" class="w-7 h-7 rounded-full border border-white/10 transition-transform hover:scale-110 active:scale-95" style="background-color: #f87171;" title="빨강"></button>
+    <button onmousedown="changeSelectedSegmentColor('#60a5fa', true)" class="w-7 h-7 rounded-full border border-white/10 transition-transform hover:scale-110 active:scale-95" style="background-color: #60a5fa;" title="파랑"></button>
+    <button onmousedown="changeSelectedSegmentColor('#facc15', true)" class="w-7 h-7 rounded-full border border-white/10 transition-transform hover:scale-110 active:scale-95" style="background-color: #facc15;" title="노랑"></button>
+    <button onmousedown="changeSelectedSegmentColor('#c084fc', true)" class="w-7 h-7 rounded-full border border-white/10 transition-transform hover:scale-110 active:scale-95" style="background-color: #c084fc;" title="보라"></button>
+    <div class="h-4 w-px bg-white/10 mx-0.5"></div>
+    <!-- 커스텀 컬러 피커 -->
+    <div class="relative w-7 h-7 flex items-center justify-center rounded-full bg-black/40 border border-white/10 overflow-hidden transition-all hover:scale-105 active:scale-95">
+      <input type="color" id="segmentColorPicker" oninput="changeSelectedSegmentColor(this.value, false)" class="absolute opacity-0 cursor-pointer w-full h-full">
+      <i data-lucide="plus" class="w-4 h-4 text-slate-400 pointer-events-none"></i>
+    </div>
+  </div>
 </body>
 </html>

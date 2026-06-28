@@ -165,7 +165,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
   wordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'wordAlarm', html: 'word-alarm.html', width: 450, height: 950 },
   discordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'discordAlarm', html: 'discord-alarm.html', width: 450, height: 950 },
-  huntingPathSimulator: { ref: null, pos: { offsetX: -860, offsetY: 40 }, key: 'huntingPathSimulator', html: 'hunting-path-simulator.html', width: 860, height: 750 },
+  huntingPathSimulator: { ref: null, pos: { offsetX: -860, offsetY: 40 }, key: 'huntingPathSimulator', html: 'hunting-path-simulator.html', width: 860, height: 800 },
   chatOverlay: {
     ref: null,
     pos: { offsetX: -460, offsetY: 450 },

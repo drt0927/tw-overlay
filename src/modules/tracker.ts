@@ -137,6 +137,22 @@ export function setWindowEventListener(callback: () => void): void {
 
 export function setForegroundChangeListener(callback: (isGameFocused: boolean, focusedHwnd: string) => void): void {
     onForegroundChangeCallback = callback;
+    
+    // 리스너가 등록되는 즉시 현재 활성화된 창(Foreground Window)의 포커스 상태를 1회 평가하여 호출합니다.
+    try {
+        if (!win32.GetForegroundWindow) return;
+        const fgHwnd = BigInt(win32.GetForegroundWindow());
+        if (fgHwnd !== 0n) {
+            // 게임 창이 아직 감지되지 않았다면 미리 찾아둡니다.
+            if (!cachedHwnd) {
+                cachedHwnd = findGameWindow();
+            }
+            const isGameFocused = cachedHwnd !== null && fgHwnd === cachedHwnd;
+            callback(isGameFocused, fgHwnd.toString());
+        }
+    } catch (e) {
+        log(`[TRACKER] Initial foreground check error: ${e}`);
+    }
 }
 
 export async function queryGameRect(): Promise<GameQueryResult> {

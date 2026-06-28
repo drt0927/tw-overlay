@@ -5,14 +5,14 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-1.19.2-violet.svg)
+![Version](https://img.shields.io/badge/version-1.19.3-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v1.19.2 (2026.06.26)
-이번 업데이트는 **사냥터 동선 시뮬레이션 기능의 노드 순서 번호 표시 도입** 및 편의성 개선이 적용되었습니다.
+## 🚀 최신 버전: v1.19.3 (2026.06.28)
+이번 업데이트는 **사냥터 동선 시뮬레이터 옵션 추가 및 SQLite 연동, 알람 기본음 통일 및 기본 볼륨 하향** 조치가 적용되었습니다.
 
 - **🗺️ 사냥터 동선 시뮬레이션 순서 번호 표시**:
   * 각 동선 노드(점)의 중앙에 1부터 시작하는 순서 번호를 표기하여 동선의 진행 방향을 더 직관적으로 파악할 수 있도록 편의성을 높였습니다.
@@ -68,7 +68,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.19.2.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-1.19.3.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

@@ -462,7 +462,7 @@
   </div>
 
   <script>
-    const DEFAULT_SOUND = 'gongseubgyeongbo-gongseubgyeongbo.mp3';
+    const DEFAULT_SOUND = 'orb.mp3';
     let ANALYSIS_INTERVAL_SEC = 60;
 
     let _config = null;
@@ -1025,7 +1025,7 @@
 
     function previewSound() {
       const sel = document.getElementById('scam-alert-sound-select');
-      if (sel?.value) window.electronAPI.playSound(sel.value, 80);
+      if (sel?.value) window.electronAPI.playSound(sel.value, 50);
     }
 
     function closeSession(encodedPath) {

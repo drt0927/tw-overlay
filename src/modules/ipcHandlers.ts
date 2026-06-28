@@ -418,7 +418,7 @@ export function register(): void {
     if (typeof groundId !== 'string') return [];
     return diaryDb.getHuntingPath(groundId);
   });
-  ipcMain.on('save-hunting-path', (_e, groundId: string, points: Array<[number, number]>) => {
+  ipcMain.on('save-hunting-path', (_e, groundId: string, points: Array<[number, number, string?]>) => {
     if (typeof groundId !== 'string' || !Array.isArray(points)) return;
     diaryDb.saveHuntingPath(groundId, points);
   });

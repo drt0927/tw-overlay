@@ -223,7 +223,8 @@ function createChatRow(chat: any): HTMLDivElement {
         '전기세비싸', '오화싸개', '모시떡',
         '딸기가좋아요', '스피들리', '곰돌이아빠', '주말쉬는시간', '뿌잉뿌잉🖤', '폭스', '만만이',
         '홍', '핑크돌고래핵펀', '비둘기오락실', '빅쭈쭈', '딱닥', '빵특', '코선인',
-        '응꼬개통식', '정지우', '따몽', '귀여운하루나기', '크힛이', '거리유지', 'YounHaHolic˚'
+        '응꼬개통식', '정지우', '따몽', '귀여운하루나기', '크힛이', '거리유지', 'YounHaHolic˚',
+        '아아'
       ];
       const isTarget = fireworkNicknames.some(nick => chat.sender === nick);
       

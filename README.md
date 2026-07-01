@@ -5,13 +5,13 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-2.0.0-violet.svg)
+![Version](https://img.shields.io/badge/version-2.0.1-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v2.0.0 (2026.07.01)
+## 🚀 최신 버전: v2.0.1 (2026.07.01)
 이번 업데이트는 독 모드 상단 위치 추가, 창 마우스 드래그 크기 조절, 전역 단축키 간섭 개선, 모험 일지 보관 및 클린업 정책 도입, 신규 숙제 자동 완료 9종 추가 및 Alt+Tab 비정상 종료 수정 등이 반영된 대규모 메이저 릴리즈입니다.
 
 - **🗺️ 사냥터 동선 시뮬레이션 순서 번호 표시**:
@@ -68,7 +68,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.0.0.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.0.1.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

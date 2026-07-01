@@ -49,9 +49,11 @@ export function register(): void {
 
   ipcMain.on('trigger-jellyppy-rain-global', () => {
     let overlayWin = wm.getGameOverlayWindow();
+    let isNew = false;
     if (!overlayWin || overlayWin.isDestroyed()) {
       wm.createGameOverlayWindow();
       overlayWin = wm.getGameOverlayWindow();
+      isNew = true;
     }
     if (overlayWin && !overlayWin.isDestroyed()) {
       const bounds = overlayWin.getBounds();
@@ -61,7 +63,24 @@ export function register(): void {
         overlayWin.setBounds({ x: 0, y: 0, width, height });
         overlayWin.showInactive();
       }
-      overlayWin.webContents.send('trigger-jellyppy-rain');
+
+      // 비 내리는 동안 임시로 항상 위에 노출 (다른 윈도우 가림 방지)
+      overlayWin.setAlwaysOnTop(true, 'screen-saver');
+      setTimeout(() => {
+        try {
+          if (overlayWin && !overlayWin.isDestroyed()) {
+            overlayWin.setAlwaysOnTop(false);
+          }
+        } catch (e) {}
+      }, 6500);
+
+      if (isNew) {
+        overlayWin.webContents.once('did-finish-load', () => {
+          overlayWin?.webContents.send('trigger-jellyppy-rain');
+        });
+      } else {
+        overlayWin.webContents.send('trigger-jellyppy-rain');
+      }
     }
   });
 
@@ -69,10 +88,12 @@ export function register(): void {
     console.log('[IPC] trigger-firework-global event received from renderer in Main Process.');
     analytics.trackEvent('trigger_firework_global');
     let overlayWin = wm.getGameOverlayWindow();
+    let isNew = false;
     if (!overlayWin || overlayWin.isDestroyed()) {
       console.log('[IPC] gameOverlayWindow not active. Creating window...');
       wm.createGameOverlayWindow();
       overlayWin = wm.getGameOverlayWindow();
+      isNew = true;
     }
     if (overlayWin && !overlayWin.isDestroyed()) {
       const bounds = overlayWin.getBounds();
@@ -83,8 +104,25 @@ export function register(): void {
         overlayWin.setBounds({ x: 0, y: 0, width, height });
         overlayWin.showInactive();
       }
+
+      // 폭죽 터지는 동안 임시로 항상 위에 노출 (다른 윈도우 가림 방지)
+      overlayWin.setAlwaysOnTop(true, 'screen-saver');
+      setTimeout(() => {
+        try {
+          if (overlayWin && !overlayWin.isDestroyed()) {
+            overlayWin.setAlwaysOnTop(false);
+          }
+        } catch (e) {}
+      }, 5500);
+
       console.log('[IPC] Forwarding trigger-firework to gameOverlayWindow webContents.');
-      overlayWin.webContents.send('trigger-firework');
+      if (isNew) {
+        overlayWin.webContents.once('did-finish-load', () => {
+          overlayWin?.webContents.send('trigger-firework');
+        });
+      } else {
+        overlayWin.webContents.send('trigger-firework');
+      }
     } else {
       console.warn('[IPC] Failed to forward event: gameOverlayWindow is null or destroyed.');
     }

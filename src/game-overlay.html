@@ -1560,13 +1560,21 @@
     // 설정 데이터 수신
     window.electronAPI.onConfigData((config) => {
       currentConfig = config;
+      const oldShowXpWidget = showXpWidget;
       showXpWidget = config.showXpWidget !== false;
       const hud = document.getElementById('xp-hud');
       const arWidget = document.getElementById('abandoned-widget');
 
       if (hud) {
-        if (!showXpWidget) hud.classList.add('hidden');
-        else hud.classList.remove('hidden');
+        if (!showXpWidget) {
+          hud.classList.add('hidden');
+        } else {
+          hud.classList.remove('hidden');
+          // 숨김 상태에서 보이기 상태로 전환되었을 때 최신 스탯을 즉시 동기화 요청
+          if (!oldShowXpWidget) {
+            refreshXpStats();
+          }
+        }
 
         if (config.xpWidgetPos) {
           const left = config.xpWidgetPos.left;
@@ -1608,7 +1616,6 @@
 
     // 경험치 데이터 수신
     window.electronAPI.onXpUpdate((data) => {
-      if (!showXpWidget) return;
       if (data.startTime !== undefined) {
         sessionStartTime = data.startTime;
       }
@@ -2659,39 +2666,43 @@
         }).catch(err => console.error('Failed to get abandoned state:', err));
       }
 
-      // 경험치 초기 데이터 가져오기 (경과 시간 시작 시점 동기화)
-      if (window.electronAPI && window.electronAPI.invoke) {
-        window.electronAPI.invoke('xp-get-stats').then(stats => {
-          if (stats) {
-            if (stats.startTime !== undefined) {
-              sessionStartTime = stats.startTime;
-            }
-            if (stats.accumulatedTime !== undefined) {
-              sessionAccumulatedTime = stats.accumulatedTime;
-            }
-            if (stats.isActive !== undefined) {
-              sessionIsActive = stats.isActive;
-            }
-            document.getElementById('xp-total').innerText = formatXP(stats.total || 0);
-            document.getElementById('xp-epm').innerText = formatXP(stats.epm || 0);
-            document.getElementById('xp-kills').innerText = (stats.kills || 0).toLocaleString();
-            
-            const elapsedEl = document.getElementById('xp-elapsed');
-            if (elapsedEl) {
-              let elapsed = sessionAccumulatedTime;
-              if (sessionIsActive) {
-                elapsed += Date.now() - sessionStartTime;
-                elapsedEl.classList.remove('text-slate-400');
-                elapsedEl.classList.add('text-white');
-              } else {
-                elapsedEl.classList.remove('text-white');
-                elapsedEl.classList.add('text-slate-400');
+      function refreshXpStats() {
+        if (window.electronAPI && window.electronAPI.invoke) {
+          window.electronAPI.invoke('xp-get-stats').then(stats => {
+            if (stats) {
+              if (stats.startTime !== undefined) {
+                sessionStartTime = stats.startTime;
               }
-              elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
+              if (stats.accumulatedTime !== undefined) {
+                sessionAccumulatedTime = stats.accumulatedTime;
+              }
+              if (stats.isActive !== undefined) {
+                sessionIsActive = stats.isActive;
+              }
+              document.getElementById('xp-total').innerText = formatXP(stats.total || 0);
+              document.getElementById('xp-epm').innerText = formatXP(stats.epm || 0);
+              document.getElementById('xp-kills').innerText = (stats.kills || 0).toLocaleString();
+              
+              const elapsedEl = document.getElementById('xp-elapsed');
+              if (elapsedEl) {
+                let elapsed = sessionAccumulatedTime;
+                if (sessionIsActive) {
+                  elapsed += Date.now() - sessionStartTime;
+                  elapsedEl.classList.remove('text-slate-400');
+                  elapsedEl.classList.add('text-white');
+                } else {
+                  elapsedEl.classList.remove('text-white');
+                  elapsedEl.classList.add('text-slate-400');
+                }
+                elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
+              }
             }
-          }
-        }).catch(err => console.error('Failed to get initial XP stats:', err));
+          }).catch(err => console.error('Failed to get initial XP stats:', err));
+        }
       }
+
+      // 경험치 초기 데이터 가져오기 (경과 시간 시작 시점 동기화)
+      refreshXpStats();
     };
   </script>
 </body>

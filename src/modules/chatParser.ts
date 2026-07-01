@@ -442,6 +442,46 @@ class ChatParser extends EventEmitter {
       return;
     }
 
+    // 21. 목요일에는 청소를!
+    if (cleanMsg.includes('청소 아르바이트 보상 조건을 달성하였습니다.')) {
+      this.emit('THURSDAY_CLEAN_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 22. 에타 일일 퀘스트 (루이나 및 제네로 일반 상자 습득)
+    if (cleanMsg.includes('[루이나 및 제네로 일반 상자]') && cleanMsg.includes('습득했습니다')) {
+      this.emit('ETA_DAILY_BOX_GAIN', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 23. 에타 도전과제 완료 (에타의 의지 레벨업 상자 습득)
+    if (cleanMsg.includes('[에타의 의지 레벨업 상자]') && (cleanMsg.includes('습득했습니다') || cleanMsg.includes('획득하였습니다') || cleanMsg.includes('획득 하였습니다'))) {
+      this.emit('ETA_WILL_UPGRADE_GAIN', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 24. 클럽 포인트 500 획득 (그라델/그람존)
+    if (cleanMsg.includes('클럽 포인트 500을(를) 받았습니다.')) {
+      this.emit('CLUB_POINT_500_GAIN', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
     // G. 어벤던로드 특화 패턴
     // 1. 입장료 (예: "입장료 5680만 Seed를 지불 하였습니다.", "입장료 1억 40만 Seed를 지불 하였습니다.")
     if (cleanMsg.includes('입장료') && (cleanMsg.toLowerCase().includes('seed') || cleanMsg.includes('시드'))) {

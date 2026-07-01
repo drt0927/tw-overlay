@@ -217,14 +217,7 @@
     "isCustom": false,
     "resetRule": { "type": "daily", "hour": 0 }
   },
-  {
-    "id": "daily-club-dungeon",
-    "name": "클럽던전",
-    "category": "클럽",
-    "isVisible": true,
-    "isCustom": false,
-    "resetRule": { "type": "daily", "hour": 0 }
-  },
+
   {
     "id": "weekly-power-root",
     "name": "힘의 근원",
@@ -410,12 +403,34 @@
     "auto": true
   },
   {
-    "id": "weekly-abandon-road",
-    "name": "어밴던로드",
+    "id": "weekly-abandon-road-mortal",
+    "name": "어벤던로드 (필멸의 땅)",
     "category": "재화",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 6 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 6 },
+    "maxCount": 10,
+    "auto": true
+  },
+  {
+    "id": "weekly-abandon-road-cardiff",
+    "name": "어벤던로드 (카디프)",
+    "category": "재화",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 6 },
+    "maxCount": 10,
+    "auto": true
+  },
+  {
+    "id": "weekly-abandon-road-orlanne",
+    "name": "어벤던로드 (오를란느)",
+    "category": "재화",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 6 },
+    "maxCount": 10,
+    "auto": true
   },
   {
     "id": "weekly-crown-reward",
@@ -431,7 +446,8 @@
     "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 4, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 4, "hour": 0 },
+    "auto": true
   },
   {
     "id": "weekly-apethiria-raid",
@@ -499,6 +515,45 @@
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
     "maxCount": 7,
+    "auto": true
+  },
+  {
+    "id": "daily-pitta",
+    "name": "팔색조 언덕 (갈망하는 즐거움)",
+    "category": "보스",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 },
+    "maxCount": 5,
+    "auto": true
+  },
+  {
+    "id": "daily-eta-quest",
+    "name": "[에타의 의지] 루이나 및 제네로",
+    "category": "일반",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 },
+    "auto": true
+  },
+  {
+    "id": "daily-eta-will-upgrade",
+    "name": "에타(대장간/골고다/공허) 도전과제 완료",
+    "category": "일반",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 },
+    "maxCount": 1,
+    "auto": true
+  },
+  {
+    "id": "daily-club-boss",
+    "name": "클럽 보스 (그라델/그람존)",
+    "category": "클럽",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "daily", "hour": 0 },
+    "maxCount": 2,
     "auto": true
   }
 ]

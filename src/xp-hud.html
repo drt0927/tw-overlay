@@ -281,6 +281,9 @@
       </div>
     </div>
     <div class="win-controls">
+      <button id="btn-toggle-hud-show" class="win-btn mr-1" title="오버레이 HUD 표시 토글">
+        <i id="hud-show-icon" data-lucide="eye" class="w-4 h-4"></i>
+      </button>
       <button onclick="window.close()" class="win-btn win-close-btn" title="닫기">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
@@ -748,6 +751,10 @@
       window.electronAPI.applySettings({ showXpWidget: e.target.checked });
     });
 
+    document.getElementById('btn-toggle-hud-show').addEventListener('click', () => {
+      window.electronAPI.applySettings({ showXpWidget: !currentShowXpWidget });
+    });
+
     document.getElementById('toggle-xp-auto-start').addEventListener('change', (e) => {
       window.electronAPI.applySettings({ xpAutoStart: e.target.checked });
     });
@@ -782,8 +789,21 @@
       window.electronAPI.applySettings({ xpWidgetPos: { left, bottom } });
     });
 
+    let currentShowXpWidget = true;
+
     window.electronAPI.onConfigData((config) => {
-      if (config.showXpWidget !== undefined) document.getElementById('toggle-show').checked = config.showXpWidget;
+      if (config.showXpWidget !== undefined) {
+        currentShowXpWidget = config.showXpWidget;
+        document.getElementById('toggle-show').checked = config.showXpWidget;
+        
+        // 헤더 눈 아이콘 업데이트
+        const icon = document.getElementById('hud-show-icon');
+        if (icon) {
+          icon.setAttribute('data-lucide', config.showXpWidget ? 'eye' : 'eye-off');
+          icon.classList.toggle('text-blue-400', config.showXpWidget);
+          refreshIcons();
+        }
+      }
       if (config.xpAutoStart !== undefined) document.getElementById('toggle-xp-auto-start').checked = config.xpAutoStart;
       if (config.ignoreNegativeXp !== undefined) document.getElementById('toggle-ignore-negative').checked = config.ignoreNegativeXp;
       if (config.xpWidgetPos) {

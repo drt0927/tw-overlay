@@ -40,6 +40,10 @@ export interface ChatParserEventMap {
     PRAVA_DEFENSE_CLEAR: { date: string; timestamp: string; count: number; message: string };
     CATACOMB_CLEAR: { date: string; timestamp: string; count: number; message: string };
     SIOKAN_BOSS_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    THURSDAY_CLEAN_CLEAR: { date: string; timestamp: string; message: string };
+    ETA_DAILY_BOX_GAIN: { date: string; timestamp: string; message: string };
+    ETA_WILL_UPGRADE_GAIN: { date: string; timestamp: string; message: string };
+    CLUB_POINT_500_GAIN: { date: string; timestamp: string; message: string };
 
     VESTIGE_CLEAR: { date: string; timestamp: string; message: string };
     APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; count: number; message: string };

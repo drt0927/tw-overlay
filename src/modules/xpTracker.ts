@@ -45,6 +45,9 @@ class XpTracker {
     const cfg = config.load();
     this._isActive = cfg.xpAutoStart !== false;
 
+    // [앱 기동 싱크 보완]: 앱 시작 시 세션 시작 상태(isActive)와 오버레이 가시성(showXpWidget) 싱크를 즉시 동기화
+    config.saveImmediate({ showXpWidget: this._isActive });
+
     // 히스토리 갱신 타이머 (10초마다 분 롤오버 체크)
     if (this._historyTimer) clearInterval(this._historyTimer);
     this._historyTimer = setInterval(() => {
@@ -346,7 +349,11 @@ class XpTracker {
     this._isActive = true;
     this._startTime = Date.now();
     log('[XP_TRACKER] XP 세션 측정 시작');
+    
+    // 세션 시작 시 오버레이 경험치 HUD 활성화
+    config.saveImmediate({ showXpWidget: true });
     this.broadcastUpdate();
+    this.broadcastConfig();
   }
 
   public stopSession(): void {
@@ -354,7 +361,11 @@ class XpTracker {
     this._isActive = false;
     this._accumulatedTime += Date.now() - this._startTime;
     log('[XP_TRACKER] XP 세션 측정 중지');
+    
+    // 세션 중지 시 오버레이 경험치 HUD 숨김
+    config.saveImmediate({ showXpWidget: false });
     this.broadcastUpdate();
+    this.broadcastConfig();
   }
 
   public toggleSession(): void {
@@ -372,6 +383,15 @@ class XpTracker {
     if (gameOverlay) gameOverlay.webContents.send('xp-update', payload);
     const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
     if (xpHud) xpHud.webContents.send('xp-update', payload);
+  }
+
+  private broadcastConfig(): void {
+    const cfg = config.load();
+    BrowserWindow.getAllWindows().forEach(win => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('config-data', cfg);
+      }
+    });
   }
 
   private parseLogTimestamp(dateStr: string, timestampStr: string): number {

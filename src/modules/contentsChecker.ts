@@ -34,6 +34,30 @@ export function init(): void {
   let currentItems = cfg.contentsCheckerItems || [];
   let changed = false;
 
+  // 구버전 클럽던전 데이터 삭제 처리 (신규 클럽 보스로 대체)
+  const hasOldClubDungeon = currentItems.some((i: any) => i.id === 'daily-club-dungeon');
+  if (hasOldClubDungeon) {
+    log(`[Contents Checker] 구버전 클럽던전 데이터 삭제`);
+    currentItems = currentItems.filter((i: any) => i.id !== 'daily-club-dungeon');
+    changed = true;
+  }
+
+  // 구버전 임시 등록된 주간 pitta/eta-will-upgrade ID를 일일형으로 변경
+  currentItems.forEach((item: any) => {
+    if (item.id === 'weekly-pitta') {
+      log(`[Contents Checker] 주간 pitta -> 일일 pitta 마이그레이션`);
+      item.id = 'daily-pitta';
+      item.resetRule = { type: 'daily', hour: 0 };
+      changed = true;
+    }
+    if (item.id === 'weekly-eta-will-upgrade') {
+      log(`[Contents Checker] 주간 에타 도전과제 -> 일일 에타 도전과제 마이그레이션`);
+      item.id = 'daily-eta-will-upgrade';
+      item.resetRule = { type: 'daily', hour: 0 };
+      changed = true;
+    }
+  });
+
   // 0-A. 고대 렐릭의 성소 (신조/키시니크) 단일 항목 병합 마이그레이션
   const relicShinjoIdx = currentItems.findIndex((i: any) => i.id === 'weekly-ancient-relic-shinjo');
   const relicKishinikIdx = currentItems.findIndex((i: any) => i.id === 'weekly-ancient-relic-kishinik');
@@ -164,6 +188,11 @@ export function init(): void {
       'weekly-abyss-dungeon-1',
       'weekly-abyss-dungeon-2',
       'weekly-abyss-dungeon-3'
+    ],
+    'weekly-abandon-road': [
+      'weekly-abandon-road-mortal',
+      'weekly-abandon-road-cardiff',
+      'weekly-abandon-road-orlanne'
     ]
   };
 
@@ -194,7 +223,11 @@ export function init(): void {
           Object.keys(oldItem.completedState).forEach(charId => {
             const oldState = oldItem.completedState[charId];
             if (!newItem.completedState[charId]) {
-              newItem.completedState[charId] = { isCompleted: false };
+              newItem.completedState[charId] = {
+                isCompleted: !!oldState.isCompleted,
+                currentCount: oldState.isCompleted ? (def.maxCount || 1) : 0,
+                lastCompletedAt: oldState.lastCompletedAt
+              };
             }
             if (oldState.isExcluded !== undefined) {
               newItem.completedState[charId].isExcluded = oldState.isExcluded;

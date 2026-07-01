@@ -20,6 +20,7 @@ export function registerAll(): void {
   // 1. 창 투과 토글
   if (shortcuts.toggleClickThrough) {
     const registered = globalShortcut.register(shortcuts.toggleClickThrough, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle Click-Through');
       const isClickThrough = wm.toggleClickThrough();
       if (isClickThrough) {
@@ -37,6 +38,7 @@ export function registerAll(): void {
   // 2. 숙제 체크 리스트 창 토글
   if (shortcuts.toggleContentsChecker) {
     const registered = globalShortcut.register(shortcuts.toggleContentsChecker, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle Contents Checker');
       wm.toggleContentsCheckerWindow();
     });
@@ -48,6 +50,7 @@ export function registerAll(): void {
   // 3. 버프 타이머 HUD 표시 토글
   if (shortcuts.toggleBuffHud) {
     const registered = globalShortcut.register(shortcuts.toggleBuffHud, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle Buff HUD');
       const current = config.load();
       wm.applySettings({ showBuffHud: !current.showBuffHud });
@@ -60,6 +63,7 @@ export function registerAll(): void {
   // 4. Dock 바 토글
   if (shortcuts.toggleDock) {
     const registered = globalShortcut.register(shortcuts.toggleDock, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle Dock');
       wm.toggleDockWindow();
     });
@@ -71,6 +75,7 @@ export function registerAll(): void {
   // 5. 채팅 오버레이 창 토글
   if (shortcuts.toggleChatOverlaySync) {
     const registered = globalShortcut.register(shortcuts.toggleChatOverlaySync, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle Chat Overlay');
       wm.toggleChatOverlayWindow();
     });
@@ -82,6 +87,7 @@ export function registerAll(): void {
   // 6. 경험치 세션 초기화
   if (shortcuts.resetXpSession) {
     const registered = globalShortcut.register(shortcuts.resetXpSession, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Reset XP Session');
       chatLogProcessor.resetXp();
     });
@@ -93,6 +99,7 @@ export function registerAll(): void {
   // 6-2. 경험치 세션 측정 시작/중지 토글
   if (shortcuts.toggleXpSession) {
     const registered = globalShortcut.register(shortcuts.toggleXpSession, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle XP Session');
       import('./xpTracker').then(mod => mod.xpTracker.toggleSession());
     });
@@ -104,6 +111,7 @@ export function registerAll(): void {
   // 7. 버프 타이머 버프 전체 삭제
   if (shortcuts.clearAllBuffs) {
     const registered = globalShortcut.register(shortcuts.clearAllBuffs, () => {
+      if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Clear All Buffs');
       buffTimerManager.clearAllBuffs();
     });

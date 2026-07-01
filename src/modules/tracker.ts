@@ -300,3 +300,22 @@ export function focusGameWindow(): void {
         log(`[TRACKER] Focus failed: ${msg}`);
     }
 }
+
+export function isGameOrAppForeground(): boolean {
+    try {
+        if (!win32.GetForegroundWindow) return false;
+        const fgHwnd = parseHwnd(win32.GetForegroundWindow());
+        if (fgHwnd === 0n) return false;
+
+        // 1. 게임 창 포커스 체크
+        if (cachedHwnd && fgHwnd === cachedHwnd) return true;
+
+        // 2. 우리 앱 창 포커스 체크 (순환 참조 방지를 위해 함수 내에서 require)
+        const wm = require('./windowManager');
+        const electronHwndBigInts = wm.getAllWindowHwnds().map((h: string) => BigInt(h));
+        if (electronHwndBigInts.includes(fgHwnd)) return true;
+    } catch (e) {
+        // 에러 시 안전하게 false 반환
+    }
+    return false;
+}

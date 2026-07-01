@@ -662,6 +662,44 @@ class ChatLogProcessor {
       contentsChecker.queuePendingHomework('weekly-apethiria-raid', data.count, false);
     });
 
+    // 어벤던로드 지역별 도전 횟수 감지 및 숙제 리스트 연동
+    chatParser.on('ABANDONED_ENTRY', (data) => {
+      const regionMapping: Record<string, string> = {
+        '필멸의 땅': 'weekly-abandon-road-mortal',
+        '카디프': 'weekly-abandon-road-cardiff',
+        '오를란느': 'weekly-abandon-road-orlanne'
+      };
+      const id = regionMapping[data.region];
+      if (id) {
+        contentsChecker.queuePendingHomework(id, data.count, false);
+      }
+    });
+
+    // 목요일에는 청소를! 완료 처리
+    chatParser.on('THURSDAY_CLEAN_CLEAR', (data) => {
+      contentsChecker.queuePendingHomework('weekly-thursday-clean', 1, true);
+    });
+
+    // 팔색조 언덕 (갈망하는 즐거움) 보상 획득 처리
+    chatParser.on('PITTA_CLEAR', (data) => {
+      contentsChecker.queuePendingHomework('daily-pitta', 1, true);
+    });
+
+    // 에타 일일 퀘스트 완료 처리
+    chatParser.on('ETA_DAILY_BOX_GAIN', (data) => {
+      contentsChecker.queuePendingHomework('daily-eta-quest', 1, true);
+    });
+
+    // 에타 도전과제 완료 처리
+    chatParser.on('ETA_WILL_UPGRADE_GAIN', (data) => {
+      contentsChecker.queuePendingHomework('daily-eta-will-upgrade', 1, true);
+    });
+
+    // 클럽 보스 (그라델/그람존) 완료 처리 (1회당 500포인트 획득 감지)
+    chatParser.on('CLUB_POINT_500_GAIN', (data) => {
+      contentsChecker.queuePendingHomework('daily-club-boss', 1, true);
+    });
+
     // XP 추적 (xpTracker에 위임)
     xpTracker.start();
 

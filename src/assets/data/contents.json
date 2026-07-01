@@ -318,7 +318,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-eclipse-boss",
@@ -327,7 +328,8 @@
     "isVisible": true,
     "isCustom": false,
     "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
-    "maxCount": 7
+    "maxCount": 21,
+    "auto": true
   },
   {
     "id": "weekly-ancient-relic",
@@ -477,7 +479,9 @@
     "category": "내실",
     "isVisible": true,
     "isCustom": false,
-    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 }
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 7,
+    "auto": true
   },
   {
     "id": "weekly-abyss-climb",

@@ -737,7 +737,7 @@
               return `<div class="text-center text-[11px] text-slate-500 my-1 bg-slate-900/40 py-0.5 px-2 rounded-md border border-white/5 select-none">${escapeHtml(msg.content)}</div>`;
             }
 
-            const timeStr = msg.timestamp ? `<span class="text-[10px] text-slate-600 select-none">${msg.timestamp}</span>` : '';
+            const timeStr = msg.timestamp ? `<span class="text-xs text-slate-600 select-none">${msg.timestamp}</span>` : '';
 
             if (msg.isSelf) {
               // 내 메시지 (우측 정렬, 연두색 테두리)
@@ -1159,7 +1159,7 @@
           <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
         </div>
         <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-[10px] shrink-0">
+          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
           설정으로 이동
         </button>
       `;

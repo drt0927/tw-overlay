@@ -220,7 +220,7 @@ function createChatRow(chat: any): HTMLDivElement {
       
       // 폭죽 이스터에그를 트리거할 대상 닉네임 목록 배열
       const fireworkNicknames = ['전기세비싸', '오화싸개', '모시떡']; 
-      const isTarget = fireworkNicknames.some(nick => chat.sender.includes(nick));
+      const isTarget = fireworkNicknames.some(nick => chat.sender === nick);
       
       if (isTarget) {
         console.log('[EasterEgg] Clicking target nickname detected. Sender:', chat.sender);

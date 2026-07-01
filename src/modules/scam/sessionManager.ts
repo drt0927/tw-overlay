@@ -13,6 +13,7 @@ import { startServer, stopServer, callLlmQueued } from './serverManager';
 import { parseLine, buildConversationText, parseResponse, sendAlert, END_KEYWORDS, TEST_SCENARIOS } from './parser';
 import { etaCacheManager } from '../etaCacheManager';
 import * as config from '../config';
+import { DEFAULT_CONFIG } from '../constants';
 
 // ── 상수 ──
 const MAX_SESSIONS = 5;
@@ -121,7 +122,7 @@ function onNewLine(session: ActiveSession, line: string): void {
 
   // 상대방의 에타 레벨만 표시
   if (!msg.isSystem && msg.sender && !msg.isSelf) {
-    const serverCode = config.load().userServer ?? 16;
+    const serverCode = config.load().userServer ?? (DEFAULT_CONFIG.userServer as number);
     const rankInfo = etaCacheManager.getRankInfo(serverCode, msg.sender);
     msg.etaLevel = rankInfo ? rankInfo.level : null;
   }

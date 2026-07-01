@@ -1,11 +1,16 @@
 [
   {
+    "_comment": "⚠️ 주의: 메뉴를 새로 추가하거나 삭제/수정할 경우, 반드시 src/modules/tray.ts 파일 내의 'apiMapping' 객체에도 해당 API 함수 매핑을 동기화해야 트레이 우클릭 메뉴가 정상 동작합니다.",
+    "isComment": true
+  },
+  {
     "id": "gallery-btn",
     "label": "갤러리 모니터",
     "icon": "bell",
     "tooltip": "갤러리 모니터링",
     "color": "purple-400",
-    "action": "openGallery"
+    "action": "openGallery",
+    "category": "monitoring"
   },
   {
     "id": "trade-btn",
@@ -13,15 +18,17 @@
     "icon": "store",
     "tooltip": "매직위버 거래 게시판 모니터링",
     "color": "emerald-400",
-    "api": "toggleTrade"
+    "api": "toggleTrade",
+    "category": "monitoring"
   },
   {
     "id": "shout-history-btn",
     "label": "외치기 히스토리",
     "icon": "message-square-more",
     "tooltip": "최근 24시간 외치기 기록",
-    "color": "purple-400",
-    "api": "toggleShoutHistory"
+    "color": "sky-400",
+    "api": "toggleShoutHistory",
+    "category": "monitoring"
   },
   {
     "id": "word-alarm-btn",
@@ -29,55 +36,17 @@
     "icon": "bell-ring",
     "tooltip": "일반/클럽 채팅 지정 단어 알림 설정 및 이력",
     "color": "indigo-400",
-    "api": "toggleWordAlarm"
+    "api": "toggleWordAlarm",
+    "category": "alarms"
   },
   {
     "id": "discord-alarm-btn",
     "label": "디스코드 알림",
     "icon": "send",
     "tooltip": "디스코드 웹훅 알림 및 전송 단어 설정",
-    "color": "indigo-400",
-    "api": "toggleDiscordAlarm"
-  },
-  {
-    "id": "abbreviation-btn",
-    "label": "약어 사전",
-    "icon": "book-open",
-    "tooltip": "테일즈위버 용어/약어 사전",
-    "color": "blue-400",
-    "api": "toggleAbbreviation"
-  },
-  {
-    "id": "equipment-dic-btn",
-    "label": "장비 사전",
-    "icon": "book-marked",
-    "tooltip": "테일즈위버 장비 사전",
-    "color": "sky-400",
-    "api": "toggleEquipmentDic"
-  },
-  {
-    "id": "buffs-btn",
-    "label": "버프 백과 & 계산기",
-    "icon": "zap",
-    "tooltip": "각종 버프 정보 및 효율 계산",
-    "color": "amber-400",
-    "api": "toggleBuffs"
-  },
-  {
-    "id": "coefficient-calculator-btn",
-    "label": "계수 및 명중 계산기",
-    "icon": "calculator",
-    "tooltip": "계수 및 명중 계산기",
-    "color": "indigo-400",
-    "api": "toggleCoefficientCalculator"
-  },
-  {
-    "id": "boss-btn",
-    "label": "필드보스 알림 설정",
-    "icon": "alarm-clock",
-    "tooltip": "필드보스 알림 설정",
-    "color": "red-400",
-    "api": "toggleBossSettings"
+    "color": "cyan-400",
+    "api": "toggleDiscordAlarm",
+    "category": "alarms"
   },
   {
     "id": "custom-alert-btn",
@@ -85,47 +54,44 @@
     "icon": "megaphone",
     "tooltip": "커스텀 알림",
     "color": "pink-400",
-    "api": "toggleCustomAlert"
+    "api": "toggleCustomAlert",
+    "category": "alarms"
   },
   {
-    "id": "buff-timer-btn",
-    "label": "버프 타이머 알림",
-    "icon": "timer",
-    "tooltip": "버프 타이머 알림 설정",
-    "color": "violet-400",
-    "api": "toggleBuffTimer"
+    "id": "abbreviation-btn",
+    "label": "약어 사전",
+    "icon": "book-open",
+    "tooltip": "테일즈위버 용어/약어 사전",
+    "color": "blue-400",
+    "api": "toggleAbbreviation",
+    "category": "information"
   },
   {
-    "id": "scam-detector-btn",
-    "label": "사기꾼 탐지",
-    "icon": "shield-alert",
-    "tooltip": "1:1 대화 실시간 사기꾼 탐지 [BETA]",
-    "color": "red-400",
-    "api": "toggleScamDetector"
+    "id": "equipment-dic-btn",
+    "label": "장비 사전",
+    "icon": "book-marked",
+    "tooltip": "테일즈위버 장비 사전",
+    "color": "pink-400",
+    "api": "toggleEquipmentDic",
+    "category": "information"
   },
   {
-    "id": "xp-hud-btn",
-    "label": "경험치 HUD",
-    "icon": "activity",
-    "tooltip": "경험치 HUD 설정 및 초기화",
-    "color": "emerald-400",
-    "api": "toggleXpHud"
+    "id": "buffs-btn",
+    "label": "버프 백과 & 계산기",
+    "icon": "zap",
+    "tooltip": "각종 버프 정보 및 효율 계산",
+    "color": "amber-400",
+    "api": "toggleBuffs",
+    "category": "information"
   },
   {
-    "id": "eta-ranking-btn",
-    "label": "에타 랭킹 조회",
-    "icon": "trophy",
-    "tooltip": "에타 랭킹 조회",
-    "color": "yellow-400",
-    "api": "toggleEtaRanking"
-  },
-  {
-    "id": "contents-checker-btn",
-    "label": "숙제 체크 리스트",
-    "icon": "check-square",
-    "tooltip": "숙제 체크 리스트",
-    "color": "cyan-400",
-    "api": "toggleContentsChecker"
+    "id": "coefficient-calculator-btn",
+    "label": "계수 및 명중 계산기",
+    "icon": "calculator",
+    "tooltip": "계수 및 명중 계산기",
+    "color": "indigo-400",
+    "api": "toggleCoefficientCalculator",
+    "category": "calculators"
   },
   {
     "id": "evolution-calculator-btn",
@@ -133,7 +99,8 @@
     "icon": "trending-up",
     "tooltip": "진화 재료 비용 계산기",
     "color": "lime-400",
-    "api": "toggleEvolutionCalculator"
+    "api": "toggleEvolutionCalculator",
+    "category": "calculators"
   },
   {
     "id": "magic-stone-calculator-btn",
@@ -141,23 +108,8 @@
     "icon": "gem",
     "tooltip": "마정석 계산기",
     "color": "orange-400",
-    "api": "toggleMagicStoneCalculator"
-  },
-  {
-    "id": "diary-btn",
-    "label": "모험 일지",
-    "icon": "book-heart",
-    "tooltip": "플레이 기록 및 성장 일지",
-    "color": "teal-400",
-    "api": "toggleDiary"
-  },
-  {
-    "id": "uniform-color-btn",
-    "label": "제복 색상 시뮬레이터",
-    "icon": "palette",
-    "tooltip": "제복 색상 시뮬레이터 (twsnowflower)",
-    "color": "rose-400",
-    "api": "toggleUniformColor"
+    "api": "toggleMagicStoneCalculator",
+    "category": "calculators"
   },
   {
     "id": "siena-aura-btn",
@@ -165,7 +117,35 @@
     "icon": "sparkles",
     "tooltip": "시에나의 기운 강화 시뮬레이터",
     "color": "purple-500",
-    "api": "toggleSienaAura"
+    "api": "toggleSienaAura",
+    "category": "calculators"
+  },
+  {
+    "id": "uniform-color-btn",
+    "label": "제복 색상 시뮬레이터",
+    "icon": "palette",
+    "tooltip": "제복 색상 시뮬레이터 (twsnowflower)",
+    "color": "rose-400",
+    "api": "toggleUniformColor",
+    "category": "calculators"
+  },
+  {
+    "id": "scam-detector-btn",
+    "label": "사기꾼 탐지",
+    "icon": "shield-alert",
+    "tooltip": "1:1 대화 실시간 사기꾼 탐지 [BETA]",
+    "color": "red-400",
+    "api": "toggleScamDetector",
+    "category": "utilities"
+  },
+  {
+    "id": "eta-ranking-btn",
+    "label": "에타 랭킹 조회",
+    "icon": "trophy",
+    "tooltip": "에타 랭킹 조회",
+    "color": "yellow-400",
+    "api": "toggleEtaRanking",
+    "category": "utilities"
   },
   {
     "id": "hunting-path-simulator-btn",
@@ -173,7 +153,53 @@
     "icon": "map",
     "tooltip": "사냥터 동선 시뮬레이션",
     "color": "emerald-500",
-    "api": "toggleHuntingPathSimulator"
+    "api": "toggleHuntingPathSimulator",
+    "category": "utilities"
+  },
+  {
+    "id": "xp-hud-btn",
+    "label": "경험치 HUD",
+    "icon": "activity",
+    "tooltip": "경험치 HUD 설정 및 초기화",
+    "color": "blue-400",
+    "api": "toggleXpHud",
+    "category": "records"
+  },
+  {
+    "id": "contents-checker-btn",
+    "label": "숙제 체크 리스트",
+    "icon": "check-square",
+    "tooltip": "숙제 체크 리스트",
+    "color": "violet-400",
+    "api": "toggleContentsChecker",
+    "category": "homework"
+  },
+  {
+    "id": "diary-btn",
+    "label": "모험 일지",
+    "icon": "book-heart",
+    "tooltip": "플레이 기록 및 성장 일지",
+    "color": "teal-400",
+    "api": "toggleDiary",
+    "category": "records"
+  },
+  {
+    "id": "boss-btn",
+    "label": "필드보스 알림 설정",
+    "icon": "alarm-clock",
+    "tooltip": "필드보스 알림 설정",
+    "color": "red-400",
+    "api": "toggleBossSettings",
+    "category": "alarms"
+  },
+  {
+    "id": "buff-timer-btn",
+    "label": "버프 타이머 알림",
+    "icon": "timer",
+    "tooltip": "버프 타이머 알림 설정",
+    "color": "orange-400",
+    "api": "toggleBuffTimer",
+    "category": "alarms"
   },
   {
     "id": "home-btn",
@@ -186,7 +212,7 @@
   },
   {
     "id": "overlay-toggle-btn",
-    "label": "오버레이 토글",
+    "label": "브라우저 오버레이 토글",
     "icon": "layout",
     "tooltip": "오버레이 브라우저 보이기/숨기기",
     "color": "slate-400",
@@ -209,6 +235,15 @@
     "tooltip": "마우스 투과 토글 (Ctrl+Shift+T)",
     "color": "slate-400",
     "api": "toggleClickThrough",
+    "isSystem": true
+  },
+  {
+    "id": "welcome-guide-btn",
+    "label": "사용 가이드",
+    "icon": "help-circle",
+    "tooltip": "TW-Overlay 사용 방법 및 가이드",
+    "color": "slate-400",
+    "api": "toggleWelcomeGuide",
     "isSystem": true
   }
 ]

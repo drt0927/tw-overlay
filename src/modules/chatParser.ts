@@ -382,6 +382,42 @@ class ChatParser extends EventEmitter {
       return;
     }
 
+    // 17-2. 시오칸하임 오딘 전면전
+    const siokanOdinMatch = cleanMsg.match(/시오칸하임\s*-\s*오딘\s*전면전의\s*클리어\s*횟수\s*:\s*(\d+)\s*회/);
+    if (siokanOdinMatch) {
+      this.emit('SIOKAN_ODIN_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(siokanOdinMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 17-3. 이클립스 보스 토벌전
+    const eclipseSubjugationMatch = cleanMsg.match(/이클립스\s*보스\s*토벌전\s*클리어\s*횟수\s*:\s*\[(\d+)회\/21회\]/);
+    if (eclipseSubjugationMatch) {
+      this.emit('ECLIPSE_BOSS_SUBJUGATION_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(eclipseSubjugationMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 17-4. 달여왕 군대 훈련소
+    const moonQueenTrainingMatch = cleanMsg.match(/달여왕\s*군대\s*훈련소\s*클리어\s*횟수\s*:\s*\[(\d+)회\/7회\]/);
+    if (moonQueenTrainingMatch) {
+      this.emit('MOON_QUEEN_TRAINING_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        count: parseInt(moonQueenTrainingMatch[1], 10),
+        message: cleanMsg
+      });
+      return;
+    }
+
 
 
     // 19. 베스티지

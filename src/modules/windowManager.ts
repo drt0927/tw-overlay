@@ -145,21 +145,21 @@ interface ManagedWindow {
 
 const windowRegistry: Record<string, ManagedWindow> = {
   settings: {
-    ref: null, pos: { offsetX: -1010, offsetY: 40 }, key: 'settings', html: 'settings.html', width: 1000, height: 720,
+    ref: null, pos: { offsetX: -1110, offsetY: 40 }, key: 'settings', html: 'settings.html', width: 1100, height: 720,
     calcPosition: (gr, pos) => {
       const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
       let targetX = Math.round(gr.x + gr.width + pos.offsetX);
       const targetY = Math.round(gr.y + pos.offsetY);
       if (targetX < 0) targetX = 10;
-      if (targetX + 1000 > screenWidth) targetX = screenWidth - 1010;
+      if (targetX + 1100 > screenWidth) targetX = screenWidth - 1110;
       return { x: targetX, y: targetY };
     }
   },
   gallery: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'gallery', html: 'gallery.html', width: 450, height: 600 },
-  abbreviation: { ref: null, pos: { offsetX: -510, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 500, height: 700 },
+  abbreviation: { ref: null, pos: { offsetX: -550, offsetY: 40 }, key: 'abbreviation', html: 'abbreviation.html', width: 540, height: 720 },
   equipmentDic: { ref: null, pos: { offsetX: -1120, offsetY: 40 }, key: 'equipmentDic', html: 'equipment-dic.html', width: 1120, height: 800 },
-  buffs: { ref: null, pos: { offsetX: -1000, offsetY: 40 }, key: 'buffs', html: 'buffs.html', width: 1000, height: 700 },
-  bossSettings: { ref: null, pos: { offsetX: -410, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 410, height: 750 },
+  buffs: { ref: null, pos: { offsetX: -1080, offsetY: 40 }, key: 'buffs', html: 'buffs.html', width: 1080, height: 740 },
+  bossSettings: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'bossSettings', html: 'boss-settings.html', width: 460, height: 780 },
   etaRanking: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 400, height: 600 },
   trade: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 450, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -1430, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1420, height: 860 },
@@ -174,7 +174,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   buffTimer: { ref: null, pos: { offsetX: -900, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 900, height: 850 },
   xpHud: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'xpHud', html: 'xp-hud.html', width: 420, height: 1050 },
   scamDetector: { ref: null, pos: { offsetX: -480, offsetY: 40 }, key: 'scamDetector', html: 'scam-detector.html', width: 480, height: 780 },
-  sienaAura: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1180, height: 930 },
+  sienaAura: { ref: null, pos: { offsetX: -900, offsetY: 40 }, key: 'sienaAura', html: 'siena-aura.html', width: 1230, height: 930 },
   wordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'wordAlarm', html: 'word-alarm.html', width: 450, height: 950 },
   discordAlarm: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'discordAlarm', html: 'discord-alarm.html', width: 450, height: 950 },
   huntingPathSimulator: { ref: null, pos: { offsetX: -860, offsetY: 40 }, key: 'huntingPathSimulator', html: 'hunting-path-simulator.html', width: 860, height: 800 },
@@ -280,8 +280,12 @@ const windowRegistry: Record<string, ManagedWindow> = {
       isDockVisible = false;
     },
     calcPosition: (gr, _pos) => {
+      const cfg = config.load();
       const targetX = Math.round(gr.x + (gr.width - 800) / 2);
-      const targetY = Math.round(gr.y + gr.height - 380 - 20); // 하단 내부 중앙 배치 (20px 여백)
+      const isTop = cfg.sidebarPosition === 'dock-top';
+      const targetY = isTop 
+        ? Math.round(gr.y + 20) 
+        : Math.round(gr.y + gr.height - 380 - 20);
       return { x: targetX, y: targetY };
     }
   }
@@ -390,6 +394,16 @@ export function createWelcomeGuideWindow(): void {
   welcomeGuideWindow.on('closed', () => {
     welcomeGuideWindow = null;
   });
+}
+
+export function toggleWelcomeGuideWindow(): boolean {
+  if (welcomeGuideWindow && !welcomeGuideWindow.isDestroyed()) {
+    welcomeGuideWindow.close();
+    welcomeGuideWindow = null;
+    return false;
+  }
+  createWelcomeGuideWindow();
+  return true;
 }
 
 export function closeSplashWindow(): void {
@@ -564,19 +578,58 @@ function createToggleableWindow(key: string, callbacks?: {
     const cfg = config.load();
     if (cfg.chatOverlaySub2Width) finalW = cfg.chatOverlaySub2Width;
     if (cfg.chatOverlaySub2Height) finalH = cfg.chatOverlaySub2Height;
+  } else if (key === 'contentsChecker') {
+    const cfg = config.load();
+    if (cfg.contentsCheckerWidth) finalW = cfg.contentsCheckerWidth;
+    if (cfg.contentsCheckerHeight) finalH = cfg.contentsCheckerHeight;
   }
   finalH = Math.min(finalH, maxH - 40); // 상단 여백 등 고려하여 약간의 여유(40px) 둠
 
+  const isResizable = ['chatOverlay', 'chatOverlaySub', 'chatOverlaySub2', 'contentsChecker'].includes(key);
+  // Electron frameless + transparent 창은 Windows에서 리사이즈 핸들이 작동하지 않음
+  // 리사이즈가 필요한 창은 transparent: false로 전환하여 네이티브 리사이즈를 활성화
+  const needsTransparent = !isResizable;
+
   let isClosing = false;
   const win = new BrowserWindow(getStandardOptions(finalW, finalH, {
-    skipTaskbar: !!winCfg.skipTaskbar
+    skipTaskbar: !!winCfg.skipTaskbar,
+    resizable: isResizable,
+    thickFrame: isResizable,
+    minWidth: isResizable ? 200 : undefined,
+    minHeight: isResizable ? 200 : undefined,
+    transparent: needsTransparent,
+    backgroundColor: needsTransparent ? undefined : '#0f0e1a'
   }));
+  if (isResizable) {
+    win.setResizable(true);
+  }
   winCfg.ref = win;
   attachStackListeners(win);
   win.loadFile(path.join(__dirname, '..', winCfg.html));
   win.on('close', () => {
     isClosing = true;
   });
+
+  win.on('resize', () => {
+    if (isClosing) return;
+    const b = win.getBounds();
+    const cfg = config.load();
+    if (key === 'chatOverlay') {
+      cfg.chatOverlayWidth = b.width;
+      cfg.chatOverlayHeight = b.height;
+    } else if (key === 'chatOverlaySub') {
+      cfg.chatOverlaySubWidth = b.width;
+      cfg.chatOverlaySubHeight = b.height;
+    } else if (key === 'chatOverlaySub2') {
+      cfg.chatOverlaySub2Width = b.width;
+      cfg.chatOverlaySub2Height = b.height;
+    } else if (key === 'contentsChecker') {
+      cfg.contentsCheckerWidth = b.width;
+      cfg.contentsCheckerHeight = b.height;
+    }
+    config.save(cfg);
+  });
+
   win.on('ready-to-show', () => {
     if (gameRect) {
       let { x, y } = (callbacks?.calcPosition || winCfg.calcPosition)
@@ -948,7 +1001,7 @@ export function toggleSubWindow(subNum: 1 | 2): void {
 let isDockVisible = false;
 export function toggleDockWindow(): void {
   const cfg = config.load();
-  if (cfg.sidebarPosition !== 'dock') return;
+  if (cfg.sidebarPosition !== 'dock' && cfg.sidebarPosition !== 'dock-top') return;
 
   const winCfg = windowRegistry['dock'];
   if (winCfg.ref && !winCfg.ref.isDestroyed()) {
@@ -1043,7 +1096,7 @@ export function syncOverlay(currentRect: GameRect): void {
     const cfg = config.load();
     const sidebarPos = cfg.sidebarPosition || 'right';
 
-    if (sidebarPos === 'dock') {
+    if (sidebarPos === 'dock' || sidebarPos === 'dock-top') {
       if (mainWindow.isVisible()) mainWindow.hide();
       const dockCfg = windowRegistry['dock'];
       if (!isDockVisible) {
@@ -1090,7 +1143,7 @@ export function syncOverlay(currentRect: GameRect): void {
       gH === display.bounds.height
     );
     // 이전 프레임(before) 또는 현재 프레임(after)이 전체화면인 경우 위치 동기화 스킵 (Alt+Enter 복귀/진입 시 위치 뒤틀림 방지)
-    const skipPositionSync = isGameFullscreen || isFullscreen;
+    const skipPositionSync = isGameFullscreen || isFullscreen || (cfg.followGameWindow === false);
     isGameFullscreen = isFullscreen; // 전역 전체화면 플래그 동기화
 
     if (overlayWindow && isOverlayVisible) {
@@ -1167,7 +1220,7 @@ export function syncOverlay(currentRect: GameRect): void {
       }
     }
 
-    if (sidebarPos === 'dock') {
+    if (sidebarPos === 'dock' || sidebarPos === 'dock-top') {
       const dockCfg = windowRegistry['dock'];
       if (isDockVisible) {
         const scaledGameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };

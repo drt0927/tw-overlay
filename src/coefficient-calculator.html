@@ -277,23 +277,23 @@
     <!-- Character stats -->
     <div class="flex items-center gap-2">
       <div class="flex items-center gap-1">
-        <label class="text-[10px] font-black text-slate-500 uppercase">STAB</label>
+        <label class="text-xs font-black text-slate-500 uppercase">STAB</label>
         <input type="number" id="stat-stab" class="sb-input" value="850">
       </div>
       <div class="flex items-center gap-1">
-        <label class="text-[10px] font-black text-slate-500 uppercase">HACK</label>
+        <label class="text-xs font-black text-slate-500 uppercase">HACK</label>
         <input type="number" id="stat-hack" class="sb-input" value="550">
       </div>
       <div class="flex items-center gap-1">
-        <label class="text-[10px] font-black text-slate-500 uppercase">INT</label>
+        <label class="text-xs font-black text-slate-500 uppercase">INT</label>
         <input type="number" id="stat-int" class="sb-input" value="0">
       </div>
       <div class="flex items-center gap-1">
-        <label class="text-[10px] font-black text-slate-500 uppercase">MR</label>
+        <label class="text-xs font-black text-slate-500 uppercase">MR</label>
         <input type="number" id="stat-mr" class="sb-input" value="0">
       </div>
       <div class="flex items-center gap-1">
-        <label class="text-[10px] font-black text-yellow-600 uppercase">DEX</label>
+        <label class="text-xs font-black text-yellow-600 uppercase">DEX</label>
         <input type="number" id="stat-dex" class="sb-input dex" value="700">
       </div>
     </div>
@@ -302,7 +302,7 @@
 
     <!-- Doping -->
     <div class="flex items-center gap-1.5">
-      <label class="text-[10px] font-black text-slate-500">도핑</label>
+      <label class="text-xs font-black text-slate-500">도핑</label>
       <select id="buff-preset-select"
         class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-xs font-bold text-purple-400 outline-none">
         <option value="none">없음</option>
@@ -388,7 +388,7 @@
           <!-- 아바타 -->
           <tr class="tr-bonus">
             <td><span class="part-lbl tooltip-wrap" data-tooltip="기본 세트 스탯(주/부/DEX 각 +15)은 자동 가산됩니다.">아바타 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
-            <td class="text-[10px] text-slate-700 italic pl-1">(기본+15 자동)</td>
+            <td class="text-xs text-slate-700 italic pl-1">(기본+15 자동)</td>
             <td><span class="av has">15</span></td>
             <td><span class="av has">15</span></td>
             <td><span class="av has">15</span></td>
@@ -401,7 +401,7 @@
           <!-- 커프 -->
           <tr class="tr-bonus">
             <td><span class="part-lbl tooltip-wrap" data-tooltip="라이도 심볼릭 커프의 기본 주/부스탯을 입력해 주세요.">커프 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
-            <td class="text-[10px] text-slate-700 italic pl-1"></td>
+            <td class="text-xs text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-cuff-main" class="ci bas" value="140" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-cuff-sub"  class="ci bas" value="140" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-cuff-hit"  class="ci dex" value="0"   placeholder="0"></td>
@@ -414,7 +414,7 @@
           <!-- 효과 -->
           <tr class="tr-bonus">
             <td><span class="part-lbl tooltip-wrap" data-tooltip="효과 부위 장비의 기본 주/부스탯 및 강화 수치를 입력해 주세요.">효과 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
-            <td class="text-[10px] text-slate-700 italic pl-1"></td>
+            <td class="text-xs text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-effect-base-main" class="ci bas" value="20" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-effect-base-sub"  class="ci bas" value="5"  placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-effect-hit"       class="ci dex" value="0"  placeholder="0"></td>
@@ -427,7 +427,7 @@
           <!-- 렐릭 -->
           <tr class="tr-bonus">
             <td><span class="part-lbl tooltip-wrap" data-tooltip="렐릭의 태양/신조 스탯 및 명중 스탯을 입력해 주세요.">렐릭 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
-            <td class="text-[10px] text-slate-700 italic pl-1"></td>
+            <td class="text-xs text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-relic-main" class="ci bas" value="50" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-relic-sub"  class="ci bas" value="50" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-relic-hit"  class="ci dex" value="0"  placeholder="0"></td>
@@ -440,7 +440,7 @@
           <!-- 칭호 -->
           <tr class="tr-bonus">
             <td><span class="part-lbl">칭호</span></td>
-            <td class="text-[10px] text-slate-700 italic pl-1"></td>
+            <td class="text-xs text-slate-700 italic pl-1"></td>
             <td class="px-1"><input type="number" id="bonus-title" class="ci bas" value="80" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-title-sub" class="ci bas" value="0" placeholder="0"></td>
             <td class="px-1"><input type="number" id="bonus-title-hit" class="ci dex" value="0" placeholder="0"></td>
@@ -462,7 +462,7 @@
             <td>
               <div class="flex items-center gap-1">
                 <span class="text-[11px] font-black text-pink-500">코어</span>
-                <div class="tooltip-wrap cursor-help text-[10px] text-slate-500 hover:text-slate-300" data-tooltip="코어의 주 스탯 강화 합을 입력해 주세요. (상단 셀렉터 기준으로 총합 계수 반영)">
+                <div class="tooltip-wrap cursor-help text-xs text-slate-500 hover:text-slate-300" data-tooltip="코어의 주 스탯 강화 합을 입력해 주세요. (상단 셀렉터 기준으로 총합 계수 반영)">
                   <i data-lucide="help-circle" class="w-3 h-3"></i>
                 </div>
               </div>

@@ -13,11 +13,11 @@
       --bg: #0f0e1a;
       --surface: #17152b;
       --surface2: #1f1c38;
-      --border: rgba(167, 139, 250, 0.1);
-      --accent: #a78bfa;
-      --accent-hover: #c4b5fd;
-      --accent-dim: rgba(167, 139, 250, 0.15);
-      --accent-glow: rgba(167, 139, 250, 0.25);
+      --border: rgba(251, 146, 60, 0.1);
+      --accent: #fb923c;
+      --accent-hover: #fdba74;
+      --accent-dim: rgba(251, 146, 60, 0.15);
+      --accent-glow: rgba(251, 146, 60, 0.25);
       --warn: #f59e0b;
       --danger: #ef4444;
       --text: #ede9fe;
@@ -95,7 +95,7 @@
     .panel {
       padding: 14px;
       overflow-y: auto;
-      border-right: 1px solid rgba(167, 139, 250, 0.1);
+      border-right: 1px solid rgba(251, 146, 60, 0.1);
     }
 
     .panel:last-child {
@@ -133,7 +133,7 @@
 
     .buff-item:hover {
       background: var(--accent-dim);
-      border-color: rgba(167, 139, 250, 0.4);
+      border-color: rgba(251, 146, 60, 0.4);
     }
 
     .buff-item.disabled {
@@ -165,9 +165,9 @@
     }
 
     .cat-stats {
-      background: rgba(167, 139, 250, 0.2);
-      color: #c4b5fd;
-      border: 1px solid rgba(167, 139, 250, 0.4);
+      background: rgba(251, 146, 60, 0.2);
+      color: #fdba74;
+      border: 1px solid rgba(251, 146, 60, 0.4);
     }
 
     .cat-damage {
@@ -261,7 +261,7 @@
       gap: 4px;
       padding: 4px 8px;
       background: transparent;
-      border: 1px dashed rgba(167, 139, 250, 0.4);
+      border: 1px dashed rgba(251, 146, 60, 0.4);
       border-radius: 20px;
       font-size: 11px;
       color: var(--accent);
@@ -313,13 +313,13 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+      background: linear-gradient(135deg, #f97316, #fb923c);
       color: white;
-      box-shadow: 0 2px 8px rgba(167, 139, 250, 0.25);
+      box-shadow: 0 2px 8px rgba(251, 146, 60, 0.25);
     }
 
     .btn-primary:hover {
-      background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+      background: linear-gradient(135deg, #ea580c, #f97316);
     }
 
     .btn-ghost {
@@ -409,7 +409,7 @@
       background: var(--surface);
       gap: 6px;
       flex-shrink: 0;
-      box-shadow: 0 -1px 0 rgba(167, 139, 250, 0.08);
+      box-shadow: 0 -1px 0 rgba(251, 146, 60, 0.08);
     }
 
     /* Active buff list */
@@ -494,8 +494,8 @@
   <!-- 헤더 -->
   <div class="win-header">
     <div class="win-title-area">
-      <div class="win-icon-box bg-violet-500/10 border-violet-500/20">
-        <i data-lucide="timer" class="w-5 h-5 text-violet-400"></i>
+      <div class="win-icon-box bg-orange-500/10 border-orange-500/20">
+        <i data-lucide="timer" class="w-5 h-5 text-orange-400"></i>
       </div>
       <div class="win-title-text">
         <div class="flex items-center gap-2">
@@ -517,9 +517,9 @@
     </div>
   </div>
 
-  <div class="bg-violet-500/10 border-b border-violet-500/20 py-2 px-4 flex items-center gap-2 flex-shrink-0">
-    <i data-lucide="info" class="w-3.5 h-3.5 text-violet-300 shrink-0"></i>
-    <span class="text-violet-200 text-[11px] font-medium leading-tight">게임 내 채팅 로그 파일에서 아이템 사용 내역을 읽어오므로, <strong>게임 내
+  <div class="bg-orange-500/10 border-b border-orange-500/20 py-2 px-4 flex items-center gap-2 flex-shrink-0">
+    <i data-lucide="info" class="w-3.5 h-3.5 text-orange-300 shrink-0"></i>
+    <span class="text-orange-200 text-[11px] font-medium leading-tight">게임 내 채팅 로그 파일에서 아이템 사용 내역을 읽어오므로, <strong>게임 내
         설정 > 게임 > 채팅 로그</strong> 기능이 켜져 있어야 동작합니다.</span>
   </div>
 
@@ -688,7 +688,7 @@
     <div class="panel flex flex-col">
       <div class="flex justify-between items-center mb-2">
         <div class="panel-title mb-0">현재 활성화된 버프</div>
-        <button class="btn-sm btn-danger py-1 px-2.5 text-[10px]" id="btn-clear-all-buffs">전체 삭제</button>
+        <button class="btn-sm btn-danger py-1 px-2.5 text-xs" id="btn-clear-all-buffs">전체 삭제</button>
       </div>
       <div class="active-buff-list flex-1" id="active-buff-list">
         <div class="flex flex-col items-center justify-center py-12 px-4 text-center" id="active-buff-empty">
@@ -703,11 +703,11 @@
   <!-- 푸터 -->
   <div class="footer">
     <div class="flex items-center gap-1.5 mr-auto">
-      <span class="text-[10px] text-slate-500 font-bold uppercase">테스트 시간</span>
+      <span class="text-xs text-slate-500 font-bold uppercase">테스트 시간</span>
       <div class="relative">
         <input type="number" id="test-seconds-input" value="1200" min="1" max="3600"
           style="width:70px;padding:4px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;font-weight:700;outline:none;text-align:center;">
-        <span class="absolute -right-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 font-bold">초</span>
+        <span class="absolute -right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-bold">초</span>
       </div>
     </div>
     <button class="btn-sm btn-ghost" id="btn-test" title="입력한 시간만큼 남은 테스트 버프를 표시합니다">
@@ -1031,7 +1031,7 @@
           <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
         </div>
         <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-[10px] shrink-0">
+          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
           설정으로 이동
         </button>
       `;

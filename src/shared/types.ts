@@ -44,6 +44,9 @@ export interface ChatParserEventMap {
     VESTIGE_CLEAR: { date: string; timestamp: string; message: string };
     APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; count: number; message: string };
     ORLY_DEFENSE_CLEAR: { date: string; timestamp: string; message: string };
+    SIOKAN_ODIN_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    ECLIPSE_BOSS_SUBJUGATION_CLEAR: { date: string; timestamp: string; count: number; message: string };
+    MOON_QUEEN_TRAINING_CLEAR: { date: string; timestamp: string; count: number; message: string };
     NORMAL_CHAT: { date: string; timestamp: string; sender: string; message: string; color: string };
     ABYSS_APOSTLE_PATTERN: { date: string; timestamp: string; message: string };
     WAVE_MONSTER_WARNING: { date: string; timestamp: string; message: string };
@@ -295,6 +298,7 @@ export interface AppConfig {
     // --- Chat Log Settings ---
     chatLogPath?: string;
     chatLogAutoDeleteDays?: number;
+    diaryKeepDays?: number;
     lootKeywords?: string[];
     lootKeywordsMigratedV2?: boolean;
     shoutKeywords?: string[];
@@ -352,7 +356,7 @@ export interface AppConfig {
     // --- Sound Settings ---
     volumeContentsChecker?: number;
     volumeCalculators?: number;
-    sidebarPosition?: 'left' | 'right' | 'dock';
+    sidebarPosition?: 'left' | 'right' | 'dock' | 'dock-top';
 
     // --- Chat Overlay Settings ---
     chatOverlayEnabled?: boolean;
@@ -368,6 +372,9 @@ export interface AppConfig {
     etaDataUrl?: string;
     chatOverlayWidth?: number;
     chatOverlayHeight?: number;
+    contentsCheckerWidth?: number;
+    contentsCheckerHeight?: number;
+    followGameWindow?: boolean;
     chatOverlaySelectedChannels?: string[];
     chatOverlaySubWidth?: number;
     chatOverlaySubHeight?: number;

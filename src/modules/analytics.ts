@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { log } from './logger';
+import { load as loadConfig } from './config';
 
 // ========== GA4 SETTINGS ==========
 let MEASUREMENT_ID = '';
@@ -100,6 +101,12 @@ export class Analytics {
     flatParams.ga_session_number = this.sessionNumber;
     // 1ms 이상이어야 GA4가 유효한 체류 시간으로 인식
     flatParams.engagement_time_msec = Math.max(1, engagementTimeMsec);
+
+    // 현재 사용 중인 런처 모드(사이드바 위치 / 독 모드) 파라미터 자동 삽입
+    try {
+      const cfg = loadConfig();
+      flatParams.launcher_mode = cfg.sidebarPosition || 'right';
+    } catch {}
 
     const payload = {
       client_id: this.clientId,

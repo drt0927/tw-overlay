@@ -8,6 +8,7 @@ import { abandonedTracker } from './abandonedTracker';
 import * as contentsChecker from './contentsChecker';
 import { discordNotifier } from './discordNotifier';
 import { etaCacheManager } from './etaCacheManager';
+import { DEFAULT_CONFIG } from './constants';
 
 /**
  * 파싱된 채팅 데이터를 실제 앱 기능(DB 저장, 알림 등)으로 연결하는 프로세서
@@ -151,6 +152,17 @@ class ChatLogProcessor {
     chatParser.on('ITEM_LOOTED', (data) => {
       const cfg = config.load();
 
+      // 엘소 포인트 누적 획득 체크 및 DB 반영
+      try {
+        const elsoPoints = parseElsoMessage(data.message);
+        if (elsoPoints > 0) {
+          const timeOnly = data.timestamp.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
+          diaryDb.addElsoPoints(data.date, timeOnly, elsoPoints);
+        }
+      } catch (err) {
+        log(`[Processor] Elso parse/save error: ${err}`);
+      }
+
       // 엘소(Elso) 습득 필터링 (오직 "[엘소 N포인트]을(를) [K]개 획득하였습니다." 패턴만 체크)
       const isTargetElso = /\[엘소\s*\d+포인트\]을\(를\)\s*\[\d+\]개\s*획득하였습니다/.test(data.message);
       if (isTargetElso && cfg.chatOverlayShowElsoGain === false) {
@@ -222,7 +234,7 @@ class ChatLogProcessor {
       }
 
       // 에타 랭킹 정보 조회 및 탭 히스토리 누적
-      const serverCode = cfg.userServer || 16;
+      const serverCode = cfg.userServer || (DEFAULT_CONFIG.userServer as number);
       const rankInfo = etaCacheManager.getRankInfo(serverCode, data.sender);
       const level = rankInfo ? rankInfo.level : null;
       const characterCode = rankInfo ? rankInfo.characterCode : null;
@@ -269,20 +281,10 @@ class ChatLogProcessor {
       // 1. 만료된(5분이 경과한) 실시간 감지 추적 목록 필터링
       this._activeTrackingAlarms = this._activeTrackingAlarms.filter(a => now <= a.endTime);
 
-      // 2. 대화 캐시 적재 및 5분 만료 처리
-      this._chatContextCache.push({
-        timestamp: now,
-        sender: data.sender,
-        message: data.message,
-        color: data.color
-      });
-      // 5분(300초) 이상 지난 데이터 삭제
-      this._chatContextCache = this._chatContextCache.filter(c => now - c.timestamp <= 5 * 60 * 1000);
-
       const cfg = config.load();
 
       // 에타 랭킹 정보 조회 및 탭 히스토리 누적
-      const serverCode = cfg.userServer || 16;
+      const serverCode = cfg.userServer || (DEFAULT_CONFIG.userServer as number);
       const rankInfo = etaCacheManager.getRankInfo(serverCode, data.sender);
       const level = rankInfo ? rankInfo.level : null;
       const characterCode = rankInfo ? rankInfo.characterCode : null;
@@ -297,6 +299,21 @@ class ChatLogProcessor {
         type = 'club';
       } else if (data.color === '#64ff64') {
         type = 'whisper';
+      }
+
+      // 시스템 탭으로 분류되는 로그 또는 시스템 발신인의 메시지는 시스템 로그로 판단
+      const isSystemLog = type === 'system' || data.sender === '시스템' || data.sender === '시스템 공지' || data.sender === '시스템 알림';
+
+      // 2. 대화 캐시 적재 및 5분 만료 처리 (시스템 로그는 제외)
+      if (!isSystemLog) {
+        this._chatContextCache.push({
+          timestamp: now,
+          sender: data.sender,
+          message: data.message,
+          color: data.color
+        });
+        // 5분(300초) 이상 지난 데이터 삭제
+        this._chatContextCache = this._chatContextCache.filter(c => now - c.timestamp <= 5 * 60 * 1000);
       }
 
       const chatItem = {
@@ -319,13 +336,12 @@ class ChatLogProcessor {
 
       this.broadcastChatUpdate(chatItem);
 
-      // 3. 현재 추적 활성 상태인 알림들에 대해 감지 이후의 후속 대화 기입
-      for (const active of this._activeTrackingAlarms) {
-        diaryDb.addWordAlarmContextLine(active.alarmId, now, data.sender, data.message, data.color);
+      // 3. 현재 추적 활성 상태인 알림들에 대해 감지 이후의 후속 대화 기입 (시스템 로그는 제외)
+      if (!isSystemLog) {
+        for (const active of this._activeTrackingAlarms) {
+          diaryDb.addWordAlarmContextLine(active.alarmId, now, data.sender, data.message, data.color);
+        }
       }
-
-      // 시스템 탭으로 분류되는 로그 또는 시스템 발신인의 메시지는 시스템 로그로 판단하여 알람 제외
-      const isSystemLog = type === 'system' || data.sender === '시스템' || data.sender === '시스템 공지' || data.sender === '시스템 알림';
 
       // 디스코드 전용 알림 처리 (독립 동작)
       if (cfg.discordAlertEnabled && cfg.discordWebhookUrl && !isSystemLog) {
@@ -618,6 +634,21 @@ class ChatLogProcessor {
     chatParser.on('SIOKAN_BOSS_CLEAR', (data) => {
       contentsChecker.queuePendingHomework('weekly-siokan-boss', data.count, false);
     });
+
+    // 21-2. 시오칸하임 오딘 전면전 클리어 처리
+    chatParser.on('SIOKAN_ODIN_CLEAR', (data) => {
+      contentsChecker.queuePendingHomework('weekly-siokan-odin', data.count, false);
+    });
+
+    // 21-3. 이클립스 보스 토벌전 클리어 처리
+    chatParser.on('ECLIPSE_BOSS_SUBJUGATION_CLEAR', (data) => {
+      contentsChecker.queuePendingHomework('weekly-eclipse-boss', data.count, false);
+    });
+
+    // 21-4. 달여왕 군대 훈련소 클리어 처리
+    chatParser.on('MOON_QUEEN_TRAINING_CLEAR', (data) => {
+      contentsChecker.queuePendingHomework('weekly-moon-queen', data.count, false);
+    });
  
 
  
@@ -696,3 +727,36 @@ class ChatLogProcessor {
 }
 
 export const chatLogProcessor = new ChatLogProcessor();
+
+function parseElsoMessage(msg: string): number {
+  // 1. [엘소 N포인트]을(를) [K]개 획득하였습니다.
+  const match1 = msg.match(/\[엘소\s*([\d,]+)포인트\]을\(를\)\s*\[([\d,]+)\]개\s*획득하였습니다/);
+  if (match1) {
+    const pt = parseInt(match1[1].replace(/,/g, ''), 10);
+    const count = parseInt(match1[2].replace(/,/g, ''), 10);
+    return pt * count;
+  }
+
+  // 2. [엘소 스크롤 (N 포인트)]을(를) [K]개 획득하였습니다.
+  const match2 = msg.match(/\[엘소\s*스크롤\s*\(([\d,]+)\s*포인트\)\]을\(를\)\s*\[([\d,]+)\]개\s*획득하였습니다/);
+  if (match2) {
+    const pt = parseInt(match2[1].replace(/,/g, ''), 10);
+    const count = parseInt(match2[2].replace(/,/g, ''), 10);
+    return pt * count;
+  }
+
+  // 3. 콘텐츠 클리어 보상 등 (대괄호 없는 수량 매칭용)
+  // 예: 콘텐츠 클리어 기본 보상으로 [엘소 스크롤 (50 포인트)] 아이템을 5개 획득하였습니다
+  const match3 = msg.match(/\[엘소\s*스크롤\s*\(([\d,]+)\s*포인트\)\]/);
+  if (match3) {
+    // 수량(개수)이 명시적으로 적힌 텍스트가 있을 때만 매칭 성공 처리
+    const countMatch = msg.match(/아이템을\s*([\d,]+)개\s*획득/);
+    if (countMatch) {
+      const pt = parseInt(match3[1].replace(/,/g, ''), 10);
+      const count = parseInt(countMatch[1].replace(/,/g, ''), 10);
+      return pt * count;
+    }
+  }
+
+  return 0;
+}

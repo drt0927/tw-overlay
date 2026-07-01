@@ -26,6 +26,7 @@ const rectOut = { left: 0, top: 0, right: 0, bottom: 0 };
 
 /** hwnd 값을 안전하게 bigint로 변환하는 헬퍼 함수 */
 function parseHwnd(hwnd: any): bigint {
+    if (hwnd === null || hwnd === undefined || !hwnd) return 0n;
     if (typeof hwnd === 'bigint') return hwnd;
     if (typeof hwnd === 'number') return BigInt(hwnd);
     if (hwnd && typeof hwnd === 'object') {
@@ -35,7 +36,11 @@ function parseHwnd(hwnd: any): bigint {
             return BigInt(hwnd);
         }
     }
-    return BigInt(hwnd);
+    try {
+        return BigInt(hwnd);
+    } catch {
+        return 0n;
+    }
 }
 
 // --- 콜백 등록 ---
@@ -213,7 +218,7 @@ export function stop() {
 /** 
  * 오버레이 창들을 게임 바로 위로 올림 (Z-Order 샌드위치 최적화 로직)
  */
-export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: string[]): { isGameOrAppFocused: boolean } {
+export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: string[], force: boolean = false): { isGameOrAppFocused: boolean } {
     if (!gameHwndStr || electronHwnds.length === 0 || !win32.SetWindowPos) return { isGameOrAppFocused: false };
 
     let isFocused = false;
@@ -235,7 +240,7 @@ export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: s
         const prevHwnd = parseHwnd(win32.GetWindow(gameHwnd, win32.GW_HWNDPREV));
         const isAlreadySandwiched = electronHwndBigInts.some(h => h === prevHwnd);
 
-        if (!isAlreadySandwiched) {
+        if (force || !isAlreadySandwiched) {
             if (prevHwnd !== 0n) {
                 let hwndInsertAfter = prevHwnd;
                 for (let i = electronHwndBigInts.length - 1; i >= 0; i--) {

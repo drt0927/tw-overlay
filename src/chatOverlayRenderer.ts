@@ -482,7 +482,8 @@ document.querySelectorAll('.tab-item').forEach(el => {
   el.addEventListener('click', () => {
     const tab = el.getAttribute('data-tab');
     if (tab === 'Settings') {
-      window.electronAPI.toggleSettings('chatlog');
+      window.electronAPI.toggleSettings('chatlog:sub-tab-overlay');
+      return;
     } else if (tab === 'OpenLog') {
       window.electronAPI.openTodayLog();
     } else if (tab) {

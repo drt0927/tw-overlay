@@ -586,9 +586,10 @@ function createToggleableWindow(key: string, callbacks?: {
   finalH = Math.min(finalH, maxH - 40); // 상단 여백 등 고려하여 약간의 여유(40px) 둠
 
   const isResizable = ['chatOverlay', 'chatOverlaySub', 'chatOverlaySub2', 'contentsChecker'].includes(key);
-  // Electron frameless + transparent 창은 Windows에서 리사이즈 핸들이 작동하지 않음
-  // 리사이즈가 필요한 창은 transparent: false로 전환하여 네이티브 리사이즈를 활성화
-  const needsTransparent = !isResizable;
+  // Electron frameless + transparent 창은 Windows에서 네이티브 테두리 리사이즈 핸들이 작동하지 않음
+  // contentsChecker는 불투명 창이므로 transparent: false로 두어 네이티브 리사이즈 활성화
+  // chatOverlay 계열은 HTML 내 자체 드래그 핸들러를 사용하므로 투명도(transparent: true)를 강제 유지
+  const needsTransparent = key !== 'contentsChecker';
 
   let isClosing = false;
   const win = new BrowserWindow(getStandardOptions(finalW, finalH, {
@@ -1434,6 +1435,17 @@ export function toggleClickThrough(): boolean {
   if (sub2Win && !sub2Win.isDestroyed()) {
     sub2Win.setIgnoreMouseEvents(isClickThrough, { forward: true });
   }
+
+  // Z-Order 재정렬 강제 적용 (비동기 스타일 갱신 딜레이 150ms 감안하여 지연 정렬 수행)
+  setTimeout(() => {
+    const gameHwndStr = tracker.getGameHwnd();
+    if (gameHwndStr) {
+      const hwnds = getAllWindowHwnds();
+      if (hwnds.length > 0) {
+        tracker.promoteWindows(gameHwndStr, hwnds, true);
+      }
+    }
+  }, 150);
 
   config.save({ chatOverlayClickThrough: isClickThrough });
   const updatedCfg = config.load();

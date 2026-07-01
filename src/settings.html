@@ -790,7 +790,7 @@
           <!-- 서브 탭 2: 채팅 오버레이 -->
           <div id="sub-tab-overlay" class="sub-tab-content space-y-6">
             <!-- 인게임 채팅 오버레이 및 에타 연동 설정 -->
-            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+            <div id="chat-overlay-settings-card" class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
               <label class="section-label flex items-center gap-2">
                 <i data-lucide="message-square" class="w-4 h-4 text-indigo-400"></i> 인게임 채팅 오버레이 및 에타 연동
               </label>
@@ -1694,7 +1694,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">1.19.4</span></p>
+                        class="text-purple-400">2.0.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2751,6 +2751,8 @@
         targetId = 'sound-shortcuts-grid';
       } else if (tabId === 'chatlog') {
         targetId = 'chatlog-path-card';
+      } else if (tabId === 'chatlog:sub-tab-overlay') {
+        targetId = 'chat-overlay-settings-card';
       } else if (tabId === 'chatlog:sub-tab-loot') {
         targetId = 'loot-keyword-card';
       } else if (tabId === 'shortcuts') {

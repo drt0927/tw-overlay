@@ -9,6 +9,7 @@ import * as config from './config';
 import { chatLogProcessor } from './chatLogProcessor';
 import { findChatLogPath } from './chatLogPathFinder';
 import { DEFAULT_CONFIG } from './constants';
+import { etaCacheManager } from './etaCacheManager';
 
 class ChatLogManager {
   private _tail: Tail | null = null;
@@ -403,6 +404,7 @@ class ChatLogManager {
 
   public async getMoreHistory(category: string): Promise<any[]> {
     const cfg = config.load();
+    const serverCode = cfg.userServer || (DEFAULT_CONFIG.userServer as number);
     const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
 
     let startIndex = this._lastReadIndex[category];
@@ -440,10 +442,15 @@ class ChatLogManager {
         if (userMatch) {
           const sender = userMatch[1];
           const message = shoutContent.replace(/\[([^\]]+)\]$/, '').trim();
+          const rankInfo = etaCacheManager.getRankInfo(serverCode, sender);
+          const level = rankInfo ? rankInfo.level : null;
+          const characterCode = rankInfo ? rankInfo.characterCode : null;
           collected.push({
             id: `more-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             type: 'shout', timestamp, sender, message,
-            color: '#c896c8'
+            color: '#c896c8',
+            level,
+            characterCode
           });
         }
         continue;
@@ -521,9 +528,15 @@ class ChatLogManager {
         continue;
       }
 
+      const rankInfo = etaCacheManager.getRankInfo(serverCode, sender);
+      const level = rankInfo ? rankInfo.level : null;
+      const characterCode = rankInfo ? rankInfo.characterCode : null;
+
       collected.push({
         id: `more-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        type, timestamp, sender, message, color
+        type, timestamp, sender, message, color,
+        level,
+        characterCode
       });
     }
 

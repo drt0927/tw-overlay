@@ -365,6 +365,23 @@ export function init(): void {
     }
   });
 
+  // 3-1. 프리셋에서 제거된 기본 아이템 자동 삭제 (isCustom이 아니고 contents.json에 없는 항목 제거)
+  const initialCount = currentItems.length;
+  currentItems = currentItems.filter(item => {
+    if (item.isCustom || item.id.startsWith('custom-')) {
+      return true;
+    }
+    const existsInDefault = defaultItems.some(def => def.id === item.id);
+    if (existsInDefault) {
+      return true;
+    }
+    log(`[Contents Checker] 프리셋에서 제외된 미사용 기본 숙제 자동 삭제: ${item.id} (${item.name})`);
+    return false;
+  });
+  if (currentItems.length !== initialCount) {
+    changed = true;
+  }
+
   // sortOrder가 없는 기존 항목들에 대해 순서 부여
   currentItems.forEach((item, idx) => {
     if (item.sortOrder === undefined) {

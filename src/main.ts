@@ -70,6 +70,31 @@ app.whenReady().then(() => {
 
   diaryDb.initDb();
 
+  try {
+    const cfg = config.load();
+    const keepDays = cfg.diaryKeepDays !== undefined ? cfg.diaryKeepDays : 180;
+    if (keepDays > 0) {
+      analytics.trackEvent('diary_data_cleanup', { keepDays, trigger: 'boot' });
+      diaryDb.cleanOldDiaryData(keepDays);
+    }
+  } catch (err) {
+    log(`[BOOT] 모험 일지 Cleanup 실행 실패: ${err}`);
+  }
+
+  // 24시간마다 오래된 모험 일지 데이터 자동 정리
+  setInterval(() => {
+    try {
+      const cfg = config.load();
+      const keepDays = cfg.diaryKeepDays !== undefined ? cfg.diaryKeepDays : 180;
+      if (keepDays > 0) {
+        analytics.trackEvent('diary_data_cleanup', { keepDays, trigger: 'interval_timer' });
+        diaryDb.cleanOldDiaryData(keepDays);
+      }
+    } catch (err) {
+      log(`[TIMER] 모험 일지 Cleanup 주기적 실행 실패: ${err}`);
+    }
+  }, 24 * 60 * 60 * 1000);
+
   analytics.trackEvent('app_open');
   ipcHandlers.register();
   tracker.start();

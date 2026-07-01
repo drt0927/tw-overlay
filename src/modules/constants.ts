@@ -53,6 +53,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   url: 'https://www.youtube.com',
   homeUrl: 'https://www.youtube.com',
   overlayVisible: false,
+  galleryNotify: false,
+  diaryKeepDays: 180,
   quickSlots: [
     {
       label: "테일즈 가이드 요약",
@@ -169,7 +171,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   chatOverlayFontSize: 14,
   chatOverlayClickThrough: true,
   chatOverlayKeywords: [],
-  userServer: 16,
+  userServer: 7,
   etaDataUrl: '',
   chatOverlayWidth: 450,
   chatOverlayHeight: 400,

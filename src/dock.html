@@ -97,9 +97,12 @@
     /* 테마 색상 및 글로우 HSL 변수 정의 */
     .color-purple-400 { --theme-color: #c084fc; --theme-glow: rgba(192, 132, 252, 0.15); }
     .color-emerald-400 { --theme-color: #34d399; --theme-glow: rgba(52, 211, 153, 0.15); }
+    .color-emerald-500 { --theme-color: #10b981; --theme-glow: rgba(16, 185, 129, 0.15); }
     .color-indigo-400 { --theme-color: #818cf8; --theme-glow: rgba(129, 140, 248, 0.15); }
     .color-blue-400 { --theme-color: #60a5fa; --theme-glow: rgba(96, 165, 250, 0.15); }
+    .color-sky-400 { --theme-color: #38bdf8; --theme-glow: rgba(56, 189, 248, 0.15); }
     .color-amber-400 { --theme-color: #fbbf24; --theme-glow: rgba(251, 191, 36, 0.15); }
+    .color-yellow-400 { --theme-color: #facc15; --theme-glow: rgba(250, 204, 21, 0.15); }
     .color-red-400 { --theme-color: #f87171; --theme-glow: rgba(248, 113, 113, 0.15); }
     .color-pink-400 { --theme-color: #f472b6; --theme-glow: rgba(244, 114, 182, 0.15); }
     .color-violet-400 { --theme-color: #a78bfa; --theme-glow: rgba(167, 139, 250, 0.15); }
@@ -153,6 +156,120 @@
       opacity: 1;
       transform: translateY(0);
     }
+
+    /* 독 카테고리 및 플라이아웃 스타일 */
+    .dock-category-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dock-flyout-submenu {
+      display: none;
+      position: absolute;
+      background: rgba(15, 18, 30, 0.96) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1.5px solid color-mix(in srgb, var(--theme-color, rgba(255, 255, 255, 0.08)) 30%, transparent);
+      border-radius: 16px;
+      padding: 8px;
+      gap: 6px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 25px var(--theme-glow, rgba(168, 85, 247, 0.15));
+      z-index: 1000;
+      white-space: nowrap;
+      pointer-events: auto;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    /* 하단 독 배치 시: 위로 팝업 */
+    body.dock-pos-bottom .dock-flyout-submenu {
+      bottom: 56px;
+      top: auto;
+      flex-direction: row;
+    }
+
+    /* 상단 독 배치 시: 아래로 팝업 */
+    body.dock-pos-top .dock-flyout-submenu {
+      top: 56px;
+      bottom: auto;
+      flex-direction: row;
+    }
+
+    /* 독바 플라이아웃 공백 영역 브릿지 (마우스 이동 시 닫힘 방지) */
+    .dock-flyout-submenu::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      background: transparent;
+    }
+    
+    body.dock-pos-bottom .dock-flyout-submenu::before {
+      bottom: -14px;
+      height: 14px;
+    }
+    
+    body.dock-pos-top .dock-flyout-submenu::before {
+      top: -14px;
+      height: 14px;
+    }
+
+    /* 상단 독 배치 시: 전체 레이아웃 방향 조정 및 툴팁 방향 아래로 */
+    body.dock-pos-top {
+      align-items: flex-start !important;
+    }
+    
+    body.dock-pos-top .dock-tooltip {
+      bottom: auto;
+      top: 48px;
+      transform: translateY(-4px);
+    }
+    
+    body.dock-pos-top .dock-item:hover .dock-tooltip {
+      transform: translateY(0);
+    }
+
+    .dock-category-item:hover .dock-flyout-submenu {
+      display: flex !important;
+    }
+
+    /* 서브메뉴 칩 스타일 */
+    .dock-submenu-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: color-mix(in srgb, var(--theme-color, #ffffff) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--theme-color, #ffffff) 20%, transparent);
+      border-radius: 10px;
+      color: var(--theme-color, #cbd5e1);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .dock-submenu-chip:hover {
+      background: color-mix(in srgb, var(--theme-color, #ffffff) 18%, transparent) !important;
+      color: var(--theme-color, #cbd5e1) !important;
+      border-color: color-mix(in srgb, var(--theme-color, #ffffff) 50%, transparent);
+      box-shadow: 0 0 10px var(--theme-glow, rgba(255, 255, 255, 0.1));
+      text-shadow: 0 0 5px var(--theme-glow, rgba(255, 255, 255, 0.3));
+      transform: scale(1.05) translateY(-1px);
+    }
+
+    .dock-submenu-chip i {
+      width: 14px;
+      height: 14px;
+      color: var(--theme-color, #cbd5e1);
+      transition: all 0.2s;
+    }
+    
+    .dock-submenu-chip:hover i {
+      filter: drop-shadow(0 0 4px var(--theme-color));
+    }
   </style>
 </head>
 <body>
@@ -194,12 +311,16 @@
       quickslotSection.innerHTML = '';
       systemSection.innerHTML = '';
 
-      // 1. 일반 섹션 첫 번째 메뉴로 '독 숨기기' 추가
+      // 1. 독의 상/하 위치 클래스 body에 바인딩
+      const sidebarPos = (appConfig && appConfig.sidebarPosition) || 'right';
+      document.body.className = sidebarPos === 'dock-top' ? 'dock-pos-top' : 'dock-pos-bottom';
+
+      // 2. 일반 섹션 첫 번째 메뉴로 '독 숨기기' 추가
       const hideDockItem = document.createElement('div');
       hideDockItem.className = 'dock-item color-slate-400';
       hideDockItem.id = 'dock-hide-btn';
       hideDockItem.innerHTML = `
-        <i data-lucide="chevrons-down"></i>
+        <i data-lucide="${sidebarPos === 'dock-top' ? 'chevrons-up' : 'chevrons-down'}"></i>
         <span class="indicator-dot"></span>
         <span class="dock-tooltip">독 숨기기</span>
       `;
@@ -212,38 +333,103 @@
 
       const hiddenMenuIds = (appConfig && appConfig.hiddenMenuIds) || [];
 
-      // 2. 일반 메뉴 렌더링
-      menuData.forEach(menu => {
-        if (menu.isSystem) return; // 시스템 메뉴는 아래에서 분리 처리
-        if (hiddenMenuIds.includes(menu.id)) return; // 숨김 적용
+      // 3. 카테고리별 그룹화 렌더링
+      const CATEGORIES = [
+        { id: 'monitoring', label: '실시간 모니터링', icon: 'activity', color: 'purple-400' },
+        { id: 'alarms', label: '알림 설정', icon: 'bell-ring', color: 'pink-400' },
+        { id: 'calculators', label: '전문 계산기', icon: 'calculator', color: 'indigo-400' },
+        { id: 'information', label: '정보 & 도감', icon: 'book-open', color: 'blue-400' },
+        { id: 'utilities', label: '편의 유틸리티', icon: 'pocket', color: 'yellow-400' },
+        { id: 'records', label: '플레이 기록', icon: 'calendar-check', color: 'emerald-400' }
+      ];
 
-        const item = document.createElement('div');
-        const colorClass = menu.color ? `color-${menu.color}` : 'color-slate-400';
-        item.className = `dock-item ${colorClass}`;
-        item.id = `dock-${menu.id}`;
-        
-        const windowKey = menu.api ? menu.api.replace('toggle', '').replace('Window', '') : '';
-        const camelKey = windowKey ? windowKey.charAt(0).toLowerCase() + windowKey.slice(1) : '';
-        item.dataset.winKey = camelKey;
+      CATEGORIES.forEach(cat => {
+        const catItem = document.createElement('div');
+        catItem.className = 'dock-category-item';
+        catItem.id = `dock-cat-${cat.id}`;
 
-        item.innerHTML = `
-          <i data-lucide="${menu.icon}"></i>
-          <span class="indicator-dot"></span>
-          <span class="dock-tooltip">${menu.label}</span>
+        const subMenus = menuData.filter(m => m.category === cat.id && !m.isSystem && !m.isComment);
+        if (subMenus.length === 0) return;
+
+        const colorClass = cat.color ? `color-${cat.color}` : 'color-slate-400';
+        catItem.innerHTML = `
+          <div class="dock-item ${colorClass}" title="${cat.label}">
+            <i data-lucide="${cat.icon}"></i>
+            <span class="indicator-dot"></span>
+            <span class="dock-tooltip">${cat.label}</span>
+          </div>
+          <div class="dock-flyout-submenu hidden" id="dock-flyout-${cat.id}"></div>
         `;
 
-        item.onclick = () => {
-          if (menu.action === 'openGallery') {
-            if (window.electronAPI.toggleGallery) window.electronAPI.toggleGallery();
-          } else if (menu.api && window.electronAPI[menu.api]) {
-            window.electronAPI[menu.api]();
-          }
-        };
+        const flyout = catItem.querySelector('.dock-flyout-submenu');
+        if (flyout) {
+          // 카테고리 기본 테마 색상 적용
+          flyout.classList.add(colorClass);
+        }
+        let visibleCount = 0;
 
-        normalSection.appendChild(item);
+        subMenus.forEach(menu => {
+          const isHidden = hiddenMenuIds.includes(menu.id);
+          const chip = document.createElement('div');
+          chip.className = 'dock-submenu-chip';
+          chip.id = `dock-chip-${menu.id}`;
+          
+          const menuColorClass = menu.color ? `color-${menu.color}` : 'color-slate-400';
+          chip.classList.add(menuColorClass);
+
+          const windowKey = menu.api ? menu.api.replace('toggle', '').replace('Window', '') : '';
+          const camelKey = windowKey ? windowKey.charAt(0).toLowerCase() + windowKey.slice(1) : '';
+          chip.dataset.winKey = camelKey;
+
+          chip.innerHTML = `
+            <i data-lucide="${menu.icon}"></i>
+            <span>${menu.label}</span>
+          `;
+
+          if (isHidden) {
+            chip.style.display = 'none';
+          } else {
+            visibleCount++;
+          }
+
+          chip.onclick = () => {
+            if (menu.action === 'openGallery') {
+              if (window.electronAPI.toggleGallery) window.electronAPI.toggleGallery();
+            } else if (menu.api && window.electronAPI[menu.api]) {
+              window.electronAPI[menu.api]();
+            }
+          };
+
+          // 호버 시 부모 서브메뉴 전체 테두리/글로우 색상 실시간 연동
+          chip.onmouseenter = () => {
+            const flyoutEl = chip.closest('.dock-flyout-submenu');
+            if (flyoutEl && menu.color) {
+              // 카테고리 기본색 제거
+              flyoutEl.classList.remove(colorClass);
+              // 칩 색상 추가
+              flyoutEl.classList.add(`color-${menu.color}`);
+            }
+          };
+          
+          chip.onmouseleave = () => {
+            const flyoutEl = chip.closest('.dock-flyout-submenu');
+            if (flyoutEl && menu.color) {
+              // 칩 색상 제거
+              flyoutEl.classList.remove(`color-${menu.color}`);
+              // 카테고리 기본색 복원
+              flyoutEl.classList.add(colorClass);
+            }
+          };
+
+          flyout.appendChild(chip);
+        });
+
+        if (visibleCount > 0) {
+          normalSection.appendChild(catItem);
+        }
       });
 
-      // 2-1. 사용자가 추가한 퀵슬롯(사이트 목록) 렌더링
+      // 4. 사용자가 추가한 퀵슬롯(사이트 목록) 렌더링
       const quickSlots = (appConfig && appConfig.quickSlots) || [];
       const validSlots = quickSlots.filter(slot => slot && slot.url);
 
@@ -256,7 +442,6 @@
           const item = document.createElement('div');
           item.className = 'dock-item color-slate-400';
           item.id = `dock-quickslot-${i}`;
-          item.dataset.winKey = ''; // 퀵슬롯은 켜져있는 오버레이를 공유하므로 개별 닷 표시 불필요
 
           const iconHtml = slot.iconType === 'text' && slot.textChar 
             ? `<span class="tw-slot-text" style="font-size: 14px; font-weight: 900; color: var(--theme-color, #94a3b8); transition: all 0.2s;">${slot.textChar}</span>` 
@@ -279,13 +464,12 @@
           quickslotSection.appendChild(item);
         });
       } else {
-        // 등록된 퀵슬롯이 없으면 퀵슬롯 전용 Row 및 구분선 감춤
         quickslotSection.style.display = 'none';
         divider1.style.display = 'none';
-        divider2.style.display = 'block'; // 일반과 시스템 경계선으로 단일 노출 유지
+        divider2.style.display = 'block';
       }
 
-      // 3. 시스템 관련 메뉴 렌더링 (홈페이지, 오버레이 토글, 마우스 투과 토글)
+      // 5. 시스템 관련 메뉴 렌더링 (홈페이지, 오버레이 토글, 마우스 투과 토글)
       menuData.forEach(menu => {
         if (!menu.isSystem) return;
 
@@ -305,9 +489,7 @@
         `;
 
         item.onclick = () => {
-          if (menu.action === 'openGallery') {
-            if (window.electronAPI.toggleGallery) window.electronAPI.toggleGallery();
-          } else if (menu.api && window.electronAPI[menu.api]) {
+          if (menu.api && window.electronAPI[menu.api]) {
             window.electronAPI[menu.api]();
           }
         };
@@ -315,7 +497,7 @@
         systemSection.appendChild(item);
       });
 
-      // 4. 하드코딩된 시스템 제어 메뉴 추가 고정 노출 (환경 설정, 후원, 종료)
+      // 6. 하드코딩된 시스템 제어 메뉴 추가 고정 노출 (환경 설정, 후원, 종료)
       const systemItems = [
         {
           id: 'settings-btn',
@@ -378,12 +560,12 @@
     }
 
     function updateActiveStates() {
+      // 1. 일반 dock-item active 상태 갱신
       document.querySelectorAll('.dock-item').forEach(item => {
         const key = item.dataset.winKey;
         if (key && activeKeys.includes(key)) {
           item.classList.add('active');
         } else {
-          // 특수 예외 케이스 처리
           if (item.id === 'dock-gallery-btn' && activeKeys.includes('gallery')) {
             item.classList.add('active');
             return;
@@ -393,6 +575,41 @@
             return;
           }
           item.classList.remove('active');
+        }
+      });
+
+      // 2. 서브메뉴 칩 및 부모 카테고리 active 상태 갱신
+      const CATEGORIES = ['monitoring', 'alarms', 'calculators', 'information', 'utilities', 'records'];
+      CATEGORIES.forEach(catId => {
+        const catItem = document.getElementById(`dock-cat-${catId}`);
+        if (!catItem) return;
+
+        const flyout = document.getElementById(`dock-flyout-${catId}`);
+        if (!flyout) return;
+
+        let hasActiveChild = false;
+        Array.from(flyout.children).forEach(chip => {
+          const key = chip.dataset.winKey;
+          if (key && activeKeys.includes(key)) {
+            chip.classList.add('active');
+            hasActiveChild = true;
+          } else {
+            if (chip.id === 'dock-chip-gallery-btn' && activeKeys.includes('gallery')) {
+              chip.classList.add('active');
+              hasActiveChild = true;
+            } else {
+              chip.classList.remove('active');
+            }
+          }
+        });
+
+        const parentIcon = catItem.querySelector('.dock-item');
+        if (parentIcon) {
+          if (hasActiveChild) {
+            parentIcon.classList.add('active');
+          } else {
+            parentIcon.classList.remove('active');
+          }
         }
       });
     }

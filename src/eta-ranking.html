@@ -138,7 +138,7 @@
             const list = document.getElementById('ranking-list');
             list.innerHTML = '';
             if (!entries || entries.length === 0) {
-                list.innerHTML = '<div class="text-[10px] text-slate-700 text-center py-10 font-bold tracking-widest opacity-50">검색 결과가 없습니다.</div>';
+                list.innerHTML = '<div class="text-xs text-slate-700 text-center py-10 font-bold tracking-widest opacity-50">검색 결과가 없습니다.</div>';
                 return;
             }
 
@@ -161,8 +161,8 @@
             <span class="text-xs text-slate-500 font-bold">${e.character}</span>
           </div>
           <div class="flex flex-col items-end">
-            <div class="text-xs text-yellow-400 font-black"><span class="text-[10px] text-slate-500 mr-1">Lv.</span>${e.level}</div>
-            <div class="text-[10px] text-slate-500 font-bold mt-0.5">${e.point.toLocaleString()} 정수</div>
+            <div class="text-xs text-yellow-400 font-black"><span class="text-xs text-slate-500 mr-1">Lv.</span>${e.level}</div>
+            <div class="text-xs text-slate-500 font-bold mt-0.5">${e.point.toLocaleString()} 정수</div>
           </div>
         `;
                 list.appendChild(div);

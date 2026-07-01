@@ -8,6 +8,7 @@ import { chatParser } from './chatParser';
 import * as config from './config';
 import { chatLogProcessor } from './chatLogProcessor';
 import { findChatLogPath } from './chatLogPathFinder';
+import { DEFAULT_CONFIG } from './constants';
 
 class ChatLogManager {
   private _tail: Tail | null = null;
@@ -137,7 +138,7 @@ class ChatLogManager {
    */
   private replayTodayLog(lines: string[]): void {
     const cfg = config.load();
-    const serverCode = cfg.userServer || 16;
+    const serverCode = cfg.userServer || (DEFAULT_CONFIG.userServer as number);
 
     // 리플레이 시작 전 기존 버퍼스토어 초기화
     chatLogProcessor.clearHistoryStore();

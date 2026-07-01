@@ -98,9 +98,9 @@
       background: transparent;
       border: none;
       color: #94a3b8;
-      font-size: 16px;
+      font-size: 14.5px;
       font-weight: 600;
-      padding: 12px 24px;
+      padding: 12px 14px;
       border-radius: 10px 10px 0 0;
       cursor: pointer;
       display: flex;
@@ -108,6 +108,7 @@
       gap: 6px;
       transition: all 0.2s;
       border-bottom: 2px solid transparent;
+      white-space: nowrap;
     }
     
     .tab-btn:hover {
@@ -365,19 +366,22 @@
       </button>
     </header>
     
-    <!-- Tab Controls (4 Tabs) -->
+    <!-- Tab Controls (5 Tabs) -->
     <nav class="guide-tabs">
       <button class="tab-btn active" onclick="switchTab(0)">
-        <i data-lucide="info" style="width:20px;height:20px;"></i>💡 앱 소개
+        <i data-lucide="info" style="width:20px;height:20px;"></i>앱 소개
       </button>
       <button class="tab-btn" onclick="switchTab(1)">
-        <i data-lucide="settings" style="width:20px;height:20px;"></i>⚙️ 필수 설정
+        <i data-lucide="settings" style="width:20px;height:20px;"></i>필수 설정
       </button>
       <button class="tab-btn" onclick="switchTab(2)">
-        <i data-lucide="monitor" style="width:20px;height:20px;"></i>🖥️ 전체 창 모드 팁
+        <i data-lucide="monitor" style="width:20px;height:20px;"></i>전체화면 대응 팁
       </button>
       <button class="tab-btn" onclick="switchTab(3)">
-        <i data-lucide="keyboard" style="width:20px;height:20px;"></i>⌨️ 단축키 요약
+        <i data-lucide="volume-2" style="width:20px;height:20px;"></i>알람음 설정
+      </button>
+      <button class="tab-btn" onclick="switchTab(4)">
+        <i data-lucide="keyboard" style="width:20px;height:20px;"></i>단축키 요약
       </button>
     </nav>
     
@@ -430,6 +434,12 @@
         <p class="section-desc">
           앱의 모든 자동화 기능이 게임 내 액션과 정상 반응하려면 반드시 본인의 테일즈위버 설치 경로 폴더를 앱에 올바르게 연동해주어야 합니다.
         </p>
+
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+          <button class="submit-btn" onclick="openChatlogSettingsDirectly()" style="font-size: 16px; padding: 10px 24px; background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
+            <i data-lucide="external-link" style="width:18px;height:18px;"></i> 채팅 로그 설정 바로 가기
+          </button>
+        </div>
         
         <div class="info-box">
           <i data-lucide="alert-circle" class="info-icon" style="width:22px;height:22px;"></i>
@@ -452,41 +462,71 @@
         </div>
       </div>
       
-      <!-- Tab 2: 전체 창 모드 팁 -->
+      <!-- Tab 2: 전체화면 대응 팁 -->
       <div id="panel-2" class="content-panel">
         <div class="section-title">
-          <i data-lucide="monitor-off" style="width:22px;height:22px;color:#a855f7;"></i>
-          전체 창 모드 실행 시 사이드바 가려짐 대처법
+          <i data-lucide="monitor-off" style="width:22px;height:22px;color:#ef4444;"></i>
+          전체화면 실행 시 사이드바/독바 가려짐 대처법
         </div>
-        <p class="section-desc">
-          테일즈위버를 <strong>전체 창 모드(또는 전체화면)</strong>로 구동하시는 분들은 사이드바 창이 뒤로 가려져 보이지 않거나 꺼진 것처럼 느껴질 수 있습니다. 아래 팁을 확인하세요.
-        </p>
+
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+          <button class="submit-btn" onclick="openGeneralSettingsDirectly()" style="font-size: 16px; padding: 10px 24px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
+            <i data-lucide="external-link" style="width:18px;height:18px;"></i> 사이드바/독 배치 설정 바로 가기
+          </button>
+        </div>
         
-        <div class="info-box">
-          <i data-lucide="check-circle" class="info-icon" style="width:22px;height:22px;"></i>
+        <div class="warning-box" style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444; border-radius: 0 12px 12px 0; padding: 16px 20px; display: flex; gap: 14px; align-items: flex-start;">
+          <i data-lucide="alert-triangle" style="color: #f87171; flex-shrink: 0; margin-top: 2px; width: 22px; height: 22px;"></i>
           <div>
-            <div class="info-title">사이드바 설정 위치를 Dock으로 변경하기</div>
-            <div class="info-desc">
-              1. 테일즈위버 게임을 임시로 <strong>창 모드</strong>로 변경하여 숨은 사이드바를 확인한 뒤, 하단 톱니바퀴(⚙️)를 눌러 설정에 들어갑니다.<br>
-              2. <strong>또는</strong> 바탕화면의 <strong>시스템 트레이 아이콘</strong>(시계 옆)을 우클릭하여 <strong>[환경설정]</strong> 메뉴를 즉시 열어줍니다.<br>
-              3. 설정 내 '사이드바 배치 설정'에서 위치를 <strong>Dock 배치</strong>로 변경합니다.
+            <div style="font-size: 17.5px; font-weight: 700; color: #f87171; margin-bottom: 4px;">왜 게임 화면에 오버레이가 안 보이나요?</div>
+            <div style="font-size: 15px; color: #cbd5e1; line-height: 1.6;">
+              테일즈위버가 **독점적 전체화면(Exclusive Fullscreen)** 모드로 실행 중일 때는 윈도우 OS의 특성상 어떠한 오버레이 창도 게임 뒤로 가려집니다.
             </div>
           </div>
         </div>
-        
-        <!-- Screenshot Frame (assets/img/guide_dock.png 매칭) -->
-        <div class="guide-screenshot-frame">
-          <img src="assets/img/guide_dock.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%;height:auto;display:block;">
-          <div style="display:none; flex-direction:column; align-items:center; gap:12px;">
-            <i data-lucide="image" style="width:30px;height:30px;opacity:0.6;"></i>
-            <span>전체 창 모드용 Dock 설정 가이드 스크린샷 영역</span>
-            <span style="font-size:14px; opacity:0.5;">(assets/img/guide_dock.png 파일을 이 위치에 저장해 주세요)</span>
+
+        <div class="info-box">
+          <i data-lucide="check-circle" class="info-icon" style="width:22px;height:22px;color: #34d399;"></i>
+          <div>
+            <div class="info-title" style="color: #a7f3d0;">추천 해결 방법 2가지</div>
+            <div class="info-desc" style="font-size:15px; line-height:1.65;">
+              1. **[강력 추천]** 테일즈위버 인게임 옵션에서 화면 설정을 **'전체 창 모드'(Borderless Windowed)** 또는 **'창 모드'**로 변경해 주세요.<br>
+              2. 윈도우 트레이 아이콘(시계 옆)을 우클릭하여 **[환경설정]**을 열거나, 설정에서 위치를 **독(Dock) 배치**로 변경하여 단축키(<span class="key-badge" style="font-size:12px; padding: 2px 5px;">Ctrl</span>+<span class="key-badge" style="font-size:12px; padding: 2px 5px;">Shift</span>+<span class="key-badge" style="font-size:12px; padding: 2px 5px;">D</span>)로 켜서 사용하세요.
+            </div>
           </div>
         </div>
       </div>
       
-      <!-- Tab 3: 단축키 요약 -->
+      <!-- Tab 3: 알람음 설정 가이드 -->
       <div id="panel-3" class="content-panel">
+        <div class="section-title">
+          <i data-lucide="volume-2" style="width:22px;height:22px;color:#a855f7;"></i>
+          알림 효과음 및 오디오 변경 방법
+        </div>
+        <p class="section-desc">
+          필드보스 출현, 지정 단어 감지 등 각 상황에 울리는 알람음은 아래의 방법으로 빠르고 손쉽게 변경할 수 있습니다.
+        </p>
+
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+          <button class="submit-btn" onclick="openSoundSettingsDirectly()" style="font-size: 16px; padding: 10px 24px; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+            <i data-lucide="external-link" style="width:18px;height:18px;"></i> 환경 설정 내 '소리 및 알림음 설정'으로 바로 가기
+          </button>
+        </div>
+        
+        <div class="info-box">
+          <i data-lucide="info" class="info-icon" style="width:22px;height:22px;"></i>
+          <div>
+            <div class="info-title">설정 팁 안내</div>
+            <div class="info-desc" style="font-size:15px; line-height:1.65;">
+              - **상황별 알림음 변경**: 필드보스 알림 설정, 지정 단어 알림 설정 등 **개별 설정 창의 하단 드롭다운**을 눌러 마음에 드는 오디오 파일(예: `orb.mp3` 등)로 직접 지정하고 바로 재생 테스트를 해볼 수 있습니다.<br>
+              - **마스터 볼륨 및 일괄 이동**: 환경 설정의 **`소리 및 알림음 설정`** 탭에 들어오시면, 숙제 완료음 등의 볼륨 크기를 미세 조절하고 각 알림음 설정 창으로 한번에 넘어갈 수 있는 **바로가기 카드**들을 제공합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab 4: 단축키 요약 -->
+      <div id="panel-4" class="content-panel">
         <div class="section-title">
           <i data-lucide="command" style="width:22px;height:22px;color:#a855f7;"></i>
           프로그램 지원 단축키 요약
@@ -494,6 +534,12 @@
         <p class="section-desc">
           플레이 중 아래의 단축키를 사용하여 각 윈도우 및 기능을 매우 빠르게 끄고 켤 수 있습니다.
         </p>
+
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+          <button class="submit-btn" onclick="openShortcutsSettingsDirectly()" style="font-size: 16px; padding: 10px 24px; background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
+            <i data-lucide="external-link" style="width:18px;height:18px;"></i> 단축키 설정 바로 가기
+          </button>
+        </div>
         
         <table class="shortcut-table">
           <thead>
@@ -560,7 +606,7 @@
     lucide.createIcons();
     
     let currentTabIdx = 0;
-    const totalTabs = 4;
+    const totalTabs = 5;
     
     // Sync buttons on load
     updateFooterButtons();
@@ -628,6 +674,37 @@
         window.close();
       }
     }
+
+    function openSoundSettingsDirectly() {
+      if (window.electronAPI && window.electronAPI.toggleSettings) {
+        window.electronAPI.toggleSettings('sound');
+      }
+    }
+
+    function openGeneralSettingsDirectly() {
+      if (window.electronAPI && window.electronAPI.toggleSettings) {
+        window.electronAPI.toggleSettings('general');
+      }
+    }
+
+    function openShortcutsSettingsDirectly() {
+      if (window.electronAPI && window.electronAPI.toggleSettings) {
+        window.electronAPI.toggleSettings('shortcuts');
+      }
+    }
+
+    function openChatlogSettingsDirectly() {
+      if (window.electronAPI && window.electronAPI.toggleSettings) {
+        window.electronAPI.toggleSettings('chatlog');
+      }
+    }
+
+    // ESC 키로 창 닫기 지원
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeGuide();
+      }
+    });
   </script>
 </body>
 </html>

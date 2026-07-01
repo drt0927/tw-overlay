@@ -51,24 +51,79 @@ function buildMenuTemplate(): any[] {
         'toggleSienaAura': wm.toggleSienaAuraWindow,
         'toggleHuntingPathSimulator': wm.toggleHuntingPathSimulatorWindow,
         'toggleOverlay': wm.toggleOverlay,
-        'toggleClickThrough': wm.toggleClickThrough
+        'toggleClickThrough': wm.toggleClickThrough,
+        'toggleChatOverlay': wm.toggleChatOverlayWindow,
+        'toggleWelcomeGuide': wm.toggleWelcomeGuideWindow
       };
 
-      menus.forEach((m: any) => {
-        // 시스템 버튼(isSystem: true)은 트레이 메뉴에서 제외
-        if (m.isSystem) return;
+      // 1. 카테고리 정의
+      const CATEGORIES = [
+        { id: 'monitoring', label: '실시간 모니터링' },
+        { id: 'alarms', label: '알림 설정' },
+        { id: 'calculators', label: '전문 계산기' },
+        { id: 'information', label: '정보 & 도감' },
+        { id: 'utilities', label: '편의 유틸리티' },
+        { id: 'homework', label: '숙제 체크' },
+        { id: 'records', label: '플레이 기록' }
+      ];
 
-        // 사용자가 숨김 처리한 메뉴 제외
-        if (hiddenMenuIds && hiddenMenuIds.includes(m.id)) return;
+      // 2. 카테고리별 서브메뉴 빌드
+      CATEGORIES.forEach(cat => {
+        const catMenus = menus.filter((m: any) => m.category === cat.id && !m.isSystem && !m.isComment);
 
-        const apiKey = m.api || m.action;
-        if (apiKey && apiMapping[apiKey]) {
+        if (cat.id === 'homework') {
+          catMenus.forEach((m: any) => {
+            if (hiddenMenuIds.includes(m.id)) return;
+
+            const apiKey = m.api || m.action;
+            if (apiKey && apiMapping[apiKey]) {
+              menuTemplate.push({
+                label: m.label,
+                click: () => apiMapping[apiKey]()
+              });
+            }
+          });
+          return;
+        }
+
+        const subItems: any[] = [];
+
+        catMenus.forEach((m: any) => {
+          if (hiddenMenuIds.includes(m.id)) return;
+
+          const apiKey = m.api || m.action;
+          if (apiKey && apiMapping[apiKey]) {
+            subItems.push({
+              label: m.label,
+              click: () => apiMapping[apiKey]()
+            });
+          }
+        });
+
+        if (subItems.length > 0) {
           menuTemplate.push({
-            label: m.label,
-            click: () => apiMapping[apiKey]()
+            label: cat.label,
+            submenu: Menu.buildFromTemplate(subItems)
           });
         }
       });
+
+      // 3. 시스템 관련 독립 제어 메뉴 추가
+      const systemMenus = menus.filter((m: any) => m.isSystem);
+      if (systemMenus.length > 0) {
+        menuTemplate.push({ type: 'separator' });
+        systemMenus.forEach((m: any) => {
+          if (hiddenMenuIds.includes(m.id)) return;
+
+          const apiKey = m.api || m.action;
+          if (apiKey && apiMapping[apiKey]) {
+            menuTemplate.push({
+              label: m.label,
+              click: () => apiMapping[apiKey]()
+            });
+          }
+        });
+      }
 
       if (menuTemplate.length > 0) {
         menuTemplate.push({ type: 'separator' });
@@ -78,9 +133,9 @@ function buildMenuTemplate(): any[] {
     log(`[TRAY] 메뉴 데이터 로드 실패: ${e}`);
   }
 
-  // 기본 메뉴 추가 (설정, 종료)
+  // 4. 기본 관리 메뉴 추가 (설정, 종료)
   menuTemplate.push({
-    label: '설정',
+    label: '환경 설정',
     click: () => wm.toggleSettingsWindow()
   });
   menuTemplate.push({

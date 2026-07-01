@@ -67,6 +67,7 @@ export function register(): void {
 
   ipcMain.on('trigger-firework-global', () => {
     console.log('[IPC] trigger-firework-global event received from renderer in Main Process.');
+    analytics.trackEvent('trigger_firework_global');
     let overlayWin = wm.getGameOverlayWindow();
     if (!overlayWin || overlayWin.isDestroyed()) {
       console.log('[IPC] gameOverlayWindow not active. Creating window...');
@@ -131,6 +132,15 @@ export function register(): void {
     
     // 챗로그 상태 변경 여부를 모든 창에 브로드캐스트
     broadcastChatLogStatus();
+
+    // 모험 일지 보관 설정 변경 시 즉시 오래된 데이터 정리 실행
+    if (newSettings.diaryKeepDays !== undefined) {
+      const keepDays = newSettings.diaryKeepDays;
+      if (keepDays > 0) {
+        analytics.trackEvent('diary_data_cleanup', { keepDays, trigger: 'settings_change' });
+        diaryDb.cleanOldDiaryData(keepDays);
+      }
+    }
   });
 
   function broadcastChatLogStatus(): void {
@@ -179,6 +189,8 @@ export function register(): void {
     'toggle-discord-alarm': wm.toggleDiscordAlarmWindow,
     'toggle-chat-overlay': wm.toggleChatOverlayWindow,
     'toggle-hunting-path-simulator': wm.toggleHuntingPathSimulatorWindow,
+    'toggle-welcome-guide': wm.toggleWelcomeGuideWindow,
+    'toggle-shout-history': wm.toggleShoutHistoryWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -252,7 +264,6 @@ export function register(): void {
   });
 
   ipcMain.on('open-coefficient-calculator', () => {
-    analytics.trackEvent('open_coefficient_calculator');
     wm.openCoefficientCalculatorWindow();
   });
 
@@ -389,9 +400,6 @@ export function register(): void {
   });
   ipcMain.on('word-alarm-clear-history', () => {
     diaryDb.clearWordAlarmHistory();
-  });
-  ipcMain.on('toggle-shout-history', () => {
-    wm.toggleShoutHistoryWindow();
   });
   ipcMain.on('play-sound', (_e, { file, volume }) => {
     const sidebar = wm.getMainWindow();

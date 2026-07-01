@@ -370,7 +370,7 @@ export function start(_overlayWin: BrowserWindow | null, sidebarWin: BrowserWind
   const cfg = config.load();
   lastSeenPostNo = cfg.galleryLastSeen || 0;
   watchedPosts = cfg.galleryWatched || {};
-  notifyEnabled = cfg.galleryNotify !== false;
+  notifyEnabled = cfg.galleryNotify === true;
   galleryKeywords = cfg.galleryKeywords || [];
 
   isRunning = true;

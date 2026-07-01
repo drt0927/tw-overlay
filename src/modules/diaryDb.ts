@@ -520,6 +520,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
   let totalLoots = 0;
   let totalEssences = 0;
   let totalSeed = 0;
+  let totalElso = 0;
   const bossCounts: Record<string, number> = {};
   const weeklyActivity = [0, 0, 0, 0, 0, 0, 0]; // 월~일 (0~6)
   const hourlyActivity = [0, 0, 0, 0]; // 아침/오전(06-12), 오후(12-18), 저녁/밤(18-24), 새벽/심야(00-06)
@@ -570,6 +571,8 @@ export function getMonthlyStatistics(yearMonth: string): any {
       if (weekIdx >= 0 && weekIdx < 6) {
         weeklySeedList[weekIdx] += log.amount || 0;
       }
+    } else if (log.type === 'elso') {
+      totalElso += log.amount || 0;
     }
   });
 
@@ -596,6 +599,7 @@ export function getMonthlyStatistics(yearMonth: string): any {
     totalLoots,
     totalEssences,
     totalSeed,
+    totalElso,
     topBosses,
     weeklyActivity,
     weeklySeedList,
@@ -843,4 +847,67 @@ export function saveHuntingPath(groundId: string, points: Array<[number, number,
     log(`[DiaryDB] saveHuntingPath failed (groundId: ${groundId}): ${e}`);
   }
 }
+
+export function cleanOldDiaryData(keepDays: number): void {
+  if (!db) initDb();
+  if (!db) return;
+
+  if (keepDays <= 0) return;
+
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - keepDays);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+
+    const transaction = db.transaction(() => {
+      const delHw = db!.prepare('DELETE FROM homework_logs WHERE date < ?');
+      const delAct = db!.prepare('DELETE FROM activity_logs WHERE date < ?');
+      const delDiary = db!.prepare('DELETE FROM diaries WHERE date < ?');
+
+      const infoHw = delHw.run(cutoffStr);
+      const infoAct = delAct.run(cutoffStr);
+      const infoDiary = delDiary.run(cutoffStr);
+
+      log(`[DiaryDB] Cleanup completed. Removed: ${infoDiary.changes} diaries, ${infoHw.changes} homework logs, ${infoAct.changes} activity logs (Older than ${cutoffStr})`);
+    });
+
+    transaction();
+    notifyUpdate();
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    log(`[DiaryDB] Failed to clean old data: ${errMsg}`);
+  }
+}
+
+export function addElsoPoints(date: string, time: string, points: number): void {
+  if (!db) initDb();
+  if (!db) return;
+
+  if (points <= 0) return;
+
+  try {
+    const transaction = db.transaction(() => {
+      ensureDiaryExists(date);
+
+      const existing = db!.prepare("SELECT id, amount FROM activity_logs WHERE date = ? AND type = 'elso'").get(date) as { id: number, amount: number } | undefined;
+
+      if (existing) {
+        const newAmount = existing.amount + points;
+        db!.prepare("UPDATE activity_logs SET amount = ? WHERE id = ?").run(newAmount, existing.id);
+        log(`[DiaryDB] Elso points updated for date ${date}: ${existing.amount} + ${points} = ${newAmount}`);
+      } else {
+        db!.prepare("INSERT INTO activity_logs (date, type, content, time, amount) VALUES (?, 'elso', '엘소 포인트 획득', ?, ?)")
+           .run(date, time, points);
+        log(`[DiaryDB] Elso points created for date ${date}: ${points}`);
+      }
+    });
+
+    transaction();
+    notifyUpdate();
+  } catch (error) {
+    log(`[DiaryDB] addElsoPoints failed (date: ${date}, points: ${points}): ${error}`);
+  }
+}
+
+
 

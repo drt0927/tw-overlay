@@ -24,6 +24,20 @@ const pidPtr = Buffer.alloc(4);
 const sizePtr = Buffer.alloc(4);
 const rectOut = { left: 0, top: 0, right: 0, bottom: 0 };
 
+/** hwnd 값을 안전하게 bigint로 변환하는 헬퍼 함수 */
+function parseHwnd(hwnd: any): bigint {
+    if (typeof hwnd === 'bigint') return hwnd;
+    if (typeof hwnd === 'number') return BigInt(hwnd);
+    if (hwnd && typeof hwnd === 'object') {
+        try {
+            return koffi.address(hwnd);
+        } catch {
+            return BigInt(hwnd);
+        }
+    }
+    return BigInt(hwnd);
+}
+
 // --- 콜백 등록 ---
 
 // 1. 창 열거(EnumWindows) 콜백
@@ -33,13 +47,14 @@ const EnumWindowsProcPtr = koffi.pointer(EnumWindowsProc);
 let _tempFoundHwnd: bigint | null = null;
 let _tempFoundPid: number | null = null;
 
-const enumCallback = koffi.register((hwnd: bigint, _lParam: bigint) => {
-    const titleLen = win32.GetWindowTextW(hwnd, titleBuffer, TITLE_BUFFER_LENGTH);
+const enumCallback = koffi.register((hwnd: any, _lParam: bigint) => {
+    const safeHwnd = parseHwnd(hwnd);
+    const titleLen = win32.GetWindowTextW(safeHwnd, titleBuffer, TITLE_BUFFER_LENGTH);
     if (titleLen === 0) return true;
 
     const title = titleBuffer.toString('utf16le', 0, titleLen * 2);
     if (title.includes('Talesweaver')) {
-        win32.GetWindowThreadProcessId(hwnd, pidPtr);
+        win32.GetWindowThreadProcessId(safeHwnd, pidPtr);
         const pid = pidPtr.readUInt32LE(0);
 
         let hProcess = 0n;
@@ -51,7 +66,7 @@ const enumCallback = koffi.register((hwnd: bigint, _lParam: bigint) => {
                     const nameLen = sizePtr.readUInt32LE(0);
                     const fullPath = nameBuffer.toString('utf16le', 0, nameLen * 2);
                     if (fullPath.toLowerCase().includes(GAME_PROCESS_NAME.toLowerCase())) {
-                        _tempFoundHwnd = hwnd;
+                        _tempFoundHwnd = safeHwnd;
                         _tempFoundPid = pid;
                         return false;
                     }
@@ -70,14 +85,15 @@ const enumCallback = koffi.register((hwnd: bigint, _lParam: bigint) => {
 const WinEventProcProto = koffi.proto('__stdcall', 'void', ['intptr', 'uint32', 'intptr', 'int32', 'int32', 'uint32', 'uint32']);
 const WinEventProcPtr = koffi.pointer(WinEventProcProto);
 
-const winEventProcInstance = koffi.register((_hWinEventHook: bigint, event: number, hwnd: bigint, _idObject: number, _idChild: number, _dwEventThread: number, _dwmsEventTime: number) => {
-    if (cachedHwnd && hwnd === cachedHwnd) {
+const winEventProcInstance = koffi.register((_hWinEventHook: bigint, event: number, hwnd: any, _idObject: number, _idChild: number, _dwEventThread: number, _dwmsEventTime: number) => {
+    const safeHwnd = parseHwnd(hwnd);
+    if (cachedHwnd && safeHwnd === cachedHwnd) {
         if (onWindowEventCallback) onWindowEventCallback();
     }
     // 포그라운드 변경 이벤트: 즉각적인 포커스 감지
     if (event === win32.EVENT_SYSTEM_FOREGROUND && onForegroundChangeCallback) {
-        const isGameFocused = cachedHwnd !== null && hwnd === cachedHwnd;
-        onForegroundChangeCallback(isGameFocused, hwnd.toString());
+        const isGameFocused = cachedHwnd !== null && safeHwnd === cachedHwnd;
+        onForegroundChangeCallback(isGameFocused, safeHwnd.toString());
     }
 }, WinEventProcPtr);
 
@@ -114,9 +130,10 @@ function findGameWindow(): bigint | null {
     return null;
 }
 
-function isHwndValid(hwnd: bigint): boolean {
+function isHwndValid(hwnd: any): boolean {
     if (!hwnd) return false;
-    const threadId = win32.GetWindowThreadProcessId(hwnd, pidPtr);
+    const safeHwnd = parseHwnd(hwnd);
+    const threadId = win32.GetWindowThreadProcessId(safeHwnd, pidPtr);
     if (threadId === 0) return false;
     return pidPtr.readUInt32LE(0) === lastProcessId;
 }
@@ -141,7 +158,7 @@ export function setForegroundChangeListener(callback: (isGameFocused: boolean, f
     // 리스너가 등록되는 즉시 현재 활성화된 창(Foreground Window)의 포커스 상태를 1회 평가하여 호출합니다.
     try {
         if (!win32.GetForegroundWindow) return;
-        const fgHwnd = BigInt(win32.GetForegroundWindow());
+        const fgHwnd = parseHwnd(win32.GetForegroundWindow());
         if (fgHwnd !== 0n) {
             // 게임 창이 아직 감지되지 않았다면 미리 찾아둡니다.
             if (!cachedHwnd) {
@@ -176,7 +193,7 @@ export async function queryGameRect(): Promise<GameQueryResult> {
             width: rectOut.right - rectOut.left,
             height: rectOut.bottom - rectOut.top,
             gameHwnd: cachedHwnd.toString(),
-            isForeground: BigInt(win32.GetForegroundWindow()) === cachedHwnd
+            isForeground: parseHwnd(win32.GetForegroundWindow()) === cachedHwnd
         };
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -206,7 +223,7 @@ export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: s
             win32.SWP_NOOWNERZORDER | win32.SWP_NOSENDCHANGING |
             win32.SWP_DEFERERASE | win32.SWP_NOCOPYBITS;
 
-        const fgHwnd = BigInt(win32.GetForegroundWindow());
+        const fgHwnd = parseHwnd(win32.GetForegroundWindow());
         const isGameFocused = (fgHwnd === gameHwnd);
         const electronHwndBigInts = electronHwnds.map(h => BigInt(h));
         // 사이드바를 포함한 모든 앱 윈도우 중 하나라도 포커스를 가졌는지 체크
@@ -215,7 +232,7 @@ export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: s
         isFocused = isGameFocused || isOurAppFocused;
 
         // 항상 샌드위치 배치: 게임 창 바로 앞(Z+1)에 오버레이 배치
-        const prevHwnd = win32.GetWindow(gameHwnd, win32.GW_HWNDPREV);
+        const prevHwnd = parseHwnd(win32.GetWindow(gameHwnd, win32.GW_HWNDPREV));
         const isAlreadySandwiched = electronHwndBigInts.some(h => h === prevHwnd);
 
         if (!isAlreadySandwiched) {
@@ -268,7 +285,7 @@ export function focusGameWindow(): void {
     if (!cachedHwnd || !isHwndValid(cachedHwnd)) return;
     try {
         // 이미 게임 창이 활성화 상태라면 아무것도 하지 않습니다 (깜박임 방지)
-        const fgHwnd = BigInt(win32.GetForegroundWindow());
+        const fgHwnd = parseHwnd(win32.GetForegroundWindow());
         if (fgHwnd === cachedHwnd) return;
 
         // Alt 키 트릭 (SetForegroundWindow 제약 우회)

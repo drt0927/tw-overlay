@@ -196,7 +196,7 @@
           <i data-lucide="help-circle" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
           <div>
             <h4 class="text-xs font-bold text-slate-300">작동하지 않나요?</h4>
-            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
               테일즈위버 인게임 <b>[옵션 > 게임 > 인터페이스]</b>에서 <b>채팅 로그</b> 항목이 <b>ON</b>으로 설정되어야 실시간 감지가 가능합니다.
             </p>
           </div>
@@ -211,7 +211,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h3 class="text-sm font-bold text-slate-200">지정 단어 알림 사용</h3>
-            <p class="text-[10px] text-slate-500 mt-0.5">일반/클럽 채팅 중 지정한 단어 감지 시 알림</p>
+            <p class="text-xs text-slate-500 mt-0.5">일반/클럽 채팅 중 지정한 단어 감지 시 알림</p>
           </div>
           <label class="switch">
             <input type="checkbox" id="alarm-toggle" onchange="toggleAlarmEnabled(this.checked)">
@@ -221,7 +221,7 @@
         <div class="border-t border-white/5 pt-3 mt-1.5 flex justify-between items-center">
           <div>
             <h3 class="text-sm font-bold text-slate-200">대화 내용(5분 이력) 저장</h3>
-            <p class="text-[10px] text-slate-500 mt-0.5">지정 단어 감지 전후 5분 동안의 대화 맥락 보관</p>
+            <p class="text-xs text-slate-500 mt-0.5">지정 단어 감지 전후 5분 동안의 대화 맥락 보관</p>
           </div>
           <label class="switch">
             <input type="checkbox" id="history-save-toggle" onchange="toggleHistorySaveEnabled(this.checked)">
@@ -259,7 +259,7 @@
           </button>
         </div>
         <div class="space-y-2 mt-2">
-          <div class="flex justify-between items-center text-[10px] font-bold text-slate-500">
+          <div class="flex justify-between items-center text-xs font-bold text-slate-500">
             <span>알림음 볼륨</span>
             <span id="volume-val" class="text-indigo-400">70%</span>
           </div>
@@ -273,7 +273,7 @@
           <label class="section-label flex items-center gap-1.5 !mb-0">
             <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i> 감지 히스토리 (최근 24시간)
           </label>
-          <button onclick="clearHistory()" class="no-drag text-[10px] font-bold text-rose-400/80 hover:text-rose-400 transition-colors flex items-center gap-1 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1.5 rounded-xl border border-rose-500/10">
+          <button onclick="clearHistory()" class="no-drag text-xs font-bold text-rose-400/80 hover:text-rose-400 transition-colors flex items-center gap-1 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1.5 rounded-xl border border-rose-500/10">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 모두 비우기
           </button>
         </div>
@@ -298,6 +298,7 @@
     let wordAlarmHistoryEnabled = true;
     let wordAlarmSound = '';
     let wordAlarmVolume = 70;
+    let alarmHistoryMap = {}; // alarmId -> historyItem 매핑 맵
 
     async function init() {
       window.bindEscapeClose();
@@ -459,6 +460,7 @@
         const history = await window.electronAPI.getWordAlarmHistory(24);
         const list = document.getElementById('history-list');
         list.innerHTML = '';
+        alarmHistoryMap = {};
 
         if (history.length === 0) {
           list.innerHTML = '<div class="p-8 text-center text-slate-600 text-xs font-bold bg-white/5 rounded-2xl border border-white/5">알림 감지 이력이 없습니다.</div>';
@@ -466,6 +468,7 @@
         }
 
         history.forEach(item => {
+          alarmHistoryMap[item.id] = item;
           const div = document.createElement('div');
           div.className = 'history-item';
           
@@ -492,7 +495,7 @@
             </div>
             <div id="context-${item.id}" class="${contextClass}">
               <div class="py-2" id="context-content-${item.id}">
-                <div class="text-center py-4 text-[10px] text-slate-500">대화 불러오는 중...</div>
+                <div class="text-center py-4 text-xs text-slate-500">대화 불러오는 중...</div>
               </div>
             </div>
           `;
@@ -525,9 +528,12 @@
         contentDiv.innerHTML = '';
 
         if (context.length === 0) {
-          contentDiv.innerHTML = '<div class="text-center py-4 text-[10px] text-slate-500">저장된 대화 맥락이 없습니다.</div>';
+          contentDiv.innerHTML = '<div class="text-center py-4 text-xs text-slate-500">저장된 대화 맥락이 없습니다.</div>';
           return;
         }
+
+        const alarmItem = alarmHistoryMap[alarmId];
+        let highlightedEl = null;
 
         context.forEach(ctx => {
           const time = new Date(ctx.timestamp * 1000).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -537,6 +543,13 @@
           // 색상 구분 (클럽대화는 #94ddfa, 일반대화는 #ffffff 계열)
           const colorClass = ctx.color === '#94ddfa' ? 'text-cyan-400' : 'text-slate-200';
           
+          // 감지된 로그인지 확인 (보낸이와 메시지가 같으면 하이라이트)
+          const isTriggerLine = alarmItem && ctx.sender === alarmItem.sender && ctx.message === alarmItem.message;
+          if (isTriggerLine) {
+            line.classList.add('bg-indigo-500/20', 'border-y', 'border-indigo-500/30');
+            highlightedEl = line;
+          }
+
           line.innerHTML = `
             <span class="context-time">${time}</span>
             <span class="context-sender ${colorClass}">${ctx.sender} :</span>
@@ -545,8 +558,14 @@
           contentDiv.appendChild(line);
         });
 
-        // 자동 스크롤 하단으로 (마지막 대화가 감지된 키워드 위치이므로)
-        contextDiv.scrollTop = contextDiv.scrollHeight;
+        // 감지된 로그로 스크롤 포커싱
+        if (highlightedEl) {
+          setTimeout(() => {
+            contextDiv.scrollTop = highlightedEl.offsetTop - contextDiv.offsetTop - 40;
+          }, 100);
+        } else {
+          contextDiv.scrollTop = contextDiv.scrollHeight;
+        }
       } catch (e) {
         console.error('Failed to load chat context:', e);
       }
@@ -609,7 +628,7 @@
           <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
         </div>
         <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-[10px] shrink-0">
+          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
           설정으로 이동
         </button>
       `;

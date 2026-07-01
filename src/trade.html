@@ -81,7 +81,7 @@
     <!-- Loading Overlay -->
     <div id="trade-loading" class="loading-overlay">
         <div class="spinner"></div>
-        <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Refreshing...</span>
+        <span class="text-xs font-black text-emerald-400 uppercase tracking-widest">Refreshing...</span>
     </div>
 
     <!-- Header -->
@@ -125,18 +125,18 @@
                 <div class="flex flex-col">
                     <span id="guide-title" class="text-[11px] font-black tracking-tight">키워드를 등록해야 모니터링이 시작됩니다</span>
                     <span id="guide-subtext"
-                        class="text-[10px] font-bold empty:hidden mt-0.5 opacity-80 break-words line-clamp-2"></span>
+                        class="text-xs font-bold empty:hidden mt-0.5 opacity-80 break-words line-clamp-2"></span>
                 </div>
             </div>
             <button id="guide-btn" onclick="window.electronAPI.toggleSettings('trade')"
-                class="shrink-0 ml-2 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg font-black transition-colors">설정
+                class="shrink-0 ml-2 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg font-black transition-colors">설정
                 열기</button>
         </div>
 
         <div class="flex-1 custom-scroll overflow-y-auto space-y-6 pr-1">
             <div>
                 <div class="px-1 mb-3">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <i data-lucide="list" class="w-3 h-3"></i> 최근 매칭된 게시글
                     </h3>
                 </div>
@@ -171,7 +171,7 @@
             const list = document.getElementById('post-list');
             list.innerHTML = '';
             if (!posts || posts.length === 0) {
-                list.innerHTML = '<div class="text-[10px] text-slate-700 text-center py-10 font-bold uppercase tracking-widest opacity-50">게시글이 없습니다.</div>';
+                list.innerHTML = '<div class="text-xs text-slate-700 text-center py-10 font-bold uppercase tracking-widest opacity-50">게시글이 없습니다.</div>';
                 return;
             }
 
@@ -179,13 +179,13 @@
                 const div = document.createElement('div');
                 div.className = 'post-item group border border-white/5 bg-black/20';
 
-                let dateHtml = `<div class="text-[10px] text-slate-500 w-12 text-right">${p.date}</div>`;
+                let dateHtml = `<div class="text-xs text-slate-500 w-12 text-right">${p.date}</div>`;
 
                 div.innerHTML = `
             <div class="flex-1 overflow-hidden">
                 <div class="truncate text-xs text-emerald-400 group-hover:text-emerald-300 transition-colors font-bold mb-1">${p.title}</div>
                 <div class="flex items-center gap-2">
-                    <div class="text-[10px] text-slate-500 font-medium">${p.writer}</div>
+                    <div class="text-xs text-slate-500 font-medium">${p.writer}</div>
                     <div class="text-[9px] text-slate-700">#${p.no}</div>
                 </div>
             </div>

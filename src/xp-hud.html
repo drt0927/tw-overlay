@@ -13,13 +13,13 @@
       --bg: #0f0e1a;
       --surface: #17152b;
       --surface2: #1f1c38;
-      --border: rgba(52, 211, 153, 0.12);
-      --accent: #34d399;
-      --accent-hover: #6ee7b7;
-      --accent-dim: rgba(52, 211, 153, 0.12);
-      --accent-glow: rgba(52, 211, 153, 0.2);
-      --text: #ecfdf5;
-      --text-muted: #6ee7b7;
+      --border: rgba(96, 165, 250, 0.12);
+      --accent: #60a5fa;
+      --accent-hover: #93c5fd;
+      --accent-dim: rgba(96, 165, 250, 0.12);
+      --accent-glow: rgba(96, 165, 250, 0.2);
+      --text: #eff6ff;
+      --text-muted: #93c5fd;
       --danger: #f87171;
     }
 
@@ -42,8 +42,8 @@
     }
 
     .stat-card:hover {
-      border-color: rgba(52, 211, 153, 0.3);
-      box-shadow: 0 0 12px rgba(52, 211, 153, 0.08);
+      border-color: rgba(96, 165, 250, 0.3);
+      box-shadow: 0 0 12px rgba(96, 165, 250, 0.08);
     }
 
     .stat-label {
@@ -124,7 +124,7 @@
     .section-label {
       font-size: 10px;
       font-weight: 700;
-      color: #34d399;
+      color: #60a5fa;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       opacity: 0.8;
@@ -273,8 +273,8 @@
   <!-- 헤더 -->
   <div class="win-header">
     <div class="win-title-area">
-      <div class="win-icon-box bg-emerald-500/10 border-emerald-500/20">
-        <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i>
+      <div class="win-icon-box bg-blue-500/10 border-blue-500/20">
+        <i data-lucide="activity" class="w-5 h-5 text-blue-400"></i>
       </div>
       <div class="win-title-text">
         <span class="win-title-main">경험치 HUD</span>
@@ -300,7 +300,7 @@
       <!-- 총 경험치 (가장 크게) -->
       <div class="stat-card">
         <div class="stat-label">총 획득 경험치</div>
-        <div class="stat-value text-emerald-300" id="stat-total">0</div>
+        <div class="stat-value text-blue-300" id="stat-total">0</div>
       </div>
 
       <!-- EPM 및 실시간 페이스 (2단) -->
@@ -309,9 +309,9 @@
           <div class="stat-label">분당 평균 (EPM)</div>
           <div class="stat-value !text-[17px]" id="stat-epm">0</div>
         </div>
-        <div class="stat-card border-emerald-500/30">
-          <div class="stat-label text-emerald-400">실시간 페이스 (5m)</div>
-          <div class="stat-value !text-[17px] text-emerald-400" id="stat-moving-epm">0</div>
+        <div class="stat-card border-blue-500/30">
+          <div class="stat-label text-blue-400">실시간 페이스 (5m)</div>
+          <div class="stat-value !text-[17px] text-blue-400" id="stat-moving-epm">0</div>
         </div>
       </div>
 
@@ -342,7 +342,7 @@
       <div class="stat-grid-sub">
         <div class="stat-card">
           <div class="stat-label">잡은 몬스터</div>
-          <div class="stat-value !text-[17px] text-emerald-300" id="stat-kills">0마리</div>
+          <div class="stat-value !text-[17px] text-blue-300" id="stat-kills">0마리</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">마리당 평균 경험치</div>
@@ -566,8 +566,8 @@
     function initChart() {
       const ctx = document.getElementById('xpChart').getContext('2d');
       const gradient = ctx.createLinearGradient(0, 0, 0, 140);
-      gradient.addColorStop(0, 'rgba(52, 211, 153, 0.3)');
-      gradient.addColorStop(1, 'rgba(52, 211, 153, 0)');
+      gradient.addColorStop(0, 'rgba(96, 165, 250, 0.3)');
+      gradient.addColorStop(1, 'rgba(96, 165, 250, 0)');
 
       xpChart = new Chart(ctx, {
         type: 'line',
@@ -576,7 +576,7 @@
           datasets: [{
             label: '분당 경험치',
             data: Array(30).fill(0),
-            borderColor: '#34d399',
+            borderColor: '#60a5fa',
             borderWidth: 2,
             pointRadius: 0,
             fill: true,
@@ -594,7 +594,7 @@
               beginAtZero: true,
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
               ticks: {
-                color: '#6ee7b7',
+                color: '#93c5fd',
                 font: { size: 9 },
                 callback: (val) => val >= 100000000 ? (val / 100000000).toFixed(1) + '억' : (val / 10000).toFixed(0) + '만'
               }
@@ -863,7 +863,7 @@
           <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
         </div>
         <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-[10px] shrink-0">
+          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
           설정으로 이동
         </button>
       `;

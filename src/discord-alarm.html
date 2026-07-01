@@ -49,7 +49,7 @@
     }
 
     .rule-card:hover {
-      border-color: rgba(99, 102, 241, 0.2);
+      border-color: rgba(34, 211, 238, 0.2);
       background: rgba(255, 255, 255, 0.02);
     }
 
@@ -90,19 +90,19 @@
     }
 
     input:checked + .slider {
-      background-color: rgba(99, 102, 241, 0.2);
-      border-color: rgba(99, 102, 241, 0.4);
+      background-color: rgba(34, 211, 238, 0.2);
+      border-color: rgba(34, 211, 238, 0.4);
     }
 
     input:checked + .slider:before {
       transform: translateX(20px);
-      background-color: #818cf8;
+      background-color: #22d3ee;
     }
 
     /* 가이드 배너 */
     .guide-banner {
-      background: rgba(99, 102, 241, 0.05);
-      border: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(34, 211, 238, 0.05);
+      border: 1px solid rgba(34, 211, 238, 0.15);
       border-radius: 16px;
       padding: 16px;
       display: flex;
@@ -116,8 +116,8 @@
     <!-- 헤더 -->
     <div class="header-section win-header !bg-transparent !border-none flex justify-between items-center">
       <div class="win-title-area">
-        <div class="win-icon-box bg-indigo-500/10 border-indigo-500/20">
-          <i data-lucide="send" class="w-5 h-5 text-indigo-400"></i>
+        <div class="win-icon-box bg-cyan-500/10 border-cyan-500/20">
+          <i data-lucide="send" class="w-5 h-5 text-cyan-400"></i>
         </div>
         <div class="win-title-text">
           <span class="win-title-main">디스코드 알림 설정</span>
@@ -134,10 +134,10 @@
       <!-- 가이드 배너 -->
       <div class="guide-banner">
         <div class="flex gap-2 items-start">
-          <i data-lucide="help-circle" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
+          <i data-lucide="help-circle" class="w-4 h-4 text-cyan-400 shrink-0 mt-0.5"></i>
           <div>
             <h4 class="text-xs font-bold text-slate-300">디스코드 웹훅 알림 가이드</h4>
-            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
               등록된 단어와 발송 필터 조건에 부합하는 채팅 감지 시 복사한 웹훅 URL을 통해 실시간 알림 카드를 전달합니다.
             </p>
           </div>
@@ -149,7 +149,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h3 class="text-sm font-bold text-slate-200">디스코드 알림 사용</h3>
-            <p class="text-[10px] text-slate-500 mt-0.5">지정 단어 감지 시 디스코드 웹훅 메시지 발송</p>
+            <p class="text-xs text-slate-500 mt-0.5">지정 단어 감지 시 디스코드 웹훅 메시지 발송</p>
           </div>
           <label class="switch">
             <input type="checkbox" id="alarm-toggle" onchange="toggleAlarmEnabled(this.checked)">
@@ -161,7 +161,7 @@
       <!-- 2. 웹훅 URL 설정 카드 -->
       <div class="setting-card">
         <label class="section-label flex items-center gap-1.5 mb-1">
-          <i data-lucide="link" class="w-4 h-4 text-indigo-400"></i> 디스코드 Webhook URL
+          <i data-lucide="link" class="w-4 h-4 text-cyan-400"></i> 디스코드 Webhook URL
         </label>
         <div class="flex gap-2">
           <input type="text" id="webhook-url-input" class="input-field flex-1 py-2 px-3 bg-black/40 text-xs text-slate-300"
@@ -175,38 +175,38 @@
       <!-- 3. 키워드 및 세부 조건 등록 카드 -->
       <div class="setting-card">
         <label class="section-label flex items-center gap-1.5 mb-1">
-          <i data-lucide="tag" class="w-4 h-4 text-indigo-400"></i> 디스코드 발송용 지정 단어 등록
+          <i data-lucide="tag" class="w-4 h-4 text-cyan-400"></i> 디스코드 발송용 지정 단어 등록
         </label>
         
         <!-- 한 묶음 폼 영역 -->
         <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4 text-slate-400">
           <div class="space-y-1.5">
-            <span class="text-[10px] font-bold text-slate-500 block">1) 감지 대상 선택 (다중 선택 가능)</span>
+            <span class="text-xs font-bold text-slate-500 block">1) 감지 대상 선택 (다중 선택 가능)</span>
             <div class="flex gap-4">
               <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold">
-                <input type="checkbox" id="target-normal-check" checked class="w-4 h-4 accent-indigo-600"> 일반 대화 (나 포함)
+                <input type="checkbox" id="target-normal-check" checked class="w-4 h-4 accent-cyan-600"> 일반 대화 (나 포함)
               </label>
               <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold">
-                <input type="checkbox" id="target-club-check" checked class="w-4 h-4 accent-indigo-600"> 클럽 대화
+                <input type="checkbox" id="target-club-check" checked class="w-4 h-4 accent-cyan-600"> 클럽 대화
               </label>
               <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold">
-                <input type="checkbox" id="target-shout-check" checked class="w-4 h-4 accent-indigo-600"> 외치기 대화
+                <input type="checkbox" id="target-shout-check" checked class="w-4 h-4 accent-cyan-600"> 외치기 대화
               </label>
             </div>
           </div>
           
           <div class="space-y-1.5">
-            <span class="text-[10px] font-bold text-slate-500 block">2) 특정 보낸 사람 필터 (선택)</span>
+            <span class="text-xs font-bold text-slate-500 block">2) 특정 보낸 사람 필터 (선택)</span>
             <input type="text" id="target-sender-input" class="input-field w-full py-1.5 px-3 bg-black/40 text-xs" 
               placeholder="비워두면 모든 닉네임의 채팅을 감지">
           </div>
 
           <div class="space-y-1.5 pt-1">
-            <span class="text-[10px] font-bold text-slate-500 block">3) 감지 단어 입력 및 등록</span>
+            <span class="text-xs font-bold text-slate-500 block">3) 감지 단어 입력 및 등록</span>
             <div class="flex gap-2">
               <input type="text" id="keyword-input" class="input-field flex-1 py-2 px-3 bg-black/40"
                 placeholder="예: 단어 입력 후 엔터..." onkeypress="if(event.key==='Enter')addRule()">
-              <button onclick="addRule()" class="btn-primary !bg-indigo-600 hover:!bg-indigo-500 px-4 font-bold text-xs shrink-0">추가</button>
+              <button onclick="addRule()" class="btn-primary !bg-cyan-600 hover:!bg-cyan-500 px-4 font-bold text-xs shrink-0">추가</button>
             </div>
           </div>
         </div>
@@ -292,7 +292,7 @@
 
         card.innerHTML = `
           <div class="flex justify-between items-start">
-            <span class="font-black text-indigo-400 text-xs">${rule.keyword}</span>
+            <span class="font-black text-cyan-400 text-xs">${rule.keyword}</span>
             <button onclick="removeRule(${i})" class="text-slate-500 hover:text-rose-400 transition-colors">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
@@ -428,7 +428,7 @@
           <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
         </div>
         <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-[10px] shrink-0">
+          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
           설정으로 이동
         </button>
       `;

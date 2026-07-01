@@ -19,6 +19,10 @@ export function load(): AppConfig {
       const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Partial<AppConfig>;
 
       let migrated = false;
+      if (parsed.galleryNotify === undefined) {
+        parsed.galleryNotify = true;
+        migrated = true;
+      }
       if (parsed.opacity !== undefined && parsed.opacity < 0.2) {
         parsed.opacity = 0.2;
         migrated = true;

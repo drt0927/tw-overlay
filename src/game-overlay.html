@@ -1291,7 +1291,7 @@
   <div id="abandoned-widget" class="abandoned-widget hidden">
     <div class="flex items-center gap-1.5 mb-1">
       <i data-lucide="gem" class="w-3 h-3 text-amber-400"></i>
-      <span class="text-[10px] font-black text-amber-400 uppercase tracking-tighter">어벤던로드</span>
+      <span class="text-xs font-black text-amber-400 uppercase tracking-tighter">어벤던로드</span>
     </div>
     <div id="abandoned-regions" class="flex flex-col gap-0.5">
       <!-- 지역별 횟수 동적 추가 -->
@@ -1709,8 +1709,8 @@
           item.className = 'region-item';
           const isMax = count >= 10;
           item.innerHTML = `
-            <span class="text-[10px] font-bold ${isMax ? 'text-amber-400' : 'text-slate-300'}">${region}</span>
-            <span class="text-[10px] font-black ${isMax ? 'text-amber-400' : 'text-white'}">${count}/10</span>
+            <span class="text-xs font-bold ${isMax ? 'text-amber-400' : 'text-slate-300'}">${region}</span>
+            <span class="text-xs font-black ${isMax ? 'text-amber-400' : 'text-white'}">${count}/10</span>
           `;
           regionContainer.appendChild(item);
         });
@@ -2565,7 +2565,7 @@
 
       if (isRealBoss && validSpawnTime) {
         displayName = `[${validSpawnTime}] ${bossName}`;
-        if (offset > 0) displayName += ` <span class="text-[10px] text-slate-500 font-medium ml-1">${offset}분 전</span>`;
+        if (offset > 0) displayName += ` <span class="text-xs text-slate-500 font-medium ml-1">${offset}분 전</span>`;
       }
 
       toast.innerHTML = `
@@ -2622,11 +2622,11 @@
             <i data-lucide="shield-alert" class="w-4 h-4 ${colorClass} mt-0.5 shrink-0"></i>
             <div class="flex-1">
               <div class="boss-toast-name leading-snug font-bold ${colorClass}">${title}</div>
-              ${reason ? `<div class="text-[10px] text-slate-400 mt-1 leading-snug line-clamp-2">${reason}</div>` : ''}
+              ${reason ? `<div class="text-xs text-slate-400 mt-1 leading-snug line-clamp-2">${reason}</div>` : ''}
             </div>
           </div>
         </div>
-        <div class="mt-2 text-[10px] text-slate-500 italic border-t border-slate-700/50 pt-2">
+        <div class="mt-2 text-xs text-slate-500 italic border-t border-slate-700/50 pt-2">
           ※ AI 판정은 참고용. 100% 안전 보장 불가. 에타 레벨·교환창 아이템을 직접 확인하세요.
         </div>
       `;

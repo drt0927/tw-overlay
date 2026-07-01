@@ -275,6 +275,7 @@ body {
   left: 0;
   right: auto;
   top: 0;
+  overflow: hidden;
 }
 
 /* 왼쪽 배치 시 레이아웃 반전: 본체를 윈도우의 오른쪽 끝에 고정 */
@@ -691,3 +692,12 @@ body[data-sidebar-pos="left"] .boss-toast.show {
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+/* --- [MINIMUM FONT SIZE ENFORCEMENT] --- */
+/* 디자인 토큰 규정에 따라 12px(0.75rem) 미만으로 하드코딩된 모든 클래스/스타일의 폰트 크기를 최소 12px로 보장합니다. */
+.text-\[8px\],
+.text-\[9px\],
+.text-\[10px\],
+.text-\[11px\] {
+  font-size: 12px !important;
+}

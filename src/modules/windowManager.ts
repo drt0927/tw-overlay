@@ -82,9 +82,10 @@ function bringGameAndOverlaysToTop(): void {
   const focusedHwnd = focusedWin.getNativeWindowHandle().readBigUInt64LE().toString();
   tracker.placeGameBelowWindow(focusedHwnd);
   // 나머지 오버레이도 게임 위로 재배치
+  // force=true: placeGameBelowWindow로 게임이 이동한 후 game-overlay가 게임 뒤로 밀리는 것을 방지
   const hwnds = getAllWindowHwnds();
   if (hwnds.length > 0) {
-    tracker.promoteWindows(gameHwndStr, hwnds);
+    tracker.promoteWindows(gameHwndStr, hwnds, true);
   }
 }
 
@@ -1037,7 +1038,7 @@ export function toggleContentsCheckerWindow(): boolean {
 
 
 export function getAllWindowHwnds(): string[] {
-  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible());
+  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible() && win !== gameOverlayWindow);
 
   // 사이드바(mainWindow)와 독바(dock)를 항상 Z-Order 최하단에 배치
   const dockWin = windowRegistry.dock?.ref;
@@ -1052,6 +1053,12 @@ export function getAllWindowHwnds(): string[] {
     }
     return 0;
   });
+
+  // gameOverlayWindow를 배열 마지막에 추가 → promoteWindows 루프에서 게임 창 바로 위에 배치됨
+  // (루프가 뒤에서 앞으로 순회하므로 마지막 = 가장 먼저 배치 = 게임 창 바로 위 Z-Order)
+  if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && gameOverlayWindow.isVisible()) {
+    windows.push(gameOverlayWindow);
+  }
 
   const results: string[] = [];
   for (const win of windows) {

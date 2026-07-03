@@ -35,8 +35,8 @@ const categories = [
 ];
 
 const statNames: Record<string, string[]> = {
-  stab: ['STAB', 'HACK'], hack: ['HACK', 'STAB'], phycomp: ['STAB', 'HACK'],
-  magatk: ['INT', 'MR'], maghack: ['HACK', 'INT'], magdef: ['MR', 'INT']
+  stab: ['찌르기', '베기'], hack: ['베기', '찌르기'], phycomp: ['찌르기', '베기'],
+  magatk: ['마공', '마방'], maghack: ['베기', '마공'], magdef: ['마방', '마공']
 };
 
 const STANDARD_BUFFS = ['util_snowman', 'dmg_potion_plus', 'stat_trust_plus', 'stat_izabel_fixed', 'stat_izabel_ratio', 'dmg_izabel', 'dmg_club_p', 'util_ampoule', 'util_haste'];
@@ -296,51 +296,25 @@ function calculate() {
     let gMain = 0, gSub = 0, gHit = 0, uMain = 0, uSub = 0;
     categories.forEach(cat => {
       const s = document.getElementById(`gear-${cat.id}`) as HTMLSelectElement;
-      const pmEl = document.getElementById(`preview-${cat.id}-main`);
-      const psEl = document.getElementById(`preview-${cat.id}-sub`);
-      const pdEl = document.getElementById(`preview-${cat.id}-dex`);
       const rcEl = document.getElementById(`row-coeff-${cat.id}`);
-      
+
       if (s && s.value) {
-        let item: any = null;
-        try {
-          item = JSON.parse(s.value);
-        } catch (e) {
-          console.error('Failed to parse gear select value in calculate', e);
-        }
-        if (item) {
-          const abilS = getV(`abil-${cat.id}-stat`), abilH = getV(`abil-${cat.id}-hit`);
-          const iH = item.hit || 0;
-          gHit += iH + abilH;
-          let iM = 0, iS = 0;
-          if (['stab', 'phycomp'].includes(currentType)) { iM = item.stab || 0; iS = item.hack || 0; }
-          else if (currentType === 'hack')   { iM = item.hack || 0;    iS = item.stab || 0; }
-          else if (currentType === 'magatk') { iM = item.mag_atk || 0; iS = item.mag_def || 0; }
-          else if (currentType === 'maghack'){ iM = item.hack || 0;    iS = item.mag_atk || 0; }
-          else if (currentType === 'magdef') { iM = item.mag_def || 0; iS = item.mag_atk || 0; }
-          
-          gMain += iM + abilS; gSub += iS;
-          const upgM = getV(`upg-${cat.id}-main`); uMain += upgM;
-          const upgS = getV(`upg-${cat.id}-sub`);  uSub  += upgS;
-          
-          if (pmEl) { pmEl.textContent = iM > 0 ? String(iM) : '—'; pmEl.className = iM > 0 ? 'av has' : 'av'; }
-          if (psEl) { psEl.textContent = iS > 0 ? String(iS) : '—'; psEl.className = iS > 0 ? 'av has' : 'av'; }
-          if (pdEl) { pdEl.textContent = iH > 0 ? String(iH) : '—'; pdEl.className = iH > 0 ? 'av has' : 'av'; }
-          if (rcEl) { 
-            const rc = rowCoeff(iM + abilS, upgM, iS, upgS); 
-            rcEl.textContent = fmtC(rc); 
-            rcEl.className = rc > 0 ? 'cc lit' : 'cc'; 
-          }
-        } else {
-          if (pmEl) { pmEl.textContent = '—'; pmEl.className = 'av'; }
-          if (psEl) { psEl.textContent = '—'; psEl.className = 'av'; }
-          if (pdEl) { pdEl.textContent = '—'; pdEl.className = 'av'; }
-          if (rcEl) { rcEl.textContent = '—'; rcEl.className = 'cc'; }
+        const abilS = getV(`abil-${cat.id}-stat`), abilH = getV(`abil-${cat.id}-hit`);
+        const iM = getV(`preview-${cat.id}-main`);
+        const iS = getV(`preview-${cat.id}-sub`);
+        const iH = getV(`preview-${cat.id}-dex`);
+
+        gHit += iH + abilH;
+        gMain += iM + abilS; gSub += iS;
+        const upgM = getV(`upg-${cat.id}-main`); uMain += upgM;
+        const upgS = getV(`upg-${cat.id}-sub`);  uSub  += upgS;
+
+        if (rcEl) {
+          const rc = rowCoeff(iM + abilS, upgM, iS, upgS);
+          rcEl.textContent = fmtC(rc);
+          rcEl.className = rc > 0 ? 'cc lit' : 'cc';
         }
       } else {
-        if (pmEl) { pmEl.textContent = '—'; pmEl.className = 'av'; }
-        if (psEl) { psEl.textContent = '—'; psEl.className = 'av'; }
-        if (pdEl) { pdEl.textContent = '—'; pdEl.className = 'av'; }
         if (rcEl) { rcEl.textContent = '—'; rcEl.className = 'cc'; }
       }
     });
@@ -610,12 +584,17 @@ function captureCurrentData() {
   d.bonuses.coreEclipse = (document.getElementById('bonus-core-eclipse') as HTMLInputElement)?.value;
   d.bonuses.coreRubicona = (document.getElementById('bonus-core-rubicona') as HTMLInputElement)?.value;
   
-  categories.forEach(cat => { 
-    d.gears[cat.id] = (document.getElementById(`gear-${cat.id}`) as HTMLSelectElement)?.value; 
-    d.upgradesMain[cat.id] = (document.getElementById(`upg-${cat.id}-main`) as HTMLInputElement)?.value; 
-    d.upgradesSub[cat.id] = (document.getElementById(`upg-${cat.id}-sub`) as HTMLInputElement)?.value; 
-    d.abilsStat[cat.id] = (document.getElementById(`abil-${cat.id}-stat`) as HTMLInputElement)?.value; 
-    d.abilsHit[cat.id] = (document.getElementById(`abil-${cat.id}-hit`) as HTMLInputElement)?.value; 
+  const d2 = d as any;
+  d2.basesMain = {}; d2.basesSub = {}; d2.basesDex = {};
+  categories.forEach(cat => {
+    d.gears[cat.id] = (document.getElementById(`gear-${cat.id}`) as HTMLSelectElement)?.value;
+    d.upgradesMain[cat.id] = (document.getElementById(`upg-${cat.id}-main`) as HTMLInputElement)?.value;
+    d.upgradesSub[cat.id] = (document.getElementById(`upg-${cat.id}-sub`) as HTMLInputElement)?.value;
+    d.abilsStat[cat.id] = (document.getElementById(`abil-${cat.id}-stat`) as HTMLInputElement)?.value;
+    d.abilsHit[cat.id] = (document.getElementById(`abil-${cat.id}-hit`) as HTMLInputElement)?.value;
+    d2.basesMain[cat.id] = (document.getElementById(`preview-${cat.id}-main`) as HTMLInputElement)?.value;
+    d2.basesSub[cat.id] = (document.getElementById(`preview-${cat.id}-sub`) as HTMLInputElement)?.value;
+    d2.basesDex[cat.id] = (document.getElementById(`preview-${cat.id}-dex`) as HTMLInputElement)?.value;
   });
   
   return d;
@@ -697,6 +676,10 @@ function loadProfileData(id: string) {
       setInp(`upg-${cat.id}-sub`, d.upgradesSub ? d.upgradesSub[cat.id] : '');
       setInp(`abil-${cat.id}-stat`, d.abilsStat ? d.abilsStat[cat.id] : '');
       setInp(`abil-${cat.id}-hit`, d.abilsHit ? d.abilsHit[cat.id] : '');
+      const dd = d as any;
+      if (dd.basesMain?.[cat.id]) setInp(`preview-${cat.id}-main`, dd.basesMain[cat.id]);
+      if (dd.basesSub?.[cat.id]) setInp(`preview-${cat.id}-sub`, dd.basesSub[cat.id]);
+      if (dd.basesDex?.[cat.id]) setInp(`preview-${cat.id}-dex`, dd.basesDex[cat.id]);
     });
     
     if (d.buffPreset) {
@@ -734,6 +717,28 @@ function updateLabels() {
     const am = document.getElementById(`abil-${cat.id}-stat`) as HTMLInputElement;
     if (um) um.placeholder = m; if (us) us.placeholder = s; if (am) am.placeholder = m;
   });
+  // Refresh gear preview inputs for the new mode
+  categories.forEach(cat => {
+    const s = document.getElementById(`gear-${cat.id}`) as HTMLSelectElement;
+    if (!s || !s.value) return;
+    let item: any = null;
+    try { item = JSON.parse(s.value); } catch(e) {}
+    if (!item) return;
+    let iM = 0, iS = 0;
+    if (['stab', 'phycomp'].includes(currentType)) { iM = item.stab || 0; iS = item.hack || 0; }
+    else if (currentType === 'hack')   { iM = item.hack || 0;    iS = item.stab || 0; }
+    else if (currentType === 'magatk') { iM = item.mag_atk || 0; iS = item.mag_def || 0; }
+    else if (currentType === 'maghack'){ iM = item.hack || 0;    iS = item.mag_atk || 0; }
+    else if (currentType === 'magdef') { iM = item.mag_def || 0; iS = item.mag_atk || 0; }
+    const iH = item.hit || 0;
+    const pmEl = document.getElementById(`preview-${cat.id}-main`) as HTMLInputElement;
+    const psEl = document.getElementById(`preview-${cat.id}-sub`) as HTMLInputElement;
+    const pdEl = document.getElementById(`preview-${cat.id}-dex`) as HTMLInputElement;
+    if (pmEl) pmEl.value = iM > 0 ? String(iM) : '';
+    if (psEl) psEl.value = iS > 0 ? String(iS) : '';
+    if (pdEl) pdEl.value = iH > 0 ? String(iH) : '';
+  });
+
   // Series badge
   const sn = document.getElementById('current-series-name');
   const ab = document.querySelector(`.tab-btn[data-type="${currentType}"]`);
@@ -803,9 +808,9 @@ function renderEquipmentOptions() {
           </div>
         </div>
       </td>
-      <td><span id="preview-${cat.id}-main" class="av">—</span></td>
-      <td><span id="preview-${cat.id}-sub"  class="av">—</span></td>
-      <td><span id="preview-${cat.id}-dex"  class="av">—</span></td>
+      <td class="px-1"><input type="number" id="preview-${cat.id}-main" class="ci bas" placeholder="0"></td>
+      <td class="px-1"><input type="number" id="preview-${cat.id}-sub"  class="ci bas" placeholder="0"></td>
+      <td class="px-1"><input type="number" id="preview-${cat.id}-dex"  class="ci dex" placeholder="0"></td>
       <td class="px-1"><input type="number" id="upg-${cat.id}-main"  class="ci upg"  placeholder="0"></td>
       <td class="px-1"><input type="number" id="upg-${cat.id}-sub"   class="ci upg"  placeholder="0"></td>
       <td class="px-1"><input type="number" id="abil-${cat.id}-stat" class="ci abil" placeholder="0"></td>
@@ -816,8 +821,40 @@ function renderEquipmentOptions() {
   });
 
   initCustomDropdowns();
+  initGearPreviewFill();
 }
 
+function initGearPreviewFill() {
+  categories.forEach(cat => {
+    const selectEl = document.getElementById(`gear-${cat.id}`) as HTMLSelectElement;
+    if (!selectEl) return;
+    selectEl.addEventListener('change', () => {
+      const val = selectEl.value;
+      const pmEl = document.getElementById(`preview-${cat.id}-main`) as HTMLInputElement;
+      const psEl = document.getElementById(`preview-${cat.id}-sub`) as HTMLInputElement;
+      const pdEl = document.getElementById(`preview-${cat.id}-dex`) as HTMLInputElement;
+      if (!val) {
+        if (pmEl) pmEl.value = '';
+        if (psEl) psEl.value = '';
+        if (pdEl) pdEl.value = '';
+        return;
+      }
+      let item: any = null;
+      try { item = JSON.parse(val); } catch(e) {}
+      if (!item) return;
+      let iM = 0, iS = 0;
+      if (['stab', 'phycomp'].includes(currentType)) { iM = item.stab || 0; iS = item.hack || 0; }
+      else if (currentType === 'hack')   { iM = item.hack || 0;    iS = item.stab || 0; }
+      else if (currentType === 'magatk') { iM = item.mag_atk || 0; iS = item.mag_def || 0; }
+      else if (currentType === 'maghack'){ iM = item.hack || 0;    iS = item.mag_atk || 0; }
+      else if (currentType === 'magdef') { iM = item.mag_def || 0; iS = item.mag_atk || 0; }
+      const iH = item.hit || 0;
+      if (pmEl) pmEl.value = iM > 0 ? String(iM) : '';
+      if (psEl) psEl.value = iS > 0 ? String(iS) : '';
+      if (pdEl) pdEl.value = iH > 0 ? String(iH) : '';
+    });
+  });
+}
 
 function applyEquipmentFromDic(item: any) {
   let partId = '';

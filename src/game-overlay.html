@@ -2552,7 +2552,7 @@
     const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
 
     function createDockToast(bossName, isCustomFromApi, spawnTime, offset) {
-      if (!currentConfig || currentConfig.sidebarPosition !== 'dock') return;
+      if (!currentConfig || (currentConfig.sidebarPosition !== 'dock' && currentConfig.sidebarPosition !== 'dock-top')) return;
 
       const toastContainer = document.getElementById('dock-toast-container');
       if (!toastContainer) return;
@@ -2606,7 +2606,7 @@
     }
 
     function createDockScamToast(result) {
-      if (!currentConfig || currentConfig.sidebarPosition !== 'dock') return;
+      if (!currentConfig || (currentConfig.sidebarPosition !== 'dock' && currentConfig.sidebarPosition !== 'dock-top')) return;
 
       const toastContainer = document.getElementById('dock-toast-container');
       if (!toastContainer) return;

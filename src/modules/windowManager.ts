@@ -606,6 +606,9 @@ function createToggleableWindow(key: string, callbacks?: {
     win.setResizable(true);
   }
   winCfg.ref = win;
+  // 창 생성 시 Windows가 기본 위치에 배치하면서 move 이벤트가 발생하므로,
+  // ready-to-show에서 올바른 위치를 설정하기 전까지 위치 저장을 차단
+  setProgrammaticMove(key);
   attachStackListeners(win);
   win.loadFile(path.join(__dirname, '..', winCfg.html));
   win.on('close', () => {
@@ -655,8 +658,12 @@ function createToggleableWindow(key: string, callbacks?: {
         }
       }
 
+      setProgrammaticMove(key);
       win.setPosition(x, y);
     } else {
+      if (key === 'chatOverlay' || key === 'chatOverlaySub' || key === 'chatOverlaySub2') {
+        log(`[CHAT_OVERLAY_POS] ready-to-show key=${key} gameRect=null => win.center()`);
+      }
       win.center();
     }
     win.webContents.send('config-data', config.load());

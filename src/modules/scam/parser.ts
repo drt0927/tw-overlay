@@ -162,19 +162,34 @@ export async function sendAlert(result: ScamAnalysisResult): Promise<void> {
     ? '🚨 사기 위험 감지! 즉시 대화를 종료하세요!'
     : '⚠️ 사기 의심 대화 감지 - 주의하세요!';
 
-  const sidebar = wm.getMainWindow();
   const alertSound = config.load().scamAlertSound || SCAM_ALERT_SOUND;
-  sidebar?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 50 });
-  sidebar?.webContents.send('scam-alert', result);
+  
+  // wm.sendPlaySound를 통해 사운드 및 토스트 노출 제어 통합 전송
+  wm.sendPlaySound({
+    label,
+    soundFile: alertSound,
+    volume: 50,
+    isCustom: true
+  });
 
+  const sidebar = wm.getMainWindow();
   const cfg = config.load();
-  if (cfg.sidebarPosition === 'dock') {
-    const gameOverlay = wm.getGameOverlayWindow();
-    gameOverlay?.webContents.send('play-sound', { label, soundFile: alertSound, volume: 50 });
-    gameOverlay?.webContents.send('scam-alert', result);
+  const sidebarPos = cfg.sidebarPosition || 'right';
+  const isDock = sidebarPos === 'dock' || sidebarPos === 'dock-top';
+  const showOnOverlay = !!cfg.showSidebarToastOnOverlay;
+
+  // 사이드바 모드이고 오버레이에만 노출하는 옵션이 꺼져 있을 때만 index.html에 scam-alert UI 전송
+  if (sidebar && !sidebar.isDestroyed() && !isDock && !showOnOverlay) {
+    sidebar.webContents.send('scam-alert', result);
   }
 
-
+  // 독 모드이거나, 사이드바 모드이면서 오버레이 옵션이 켜져 있을 때 오버레이 창에 scam-alert UI 전송
+  if (isDock || showOnOverlay) {
+    const gameOverlay = wm.getGameOverlayWindow();
+    if (gameOverlay && !gameOverlay.isDestroyed()) {
+      gameOverlay.webContents.send('scam-alert', result);
+    }
+  }
 }
 
 // ── 테스트 시나리오 ──

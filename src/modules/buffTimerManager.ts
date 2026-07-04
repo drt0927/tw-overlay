@@ -302,19 +302,45 @@ class BuffTimerManager {
    */
   private _sendToMainWindow(channel: string, data: any): void {
     const wins = BrowserWindow.getAllWindows();
+    const cfg = config.load();
+    const sidebarPos = cfg.sidebarPosition || 'right';
+    const isDock = sidebarPos === 'dock' || sidebarPos === 'dock-top';
+    const showOnOverlay = !!cfg.showSidebarToastOnOverlay;
+
     const main = wins.find(w => {
       if (w.isDestroyed()) return false;
       try { return w.webContents.getURL().includes('index.html'); } catch { return false; }
     });
-    if (main) main.webContents.send(channel, data);
 
-    const cfg = config.load();
-    if (cfg.sidebarPosition === 'dock') {
+    if (main) {
+      if (channel === 'play-sound') {
+        const shouldShowToastOnIndex = !isDock && !showOnOverlay;
+        main.webContents.send(channel, {
+          ...data,
+          soundFile: data.soundFile, // 사운드는 무조건 재생
+          showToast: shouldShowToastOnIndex
+        });
+      } else {
+        main.webContents.send(channel, data);
+      }
+    }
+
+    if (isDock || (channel === 'play-sound' && showOnOverlay)) {
       const overlay = wins.find(w => {
         if (w.isDestroyed()) return false;
         try { return w.webContents.getURL().includes('game-overlay.html'); } catch { return false; }
       });
-      if (overlay) overlay.webContents.send(channel, data);
+      if (overlay) {
+        if (channel === 'play-sound') {
+          overlay.webContents.send(channel, {
+            ...data,
+            soundFile: '', // 중복 재생 방지를 위해 사운드 정보 제거
+            showToast: true // 토스트 표시
+          });
+        } else {
+          overlay.webContents.send(channel, data);
+        }
+      }
     }
   }
 

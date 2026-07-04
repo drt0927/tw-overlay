@@ -111,6 +111,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   volumeContentsChecker: 30,
   volumeCalculators: 30,
   sidebarPosition: 'right',
+  showSidebarToastOnOverlay: false,
   chatLogPath: '',
   lootKeywords: [],
   shoutKeywords: [],

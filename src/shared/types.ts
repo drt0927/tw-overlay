@@ -403,6 +403,7 @@ export interface AppConfig {
     chatOverlayNicknameColorClub?: string;
     chatOverlayNicknameColorShout?: string;
     forgeQuestHudPos?: { left: number; bottom: number };
+    showSidebarToastOnOverlay?: boolean;
 }
 
 export interface GalleryPost {

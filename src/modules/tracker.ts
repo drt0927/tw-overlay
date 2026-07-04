@@ -243,7 +243,7 @@ export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: s
         if (force || !isAlreadySandwiched) {
             if (prevHwnd !== 0n) {
                 let hwndInsertAfter = prevHwnd;
-                for (let i = electronHwndBigInts.length - 1; i >= 0; i--) {
+                for (let i = 0; i < electronHwndBigInts.length; i++) {
                     const hBigInt = electronHwndBigInts[i];
                     win32.SetWindowPos(hBigInt, hwndInsertAfter, 0, 0, 0, 0, flags);
                     hwndInsertAfter = hBigInt;

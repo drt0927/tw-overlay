@@ -16,6 +16,36 @@ let isLoadingProfile = false;
 
 let pendingItemFromDic: any = null;
 
+let showBuffTooltip = true;
+function updateBuffTooltipIcon(): void {
+  const toggleBtn = document.getElementById('btn-toggle-buff-info');
+  if (toggleBtn) {
+    toggleBtn.textContent = showBuffTooltip ? '툴팁 ON' : '툴팁 OFF';
+  }
+}
+function updateBuffTooltipVisibility(): void {
+  const bInfo = document.getElementById('active-buff-info');
+  const presetSelect = document.getElementById('buff-preset-select') as HTMLSelectElement;
+  const toggleBtn = document.getElementById('btn-toggle-buff-info');
+
+  if (presetSelect && presetSelect.value !== 'none') {
+    if (toggleBtn) {
+      toggleBtn.classList.remove('hidden');
+      updateBuffTooltipIcon(); // 아이콘 갱신 및 lucide 그리기 강제 트리거
+    }
+    if (bInfo) {
+      if (showBuffTooltip) {
+        bInfo.classList.remove('hidden');
+      } else {
+        bInfo.classList.add('hidden');
+      }
+    }
+  } else {
+    if (toggleBtn) toggleBtn.classList.add('hidden');
+    if (bInfo) bInfo.classList.add('hidden');
+  }
+}
+
 if ((window as any).electronAPI && (window as any).electronAPI.onAutoSelectEquipment) {
   (window as any).electronAPI.onAutoSelectEquipment((item: any) => {
     if (!gearData || Object.keys(gearData.armors || {}).length === 0) {
@@ -170,6 +200,11 @@ async function init() {
   document.addEventListener('change', (e) => { if ((e.target as HTMLElement).tagName === 'SELECT') handleInput(); });
   document.getElementById('profile-select')?.addEventListener('change', (e) => switchProfile((e.target as HTMLSelectElement).value));
   document.getElementById('buff-preset-select')?.addEventListener('change', () => { calculate(); saveCurrentProfile(); });
+  document.getElementById('btn-toggle-buff-info')?.addEventListener('click', () => {
+    showBuffTooltip = !showBuffTooltip;
+    updateBuffTooltipIcon();
+    updateBuffTooltipVisibility();
+  });
   document.getElementById('btn-add-profile')?.addEventListener('click', async () => { const n = await showPrompt('새 프로필', '이름 입력:'); if (n?.trim()) addProfile(n.trim()); });
   document.getElementById('btn-rename-profile')?.addEventListener('click', async () => { const p = profiles[currentProfileId]; if (p) { const n = await showPrompt('이름 변경', '새 이름:', p.name); if (n?.trim() && n !== p.name) renameProfile(currentProfileId, n.trim()); } });
   document.getElementById('btn-delete-profile')?.addEventListener('click', async () => { if (Object.keys(profiles).length > 1 && await showConfirm('삭제', '정말 삭제할까요?')) deleteProfile(currentProfileId); else if (Object.keys(profiles).length <= 1) showAlert('알림', '최소 1개는 유지해야 합니다.'); });
@@ -252,25 +287,25 @@ function calculate() {
       if (buffIds.length > 0) {
         const row = (label: string, bonus: any) => `
           <div class="flex justify-between items-center text-[10px]">
-            <span class="text-slate-400 w-8 font-black">${label}:</span>
+            <span class="text-slate-400 w-10 whitespace-nowrap font-black">${label}:</span>
             <span class="text-purple-300 font-bold">+${bonus.fixed}, +${bonus.ratio}% (+${bonus.bonusFromPct})</span>
           </div>
         `;
         bInfo.innerHTML = `
-          <div class="flex flex-col gap-1 mt-1 bg-purple-500/10 p-2.5 rounded-xl border border-purple-500/20">
-            <div class="flex justify-between items-center mb-1 border-b border-purple-500/20 pb-1">
-              <span class="text-[10px] text-purple-200 font-black">도핑 상세보너스</span>
-              <span class="text-[9px] bg-purple-500/30 text-purple-100 px-1.5 rounded">${buffIds.length}종</span>
-            </div>
+          <div class="flex justify-between items-center mb-1.5 border-b border-purple-500/20 pb-1">
+            <span class="text-[10px] text-purple-200 font-black">도핑 상세보너스</span>
+            <span class="text-[9px] bg-purple-500/30 text-purple-100 px-1.5 rounded">${buffIds.length}종</span>
+          </div>
+          <div class="flex flex-col gap-1">
             ${row(mainLabel, mainBonus)}
             ${row(subLabel, subBonus)}
-            ${row('DEX', dexBonus)}
+            ${row('명중', dexBonus)}
           </div>
         `;
-        bInfo.classList.remove('hidden');
+        updateBuffTooltipVisibility();
       } else { 
-        bInfo.innerHTML = `<span class="text-slate-500">프리셋을 선택하면 스탯에 반영됩니다.</span>`; 
-        bInfo.classList.add('hidden');
+        bInfo.innerHTML = ''; 
+        updateBuffTooltipVisibility();
       }
     }
 
@@ -489,7 +524,7 @@ function updateGuide(baseCoeff: number, hit: number, coreCoeffs: Record<string, 
       <div class="flex justify-between items-center leading-none">
         <span class="text-slate-200 text-[11.5px] font-black truncate max-w-[170px]" title="${ct.name}">${ct.name}</span>
         <div class="flex items-center gap-1.5">
-          <span class="${hitOk ? 'text-green-400' : 'text-red-400'} text-[10px] font-black">DEX ${ct.hit} ${hitOk ? '✔' : '✘'}</span>
+          <span class="${hitOk ? 'text-green-400' : 'text-red-400'} text-[10px] font-black">명중 ${ct.hit} ${hitOk ? '✔' : '✘'}</span>
           <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
           <span class="${color} text-[10.5px] font-black">${status}</span>
         </div>

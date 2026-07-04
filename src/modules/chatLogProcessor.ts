@@ -9,6 +9,7 @@ import * as contentsChecker from './contentsChecker';
 import { discordNotifier } from './discordNotifier';
 import { etaCacheManager } from './etaCacheManager';
 import { DEFAULT_CONFIG } from './constants';
+import * as wm from './windowManager';
 
 /**
  * 파싱된 채팅 데이터를 실제 앱 기능(DB 저장, 알림 등)으로 연결하는 프로세서
@@ -404,25 +405,12 @@ class ChatLogProcessor {
 
         // 지정 사운드 재생
         if (cfg.wordAlarmSound) {
-          const allWindows = BrowserWindow.getAllWindows();
-          const sidebar = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
-          if (sidebar) {
-            sidebar.webContents.send('play-sound', {
-              label: '지정 단어 알림',
-              soundFile: cfg.wordAlarmSound,
-              volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70
-            });
-          }
-          if (cfg.sidebarPosition === 'dock') {
-            const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-            if (gameOverlay) {
-              gameOverlay.webContents.send('play-sound', {
-                label: '지정 단어 알림',
-                soundFile: cfg.wordAlarmSound,
-                volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70
-              });
-            }
-          }
+          wm.sendPlaySound({
+            label: '지정 단어 알림',
+            soundFile: cfg.wordAlarmSound,
+            volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70,
+            isCustom: true
+          });
         }
       }
     });
@@ -463,24 +451,12 @@ class ChatLogProcessor {
       }
 
       if (cfg.waveMonsterWarningSound) {
-        const sidebar = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
-        if (sidebar) {
-          sidebar.webContents.send('play-sound', {
-            label: '몬스터 웨이브 종료 대기 알림',
-            soundFile: cfg.waveMonsterWarningSound,
-            volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70
-          });
-        }
-        if (cfg.sidebarPosition === 'dock') {
-          const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-          if (gameOverlay) {
-            gameOverlay.webContents.send('play-sound', {
-              label: '몬스터 웨이브 종료 대기 알림',
-              soundFile: cfg.waveMonsterWarningSound,
-              volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70
-            });
-          }
-        }
+        wm.sendPlaySound({
+          label: '몬스터 웨이브 종료 대기 알림',
+          soundFile: cfg.waveMonsterWarningSound,
+          volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70,
+          isCustom: true
+        });
       }
     });
 

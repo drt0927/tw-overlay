@@ -114,15 +114,9 @@ function notify(message: string, soundFile: string): void {
     }
   }
 
-  const sidebar = wm.getMainWindow();
-  if (sidebar) {
-    sidebar.webContents.send('play-sound', { label: message, soundFile });
-  }
-  const cfg = config.load();
-  if (cfg.sidebarPosition === 'dock') {
-    const gameOverlay = wm.getGameOverlayWindow();
-    if (gameOverlay) {
-      gameOverlay.webContents.send('play-sound', { label: message, soundFile });
-    }
-  }
+  wm.sendPlaySound({
+    label: message,
+    soundFile,
+    isCustom: true
+  });
 }

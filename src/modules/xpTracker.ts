@@ -4,6 +4,7 @@ import { log } from './logger';
 import { Notification, BrowserWindow } from 'electron';
 import { buffTimerManager } from './buffTimerManager';
 import * as diaryDb from './diaryDb';
+import * as wm from './windowManager';
 
 export const QUEST_DEFINITIONS = {
   forge: { name: '대장간', target: 1500, icon: 'hammer' },
@@ -284,10 +285,12 @@ class XpTracker {
     const cfg = config.load();
     const soundFile = cfg.essenceAlertSound || 'orb.mp3';
     const volume = cfg.essenceAlertVolume ?? 70;
-    const sidebar = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
-    if (sidebar) {
-      sidebar.webContents.send('play-sound', { label: `${questName} 도전과제 완료`, soundFile, volume });
-    }
+    wm.sendPlaySound({
+      label: `${questName} 도전과제 완료`,
+      soundFile,
+      volume,
+      isCustom: true
+    });
   }
 
   public resetXp(): void {
@@ -418,8 +421,12 @@ class XpTracker {
 
     const soundFile = cfg.essenceAlertSound || 'orb.mp3';
     const volume = cfg.essenceAlertVolume ?? 70;
-    const sidebar = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('index.html'));
-    if (sidebar) sidebar.webContents.send('play-sound', { label: '경험의 정수 버프 확인', soundFile, volume });
+    wm.sendPlaySound({
+      label: '경험의 정수 버프 확인',
+      soundFile,
+      volume,
+      isCustom: true
+    });
   }
 }
 

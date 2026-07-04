@@ -148,29 +148,12 @@ function notify(bossName: string, soundFile: string, spawnTime: string, offset: 
     }
   }
 
-  const sidebar = wm.getMainWindow();
-  if (sidebar) {
-    sidebar.webContents.send('play-sound', {
-      label: bossName,
-      soundFile,
-      spawnTime,
-      offset,
-      isCustom: false,
-      isAlreadyRecorded // 이미 기록되었는지 여부 전달
-    });
-  }
-  const cfg = config.load();
-  if (cfg.sidebarPosition === 'dock') {
-    const gameOverlay = wm.getGameOverlayWindow();
-    if (gameOverlay) {
-      gameOverlay.webContents.send('play-sound', {
-        label: bossName,
-        soundFile,
-        spawnTime,
-        offset,
-        isCustom: false,
-        isAlreadyRecorded
-      });
-    }
-  }
+  wm.sendPlaySound({
+    label: bossName,
+    soundFile,
+    spawnTime,
+    offset,
+    isCustom: false,
+    isAlreadyRecorded
+  });
 }

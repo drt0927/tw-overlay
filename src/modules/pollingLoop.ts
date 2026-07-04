@@ -116,7 +116,7 @@ export function start(): void {
         const cfg = config.load();
         const sidebarPos = cfg.sidebarPosition || 'right';
         let isVisible = false;
-        if (sidebarPos === 'dock') {
+        if (sidebarPos === 'dock' || sidebarPos === 'dock-top') {
             if (wm.getIsDockVisible()) {
                 const dockWin = wm.getDockWindow();
                 isVisible = !!(dockWin && !dockWin.isDestroyed() && dockWin.isVisible());

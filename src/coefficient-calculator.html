@@ -301,15 +301,18 @@
     <div class="w-px h-4 bg-slate-800"></div>
 
     <!-- Doping -->
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center gap-1.5 relative">
       <label class="text-xs font-black text-slate-500">도핑</label>
       <select id="buff-preset-select"
         class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-xs font-bold text-purple-400 outline-none">
         <option value="none">없음</option>
         <option value="standard">기본 도핑 세트</option>
       </select>
+      <button id="btn-toggle-buff-info" class="px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded text-[10px] font-black text-purple-400 hidden no-drag transition-colors" title="도핑 상세정보 토글">
+        툴팁 ON
+      </button>
+      <div id="active-buff-info" class="hidden absolute top-full left-0 mt-2 z-[999] w-[210px] bg-slate-950/98 backdrop-blur-md border border-purple-500/30 rounded-xl shadow-2xl p-2.5 flex flex-col no-drag"></div>
     </div>
-    <div id="active-buff-info" class="hidden"></div>
 
     <!-- Spacer -->
     <div class="flex-1"></div>
@@ -338,7 +341,7 @@
 
       <!-- Result: DEX -->
       <div class="bg-yellow-500/5 px-3 py-1 rounded-lg border border-yellow-500/15 flex flex-col justify-center min-w-[70px]">
-        <span class="text-[9px] text-slate-500 font-bold leading-none">명중 DEX</span>
+        <span class="text-[9px] text-slate-500 font-bold leading-none">명중</span>
         <div id="total-hit-display" class="text-[17px] font-black text-yellow-400 tracking-tight mt-1 leading-none">0</div>
       </div>
     </div>
@@ -368,11 +371,11 @@
             <th style="text-align:left; padding-left:6px;">장비명</th>
             <th>기본<br><span class="bonus-label-main text-indigo-400/90">STAB</span></th>
             <th>기본<br><span class="bonus-label-sub text-slate-500/80">HACK</span></th>
-            <th class="text-yellow-500/70">기본<br>DEX</th>
+            <th class="text-yellow-500/70">기본<br>명중</th>
             <th class="text-emerald-500/80">강화<br><span class="bonus-label-main2">STAB</span></th>
             <th class="text-emerald-500/80">강화<br><span class="bonus-label-sub2">HACK</span></th>
             <th class="text-violet-400/80">어빌<br><span class="bonus-label-main3">STAB</span></th>
-            <th class="text-yellow-500/70">어빌<br>DEX</th>
+            <th class="text-yellow-500/70">어빌<br>명중</th>
             <th>계수 기여</th>
           </tr>
         </thead>
@@ -387,7 +390,7 @@
         <tbody id="bonus-tbody">
           <!-- 아바타 -->
           <tr class="tr-bonus">
-            <td><span class="part-lbl tooltip-wrap" data-tooltip="기본 세트 스탯(주/부/DEX 각 +15)은 자동 가산됩니다.">아바타 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
+            <td><span class="part-lbl tooltip-wrap" data-tooltip="기본 세트 스탯(주/부/명중 각 +15)은 자동 가산됩니다.">아바타 <i data-lucide="help-circle" class="inline-block w-3 h-3 text-slate-500 hover:text-slate-300 ml-0.5"></i></span></td>
             <td class="text-xs text-slate-700 italic pl-1">(기본+15 자동)</td>
             <td><span class="av has">15</span></td>
             <td><span class="av has">15</span></td>

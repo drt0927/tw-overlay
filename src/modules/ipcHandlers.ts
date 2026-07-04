@@ -355,8 +355,7 @@ export function register(): void {
   });
 
   ipcMain.on('preview-boss-sound', (_e, soundFile: string, volume: number | null, bossName: string = '미리보기') => {
-    const sidebar = wm.getMainWindow();
-    if (sidebar) sidebar.webContents.send('play-sound', { label: bossName, soundFile, volume, isPreview: true });
+    wm.sendPlaySound({ label: bossName, soundFile, volume: volume !== null ? volume : undefined, isPreview: true });
   });
 
   ipcMain.on('save-quick-slots', (_e, slots: QuickSlotItem[]) => {
@@ -440,8 +439,7 @@ export function register(): void {
     diaryDb.clearWordAlarmHistory();
   });
   ipcMain.on('play-sound', (_e, { file, volume }) => {
-    const sidebar = wm.getMainWindow();
-    if (sidebar) sidebar.webContents.send('play-sound', { label: '미리보기', soundFile: file, volume, isPreview: true });
+    wm.sendPlaySound({ label: '미리보기', soundFile: file, volume, isPreview: true });
   });
   ipcMain.on('diary-add-activity', (_e, date: string, time: string, type: 'boss' | 'calc' | 'memo' | 'loot' | 'homework', content: string, amount: number = 0) => {
     if (!isValidDate(date) || typeof time !== 'string' || !validActivityTypes.includes(type) || typeof content !== 'string') return;

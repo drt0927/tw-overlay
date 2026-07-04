@@ -1045,35 +1045,38 @@ export function toggleContentsCheckerWindow(): boolean {
 
 
 export function getAllWindowHwnds(): string[] {
-  const windows = activeWindowsStack.filter(win => win && !win.isDestroyed() && win.isVisible() && win !== gameOverlayWindow);
-
-  // 사이드바(mainWindow)와 독바(dock)를 항상 Z-Order 최하단에 배치
   const dockWin = windowRegistry.dock?.ref;
-  windows.sort((a, b) => {
-    const isSpecialA = (a === mainWindow || a === dockWin);
-    const isSpecialB = (b === mainWindow || b === dockWin);
-    if (isSpecialA && !isSpecialB) return -1;
-    if (!isSpecialA && isSpecialB) return 1;
-    if (isSpecialA && isSpecialB) {
-      if (a === mainWindow) return -1;
-      if (b === mainWindow) return 1;
-    }
-    return 0;
-  });
+  
+  // 1. 일반 서브 창들 추출 (사이드바, 독바, 게임 오버레이 제외)
+  const subWindows = activeWindowsStack.filter(win => 
+    win && !win.isDestroyed() && win.isVisible() && 
+    win !== mainWindow && win !== dockWin && win !== gameOverlayWindow
+  );
 
-  // gameOverlayWindow를 배열 마지막에 추가 → promoteWindows 루프에서 게임 창 바로 위에 배치됨
-  // (루프가 뒤에서 앞으로 순회하므로 마지막 = 가장 먼저 배치 = 게임 창 바로 위 Z-Order)
+  // 가장 최근에 포커스된 창(스택의 맨 뒤 원소)이 가장 위에 오도록(배열의 맨 앞) 순서를 뒤집습니다.
+  subWindows.reverse();
+
+  // 2. 최종 순서 배열 조립: [일반 서브 창들, 메인 사이드바/독바, 게임 오버레이]
+  // 정방향 루프로 Z-Order를 깔기 때문에, 앞쪽에 배치된 서브 창들이 가장 위로 올라오게 됩니다.
+  const orderedWindows: BrowserWindow[] = [...subWindows];
+
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+    orderedWindows.push(mainWindow);
+  }
+  if (dockWin && !dockWin.isDestroyed() && dockWin.isVisible()) {
+    orderedWindows.push(dockWin);
+  }
   if (gameOverlayWindow && !gameOverlayWindow.isDestroyed() && gameOverlayWindow.isVisible()) {
-    windows.push(gameOverlayWindow);
+    orderedWindows.push(gameOverlayWindow);
   }
 
   const results: string[] = [];
-  for (const win of windows) {
+  for (const win of orderedWindows) {
     if (win && !win.isDestroyed()) {
       try {
         results.push(win.getNativeWindowHandle().readBigUint64LE().toString());
       } catch (e) {
-        // 무시: 수집 중 파괴된 경우
+        // 무시
       }
     }
   }
@@ -1646,6 +1649,44 @@ export function setChatOverlaySize(mode: 'main' | 'sub1' | 'sub2', width: number
   if (winCfg.ref && !winCfg.ref.isDestroyed()) {
     const b = winCfg.ref.getBounds();
     winCfg.ref.setBounds({ x: b.x, y: b.y, width, height });
+  }
+}
+
+export function sendPlaySound(data: {
+  label: string;
+  soundFile: string;
+  volume?: number;
+  spawnTime?: string;
+  offset?: number;
+  isCustom?: boolean;
+  isAlreadyRecorded?: boolean;
+  isPreview?: boolean;
+}): void {
+  const cfg = config.load();
+  const sidebarPos = cfg.sidebarPosition || 'right';
+  const isDock = sidebarPos === 'dock' || sidebarPos === 'dock-top';
+  const showOnOverlay = !!cfg.showSidebarToastOnOverlay;
+
+  // 1. 토스트 노출 규칙 설정 (미리보기와 실제 알람 동일 적용)
+  const shouldShowToastOnIndex = !isDock && !showOnOverlay;
+  const shouldShowToastOnOverlay = isDock || showOnOverlay;
+
+  // 2. index.html (메인 창) 처리: 사운드는 여기서만 무조건 재생, 토스트는 조건 만족 시 노출
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('play-sound', {
+      ...data,
+      soundFile: data.soundFile, // 사운드는 무조건 재생
+      showToast: shouldShowToastOnIndex
+    });
+  }
+
+  // 3. gameOverlayWindow (오버레이 창) 처리: 사운드 파일은 제거(비움), 토스트는 조건 만족 시 노출
+  if (gameOverlayWindow && !gameOverlayWindow.isDestroyed()) {
+    gameOverlayWindow.webContents.send('play-sound', {
+      ...data,
+      soundFile: '', // 중복 재생 방지를 위해 사운드 정보 제거
+      showToast: shouldShowToastOnOverlay
+    });
   }
 }
 

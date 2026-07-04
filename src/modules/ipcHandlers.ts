@@ -238,6 +238,10 @@ export function register(): void {
     });
   });
 
+  ipcMain.on('open-and-highlight', (_e, key: string) => {
+    wm.openAndHighlightWindow(key);
+  });
+
   // 컨텐츠 체크 리스트 조작 핸들러
   ipcMain.on('contents-toggle-item', (_e, id: string, characterId?: string) => {
     import('./contentsChecker').then(mod => mod.toggleItem(id, characterId));
@@ -700,5 +704,13 @@ export function register(): void {
 
   ipcMain.on('inject-test-chat', (_e, rawLine: string) => {
     chatParser.parseLine(rawLine);
+  });
+
+  // --- Alarm Logs IPC ---
+  ipcMain.handle('alarm-get-logs', (_e, limit?: number) => {
+    return diaryDb.getAlarmLogs(limit);
+  });
+  ipcMain.on('alarm-clear-logs', () => {
+    diaryDb.clearAlarmLogs();
   });
 }

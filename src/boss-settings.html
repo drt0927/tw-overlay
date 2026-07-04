@@ -104,6 +104,10 @@
       border: 2px solid #0f172a;
       box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
     }
+
+    #boss-list {
+      padding-top: 1px;
+    }
   </style>
 
   <script>
@@ -136,7 +140,7 @@
 
   <div class="flex-1 overflow-hidden flex flex-col no-drag p-6">
     <!-- 공통 설정 패널 -->
-    <div class="p-4 border border-white/5 rounded-2xl bg-black/20 space-y-3 mb-6">
+    <div id="global-boss-settings" class="p-4 border border-white/5 rounded-2xl bg-black/20 space-y-3 mb-6">
       <!-- 활성화 -->
       <div class="flex items-center justify-between">
         <label class="flex items-center gap-2.5 cursor-pointer group">
@@ -406,6 +410,36 @@
         fieldBossNotifyEnabled: document.getElementById('boss-enabled-check').checked,
         fieldBossNotifyOffsets: offsets,
         fieldBossNotifyVolume: parseInt(document.getElementById('boss-volume-input').value) || 50
+      });
+    }
+
+    // 하이라이트 공통 함수 및 리스너
+    function highlightElement(el) {
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.transition = 'all 0.4s ease';
+      
+      let count = 0;
+      const interval = setInterval(() => {
+        if (count % 2 === 0) {
+          el.style.borderColor = 'rgba(239, 68, 68, 0.8)';
+          el.style.boxShadow = '0 0 25px rgba(239, 68, 68, 0.5)';
+        } else {
+          el.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+          el.style.boxShadow = 'none';
+        }
+        count++;
+        if (count > 5) {
+          clearInterval(interval);
+          el.style.borderColor = '';
+          el.style.boxShadow = '';
+        }
+      }, 300);
+    }
+
+    if (window.electronAPI && window.electronAPI.onHighlightAlarmSettings) {
+      window.electronAPI.onHighlightAlarmSettings(() => {
+        highlightElement(document.getElementById('global-boss-settings'));
       });
     }
   </script>

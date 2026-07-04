@@ -68,7 +68,7 @@ function checkAlerts(): void {
           ? alert.message
           : `[${offset}분 전] ${alert.message}`;
         log(`[CUSTOM_ALERT] hourly 알림: "${message}"`);
-        notify(message, alert.soundFile);
+        notify(message, alert.soundFile, alert.volume);
       }
     } else {
       // daily: alert.time(HH:mm) 기준 offset 계산
@@ -91,13 +91,13 @@ function checkAlerts(): void {
           ? alert.message
           : `[${offset}분 전] ${alert.message}`;
         log(`[CUSTOM_ALERT] daily 알림: "${message}"`);
-        notify(message, alert.soundFile);
+        notify(message, alert.soundFile, alert.volume);
       }
     }
   }
 }
 
-function notify(message: string, soundFile: string): void {
+function notify(message: string, soundFile: string, volume?: number): void {
   // 게임창이 최소화되어 있는 상태일 때 Windows 알림 발송
   const gameStatus = getGameStatus();
   if (gameStatus === 'minimized') {
@@ -117,6 +117,7 @@ function notify(message: string, soundFile: string): void {
   wm.sendPlaySound({
     label: message,
     soundFile,
+    volume,
     isCustom: true
   });
 }

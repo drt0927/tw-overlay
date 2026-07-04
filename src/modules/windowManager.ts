@@ -11,6 +11,8 @@ import * as trade from './tradeMonitor';
 import * as tracker from './tracker';
 import { log } from './logger';
 import { buffTimerManager } from './buffTimerManager';
+import * as diaryDb from './diaryDb';
+
 
 // --- 상태 관리 ---
 let activeWindowsStack: BrowserWindow[] = [];
@@ -167,7 +169,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
-  customAlert: { ref: null, pos: { offsetX: -420, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 420, height: 640 },
+  customAlert: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 580, height: 640 },
   diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 1400, height: 920 },
   uniformColor: { ref: null, pos: { offsetX: -360, offsetY: 40 }, key: 'uniformColor', html: 'uniform-color.html', width: 360, height: 800 },
   shoutHistory: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'shoutHistory', html: 'shout-history.html', width: 450, height: 600 },
@@ -1661,17 +1663,63 @@ export function sendPlaySound(data: {
   isCustom?: boolean;
   isAlreadyRecorded?: boolean;
   isPreview?: boolean;
+  logMessage?: string;
 }): void {
   const cfg = config.load();
   const sidebarPos = cfg.sidebarPosition || 'right';
   const isDock = sidebarPos === 'dock' || sidebarPos === 'dock-top';
   const showOnOverlay = !!cfg.showSidebarToastOnOverlay;
 
-  // 1. 토스트 노출 규칙 설정 (미리보기와 실제 알람 동일 적용)
+  // 1. 알람 로그 데이터베이스에 기록 (테스트/미리보기가 아닐 때만)
+  if (!data.isPreview) {
+    let type: 'boss' | 'custom' | 'word' | 'wave' | 'buff' | 'etc' = 'etc';
+    let title = '알림';
+    let message = data.logMessage || data.label;
+
+    if (data.logMessage) {
+      if (data.logMessage.startsWith('[지정 단어]') || data.logMessage.startsWith('[단어]')) {
+        type = 'word';
+        title = '지정 단어 알림';
+      } else if (data.logMessage.startsWith('[웨이브]') || data.logMessage.startsWith('[몬스터 웨이브]')) {
+        type = 'wave';
+        title = '몬스터 웨이브 알림';
+      } else if (data.logMessage.startsWith('[버프]')) {
+        type = 'buff';
+        title = '버프 타이머 알림';
+      }
+    }
+
+    if (type === 'etc') {
+      const isBoss = (data.spawnTime && data.spawnTime !== 'undefined' && data.spawnTime !== 'null') && !data.isCustom;
+      if (isBoss) {
+        type = 'boss';
+        title = '필드보스 출현 알림';
+        const offsetMin = data.offset ?? 0;
+        message = offsetMin === 0 
+          ? `[${data.spawnTime}] [${data.label}] 출현!` 
+          : `[${data.spawnTime}] [${data.label}] ${offsetMin}분 전`;
+      } else if (data.isCustom) {
+        if (data.label === '지정 단어 알림') {
+          type = 'word';
+          title = '지정 단어 알림';
+        } else if (data.label === '몬스터 웨이브 종료 대기 알림') {
+          type = 'wave';
+          title = '몬스터 웨이브 알림';
+        } else {
+          type = 'custom';
+          title = '커스텀 알림';
+        }
+      }
+    }
+
+    diaryDb.addAlarmLog(type, title, message);
+  }
+
+  // 2. 토스트 노출 규칙 설정 (미리보기와 실제 알람 동일 적용)
   const shouldShowToastOnIndex = !isDock && !showOnOverlay;
   const shouldShowToastOnOverlay = isDock || showOnOverlay;
 
-  // 2. index.html (메인 창) 처리: 사운드는 여기서만 무조건 재생, 토스트는 조건 만족 시 노출
+  // 3. index.html (메인 창) 처리: 사운드는 여기서만 무조건 재생, 토스트는 조건 만족 시 노출
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('play-sound', {
       ...data,
@@ -1680,13 +1728,54 @@ export function sendPlaySound(data: {
     });
   }
 
-  // 3. gameOverlayWindow (오버레이 창) 처리: 사운드 파일은 제거(비움), 토스트는 조건 만족 시 노출
+  // 4. gameOverlayWindow (오버레이 창) 처리: 사운드 파일은 제거(비움), 토스트는 조건 만족 시 노출
   if (gameOverlayWindow && !gameOverlayWindow.isDestroyed()) {
     gameOverlayWindow.webContents.send('play-sound', {
       ...data,
       soundFile: '', // 중복 재생 방지를 위해 사운드 정보 제거
       showToast: shouldShowToastOnOverlay
     });
+  }
+}
+
+export function openAndHighlightWindow(key: string): void {
+  const winCfg = windowRegistry[key];
+  if (!winCfg) return;
+
+  const sendHighlight = (win: BrowserWindow) => {
+    setTimeout(() => {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('highlight-alarm-settings');
+      }
+    }, 350);
+  };
+
+  if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    sendHighlight(winCfg.ref);
+  } else {
+    let success = false;
+    switch (key) {
+      case 'bossSettings':
+        success = toggleBossSettingsWindow();
+        break;
+      case 'wordAlarm':
+        success = toggleWordAlarmWindow();
+        break;
+      case 'buffTimer':
+        success = toggleBuffTimerWindow();
+        break;
+      case 'xpHud':
+        success = toggleXpHudWindow();
+        break;
+    }
+
+    if (success && winCfg.ref) {
+      winCfg.ref.webContents.once('did-finish-load', () => {
+        sendHighlight(winCfg.ref!);
+      });
+    }
   }
 }
 

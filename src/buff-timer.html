@@ -556,7 +556,7 @@
       </div>
 
       <!-- 청각 알림 -->
-      <div class="section">
+      <div id="audio-settings-section" class="section">
         <div class="section-label">
           <i data-lucide="volume-2" style="width:12px;height:12px"></i>
           청각 알림
@@ -572,14 +572,15 @@
           </label>
         </div>
         <div class="flex flex-col gap-2 mt-3 p-3 bg-white/5 border border-white/5 rounded-lg" id="volume-container">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 w-full min-w-0">
             <select id="sound-select"
-              class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-slate-300 focus:outline-none w-1/2">
+              class="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 focus:outline-none flex-1 cursor-pointer h-[40px] min-w-0 w-full">
               <!-- JS dynamic options -->
             </select>
-            <button class="preview-btn shrink-0 w-1/2 justify-center" id="preview-sound">
-              <i data-lucide="play" style="width:11px;height:11px"></i>
-              미리듣기
+            <button id="preview-sound" 
+                    class="w-10 h-[40px] flex items-center justify-center bg-orange-600/20 border border-orange-500/40 rounded-xl text-orange-400 hover:bg-orange-600 hover:text-white transition-all shadow-lg active:scale-90 shrink-0" 
+                    title="소리 테스트">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i>
             </button>
           </div>
           <div class="volume-row mt-1">
@@ -878,6 +879,36 @@
     document.getElementById('btn-clear-all-buffs').onclick = () => {
       window.electronAPI.buffTimerClearAll();
     };
+
+    // 하이라이트 공통 함수 및 리스너
+    function highlightElement(el) {
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.transition = 'all 0.4s ease';
+      
+      let count = 0;
+      const interval = setInterval(() => {
+        if (count % 2 === 0) {
+          el.style.borderColor = 'rgba(249, 115, 22, 0.8)';
+          el.style.boxShadow = '0 0 25px rgba(249, 115, 22, 0.5)';
+        } else {
+          el.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+          el.style.boxShadow = 'none';
+        }
+        count++;
+        if (count > 5) {
+          clearInterval(interval);
+          el.style.borderColor = '';
+          el.style.boxShadow = '';
+        }
+      }, 300);
+    }
+
+    if (window.electronAPI && window.electronAPI.onHighlightAlarmSettings) {
+      window.electronAPI.onHighlightAlarmSettings(() => {
+        highlightElement(document.getElementById('audio-settings-section'));
+      });
+    }
 
     function formatMs(ms) {
       if (ms <= 0) return '0초';

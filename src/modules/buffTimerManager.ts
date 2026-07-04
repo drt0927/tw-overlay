@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as config from './config';
 import { log } from './logger';
 import type { BuffDefinition } from '../shared/types';
+import * as diaryDb from './diaryDb';
 
 export interface ActiveBuff {
   buffId: string;
@@ -230,6 +231,7 @@ class BuffTimerManager {
       const soundFile = cfg.buffTimerSound || 'orb.mp3';
       const volume = cfg.buffTimerVolume ?? 70;
       const label2 = phase === 'warn2' ? `[임박] ${buff.name} 5초 전!` : `[경고] ${buff.name} ${label} 남음`;
+      diaryDb.addAlarmLog('buff', '버프 타이머 알림', label2);
       this._sendToMainWindow('play-sound', { label: label2, soundFile, volume, isCustom: true });
     }
   }

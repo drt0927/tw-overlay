@@ -409,7 +409,8 @@ class ChatLogProcessor {
             label: '지정 단어 알림',
             soundFile: cfg.wordAlarmSound,
             volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70,
-            isCustom: true
+            isCustom: true,
+            logMessage: `[지정 단어] [@${matchedKeyword}] ${data.sender}: ${data.message}`
           });
         }
       }
@@ -455,7 +456,8 @@ class ChatLogProcessor {
           label: '몬스터 웨이브 종료 대기 알림',
           soundFile: cfg.waveMonsterWarningSound,
           volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70,
-          isCustom: true
+          isCustom: true,
+          logMessage: `[웨이브] ${data.message}`
         });
       }
     });

@@ -299,7 +299,7 @@
           <i data-lucide="settings-2" class="w-4 h-4"></i> 일반 설정
         </div>
         <div class="nav-item" onclick="showSection('sound', this)">
-          <i data-lucide="volume-2" class="w-4 h-4"></i> 소리 및 알림음 설정
+          <i data-lucide="volume-2" class="w-4 h-4"></i> 소리 및 알림
         </div>
         <div class="nav-item" onclick="showSection('overlay', this)">
           <i data-lucide="layout" class="w-4 h-4"></i> 오버레이 설정
@@ -485,13 +485,26 @@
         </div>
       </div>
 
-      <!-- 사운드 설정 -->
+      <!-- 3. 소리 및 알림 설정 -->
       <div id="section-sound" class="settings-section space-y-8 hidden">
         <div class="settings-group">
-          <h2 class="text-lg font-bold mb-6 flex items-center gap-2"><i data-lucide="volume-2"
-              class="w-5 h-5 text-purple-500"></i> 소리 및 알림음 설정</h2>
+          <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
+            <i data-lucide="volume-2" class="w-5 h-5 text-purple-500"></i> 소리 및 알림 설정
+          </h2>
 
-          <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
+          <!-- 가로 서브 탭 바 -->
+          <div class="sub-tab-bar">
+            <button type="button" class="sub-tab-item active" onclick="showSubSection('sub-tab-sound-settings', this)">
+              <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> 소리 설정
+            </button>
+            <button type="button" class="sub-tab-item" onclick="showSubSection('sub-tab-alarm-log', this)">
+              <i data-lucide="history" class="w-3.5 h-3.5"></i> 알림 기록
+            </button>
+          </div>
+
+          <!-- 서브 탭 1: 소리 설정 -->
+          <div id="sub-tab-sound-settings" class="sub-tab-content active space-y-6">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-8">
             <div class="space-y-4">
               <label class="section-label flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -532,54 +545,103 @@
             </div>
           </div>
 
-          <!-- 알림음 바로가기 링크 카드들 -->
-          <div class="pt-6 border-t border-white/5 space-y-4">
-            <label class="section-label flex items-center gap-2 mb-2">
-              <i data-lucide="link" class="w-4 h-4 text-purple-400"></i> 기능별 알림음 설정 바로가기
-            </label>
-            <div id="sound-shortcuts-grid" class="grid grid-cols-2 gap-4">
-              <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
-                   onclick="window.electronAPI.toggleBossSettings()">
-                <div class="space-y-1">
-                  <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
-                    <i data-lucide="alarm-clock" class="w-3.5 h-3.5 text-red-400"></i> 필드보스 알림음 설정
-                  </span>
-                  <p class="text-xs text-slate-500">각 필드 보스 출현 알림음 변경</p>
+            <!-- 알림음 바로가기 링크 카드들 -->
+            <div class="pt-6 border-t border-white/5 space-y-4">
+              <label class="section-label flex items-center gap-2 mb-2">
+                <i data-lucide="link" class="w-4 h-4 text-purple-400"></i> 기능별 알림음 설정 바로가기
+              </label>
+              <div id="sound-shortcuts-grid" class="grid grid-cols-3 gap-4">
+                <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
+                     onclick="window.electronAPI.openAndHighlight('bossSettings')">
+                  <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
+                      <i data-lucide="alarm-clock" class="w-3.5 h-3.5 text-red-400"></i> 필드보스 알림 설정
+                    </span>
+                    <p class="text-xs text-slate-500">각 필드 보스 출현 알림음 변경</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+
+                <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
+                     onclick="window.electronAPI.openAndHighlight('wordAlarm')">
+                  <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
+                      <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-indigo-400"></i> 지정 단어 알림 설정
+                    </span>
+                    <p class="text-xs text-slate-500">채팅 키워드 감지 알림음 변경</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+                </div>
+
+                <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
+                     onclick="window.electronAPI.toggleCustomAlert()">
+                  <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
+                      <i data-lucide="megaphone" class="w-3.5 h-3.5 text-pink-400"></i> 커스텀 알림
+                    </span>
+                    <p class="text-xs text-slate-500">시간별/매일 반복 알림음 변경</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+                </div>
+
+                <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
+                     onclick="window.electronAPI.openAndHighlight('buffTimer')">
+                  <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
+                      <i data-lucide="timer" class="w-3.5 h-3.5 text-orange-400"></i> 버프 타이머 알림
+                    </span>
+                    <p class="text-xs text-slate-500">버프 경고 시간 및 알림음 변경</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+                </div>
+
+                <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
+                     onclick="window.electronAPI.openAndHighlight('xpHud')">
+                  <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
+                      <i data-lucide="trending-up" class="w-3.5 h-3.5 text-blue-400"></i> 경험치 HUD 설정
+                    </span>
+                    <p class="text-xs text-slate-500">경험치 획득량 및 EPM 창 켜기</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+                </div>
+              </div>
+            </div>
+          </div> <!-- sub-tab-sound-settings 닫기 (정확히 3개 div 닫힘) -->
+
+          <!-- 서브 탭 2: 알림 기록 -->
+          <div id="sub-tab-alarm-log" class="sub-tab-content space-y-6">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <!-- 상단 컨트롤러 (필터 & 삭제) -->
+              <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/5">
+                <div class="flex items-center gap-3">
+                  <label class="text-sm font-bold text-slate-300">알림 종류 필터</label>
+                  <select id="alarm-log-filter" onchange="renderAlarmLogs()" 
+                          class="bg-black/40 border border-white/10 text-white rounded-xl px-3 py-2 text-sm focus:border-purple-500 focus:outline-none transition-all cursor-pointer">
+                    <option value="all">전체 알림</option>
+                    <option value="boss">필드 보스</option>
+                    <option value="custom">커스텀 알림</option>
+                    <option value="word">지정 단어</option>
+                    <option value="wave">몬스터 웨이브</option>
+                    <option value="buff">버프 타이머</option>
+                    <option value="etc">기타</option>
+                  </select>
+                </div>
+                <button onclick="clearAllAlarmLogs()" 
+                        class="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i> 전체 삭제
+                </button>
               </div>
 
-              <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
-                   onclick="window.electronAPI.toggleWordAlarm()">
-                <div class="space-y-1">
-                  <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
-                    <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-indigo-400"></i> 지정 단어 알림음 설정
-                  </span>
-                  <p class="text-xs text-slate-500">채팅방 특정 키워드 감지 알림음 변경</p>
+              <!-- 로그 목록 영역 -->
+              <div class="max-h-[440px] overflow-y-auto custom-scroll pr-2" id="alarm-log-list-scroll">
+                <div id="alarm-log-empty" class="text-center py-16 text-slate-500 font-bold hidden">
+                  <i data-lucide="bell-off" class="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-400 animate-pulse"></i>
+                  기록된 알림이 없습니다.
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
-              </div>
-
-              <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
-                   onclick="window.electronAPI.toggleCustomAlert()">
-                <div class="space-y-1">
-                  <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
-                    <i data-lucide="megaphone" class="w-3.5 h-3.5 text-pink-400"></i> 사용자 지정 알림음 설정
-                  </span>
-                  <p class="text-xs text-slate-500">아이템 획득 등 커스텀 알림음 변경</p>
+                <div id="alarm-log-list" class="space-y-3.5">
+                  <!-- JS에서 동적 삽입 -->
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
-              </div>
-
-              <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
-                   onclick="window.electronAPI.toggleDiscordAlarm()">
-                <div class="space-y-1">
-                  <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
-                    <i data-lucide="send" class="w-3.5 h-3.5 text-indigo-400"></i> 디스코드 알림 설정
-                  </span>
-                  <p class="text-xs text-slate-500">디스코드 알림 소리 및 웹훅 전송 설정</p>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
               </div>
             </div>
           </div>
@@ -1703,7 +1765,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.0.5</span></p>
+                        class="text-purple-400">2.0.6</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2225,6 +2287,15 @@
       await checkOptimizeStatus();
       await initContentsItems();
 
+      if (window.electronAPI && window.electronAPI.onAlarmLogsUpdated) {
+        window.electronAPI.onAlarmLogsUpdated(() => {
+          const section = document.getElementById('sub-tab-alarm-log');
+          if (section && section.classList.contains('active')) {
+            renderAlarmLogs();
+          }
+        });
+      }
+
       _initReady = true;
       hideLoading();
     }
@@ -2327,19 +2398,57 @@
 
     function showSection(id, el) {
       document.querySelectorAll('.settings-section').forEach(s => s.classList.add('hidden'));
-      document.getElementById('section-' + id).classList.remove('hidden');
+      const activeSection = document.getElementById('section-' + id);
+      if (activeSection) {
+        activeSection.classList.remove('hidden');
+        
+        // 안전장치: 이 섹션에 서브 탭(sub-tab-content)이 존재하는데 활성화된 것이 하나도 없다면 첫 번째 탭 강제 활성화
+        const activeSubContents = activeSection.querySelectorAll('.sub-tab-content.active');
+        if (activeSubContents.length === 0) {
+          const firstSubContent = activeSection.querySelector('.sub-tab-content');
+          if (firstSubContent) {
+            firstSubContent.classList.add('active');
+            
+            // 그에 매칭되는 서브 탭 버튼(sub-tab-item)도 active 처리
+            const subTabItem = activeSection.querySelector('.sub-tab-item');
+            if (subTabItem) {
+              const parent = subTabItem.parentElement;
+              if (parent) {
+                parent.querySelectorAll('.sub-tab-item').forEach(btn => btn.classList.remove('active'));
+              }
+              subTabItem.classList.add('active');
+            }
+          }
+        }
+      }
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       el.classList.add('active');
       window.refreshIcons();
+      if (id === 'sound') {
+        const logSubTab = document.getElementById('sub-tab-alarm-log');
+        if (logSubTab && logSubTab.classList.contains('active')) {
+          renderAlarmLogs();
+        }
+      }
     }
 
     function showSubSection(subTabId, btnEl) {
-      document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+      // 현재 서브 탭이 위치한 대메뉴 섹션 내부의 서브 탭들만 active 클래스 제거
+      const section = btnEl.closest('.settings-section');
+      if (section) {
+        section.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+      } else {
+        document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+      }
+      
       const target = document.getElementById(subTabId);
       if (target) target.classList.add('active');
       btnEl.parentElement.querySelectorAll('.sub-tab-item').forEach(btn => btn.classList.remove('active'));
       btnEl.classList.add('active');
       window.refreshIcons();
+      if (subTabId === 'sub-tab-alarm-log') {
+        renderAlarmLogs();
+      }
     }
 
     function toggleNicknameColorPickers() {
@@ -2756,6 +2865,117 @@
         }
       }
     });
+
+    // --- Alarm Logs JavaScript ---
+    let _alarmLogs = [];
+
+    async function renderAlarmLogs() {
+      if (!window.electronAPI || !window.electronAPI.getAlarmLogs) return;
+
+      try {
+        _alarmLogs = await window.electronAPI.getAlarmLogs(200);
+      } catch (e) {
+        console.error('Failed to get alarm logs:', e);
+        return;
+      }
+
+      const filterVal = document.getElementById('alarm-log-filter').value;
+      const listEl = document.getElementById('alarm-log-list');
+      const emptyEl = document.getElementById('alarm-log-empty');
+
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      const filtered = _alarmLogs.filter(logItem => {
+        if (filterVal === 'all') return true;
+        return logItem.type === filterVal;
+      });
+
+      if (filtered.length === 0) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      filtered.forEach(logItem => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'flex items-start justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.06] hover:translate-x-1 transition-all gap-4';
+        
+        let badgeText = '알림';
+        let badgeClass = 'bg-slate-400/5 text-slate-400 border-slate-500/20';
+
+        switch (logItem.type) {
+          case 'boss':
+            badgeText = '필드보스';
+            badgeClass = 'bg-red-400/5 text-red-400 border-red-500/20';
+            break;
+          case 'custom':
+            badgeText = '커스텀';
+            badgeClass = 'bg-pink-400/5 text-pink-400 border-pink-500/20';
+            break;
+          case 'word':
+            badgeText = '지정단어';
+            badgeClass = 'bg-sky-400/5 text-sky-400 border-sky-500/20';
+            break;
+          case 'wave':
+            badgeText = '웨이브';
+            badgeClass = 'bg-violet-400/5 text-violet-400 border-violet-500/20';
+            break;
+          case 'buff':
+            badgeText = '버프';
+            badgeClass = 'bg-orange-400/5 text-orange-400 border-orange-500/20';
+            break;
+        }
+
+        const timeStr = formatTimestamp(logItem.timestamp);
+
+        itemDiv.innerHTML = `
+          <div class="flex items-start gap-4 w-full">
+            <span class="px-2.5 py-1 text-xs font-bold border rounded-lg shrink-0 ${badgeClass}">${badgeText}</span>
+            <div class="space-y-1.5 flex-1 min-w-0">
+              <p class="text-[13px] sm:text-sm font-semibold text-slate-100 leading-snug break-all">${escapeHtml(logItem.message)}</p>
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <i data-lucide="clock" class="w-3.5 h-3.5 opacity-60"></i>
+                <span>${timeStr}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        listEl.appendChild(itemDiv);
+      });
+
+      window.refreshIcons();
+    }
+
+    async function clearAllAlarmLogs() {
+      if (!confirm('모든 알림 기록을 삭제하시겠습니까?')) return;
+      if (window.electronAPI && window.electronAPI.clearAlarmLogs) {
+        window.electronAPI.clearAlarmLogs();
+        _alarmLogs = [];
+        renderAlarmLogs();
+      }
+    }
+
+    function formatTimestamp(ts) {
+      const d = new Date(ts);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const date = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     function triggerSectionHighlight(tabId) {
       let targetId = null;

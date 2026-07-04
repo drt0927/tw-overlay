@@ -624,6 +624,14 @@
         }
 
         if (shouldPlay) {
+          if (isPreview) {
+            // 미리보기 요청일 경우 현재 울리던 소리를 즉각 차단하고 큐를 초기화함
+            audioQueue = [];
+            bossAudio.pause();
+            bossAudio.currentTime = 0;
+            isPlayingAudio = false;
+          }
+
           // 사운드 재생 큐에 삽입 후 순차 재생 처리
           audioQueue.push({ soundFile, volume });
           if (!isPlayingAudio) {

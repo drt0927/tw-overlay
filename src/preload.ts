@@ -194,6 +194,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startChatLogWatch: () => ipcRenderer.send('start-chat-log-watch'),
   checkChatLogStatus: () => ipcRenderer.invoke('check-chat-log-status'),
   sendRendererReady: (windowKey: string) => ipcRenderer.send('renderer-ready', windowKey),
+  openAndHighlight: (key: string) => ipcRenderer.send('open-and-highlight', key),
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
 
   contentsToggleItem: (id: string, characterId?: string) => ipcRenderer.send('contents-toggle-item', id, characterId),
@@ -409,6 +410,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('open-settings-tab');
     ipcRenderer.on('open-settings-tab', (_event, tabId) => callback(tabId));
   },
+  onHighlightAlarmSettings: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('highlight-alarm-settings');
+    ipcRenderer.on('highlight-alarm-settings', () => callback());
+  },
   onToolbarHover: (callback: (isHover: boolean) => void) => {
     ipcRenderer.removeAllListeners('toolbar-hover');
     ipcRenderer.on('toolbar-hover', (_event, isHover) => callback(isHover));
@@ -551,6 +556,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   abandonedSetEnabled: (enabled: boolean) => ipcRenderer.send('abandoned-set-enabled', enabled),
   abandonedHideNow: () => ipcRenderer.send('abandoned-hide-now'),
   setAbandonedAutoHide: (minutes: number) => ipcRenderer.send('set-abandoned-autohide', minutes),
+  getAlarmLogs: (limit?: number) => ipcRenderer.invoke('alarm-get-logs', limit),
+  clearAlarmLogs: () => ipcRenderer.send('alarm-clear-logs'),
+  onAlarmLogsUpdated: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('alarm-logs-updated');
+    ipcRenderer.on('alarm-logs-updated', () => callback());
+  },
+
 
   cleanupAllListeners: () => {
     const events = [
@@ -564,7 +576,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'lokagos-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
       'auto-select-equipment', 'auto-select-evolution',
       'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled',
-      'trigger-jellyppy-rain', 'trigger-firework', 'chat-log-status-changed'
+      'trigger-jellyppy-rain', 'trigger-firework', 'chat-log-status-changed',
+      'alarm-logs-updated', 'highlight-alarm-settings'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

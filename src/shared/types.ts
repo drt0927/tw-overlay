@@ -129,6 +129,7 @@ export interface CustomAlert {
     offsets: number[];  // e.g. [10, 5, 0]
     message: string;
     soundFile: string;
+    volume?: number;    // 알림 재생 볼륨 (0~100)
 }
 
 export interface ShortcutsConfig {
@@ -573,3 +574,12 @@ export interface AbandonedRoadState {
         stoneLosses: Record<string, number>;
     }>;
 }
+
+export interface AlarmLog {
+    id?: number;
+    timestamp: number;
+    type: 'boss' | 'custom' | 'word' | 'wave' | 'buff' | 'etc';
+    title: string;
+    message: string;
+}
+

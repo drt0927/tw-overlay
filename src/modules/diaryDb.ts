@@ -2,7 +2,7 @@ import * as path from 'path';
 import { app, BrowserWindow } from 'electron';
 import Database = require('better-sqlite3');
 import { log } from './logger';
-import { DiaryEntry, HomeworkLog, ActivityLog, DiaryData } from '../shared/types';
+import { DiaryEntry, HomeworkLog, ActivityLog, DiaryData, AlarmLog } from '../shared/types';
 
 let db: Database.Database | null = null;
 
@@ -115,6 +115,14 @@ export function initDb(): void {
         y INTEGER NOT NULL,
         color TEXT,
         FOREIGN KEY (hunting_ground_id) REFERENCES hunting_grounds(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS alarm_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL
       );
     `);
 
@@ -908,6 +916,75 @@ export function addElsoPoints(date: string, time: string, points: number): void 
     log(`[DiaryDB] addElsoPoints failed (date: ${date}, points: ${points}): ${error}`);
   }
 }
+
+/**
+ * 알람 로그 추가
+ */
+export function addAlarmLog(
+  type: 'boss' | 'custom' | 'word' | 'wave' | 'buff' | 'etc',
+  title: string,
+  message: string
+): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    const timestamp = Date.now();
+    db.prepare('INSERT INTO alarm_logs (timestamp, type, title, message) VALUES (?, ?, ?, ?)').run(
+      timestamp,
+      type,
+      title,
+      message
+    );
+    log(`[DiaryDB] 알람 로그 추가: [${type}] ${title} - ${message}`);
+
+    // 용량 관리를 위해 7일 이전의 로그 자동 삭제 (7일 = 7 * 24 * 60 * 60 * 1000 ms)
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    db.prepare('DELETE FROM alarm_logs WHERE timestamp < ?').run(sevenDaysAgo);
+
+    notifyAlarmLogUpdate();
+  } catch (e) {
+    log(`[DiaryDB] addAlarmLog 실패: ${e}`);
+  }
+}
+
+/**
+ * 알람 로그 조회
+ */
+export function getAlarmLogs(limit: number = 100): AlarmLog[] {
+  if (!db) initDb();
+  if (!db) return [];
+  try {
+    return db.prepare('SELECT * FROM alarm_logs ORDER BY timestamp DESC LIMIT ?').all(limit) as AlarmLog[];
+  } catch (e) {
+    log(`[DiaryDB] getAlarmLogs 실패: ${e}`);
+    return [];
+  }
+}
+
+/**
+ * 알람 로그 전체 삭제
+ */
+export function clearAlarmLogs(): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    db.prepare('DELETE FROM alarm_logs').run();
+    log('[DiaryDB] 모든 알람 로그 삭제 완료');
+    notifyAlarmLogUpdate();
+  } catch (e) {
+    log(`[DiaryDB] clearAlarmLogs 실패: ${e}`);
+  }
+}
+
+/**
+ * 알람 로그 업데이트 알림
+ */
+function notifyAlarmLogUpdate(): void {
+  BrowserWindow.getAllWindows().forEach(win => {
+    if (!win.isDestroyed()) win.webContents.send('alarm-logs-updated');
+  });
+}
+
 
 
 

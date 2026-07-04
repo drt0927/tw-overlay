@@ -344,8 +344,8 @@ class ChatLogProcessor {
         }
       }
 
-      // 디스코드 전용 알림 처리 (독립 동작)
-      if (cfg.discordAlertEnabled && cfg.discordWebhookUrl && !isSystemLog) {
+      // 디스코드 전용 알림 처리 (독립 동작 - 클럽 공지 제외)
+      if (cfg.discordAlertEnabled && cfg.discordWebhookUrl && !isSystemLog && data.sender !== '클럽 공지') {
         // 기존 discordKeywords 필드만 있고 discordRules가 없는 구버전 설정을 위한 마이그레이션
         let rules = cfg.discordRules || [];
         if (rules.length === 0 && cfg.discordKeywords && cfg.discordKeywords.length > 0) {
@@ -656,9 +656,18 @@ class ChatLogProcessor {
       contentsChecker.queuePendingHomework('weekly-thursday-clean', 1, true);
     });
 
-    // 팔색조 언덕 (갈망하는 즐거움) 보상 획득 처리
-    chatParser.on('PITTA_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('daily-pitta', 1, true);
+    // 팔색조 언덕 (갈망하는 즐거움) 진입 처리
+    chatParser.on('PITTA_ENTRY', (data) => {
+      // K값이 인식되지 않는 경우 (NaN이거나 undefined인 경우 등) K를 0으로 예외 처리
+      const energy = typeof data.energy === 'number' && !isNaN(data.energy) ? data.energy : 0;
+      const computedCount = (20 - energy) + 1;
+      
+      // 유효 범위(1~5회)인 경우에만 숙제 카운팅 동기화
+      if (computedCount >= 1 && computedCount <= 5) {
+        contentsChecker.queuePendingHomework('daily-pitta', computedCount, false);
+      } else {
+        log(`[CHAT_PROCESSOR] 팔색조 언덕 카운트 범위 초과 혹은 예외로 무시됨: computedCount=${computedCount} (energy=${energy})`);
+      }
     });
 
     // 에타 일일 퀘스트 완료 처리

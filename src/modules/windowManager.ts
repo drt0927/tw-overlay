@@ -40,6 +40,10 @@ function pushToStack(win: BrowserWindow | null): void {
   activeWindowsStack.push(win);
 }
 
+function isValidCoordinate(val: any): boolean {
+  return typeof val === 'number' && Number.isFinite(val) && !Number.isNaN(val);
+}
+
 function removeFromStack(win: BrowserWindow | null): void {
   activeWindowsStack = activeWindowsStack.filter(w => w !== win);
 }
@@ -1076,7 +1080,12 @@ export function getAllWindowHwnds(): string[] {
   for (const win of orderedWindows) {
     if (win && !win.isDestroyed()) {
       try {
-        results.push(win.getNativeWindowHandle().readBigUint64LE().toString());
+        const handle = win.getNativeWindowHandle();
+        if (handle && handle.length >= 8) {
+          results.push(handle.readBigUint64LE().toString());
+        } else if (handle && handle.length >= 4) {
+          results.push(handle.readUInt32LE(0).toString());
+        }
       } catch (e) {
         // 무시
       }
@@ -1173,7 +1182,9 @@ export function syncOverlay(currentRect: GameRect): void {
       const finalX = Math.round(gX + overlayPos.offsetX), finalY = Math.round(gY + overlayPos.offsetY);
       // 전체화면 과도기 상태(skipPositionSync)일 때는 사용자 오버레이 창 위치 조정을 건너뜀
       if (!skipPositionSync && (Math.abs(b.x - finalX) > POSITION_THRESHOLD || Math.abs(b.y - finalY) > POSITION_THRESHOLD || Math.abs(b.width - newW) > POSITION_THRESHOLD || Math.abs(b.height - newH) > POSITION_THRESHOLD)) {
-        setProgrammaticMove('overlay'); overlayWindow.setBounds({ x: finalX, y: finalY, width: newW, height: newH });
+        if (isValidCoordinate(finalX) && isValidCoordinate(finalY) && isValidCoordinate(newW) && isValidCoordinate(newH)) {
+          setProgrammaticMove('overlay'); overlayWindow.setBounds({ x: finalX, y: finalY, width: newW, height: newH });
+        }
       }
     } else if (isOverlayVisible && !overlayWindow) createOverlayWindow();
 
@@ -1183,7 +1194,9 @@ export function syncOverlay(currentRect: GameRect): void {
     if (gameOverlayWindow) {
       const b = gameOverlayWindow.getBounds();
       if (Math.abs(b.x - gX) > POSITION_THRESHOLD || Math.abs(b.y - gY) > POSITION_THRESHOLD || Math.abs(b.width - gW) > POSITION_THRESHOLD || Math.abs(b.height - gH) > POSITION_THRESHOLD) {
-        gameOverlayWindow.setBounds({ x: gX, y: gY, width: gW, height: gH });
+        if (isValidCoordinate(gX) && isValidCoordinate(gY) && isValidCoordinate(gW) && isValidCoordinate(gH)) {
+          gameOverlayWindow.setBounds({ x: gX, y: gY, width: gW, height: gH });
+        }
       }
       // 게임 복귀 시 숨겨진 상태면 다시 표시 (isDestroyed 재확인 후 처리)
       if (!gameOverlayWindow.isDestroyed() && !gameOverlayWindow.isVisible()) gameOverlayWindow.showInactive();
@@ -1252,8 +1265,10 @@ export function syncOverlay(currentRect: GameRect): void {
           const b = dockCfg.ref.getBounds();
           // 독바는 전체화면 모드일 때도 게임 창 가장자리에 항상 도킹되어 보여야 함
           if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
-            setProgrammaticMove('dock');
-            dockCfg.ref.setPosition(x, y);
+            if (isValidCoordinate(x) && isValidCoordinate(y)) {
+              setProgrammaticMove('dock');
+              dockCfg.ref.setPosition(x, y);
+            }
           }
         }
       }
@@ -1271,8 +1286,10 @@ export function syncOverlay(currentRect: GameRect): void {
       if (Math.abs(currentSidebarB.x - newSidebarX) > POSITION_THRESHOLD ||
         Math.abs(currentSidebarB.y - newSidebarY) > POSITION_THRESHOLD ||
         Math.abs(currentSidebarB.height - newSidebarH) > POSITION_THRESHOLD) {
-        setProgrammaticMove('main');
-        mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: newSidebarH });
+        if (isValidCoordinate(newSidebarX) && isValidCoordinate(newSidebarY) && isValidCoordinate(currentSidebarB.width) && isValidCoordinate(newSidebarH)) {
+          setProgrammaticMove('main');
+          mainWindow.setBounds({ x: newSidebarX, y: newSidebarY, width: currentSidebarB.width, height: newSidebarH });
+        }
       }
     }
 
@@ -1280,7 +1297,7 @@ export function syncOverlay(currentRect: GameRect): void {
       if (key === 'dock') return;
       const winCfg = windowRegistry[key];
       if (winCfg.ref && !winCfg.ref.isDestroyed() && winCfg.ref.isVisible()) {
-        // 스케일링된 좌표(gX, gY 등)를 기반으로 위치 계산
+        // 스케일링된 좌표(gX, y 등)를 기반으로 위치 계산
         const scaledGameRect = { x: gX, y: gY, width: gW, height: gH, isForeground: currentRect.isForeground };
         const { x, y } = (winCfg.calcPosition)
           ? winCfg.calcPosition(scaledGameRect, winCfg.pos)
@@ -1289,8 +1306,10 @@ export function syncOverlay(currentRect: GameRect): void {
         const b = winCfg.ref.getBounds();
         // 전체화면 과도기 상태(skipPositionSync)일 때는 개별 오버레이 창들의 위치 조정을 건너뜀
         if (!skipPositionSync && (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD)) {
-          setProgrammaticMove(key);
-          winCfg.ref.setPosition(x, y);
+          if (isValidCoordinate(x) && isValidCoordinate(y)) {
+            setProgrammaticMove(key);
+            winCfg.ref.setPosition(x, y);
+          }
         }
       }
     });
@@ -1318,7 +1337,9 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     // X(right 방향)와 Y/H는 syncOverlay가 관리 — stale gameRect 사용 금지
     setProgrammaticMove('main');
     if (mainWindow.isVisible()) {
-      mainWindow.setBounds({ x: Math.round(newX), y: b.y, width: newSettings.width, height: b.height });
+      if (isValidCoordinate(newX) && isValidCoordinate(b.y) && isValidCoordinate(newSettings.width) && isValidCoordinate(b.height)) {
+        mainWindow.setBounds({ x: Math.round(newX), y: b.y, width: newSettings.width, height: b.height });
+      }
     }
 
     // 열려있는 자식 창들도 재배치 (사이드바 X 변경에 따른 오프셋 보정)
@@ -1333,8 +1354,10 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
 
           const b = winCfg.ref.getBounds();
           if (Math.abs(b.x - x) > POSITION_THRESHOLD || Math.abs(b.y - y) > POSITION_THRESHOLD) {
-            setProgrammaticMove(key);
-            winCfg.ref.setPosition(x, y);
+            if (isValidCoordinate(x) && isValidCoordinate(y)) {
+              setProgrammaticMove(key);
+              winCfg.ref.setPosition(x, y);
+            }
           }
         }
       });

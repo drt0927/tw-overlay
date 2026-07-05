@@ -230,7 +230,15 @@ export function promoteWindows(gameHwndStr: string | undefined, electronHwnds: s
 
         const fgHwnd = parseHwnd(win32.GetForegroundWindow());
         const isGameFocused = (fgHwnd === gameHwnd);
-        const electronHwndBigInts = electronHwnds.map(h => BigInt(h));
+        const electronHwndBigInts = electronHwnds
+            .map(h => {
+                try {
+                    return BigInt(h);
+                } catch {
+                    return 0n;
+                }
+            })
+            .filter(h => h !== 0n);
         // 사이드바를 포함한 모든 앱 윈도우 중 하나라도 포커스를 가졌는지 체크
         const isOurAppFocused = electronHwndBigInts.includes(fgHwnd);
 
@@ -276,7 +284,12 @@ export async function boostGameProcess(): Promise<string | undefined> {
 export function placeGameBelowWindow(insertAfterHwndStr: string): void {
     if (!cachedHwnd || !isHwndValid(cachedHwnd)) return;
     try {
-        const insertAfterHwnd = BigInt(insertAfterHwndStr);
+        let insertAfterHwnd: bigint;
+        try {
+            insertAfterHwnd = BigInt(insertAfterHwndStr);
+        } catch {
+            return;
+        }
         const flags = win32.SWP_NOMOVE | win32.SWP_NOSIZE | win32.SWP_NOACTIVATE |
             win32.SWP_NOOWNERZORDER | win32.SWP_NOSENDCHANGING;
         win32.SetWindowPos(cachedHwnd, insertAfterHwnd, 0, 0, 0, 0, flags);

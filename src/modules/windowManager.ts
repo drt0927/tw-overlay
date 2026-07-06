@@ -546,6 +546,36 @@ function createOverlayWindow(targetUrl?: string): void {
   attachStackListeners(overlayWindow);
 }
 
+function getOverlapArea(
+  rect1: { x: number; y: number; w: number; h: number },
+  rect2: { x: number; y: number; w: number; h: number }
+): number {
+  const xLeft = Math.max(rect1.x, rect2.x);
+  const yTop = Math.max(rect1.y, rect2.y);
+  const xRight = Math.min(rect1.x + rect1.w, rect2.x + rect2.w);
+  const yBottom = Math.min(rect1.y + rect1.h, rect2.y + rect2.h);
+
+  if (xRight > xLeft && yBottom > yTop) {
+    return (xRight - xLeft) * (yBottom - yTop);
+  }
+  return 0;
+}
+
+function isVisibleOnScreens(x: number, y: number, width: number, height: number): boolean {
+  const displays = screen.getAllDisplays();
+  let totalOverlap = 0;
+  for (const display of displays) {
+    const bounds = display.bounds;
+    totalOverlap += getOverlapArea(
+      { x, y, w: width, h: height },
+      { x: bounds.x, y: bounds.y, w: bounds.width, h: bounds.height }
+    );
+  }
+  // 최소 900 픽셀 (30x30) 또는 창 크기의 10% 중 더 작은 영역 이상이 화면과 겹쳐야 함.
+  const minOverlapArea = Math.min(900, width * height * 0.1);
+  return totalOverlap >= minOverlapArea;
+}
+
 function createToggleableWindow(key: string, callbacks?: {
   onReady?: (win: BrowserWindow) => void,
   calcPosition?: (gr: GameRect, pos: WindowPosition) => { x: number, y: number }
@@ -661,6 +691,22 @@ function createToggleableWindow(key: string, callbacks?: {
           const minX = gameRect.x;
           const maxX = Math.max(minX, gameRect.x + gameRect.width - finalW);
           x = Math.max(minX, Math.min(x, maxX));
+        } else {
+          // 저장된 위치가 있으나, 화면 바깥에 완전히 밀려나서 보이지 않는 경우 중앙으로 강제 복귀
+          if (!isVisibleOnScreens(x, y, finalW, finalH)) {
+            log(`[CHAT_OVERLAY_POS] Window ${key} is out of screen bounds (x=${x}, y=${y}). Centering window.`);
+            const targetDisplay = screen.getDisplayNearestPoint({ x: gameRect.x, y: gameRect.y });
+            const workArea = targetDisplay.workArea;
+            x = Math.round(workArea.x + (workArea.width - finalW) / 2);
+            y = Math.round(workArea.y + (workArea.height - finalH) / 2);
+
+            // 중앙 위치로 계산된 새 오프셋 저장
+            winCfg.pos = {
+              offsetX: x - (gameRect.x + gameRect.width),
+              offsetY: y - gameRect.y
+            };
+            savePosition(key, winCfg.pos);
+          }
         }
       }
 

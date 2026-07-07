@@ -184,6 +184,15 @@
     "category": "records"
   },
   {
+    "id": "stopwatch-btn",
+    "label": "시간 측정 및 기록",
+    "icon": "timer",
+    "tooltip": "클리어 타임 측정 및 기록 (Ctrl+Shift+S)",
+    "color": "indigo-400",
+    "api": "toggleStopwatch",
+    "category": "records"
+  },
+  {
     "id": "boss-btn",
     "label": "필드보스 알림 설정",
     "icon": "alarm-clock",

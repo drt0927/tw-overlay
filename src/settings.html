@@ -1663,6 +1663,25 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 8. 시간 측정 시작/종료 토글 -->
+              <div class="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5 group">
+                <div class="flex flex-col gap-1">
+                  <span class="text-sm font-bold text-slate-200">시간 측정 시작/종료 토글</span>
+                  <p class="text-xs text-slate-500">인게임 클리어 타임 측정을 시작하거나 종료합니다.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="relative">
+                    <input type="text" id="shortcut-toggleTimer" readonly
+                      class="shortcut-input w-48 text-center font-mono text-xs py-2.5 px-4 bg-black/40 border border-white/10 rounded-lg text-purple-400 cursor-pointer focus:border-purple-500/50 outline-none transition-all"
+                      placeholder="단축키 입력..." onclick="recordShortcut('toggleTimer')">
+                    <button onclick="resetShortcut('toggleTimer')"
+                      class="absolute -right-2 -top-2 w-5 h-5 bg-slate-800 border border-white/10 rounded-full text-slate-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                      <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="mt-4 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
@@ -1765,7 +1784,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.0.7</span></p>
+                        class="text-purple-400">2.1.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2098,7 +2117,8 @@
       toggleChatOverlaySync: 'CommandOrControl+Shift+H',
       resetXpSession: 'CommandOrControl+Shift+X',
       toggleXpSession: 'CommandOrControl+Shift+Z',
-      clearAllBuffs: 'CommandOrControl+Shift+E'
+      clearAllBuffs: 'CommandOrControl+Shift+E',
+      toggleTimer: 'CommandOrControl+Shift+S'
     };
 
     function recordShortcut(key) {
@@ -2161,7 +2181,8 @@
         toggleChatOverlaySync: 'CommandOrControl+Shift+H',
         resetXpSession: 'CommandOrControl+Shift+X',
         toggleXpSession: 'CommandOrControl+Shift+Z',
-        clearAllBuffs: 'CommandOrControl+Shift+E'
+        clearAllBuffs: 'CommandOrControl+Shift+E',
+        toggleTimer: 'CommandOrControl+Shift+S'
       };
       currentShortcuts[key] = defaults[key];
       const input = document.getElementById(`shortcut-${key}`);

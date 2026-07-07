@@ -2,7 +2,7 @@ import * as path from 'path';
 import { app, BrowserWindow } from 'electron';
 import Database = require('better-sqlite3');
 import { log } from './logger';
-import { DiaryEntry, HomeworkLog, ActivityLog, DiaryData, AlarmLog } from '../shared/types';
+import { DiaryEntry, HomeworkLog, ActivityLog, DiaryData, AlarmLog, TimerRecord } from '../shared/types';
 
 let db: Database.Database | null = null;
 
@@ -124,7 +124,33 @@ export function initDb(): void {
         title TEXT NOT NULL,
         message TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS timer_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        duration INTEGER NOT NULL,
+        title TEXT DEFAULT '',
+        series TEXT NOT NULL,
+        core_master TEXT NOT NULL,
+        coefficient REAL NOT NULL,
+        char_main INTEGER NOT NULL DEFAULT 0,
+        char_sub INTEGER NOT NULL DEFAULT 0,
+        base_main INTEGER NOT NULL,
+        enchant_main INTEGER NOT NULL,
+        base_sub INTEGER NOT NULL,
+        enchant_sub INTEGER NOT NULL,
+        accuracy INTEGER NOT NULL,
+        raw_profile_data TEXT NOT NULL
+      );
     `);
+
+    // char_main 및 char_sub 컬럼 하위 호환 마이그레이션
+    try {
+      db.prepare("ALTER TABLE timer_records ADD COLUMN char_main INTEGER NOT NULL DEFAULT 0").run();
+    } catch (e) {}
+    try {
+      db.prepare("ALTER TABLE timer_records ADD COLUMN char_sub INTEGER NOT NULL DEFAULT 0").run();
+    } catch (e) {}
 
     // 사냥터 기본 맵 정보 초기 삽입
     db.prepare(`
@@ -984,6 +1010,138 @@ function notifyAlarmLogUpdate(): void {
     if (!win.isDestroyed()) win.webContents.send('alarm-logs-updated');
   });
 }
+
+/**
+ * 시간 측정 기록 추가
+ */
+export function addTimerRecord(record: Omit<TimerRecord, 'id'>): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    db.prepare(`
+      INSERT INTO timer_records (date, duration, title, series, core_master, coefficient, char_main, char_sub, base_main, enchant_main, base_sub, enchant_sub, accuracy, raw_profile_data)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      record.date,
+      record.duration,
+      record.title,
+      record.series,
+      record.core_master,
+      record.coefficient,
+      record.char_main,
+      record.char_sub,
+      record.base_main,
+      record.enchant_main,
+      record.base_sub,
+      record.enchant_sub,
+      record.accuracy,
+      record.raw_profile_data
+    );
+    log(`[DiaryDB] Timer record added: ${record.date} - ${record.duration}ms`);
+    notifyTimerUpdate();
+  } catch (e) {
+    log(`[DiaryDB] addTimerRecord failed: ${e}`);
+  }
+}
+
+/**
+ * 시간 측정 기록 목록 조회
+ */
+export function getTimerRecords(): TimerRecord[] {
+  if (!db) initDb();
+  if (!db) return [];
+  try {
+    return db.prepare('SELECT * FROM timer_records ORDER BY date DESC').all() as TimerRecord[];
+  } catch (e) {
+    log(`[DiaryDB] getTimerRecords failed: ${e}`);
+    return [];
+  }
+}
+
+/**
+ * 시간 측정 기록 제목 수정
+ */
+export function updateTimerRecordTitle(id: number, title: string): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    db.prepare('UPDATE timer_records SET title = ? WHERE id = ?').run(title, id);
+    log(`[DiaryDB] Timer record title updated (id: ${id}) -> ${title}`);
+    notifyTimerUpdate();
+  } catch (e) {
+    log(`[DiaryDB] updateTimerRecordTitle failed: ${e}`);
+  }
+}
+
+/**
+ * 시간 측정 기록 계열, 코어 마스터, 계산된 계수 수정
+ */
+export function updateTimerRecordSeriesAndCore(
+  id: number,
+  series: string,
+  core_master: string,
+  coefficient: number,
+  char_main: number,
+  char_sub: number,
+  base_main: number,
+  enchant_main: number,
+  base_sub: number,
+  enchant_sub: number,
+  accuracy: number
+): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    db.prepare(`
+      UPDATE timer_records 
+      SET series = ?, core_master = ?, coefficient = ?, 
+          char_main = ?, char_sub = ?, base_main = ?, enchant_main = ?, 
+          base_sub = ?, enchant_sub = ?, accuracy = ? 
+      WHERE id = ?
+    `).run(
+      series,
+      core_master,
+      coefficient,
+      char_main,
+      char_sub,
+      base_main,
+      enchant_main,
+      base_sub,
+      enchant_sub,
+      accuracy,
+      id
+    );
+    log(`[DiaryDB] Timer record updated (id: ${id}) -> series: ${series}, core: ${core_master}, coeff: ${coefficient}`);
+    notifyTimerUpdate();
+  } catch (e) {
+    log(`[DiaryDB] updateTimerRecordSeriesAndCore failed: ${e}`);
+  }
+}
+
+/**
+ * 시간 측정 기록 삭제
+ */
+export function deleteTimerRecord(id: number): void {
+  if (!db) initDb();
+  if (!db) return;
+  try {
+    db.prepare('DELETE FROM timer_records WHERE id = ?').run(id);
+    log(`[DiaryDB] Timer record deleted (id: ${id})`);
+    notifyTimerUpdate();
+  } catch (e) {
+    log(`[DiaryDB] deleteTimerRecord failed: ${e}`);
+  }
+}
+
+/**
+ * 시간 측정 기록 업데이트 알림
+ */
+function notifyTimerUpdate(): void {
+  BrowserWindow.getAllWindows().forEach(win => {
+    if (!win.isDestroyed()) win.webContents.send('timer-updated');
+  });
+}
+
 
 
 

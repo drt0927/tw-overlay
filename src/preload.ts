@@ -184,6 +184,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleSienaAura: () => ipcRenderer.send('toggle-siena-aura'),
   toggleHuntingPathSimulator: () => ipcRenderer.send('toggle-hunting-path-simulator'),
   toggleWelcomeGuide: () => ipcRenderer.send('toggle-welcome-guide'),
+  toggleStopwatch: () => ipcRenderer.send('toggle-stopwatch'),
   getHuntingGrounds: () => ipcRenderer.invoke('get-hunting-grounds'),
   getHuntingPath: (groundId: string) => ipcRenderer.invoke('get-hunting-path', groundId),
   saveHuntingPath: (groundId: string, points: Array<[number, number, string?]>) => ipcRenderer.send('save-hunting-path', groundId, points),
@@ -563,6 +564,46 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('alarm-logs-updated', () => callback());
   },
 
+  onTimerToggle: (callback: (state: 'start' | 'stop' | 'toggle') => void) => {
+    ipcRenderer.removeAllListeners('timer-toggle');
+    ipcRenderer.on('timer-toggle', (_event, state) => callback(state));
+  },
+  onTimerUpdated: (callback: () => void) => {
+    ipcRenderer.removeAllListeners('timer-updated');
+    ipcRenderer.on('timer-updated', () => callback());
+  },
+  timerSaveRecord: (record: any) => ipcRenderer.send('timer-save-record', record),
+  timerGetRecords: () => ipcRenderer.invoke('timer-get-records'),
+  timerUpdateTitle: (id: number, title: string) => ipcRenderer.send('timer-update-title', id, title),
+  timerUpdateSeriesCore: (
+    id: number, 
+    series: string, 
+    core_master: string, 
+    coefficient: number,
+    char_main: number,
+    char_sub: number,
+    base_main: number,
+    enchant_main: number,
+    base_sub: number,
+    enchant_sub: number,
+    accuracy: number
+  ) => ipcRenderer.send(
+    'timer-update-series-core', 
+    id, 
+    series, 
+    core_master, 
+    coefficient,
+    char_main,
+    char_sub,
+    base_main,
+    enchant_main,
+    base_sub,
+    enchant_sub,
+    accuracy
+  ),
+  timerDeleteRecord: (id: number) => ipcRenderer.send('timer-delete-record', id),
+  timerToggleSession: (state: 'start' | 'stop') => ipcRenderer.send('timer-toggle-session', state),
+
 
   cleanupAllListeners: () => {
     const events = [
@@ -577,7 +618,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'auto-select-equipment', 'auto-select-evolution',
       'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled',
       'trigger-jellyppy-rain', 'trigger-firework', 'chat-log-status-changed',
-      'alarm-logs-updated', 'highlight-alarm-settings'
+      'alarm-logs-updated', 'highlight-alarm-settings', 'timer-toggle', 'timer-updated'
     ];
     events.forEach(event => ipcRenderer.removeAllListeners(event));
   }

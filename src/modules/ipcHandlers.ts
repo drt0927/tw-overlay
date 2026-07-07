@@ -229,6 +229,7 @@ export function register(): void {
     'toggle-hunting-path-simulator': wm.toggleHuntingPathSimulatorWindow,
     'toggle-welcome-guide': wm.toggleWelcomeGuideWindow,
     'toggle-shout-history': wm.toggleShoutHistoryWindow,
+    'toggle-stopwatch': wm.toggleStopwatchWindow,
   };
 
   Object.entries(toggleHandlers).forEach(([event, handler]) => {
@@ -712,5 +713,54 @@ export function register(): void {
   });
   ipcMain.on('alarm-clear-logs', () => {
     diaryDb.clearAlarmLogs();
+  });
+
+  // --- Timer IPC ---
+  ipcMain.on('timer-save-record', (_e, record: any) => {
+    diaryDb.addTimerRecord(record);
+  });
+  ipcMain.handle('timer-get-records', () => {
+    return diaryDb.getTimerRecords();
+  });
+  ipcMain.on('timer-update-title', (_e, id: number, title: string) => {
+    diaryDb.updateTimerRecordTitle(id, title);
+  });
+  ipcMain.on('timer-update-series-core', (
+    _e, 
+    id: number, 
+    series: string, 
+    core_master: string, 
+    coefficient: number,
+    char_main: number,
+    char_sub: number,
+    base_main: number,
+    enchant_main: number,
+    base_sub: number,
+    enchant_sub: number,
+    accuracy: number
+  ) => {
+    diaryDb.updateTimerRecordSeriesAndCore(
+      id, 
+      series, 
+      core_master, 
+      coefficient,
+      char_main,
+      char_sub,
+      base_main,
+      enchant_main,
+      base_sub,
+      enchant_sub,
+      accuracy
+    );
+  });
+  ipcMain.on('timer-delete-record', (_e, id: number) => {
+    diaryDb.deleteTimerRecord(id);
+  });
+  ipcMain.on('timer-toggle-session', (event, state: 'start' | 'stop') => {
+    BrowserWindow.getAllWindows().forEach(win => {
+      if (!win.isDestroyed() && win.webContents !== event.sender) {
+        win.webContents.send('timer-toggle', state);
+      }
+    });
   });
 }

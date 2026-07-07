@@ -1260,12 +1260,99 @@
       pointer-events: none;
       width: 320px;
     }
+
+    /* ── 타이머 HUD ── */
+    .timer-hud {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      padding: 10px 24px;
+      background: rgba(15, 18, 30, 0.94);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(129, 140, 248, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      z-index: 200;
+      min-width: 170px;
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    .timer-hud.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .timer-hud-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .timer-hud-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: timer-pulse-indigo 2.5s infinite;
+    }
+
+    .timer-hud-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.12em;
+    }
+
+    .timer-hud-display {
+      font-size: 26px;
+      font-weight: 900;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace, sans-serif;
+      text-shadow: 0 0 12px rgba(129, 140, 248, 0.5);
+      letter-spacing: 0.05em;
+    }
+
+    .timer-hud-status {
+      font-size: 9px;
+      font-weight: 800;
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      padding: 1px 10px;
+      border-radius: 9999px;
+      margin-top: 3px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    @keyframes timer-pulse-indigo {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.92); }
+    }
   </style>
 </head>
 
 <body class="select-none">
   <!-- Dock 모드 전용 알림 토스트 컨테이너 -->
   <div id="dock-toast-container" class="dock-toast-container"></div>
+
+  <!-- 타이머 HUD (클리어 타임 측정용) -->
+  <div id="timer-hud" class="timer-hud">
+    <div class="timer-hud-header">
+      <span class="timer-hud-icon-wrap">
+        <i data-lucide="timer" class="w-3.5 h-3.5 text-indigo-400"></i>
+      </span>
+      <span class="timer-hud-title">STOPWATCH</span>
+    </div>
+    <div id="timer-hud-display" class="timer-hud-display">00:00.00</div>
+    <div id="timer-hud-status" class="timer-hud-status hidden">HOLDING (10s)</div>
+  </div>
 
   <!-- XP HUD -->
   <div id="xp-hud" class="xp-hud">
@@ -1407,6 +1494,96 @@
   <div id="buff-hud" class="buff-hud"></div>
 
   <script>
+    // ── 타이머 HUD 상태 및 로직 정의 ──
+    let timerInterval = null;
+    let timerStartTime = 0;
+    let timerIsRunning = false;
+    let timerFadeTimeout = null;
+    let timerStatusInterval = null;
+
+    function formatTimerTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      const cs = Math.floor((ms % 1000) / 10);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      if (timerIsRunning) return;
+      
+      if (timerFadeTimeout) { clearTimeout(timerFadeTimeout); timerFadeTimeout = null; }
+      if (timerStatusInterval) { clearInterval(timerStatusInterval); timerStatusInterval = null; }
+      
+      timerStartTime = Date.now();
+      timerIsRunning = true;
+      
+      const hud = document.getElementById('timer-hud');
+      const display = document.getElementById('timer-hud-display');
+      const status = document.getElementById('timer-hud-status');
+      
+      if (hud) {
+        hud.classList.remove('hidden');
+        hud.offsetHeight; // layout trigger
+        hud.classList.add('show');
+      }
+      if (status) {
+        status.classList.add('hidden');
+      }
+      if (display) {
+        display.innerText = '00:00.00';
+      }
+      
+      timerInterval = setInterval(() => {
+        if (display) {
+          const elapsed = Date.now() - timerStartTime;
+          display.innerText = formatTimerTime(elapsed);
+        }
+      }, 10);
+    }
+
+    function stopTimer() {
+      if (!timerIsRunning) return;
+      timerIsRunning = false;
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      
+      const status = document.getElementById('timer-hud-status');
+      const hud = document.getElementById('timer-hud');
+      
+      if (status) {
+        status.classList.remove('hidden');
+        let remain = 10;
+        status.innerText = `HOLDING (${remain}s)`;
+        
+        timerStatusInterval = setInterval(() => {
+          remain--;
+          if (remain <= 0) {
+            clearInterval(timerStatusInterval);
+            timerStatusInterval = null;
+            if (hud) {
+              hud.classList.remove('show');
+              timerFadeTimeout = setTimeout(() => {
+                hud.classList.add('hidden');
+                timerFadeTimeout = null;
+              }, 400);
+            }
+          } else {
+            status.innerText = `HOLDING (${remain}s)`;
+          }
+        }, 1000);
+      } else {
+        if (hud) {
+          timerFadeTimeout = setTimeout(() => {
+            hud.classList.remove('show');
+            timerFadeTimeout = setTimeout(() => {
+              hud.classList.add('hidden');
+              timerFadeTimeout = null;
+            }, 400);
+          }, 10000);
+        }
+      }
+    }
+
     function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
     function formatXP(num) {
@@ -2660,6 +2837,22 @@
 
       window.electronAPI.onScamAlert((result) => {
         createDockScamToast(result);
+      });
+
+      window.electronAPI.onTimerToggle((state) => {
+        if (state === 'start') {
+          startTimer();
+        } else if (state === 'stop') {
+          stopTimer();
+        } else if (state === 'toggle') {
+          if (timerIsRunning) {
+            window.electronAPI.timerToggleSession('stop');
+            stopTimer();
+          } else {
+            window.electronAPI.timerToggleSession('start');
+            startTimer();
+          }
+        }
       });
     }
 

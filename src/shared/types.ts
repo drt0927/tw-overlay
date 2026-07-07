@@ -149,6 +149,8 @@ export interface ShortcutsConfig {
     toggleXpSession?: string;
     /** 버프 타이머 버프 전체 삭제 */
     clearAllBuffs?: string;
+    /** 시간 측정 시작/종료 토글 */
+    toggleTimer?: string;
 }
 
 /** 채팅 로그 버프 감지 트리거 */
@@ -285,6 +287,7 @@ export interface AppConfig {
         chatOverlay?: WindowPosition;
         chatOverlaySub?: WindowPosition;
         chatOverlaySub2?: WindowPosition;
+        stopwatch?: WindowPosition;
       };
     tradeServer?: string;
     tradeKeywords?: string[];
@@ -582,4 +585,20 @@ export interface AlarmLog {
     title: string;
     message: string;
 }
-
+export interface TimerRecord {
+    id?: number;
+    date: string;          // YYYY-MM-DD HH:mm:ss
+    duration: number;      // 소요 시간 (밀리초)
+    title: string;
+    series: string;
+    core_master: string;
+    coefficient: number;
+    char_main: number;
+    char_sub: number;
+    base_main: number;
+    enchant_main: number;
+    base_sub: number;
+    enchant_sub: number;
+    accuracy: number;
+    raw_profile_data: string; // 계수 계산기 설정의 스냅샷 JSON 텍스트
+}

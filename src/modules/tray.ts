@@ -53,7 +53,8 @@ function buildMenuTemplate(): any[] {
         'toggleOverlay': wm.toggleOverlay,
         'toggleClickThrough': wm.toggleClickThrough,
         'toggleChatOverlay': wm.toggleChatOverlayWindow,
-        'toggleWelcomeGuide': wm.toggleWelcomeGuideWindow
+        'toggleWelcomeGuide': wm.toggleWelcomeGuideWindow,
+        'toggleStopwatch': wm.toggleStopwatchWindow
       };
 
       // 1. 카테고리 정의

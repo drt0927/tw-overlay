@@ -1,4 +1,4 @@
-import { globalShortcut } from 'electron';
+import { globalShortcut, BrowserWindow } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import * as tracker from './tracker';
@@ -117,6 +117,22 @@ export function registerAll(): void {
     });
     if (!registered) {
       log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.clearAllBuffs}`);
+    }
+  }
+
+  // 8. 시간 측정(Stopwatch) 토글
+  if (shortcuts.toggleTimer) {
+    const registered = globalShortcut.register(shortcuts.toggleTimer, () => {
+      if (!tracker.isGameOrAppForeground()) return;
+      log('[SHORTCUT] Toggle Timer');
+      BrowserWindow.getAllWindows().forEach(win => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('timer-toggle', 'toggle');
+        }
+      });
+    });
+    if (!registered) {
+      log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleTimer}`);
     }
   }
 

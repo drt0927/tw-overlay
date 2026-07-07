@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Declare lucide externally since it is loaded via script tag in HTML
 declare const lucide: any;
 

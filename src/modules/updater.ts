@@ -56,7 +56,9 @@ function broadcastStatus(data: UpdateStatusInfo) {
 export function setupUpdater(mainWindow: BrowserWindow | null) {
   if (isSetup) {
     if (currentUpdateInfo) {
-      mainWindow?.webContents.send('update-status', currentUpdateInfo);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update-status', currentUpdateInfo);
+      }
     }
     return;
   }
@@ -184,7 +186,9 @@ export function getCurrentStatus() {
 /** 수동 업데이트 확인 */
 export async function manualCheckForUpdate(mainWindow: BrowserWindow | null) {
   if (!app.isPackaged) {
-    mainWindow?.webContents.send('update-status', { state: 'dev-mode' });
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', { state: 'dev-mode' });
+    }
     return;
   }
 

@@ -76,7 +76,9 @@ export function getConstants() {
 // ── 브로드캐스트 ──
 function broadcastSessionUpdate(): void {
   const scamWin = wm.getScamDetectorWindow();
-  scamWin?.webContents.send('scam-session-update', getSessionStates(), _sessionQueue.length);
+  if (scamWin && !scamWin.isDestroyed()) {
+    scamWin.webContents.send('scam-session-update', getSessionStates(), _sessionQueue.length);
+  }
 }
 
 // ── 타이머 ──
@@ -214,8 +216,10 @@ async function runMockAnalysis(session: ActiveSession): Promise<void> {
     // 가상 딜레이 연출 (0.5초)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    log(`[SCAM] [MOCK] 가상 분석 결과: ${result.verdict} | ${path.basename(session.filePath)}`);
-    wm.getScamDetectorWindow()?.webContents.send('scam-analysis-result', result);
+    const scamWin = wm.getScamDetectorWindow();
+    if (scamWin && !scamWin.isDestroyed()) {
+      scamWin.webContents.send('scam-analysis-result', result);
+    }
 
     const shouldAlert =
       (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&
@@ -274,8 +278,10 @@ async function analyze(session: ActiveSession): Promise<void> {
       analyzedAt: Date.now(),
     };
 
-    log(`[SCAM] 분석 결과: ${result.verdict} | 응답 앞부분: ${raw.slice(0, 120).replace(/\n/g, '↵')}`);
-    wm.getScamDetectorWindow()?.webContents.send('scam-analysis-result', result);
+    const scamWin = wm.getScamDetectorWindow();
+    if (scamWin && !scamWin.isDestroyed()) {
+      scamWin.webContents.send('scam-analysis-result', result);
+    }
 
     const shouldAlert =
       (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&

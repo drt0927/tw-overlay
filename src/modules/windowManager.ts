@@ -475,7 +475,7 @@ function createOverlayWindow(targetUrl?: string): void {
   view.webContents.setWindowOpenHandler(({ url }) => { if (view) view.webContents.loadURL(url); return { action: 'deny' }; });
   view.webContents.loadURL(targetUrl || cfg.url || cfg.homeUrl);
   const updateUrl = () => {
-    if (view && overlayWindow) {
+    if (view && overlayWindow && !overlayWindow.isDestroyed()) {
       const currentUrl = view.webContents.getURL();
       overlayWindow.webContents.send('url-change', currentUrl);
       config.save({ url: currentUrl });
@@ -778,8 +778,19 @@ export function toggleSettingsWindow(tabId?: string): void {
   }
   createToggleableWindow('settings', {
     onReady: (win) => {
-      import('./updater').then(mod => { const info = mod.getCurrentStatus(); if (info) win.webContents.send('update-status', info); });
-      if (tabId) setTimeout(() => win.webContents.send('open-settings-tab', tabId), 100);
+      import('./updater').then(mod => {
+        const info = mod.getCurrentStatus();
+        if (info && win && !win.isDestroyed()) {
+          win.webContents.send('update-status', info);
+        }
+      });
+      if (tabId) {
+        setTimeout(() => {
+          if (win && !win.isDestroyed()) {
+            win.webContents.send('open-settings-tab', tabId);
+          }
+        }, 100);
+      }
     }
   });
 }
@@ -1426,8 +1437,16 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     updateViewBounds();
     setTimeout(() => { isApplyingSize = false; }, 300);
   }
-  [mainWindow, overlayWindow, gameOverlayWindow].forEach(win => win?.webContents.send('config-data', updated));
-  Object.values(windowRegistry).forEach(winCfg => winCfg.ref?.webContents.send('config-data', updated));
+  [mainWindow, overlayWindow, gameOverlayWindow].forEach(win => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('config-data', updated);
+    }
+  });
+  Object.values(windowRegistry).forEach(winCfg => {
+    if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+      winCfg.ref.webContents.send('config-data', updated);
+    }
+  });
 
   if (newSettings.chatOverlayClickThrough !== undefined) {
     const chatWin = windowRegistry.chatOverlay.ref;
@@ -1562,7 +1581,9 @@ export function toggleClickThrough(): boolean {
 
 export function toggleSidebar(): boolean {
   isSidebarCollapsed = !isSidebarCollapsed;
-  mainWindow?.webContents.send('sidebar-status', isSidebarCollapsed);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('sidebar-status', isSidebarCollapsed);
+  }
   return isSidebarCollapsed;
 }
 

@@ -76,7 +76,9 @@ export function register(): void {
 
       if (isNew) {
         overlayWin.webContents.once('did-finish-load', () => {
-          overlayWin?.webContents.send('trigger-jellyppy-rain');
+          if (overlayWin && !overlayWin.isDestroyed()) {
+            overlayWin.webContents.send('trigger-jellyppy-rain');
+          }
         });
       } else {
         overlayWin.webContents.send('trigger-jellyppy-rain');
@@ -118,7 +120,9 @@ export function register(): void {
       console.log('[IPC] Forwarding trigger-firework to gameOverlayWindow webContents.');
       if (isNew) {
         overlayWin.webContents.once('did-finish-load', () => {
-          overlayWin?.webContents.send('trigger-firework');
+          if (overlayWin && !overlayWin.isDestroyed()) {
+            overlayWin.webContents.send('trigger-firework');
+          }
         });
       } else {
         overlayWin.webContents.send('trigger-firework');
@@ -566,7 +570,9 @@ export function register(): void {
       scam.stopServer();
       const gpuResult = await scam.buildGpuResultForUserChoice(gpuChoice);
       await scam.downloadServerBinary(gpuResult, (pct) => {
-        win?.webContents.send('scam-progress', pct);
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('scam-progress', pct);
+        }
       });
       return { success: true, binaryVariant: gpuResult.binaryVariant };
     } catch (e) {
@@ -577,7 +583,9 @@ export function register(): void {
     const win = BrowserWindow.fromWebContents(event.sender);
     try {
       await scam.downloadModel((pct) => {
-        win?.webContents.send('scam-progress', pct);
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('scam-progress', pct);
+        }
       });
       return { success: true };
     } catch (e) {

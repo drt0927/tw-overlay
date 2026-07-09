@@ -35,6 +35,35 @@ export function register(): void {
     if (win) win.setIgnoreMouseEvents(ignore, options || {});
   });
 
+  ipcMain.on('set-always-on-top', (event, flag: boolean) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      win.setAlwaysOnTop(flag, flag ? 'screen-saver' : 'normal');
+      // 오버레이 해제(flag === false) 시, 게임창 뒤로 창이 숨겨지지 않도록 포커스를 다시 줌
+      if (!flag) {
+        win.show();
+        win.focus();
+      }
+    }
+  });
+
+  ipcMain.on('set-window-size', (event, width: number, height: number) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      const isResizable = win.isResizable();
+      win.setResizable(true);
+      win.setSize(Math.round(width), Math.round(height));
+      win.setResizable(isResizable);
+    }
+  });
+
+  ipcMain.on('set-window-position', (event, x: number, y: number) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      win.setPosition(Math.round(x), Math.round(y));
+    }
+  });
+
   ipcMain.on('welcome-guide-close', () => {
     config.save({ hasSeenWelcomeGuide: true });
     const guideWin = wm.getWelcomeGuideWindow();

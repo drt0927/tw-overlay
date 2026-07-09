@@ -183,6 +183,17 @@ export async function queryGameRect(): Promise<GameQueryResult> {
             cachedHwnd = findGameWindow();
             if (!cachedHwnd) return { notRunning: true };
             log(`[TRACKER] Found game window: ${cachedHwnd} (PID: ${lastProcessId})`);
+
+            // 최초 감지 또는 재감지 시, 현재 포커스 상태를 즉시 평가하여 단축키 상태를 업데이트합니다.
+            if (onForegroundChangeCallback) {
+                try {
+                    const fgHwnd = parseHwnd(win32.GetForegroundWindow());
+                    const isGameFocused = fgHwnd === cachedHwnd;
+                    onForegroundChangeCallback(isGameFocused, fgHwnd.toString());
+                } catch (e) {
+                    log(`[TRACKER] Failed to trigger initial foreground callback: ${e}`);
+                }
+            }
         }
 
         if (win32.IsIconic(cachedHwnd)) return null;

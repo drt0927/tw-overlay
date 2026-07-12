@@ -426,6 +426,16 @@ class ChatLogProcessor {
       if (gameOverlay) {
         gameOverlay.webContents.send('ethos-alert', data);
       }
+
+      if (cfg.ethosAlertSound && cfg.ethosAlertSound !== 'none') {
+        wm.sendPlaySound({
+          label: '이클립스 에토스 기믹 알림',
+          soundFile: cfg.ethosAlertSound,
+          volume: cfg.ethosAlertVolume !== undefined ? cfg.ethosAlertVolume : 40,
+          isCustom: true,
+          logMessage: `[에토스] 암호 감지: ${data.password}`
+        });
+      }
     });
 
     // 4-2. 심연의 제2사도 기믹 알림 처리
@@ -437,6 +447,31 @@ class ChatLogProcessor {
       const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
       if (gameOverlay) {
         gameOverlay.webContents.send('abyss-apostle-alert', data);
+      }
+
+      if (cfg.abyssApostleStartSound && cfg.abyssApostleStartSound !== 'none') {
+        wm.sendPlaySound({
+          label: '심연의 제2사도 반사 시작',
+          soundFile: cfg.abyssApostleStartSound,
+          volume: cfg.abyssApostleVolume !== undefined ? cfg.abyssApostleVolume : 40,
+          isCustom: true,
+          logMessage: `[제2사도] 반사 패턴 감지`
+        });
+      }
+
+      if (cfg.abyssApostleEndSound && cfg.abyssApostleEndSound !== 'none') {
+        setTimeout(() => {
+          const currentCfg = config.load();
+          if (currentCfg.abyssApostleAlertEnabled && currentCfg.abyssApostleEndSound && currentCfg.abyssApostleEndSound !== 'none') {
+            wm.sendPlaySound({
+              label: '심연의 제2사도 반사 종료',
+              soundFile: currentCfg.abyssApostleEndSound,
+              volume: currentCfg.abyssApostleVolume !== undefined ? currentCfg.abyssApostleVolume : 40,
+              isCustom: true,
+              logMessage: `[제2사도] 반사 패턴 종료`
+            });
+          }
+        }, 6500);
       }
     });
 
@@ -451,7 +486,7 @@ class ChatLogProcessor {
         gameOverlay.webContents.send('wave-warning-alert', data);
       }
 
-      if (cfg.waveMonsterWarningSound) {
+      if (cfg.waveMonsterWarningSound && cfg.waveMonsterWarningSound !== 'none') {
         wm.sendPlaySound({
           label: '몬스터 웨이브 종료 대기 알림',
           soundFile: cfg.waveMonsterWarningSound,
@@ -471,6 +506,16 @@ class ChatLogProcessor {
       const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
       if (gameOverlay) {
         gameOverlay.webContents.send('lokagos-alert', data);
+      }
+
+      if (cfg.lokagosAlertSound && cfg.lokagosAlertSound !== 'none') {
+        wm.sendPlaySound({
+          label: '이클립스 로카고스 기믹 알림',
+          soundFile: cfg.lokagosAlertSound,
+          volume: cfg.lokagosAlertVolume !== undefined ? cfg.lokagosAlertVolume : 40,
+          isCustom: true,
+          logMessage: `[로카고스] 기믹 패턴 감지`
+        });
       }
     });
 

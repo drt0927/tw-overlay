@@ -325,7 +325,14 @@ export interface AppConfig {
     waveMonsterWarningEnabled?: boolean;
     waveMonsterWarningSound?: string;
     waveMonsterWarningVolume?: number;
+    ethosAlertSound?: string;
+    ethosAlertVolume?: number;
+    abyssApostleStartSound?: string;
+    abyssApostleEndSound?: string;
+    abyssApostleVolume?: number;
     lokagosAlertEnabled?: boolean;
+    lokagosAlertSound?: string;
+    lokagosAlertVolume?: number;
 
     // --- Buff Timer Settings ---
     buffTimerEnabled?: boolean;

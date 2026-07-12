@@ -2327,6 +2327,13 @@
         return;
       }
       triggerLokagosAlert(type, zone);
+
+      // 테스트 사운드 재생 추가
+      if (currentConfig && currentConfig.lokagosAlertEnabled && currentConfig.lokagosAlertSound && currentConfig.lokagosAlertSound !== 'none') {
+        const vol = currentConfig.lokagosAlertVolume !== undefined ? currentConfig.lokagosAlertVolume : 40;
+        window.electronAPI.previewBossSound(currentConfig.lokagosAlertSound, vol, '로카고스 기믹 알림 테스트');
+      }
+
       console.log(`✅ 로카고스 기믹 테스트: ${type === 'EXCLUDE' ? zone + ' 제외 구역 대피' : zone + ' 구역 회피'} (${zone})`);
     };
 
@@ -2378,8 +2385,59 @@
         arrowIndicator.classList.remove('show');
         alertText.classList.remove('show');
       }, 5000);
+
+      // 테스트 사운드 재생 추가
+      if (currentConfig && currentConfig.ethosAlertEnabled && currentConfig.ethosAlertSound && currentConfig.ethosAlertSound !== 'none') {
+        const vol = currentConfig.ethosAlertVolume !== undefined ? currentConfig.ethosAlertVolume : 40;
+        window.electronAPI.previewBossSound(currentConfig.ethosAlertSound, vol, '에토스 기믹 알림 테스트');
+      }
       
       console.log(`✅ 에토스 기믹 테스트: ${data.password} (${dir} 방향)`);
+    };
+
+    // ── 테스트 가이드 (Console) ──
+    console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
+    console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`const el = document.getElementById('pitta-alert'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');`);
+    console.log('%c2. 에토스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testEthos('번개') // N, NE, E, SE, S, SW, W, NW 중 택1 혹은 암호 입력`);
+    console.log('%c3. 심연의 제2사도 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testAbyssApostle()`);
+    console.log('%c4. 로카고스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testLokagos('EXCLUDE', '알파') // EXCLUDE(대피), TARGET(폭격) 및 알파, 브라보, 찰리, 델타 중 택1`);
+    console.log('%c5. 경험의 정수 버프 경고 알림 테스트:', 'color: #facc15; font-weight: bold;');
+    console.log(`testEssenceAlert()`);
+    console.log('----------------------------------------------------');
+
+    // [DevTools 전용 글로벌 테스트 함수]
+    window.testEssenceAlert = function() {
+      const alertEl = document.getElementById('essence-alert');
+      if (!alertEl) {
+        console.error('essence-alert 엘리먼트를 찾을 수 없습니다.');
+        return;
+      }
+      alertEl.classList.remove('show');
+      void alertEl.offsetWidth;
+      alertEl.classList.add('show');
+      console.log('✅ 경험의 정수 버프 경고 테스트 실행');
+    };
+
+    window.testLokagos = function(type = 'EXCLUDE', zone = '알파') {
+      const validTypes = ['EXCLUDE', 'TARGET'];
+      const validZones = ['알파', '브라보', '찰리', '델타'];
+      if (!validTypes.includes(type) || !validZones.includes(zone)) {
+        console.error('올바르지 않은 파라미터입니다. 예: testLokagos("EXCLUDE", "알파") 또는 testLokagos("TARGET", "브라보")');
+        return;
+      }
+      triggerLokagosAlert(type, zone);
+
+      // 테스트 사운드 재생 추가
+      if (currentConfig && currentConfig.lokagosAlertEnabled && currentConfig.lokagosAlertSound && currentConfig.lokagosAlertSound !== 'none') {
+        const vol = currentConfig.lokagosAlertVolume !== undefined ? currentConfig.lokagosAlertVolume : 40;
+        window.electronAPI.previewBossSound(currentConfig.lokagosAlertSound, vol, '로카고스 기믹 알림 테스트');
+      }
+
+      console.log(`✅ 로카고스 기믹 테스트: ${type === 'EXCLUDE' ? zone + ' 제외 구역 대피' : zone + ' 구역 회피'} (${zone})`);
     };
 
     window.testAbyssApostle = function() {
@@ -2396,11 +2454,23 @@
       title.innerText = '공격 반사 패턴! 경고!';
       subtitle.innerText = '보스 공격 중단 (6.5초)';
 
+      // 1) 시작 테스트 사운드 재생
+      if (currentConfig && currentConfig.abyssApostleAlertEnabled && currentConfig.abyssApostleStartSound && currentConfig.abyssApostleStartSound !== 'none') {
+        const vol = currentConfig.abyssApostleVolume !== undefined ? currentConfig.abyssApostleVolume : 40;
+        window.electronAPI.previewBossSound(currentConfig.abyssApostleStartSound, vol, '제2사도 반사 시작 테스트');
+      }
+
       abyssAlertTimeout = setTimeout(() => {
         overlay.className = 'abyss-apostle-alert-overlay safe';
         title.className = 'abyss-apostle-title safe';
         title.innerText = '공격 반사 패턴 종료!';
         subtitle.innerText = '공격 가능';
+
+        // 2) 6.5초 후 종료 테스트 사운드 재생
+        if (currentConfig && currentConfig.abyssApostleAlertEnabled && currentConfig.abyssApostleEndSound && currentConfig.abyssApostleEndSound !== 'none') {
+          const vol = currentConfig.abyssApostleVolume !== undefined ? currentConfig.abyssApostleVolume : 40;
+          window.electronAPI.previewBossSound(currentConfig.abyssApostleEndSound, vol, '제2사도 반사 종료 테스트');
+        }
 
         abyssResetTimeout = setTimeout(() => {
           overlay.className = 'abyss-apostle-alert-overlay hide';

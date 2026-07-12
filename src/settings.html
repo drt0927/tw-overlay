@@ -1285,36 +1285,102 @@
               
               <div class="space-y-4">
                 <!-- 1. 에토스 -->
-                <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
-                  <label class="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" id="ethos-alert-enabled" class="w-5 h-5 accent-indigo-600">
-                    <div>
-                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">이클립스 에토스 기믹 알림</span>
-                      <p class="text-xs text-slate-500 mt-0.5">에토스의 대사를 인식하여 피해야 할 방향(8방향 화살표)을 오버레이 중앙에 표시합니다.</p>
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
+                  <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" id="ethos-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                      <div>
+                        <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">이클립스 에토스 기믹 알림</span>
+                        <p class="text-xs text-slate-500 mt-0.5">에토스의 대사를 인식하여 피해야 할 방향(8방향 화살표)을 오버레이 중앙에 표시합니다.</p>
+                      </div>
+                    </label>
+                  </div>
+                  <!-- 에토스 사운드 설정 영역 -->
+                  <div id="ethos-sound-settings" class="pl-8 space-y-3 pt-2 border-t border-white/5">
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-16">알림음</span>
+                      <select id="ethos-alert-sound" class="input-field py-1.5 px-3 bg-black/40 text-xs text-slate-300 rounded-lg flex-1">
+                        <!-- 동적으로 로드됨 -->
+                      </select>
+                      <button id="btn-ethos-sound-preview" onclick="previewEthosSound()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs">
+                        ▶ 미리듣기
+                      </button>
                     </div>
-                  </label>
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-16">볼륨</span>
+                      <input type="range" id="ethos-alert-volume" min="0" max="100" class="flex-1 accent-purple-500 bg-white/10 h-1 rounded-lg cursor-pointer">
+                      <span id="ethos-alert-volume-val" class="text-xs text-slate-300 font-bold w-10 text-right">40%</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- 2. 제2사도 -->
-                <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
-                  <label class="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" id="abyss-apostle-alert-enabled" class="w-5 h-5 accent-indigo-600">
-                    <div>
-                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">심연의 제2사도 반사 기믹 알림</span>
-                      <p class="text-xs text-slate-500 mt-0.5">제2사도의 반사 대사를 인식하여 공격 반사 패턴 경고를 화면 중앙에 알립니다.</p>
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
+                  <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" id="abyss-apostle-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                      <div>
+                        <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">심연의 제2사도 반사 기믹 알림</span>
+                        <p class="text-xs text-slate-500 mt-0.5">제2사도의 반사 대사를 인식하여 공격 반사 패턴 경고를 화면 중앙에 알립니다.</p>
+                      </div>
+                    </label>
+                  </div>
+                  <!-- 제2사도 사운드 설정 영역 -->
+                  <div id="abyss-sound-settings" class="pl-8 space-y-3 pt-2 border-t border-white/5">
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-20">시작 알림음</span>
+                      <select id="abyss-apostle-start-sound" class="input-field py-1.5 px-3 bg-black/40 text-xs text-slate-300 rounded-lg flex-1">
+                        <!-- 동적으로 로드됨 -->
+                      </select>
+                      <button id="btn-abyss-start-sound-preview" onclick="previewAbyssStartSound()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs">
+                        ▶ 미리듣기
+                      </button>
                     </div>
-                  </label>
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-20">종료 알림음</span>
+                      <select id="abyss-apostle-end-sound" class="input-field py-1.5 px-3 bg-black/40 text-xs text-slate-300 rounded-lg flex-1">
+                        <!-- 동적으로 로드됨 -->
+                      </select>
+                      <button id="btn-abyss-end-sound-preview" onclick="previewAbyssEndSound()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs">
+                        ▶ 미리듣기
+                      </button>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-20">볼륨</span>
+                      <input type="range" id="abyss-apostle-volume" min="0" max="100" class="flex-1 accent-purple-500 bg-white/10 h-1 rounded-lg cursor-pointer">
+                      <span id="abyss-apostle-volume-val" class="text-xs text-slate-300 font-bold w-10 text-right">40%</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- 3. 로카고스 -->
-                <div class="flex items-center gap-4 p-4 bg-black/20 rounded-xl border border-white/5">
-                  <label class="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" id="lokagos-alert-enabled" class="w-5 h-5 accent-indigo-600">
-                    <div>
-                      <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">이클립스 로카고스 기믹 알림</span>
-                      <p class="text-xs text-slate-500 mt-0.5">로카고스의 대사를 인식하여 안전/회피 구역 색상을 화면 중앙 및 테두리에 표시합니다.</p>
+                <div class="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4">
+                  <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" id="lokagos-alert-enabled" class="w-5 h-5 accent-indigo-600">
+                      <div>
+                        <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">이클립스 로카고스 기믹 알림</span>
+                        <p class="text-xs text-slate-500 mt-0.5">로카고스의 대사를 인식하여 안전/회피 구역 색상을 화면 중앙 및 테두리에 표시합니다.</p>
+                      </div>
+                    </label>
+                  </div>
+                  <!-- 로카고스 사운드 설정 영역 -->
+                  <div id="lokagos-sound-settings" class="pl-8 space-y-3 pt-2 border-t border-white/5">
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-16">알림음</span>
+                      <select id="lokagos-alert-sound" class="input-field py-1.5 px-3 bg-black/40 text-xs text-slate-300 rounded-lg flex-1">
+                        <!-- 동적으로 로드됨 -->
+                      </select>
+                      <button id="btn-lokagos-sound-preview" onclick="previewLokagosSound()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs">
+                        ▶ 미리듣기
+                      </button>
                     </div>
-                  </label>
+                    <div class="flex gap-2 items-center">
+                      <span class="text-xs text-slate-400 font-bold w-16">볼륨</span>
+                      <input type="range" id="lokagos-alert-volume" min="0" max="100" class="flex-1 accent-purple-500 bg-white/10 h-1 rounded-lg cursor-pointer">
+                      <span id="lokagos-alert-volume-val" class="text-xs text-slate-300 font-bold w-10 text-right">40%</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- 3. 웨이브 종료 대기 알림 -->
@@ -2321,10 +2387,23 @@
     async function initSettings() {
       soundFiles = await window.loadSoundList();
 
-      // 웨이브 알림 사운드 셀렉트 옵션 채우기
-      const waveSoundSel = document.getElementById('wave-warning-sound');
-      if (waveSoundSel && soundFiles) {
-        waveSoundSel.innerHTML = soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+      // 각 기믹/웨이브 알림 사운드 셀렉트 옵션 채우기
+      if (soundFiles) {
+        const soundOptionsHtml = '<option value="none">사용 안 함 (소리 없음)</option>' + 
+          soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+
+        const selects = [
+          'wave-warning-sound',
+          'ethos-alert-sound',
+          'abyss-apostle-start-sound',
+          'abyss-apostle-end-sound',
+          'lokagos-alert-sound'
+        ];
+
+        selects.forEach(id => {
+          const sel = document.getElementById(id);
+          if (sel) sel.innerHTML = soundOptionsHtml;
+        });
       }
 
       window.bindEscapeClose();
@@ -2434,11 +2513,26 @@
 
     async function refreshAllSoundSelects() {
       soundFiles = await window.loadSoundList();
-      const waveSoundSel = document.getElementById('wave-warning-sound');
-      if (waveSoundSel && soundFiles) {
-        const prevVal = waveSoundSel.value;
-        waveSoundSel.innerHTML = soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
-        waveSoundSel.value = prevVal;
+      if (soundFiles) {
+        const soundOptionsHtml = '<option value="none">사용 안 함 (소리 없음)</option>' + 
+          soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+
+        const selects = [
+          'wave-warning-sound',
+          'ethos-alert-sound',
+          'abyss-apostle-start-sound',
+          'abyss-apostle-end-sound',
+          'lokagos-alert-sound'
+        ];
+
+        selects.forEach(id => {
+          const sel = document.getElementById(id);
+          if (sel) {
+            const prevVal = sel.value;
+            sel.innerHTML = soundOptionsHtml;
+            sel.value = prevVal;
+          }
+        });
       }
     }
 
@@ -2725,15 +2819,60 @@
       // 채팅 로그 설정 로드
       document.getElementById('chat-log-path-input').value = config.chatLogPath || '';
       document.getElementById('chat-log-auto-delete-input').value = config.chatLogAutoDeleteDays ?? 0;
-      if (document.getElementById('ethos-alert-enabled')) {
+       if (document.getElementById('ethos-alert-enabled')) {
         document.getElementById('ethos-alert-enabled').checked = !!config.ethosAlertEnabled;
       }
+      if (document.getElementById('ethos-alert-sound')) {
+        document.getElementById('ethos-alert-sound').value = config.ethosAlertSound || '에코스_기믹_알림.mp3';
+      }
+      const ethosVolumeEl = document.getElementById('ethos-alert-volume');
+      const ethosVolumeVal = document.getElementById('ethos-alert-volume-val');
+      if (ethosVolumeEl && ethosVolumeVal) {
+        const vol = config.ethosAlertVolume !== undefined ? config.ethosAlertVolume : 40;
+        ethosVolumeEl.value = vol;
+        ethosVolumeVal.innerText = vol + '%';
+        ethosVolumeEl.oninput = (e) => {
+          ethosVolumeVal.innerText = e.target.value + '%';
+        };
+      }
+
       if (document.getElementById('abyss-apostle-alert-enabled')) {
         document.getElementById('abyss-apostle-alert-enabled').checked = !!config.abyssApostleAlertEnabled;
       }
+      if (document.getElementById('abyss-apostle-start-sound')) {
+        document.getElementById('abyss-apostle-start-sound').value = config.abyssApostleStartSound || '제2사도_반사_패턴_시작.mp3';
+      }
+      if (document.getElementById('abyss-apostle-end-sound')) {
+        document.getElementById('abyss-apostle-end-sound').value = config.abyssApostleEndSound || '제2사도_반사_패턴_종료.mp3';
+      }
+      const abyssVolumeEl = document.getElementById('abyss-apostle-volume');
+      const abyssVolumeVal = document.getElementById('abyss-apostle-volume-val');
+      if (abyssVolumeEl && abyssVolumeVal) {
+        const vol = config.abyssApostleVolume !== undefined ? config.abyssApostleVolume : 40;
+        abyssVolumeEl.value = vol;
+        abyssVolumeVal.innerText = vol + '%';
+        abyssVolumeEl.oninput = (e) => {
+          abyssVolumeVal.innerText = e.target.value + '%';
+        };
+      }
+
       if (document.getElementById('lokagos-alert-enabled')) {
         document.getElementById('lokagos-alert-enabled').checked = !!config.lokagosAlertEnabled;
       }
+      if (document.getElementById('lokagos-alert-sound')) {
+        document.getElementById('lokagos-alert-sound').value = config.lokagosAlertSound || '로카고스_기믹_알림.mp3';
+      }
+      const lokagosVolumeEl = document.getElementById('lokagos-alert-volume');
+      const lokagosVolumeVal = document.getElementById('lokagos-alert-volume-val');
+      if (lokagosVolumeEl && lokagosVolumeVal) {
+        const vol = config.lokagosAlertVolume !== undefined ? config.lokagosAlertVolume : 40;
+        lokagosVolumeEl.value = vol;
+        lokagosVolumeVal.innerText = vol + '%';
+        lokagosVolumeEl.oninput = (e) => {
+          lokagosVolumeVal.innerText = e.target.value + '%';
+        };
+      }
+
       if (document.getElementById('wave-warning-enabled')) {
         document.getElementById('wave-warning-enabled').checked = !!config.waveMonsterWarningEnabled;
       }
@@ -3549,8 +3688,15 @@
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,
           ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
+          ethosAlertSound: document.getElementById('ethos-alert-sound') ? document.getElementById('ethos-alert-sound').value : '에코스_기믹_알림.mp3',
+          ethosAlertVolume: document.getElementById('ethos-alert-volume') ? parseInt(document.getElementById('ethos-alert-volume').value) : 40,
           abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+          abyssApostleStartSound: document.getElementById('abyss-apostle-start-sound') ? document.getElementById('abyss-apostle-start-sound').value : '제2사도_반사_패턴_시작.mp3',
+          abyssApostleEndSound: document.getElementById('abyss-apostle-end-sound') ? document.getElementById('abyss-apostle-end-sound').value : '제2사도_반사_패턴_종료.mp3',
+          abyssApostleVolume: document.getElementById('abyss-apostle-volume') ? parseInt(document.getElementById('abyss-apostle-volume').value) : 40,
           lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
+          lokagosAlertSound: document.getElementById('lokagos-alert-sound') ? document.getElementById('lokagos-alert-sound').value : '로카고스_기믹_알림.mp3',
+          lokagosAlertVolume: document.getElementById('lokagos-alert-volume') ? parseInt(document.getElementById('lokagos-alert-volume').value) : 40,
           waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
           waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
           waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
@@ -3602,8 +3748,15 @@
           lootKeywords: lootKeywordsList,
           shoutKeywords: shoutKeywordsList,
           ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
+          ethosAlertSound: document.getElementById('ethos-alert-sound') ? document.getElementById('ethos-alert-sound').value : '에코스_기믹_알림.mp3',
+          ethosAlertVolume: document.getElementById('ethos-alert-volume') ? parseInt(document.getElementById('ethos-alert-volume').value) : 40,
           abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+          abyssApostleStartSound: document.getElementById('abyss-apostle-start-sound') ? document.getElementById('abyss-apostle-start-sound').value : '제2사도_반사_패턴_시작.mp3',
+          abyssApostleEndSound: document.getElementById('abyss-apostle-end-sound') ? document.getElementById('abyss-apostle-end-sound').value : '제2사도_반사_패턴_종료.mp3',
+          abyssApostleVolume: document.getElementById('abyss-apostle-volume') ? parseInt(document.getElementById('abyss-apostle-volume').value) : 40,
           lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
+          lokagosAlertSound: document.getElementById('lokagos-alert-sound') ? document.getElementById('lokagos-alert-sound').value : '로카고스_기믹_알림.mp3',
+          lokagosAlertVolume: document.getElementById('lokagos-alert-volume') ? parseInt(document.getElementById('lokagos-alert-volume').value) : 40,
           waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
           waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
           waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
@@ -3632,6 +3785,34 @@
       const sound = document.getElementById('wave-warning-sound').value || 'orb.mp3';
       const vol = parseInt(document.getElementById('wave-warning-volume').value) || 70;
       window.electronAPI.previewBossSound(sound, vol, '몬스터 웨이브 종료 대기 알림');
+    }
+
+    function previewEthosSound() {
+      const sound = document.getElementById('ethos-alert-sound').value;
+      if (sound === 'none') return;
+      const vol = parseInt(document.getElementById('ethos-alert-volume').value) || 40;
+      window.electronAPI.previewBossSound(sound, vol, '에토스 기믹 알림');
+    }
+
+    function previewAbyssStartSound() {
+      const sound = document.getElementById('abyss-apostle-start-sound').value;
+      if (sound === 'none') return;
+      const vol = parseInt(document.getElementById('abyss-apostle-volume').value) || 40;
+      window.electronAPI.previewBossSound(sound, vol, '제2사도 반사 시작');
+    }
+
+    function previewAbyssEndSound() {
+      const sound = document.getElementById('abyss-apostle-end-sound').value;
+      if (sound === 'none') return;
+      const vol = parseInt(document.getElementById('abyss-apostle-volume').value) || 40;
+      window.electronAPI.previewBossSound(sound, vol, '제2사도 반사 종료');
+    }
+
+    function previewLokagosSound() {
+      const sound = document.getElementById('lokagos-alert-sound').value;
+      if (sound === 'none') return;
+      const vol = parseInt(document.getElementById('lokagos-alert-volume').value) || 40;
+      window.electronAPI.previewBossSound(sound, vol, '로카고스 기믹 알림');
     }
 
     async function updateEtaCacheStatusText() {

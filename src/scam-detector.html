@@ -474,8 +474,24 @@
 
     // ── IPC 수신 ──
 
-    window.electronAPI.onConfigData((cfg) => {
+    window.electronAPI.onConfigData(async (cfg) => {
       _config = cfg;
+      
+      // 사운드 목록 동적 갱신
+      if (window.loadSoundList) {
+        try {
+          const sounds = await window.loadSoundList();
+          const sel = document.getElementById('scam-alert-sound-select');
+          if (sel && sounds) {
+            const prevVal = sel.value || cfg.scamAlertSound || 'orb.mp3';
+            sel.innerHTML = sounds.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+            sel.value = prevVal;
+          }
+        } catch (e) {
+          console.error('Failed to reload sound list:', e);
+        }
+      }
+
       applyConfig(cfg);
     });
 

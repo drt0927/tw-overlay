@@ -500,6 +500,9 @@
             <button type="button" class="sub-tab-item" onclick="showSubSection('sub-tab-alarm-log', this)">
               <i data-lucide="history" class="w-3.5 h-3.5"></i> 알림 기록
             </button>
+            <button type="button" class="sub-tab-item" onclick="showSubSection('sub-tab-custom-sounds', this)">
+              <i data-lucide="music" class="w-3.5 h-3.5"></i> 커스텀 알림음
+            </button>
           </div>
 
           <!-- 서브 탭 1: 소리 설정 -->
@@ -642,6 +645,28 @@
                 <div id="alarm-log-list" class="space-y-3.5">
                   <!-- JS에서 동적 삽입 -->
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 서브 탭 3: 커스텀 알림음 -->
+          <div id="sub-tab-custom-sounds" class="sub-tab-content space-y-6">
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-6">
+              <div class="flex items-center justify-between pb-4 border-b border-white/5">
+                <div class="space-y-1">
+                  <label class="section-label flex items-center gap-2 mb-0">
+                    <i data-lucide="music" class="w-4 h-4 text-purple-400"></i> 커스텀 알림음 관리
+                  </label>
+                  <p class="text-xs text-slate-500">원하는 오디오 파일(.mp3, .wav 등)을 추가하여 다른 알림음에 연동할 수 있습니다.</p>
+                </div>
+                <button type="button" onclick="addCustomSound()"
+                        class="text-xs font-bold text-white px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-900/20 transition-all flex items-center gap-1.5 active:scale-95">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> 파일 선택 및 추가
+                </button>
+              </div>
+              
+              <div id="custom-sounds-list" class="space-y-3 max-h-[350px] overflow-y-auto custom-scroll pr-1">
+                <p class="text-xs text-slate-500 font-bold italic py-2">추가된 커스텀 알림음이 없습니다.</p>
               </div>
             </div>
           </div>
@@ -1784,7 +1809,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.1.1</span></p>
+                        class="text-purple-400">2.1.2</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2307,6 +2332,7 @@
       await initDynamicMenuManagement();
       await checkOptimizeStatus();
       await initContentsItems();
+      renderCustomSounds();
 
       if (window.electronAPI && window.electronAPI.onAlarmLogsUpdated) {
         window.electronAPI.onAlarmLogsUpdated(() => {
@@ -2319,6 +2345,101 @@
 
       _initReady = true;
       hideLoading();
+    }
+
+    // --- Custom Sounds Management ---
+    function renderCustomSounds() {
+      const listContainer = document.getElementById('custom-sounds-list');
+      if (!listContainer) return;
+      
+      const customSounds = (lastConfig && lastConfig.customSounds) || [];
+      if (customSounds.length === 0) {
+        listContainer.innerHTML = `<p class="text-xs text-slate-500 font-bold italic py-2">추가된 커스텀 알림음이 없습니다.</p>`;
+        return;
+      }
+      
+      listContainer.innerHTML = customSounds.map(s => {
+        return `
+          <div class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl transition-all hover:bg-white/[0.08]">
+            <button type="button" onclick="playCustomSoundPreview('${s.file}')"
+                    class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:text-white flex items-center justify-center transition-all active:scale-95"
+                    title="미리듣기">
+              <i data-lucide="play" class="w-4 h-4"></i>
+            </button>
+            <input type="text" value="${s.name}" onchange="updateCustomSoundName('${s.file}', this.value)"
+                   class="w-full bg-black/40 border border-white/10 focus:border-purple-500 transition-all rounded-xl px-3 py-1.5 text-sm text-white"
+                   placeholder="알림음 이름 입력" />
+            <button type="button" onclick="deleteCustomSound('${s.file}')"
+                    class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all active:scale-95"
+                    title="삭제">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+      
+      refreshIcons();
+    }
+
+    function playCustomSoundPreview(file) {
+      if (window.playPreview) {
+        window.playPreview(file, 50, '커스텀 알림음 미리보기');
+      }
+    }
+
+    async function addCustomSound() {
+      if (!window.electronAPI || !window.electronAPI.selectCustomSound) return;
+      try {
+        const soundInfo = await window.electronAPI.selectCustomSound();
+        if (!soundInfo) return; // 취소된 경우
+        
+        const customSounds = [...((lastConfig && lastConfig.customSounds) || [])];
+        customSounds.push(soundInfo);
+        
+        await window.electronAPI.applySettings({ customSounds });
+        await refreshAllSoundSelects();
+      } catch (err) {
+        console.error('Failed to add custom sound:', err);
+      }
+    }
+
+    async function updateCustomSoundName(file, newName) {
+      if (!newName || !newName.trim()) return;
+      const customSounds = [...((lastConfig && lastConfig.customSounds) || [])];
+      const target = customSounds.find(s => s.file === file);
+      if (target) {
+        target.name = newName.trim();
+        await window.electronAPI.applySettings({ customSounds });
+        await refreshAllSoundSelects();
+      }
+    }
+
+    async function deleteCustomSound(file) {
+      if (!confirm('이 커스텀 알림음을 삭제하시겠습니까?\n이 소리를 사용 중인 알람 설정은 기본 알림음으로 변경되거나 작동하지 않을 수 있습니다.')) {
+        return;
+      }
+      if (!window.electronAPI || !window.electronAPI.deleteCustomSound) return;
+      try {
+        const success = await window.electronAPI.deleteCustomSound(file);
+        if (success) {
+          let customSounds = [...((lastConfig && lastConfig.customSounds) || [])];
+          customSounds = customSounds.filter(s => s.file !== file);
+          await window.electronAPI.applySettings({ customSounds });
+          await refreshAllSoundSelects();
+        }
+      } catch (err) {
+        console.error('Failed to delete custom sound:', err);
+      }
+    }
+
+    async function refreshAllSoundSelects() {
+      soundFiles = await window.loadSoundList();
+      const waveSoundSel = document.getElementById('wave-warning-sound');
+      if (waveSoundSel && soundFiles) {
+        const prevVal = waveSoundSel.value;
+        waveSoundSel.innerHTML = soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+        waveSoundSel.value = prevVal;
+      }
     }
 
     async function initDynamicMenuManagement() {
@@ -2850,6 +2971,8 @@
       window.electronAPI.getAppVersion().then(v => {
         document.getElementById('app-version').innerText = v;
       });
+
+      renderCustomSounds();
 
       // config 로드 완료
       _configReady = true;

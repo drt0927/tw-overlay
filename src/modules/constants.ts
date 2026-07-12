@@ -55,6 +55,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   overlayVisible: false,
   galleryNotify: false,
   diaryKeepDays: 180,
+  customSounds: [],
   quickSlots: [
     {
       label: "테일즈 가이드 요약",

@@ -274,9 +274,28 @@
       window.refreshIcons();
     };
 
-    window.electronAPI.onConfigData((data) => { 
+    window.electronAPI.onConfigData(async (data) => { 
       config = data; 
-      if (_soundReady) render(); 
+      if (window.loadSoundList) {
+        try {
+          soundFiles = await window.loadSoundList();
+          const sel = document.getElementById('form-sound');
+          if (sel) {
+            const prevVal = sel.value;
+            sel.innerHTML = '';
+            soundFiles.forEach(s => {
+              const opt = document.createElement('option');
+              opt.value = s.file; opt.textContent = s.name;
+              sel.appendChild(opt);
+            });
+            if (prevVal) sel.value = prevVal;
+          }
+        } catch (e) {
+          console.error('Failed to reload sound list:', e);
+        }
+      }
+      _soundReady = true;
+      render(); 
     });
 
     // --- 타입 탭 전환 ---

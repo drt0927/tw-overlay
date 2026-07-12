@@ -963,9 +963,9 @@ export function addAlarmLog(
     );
     log(`[DiaryDB] 알람 로그 추가: [${type}] ${title} - ${message}`);
 
-    // 용량 관리를 위해 7일 이전의 로그 자동 삭제 (7일 = 7 * 24 * 60 * 60 * 1000 ms)
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    db.prepare('DELETE FROM alarm_logs WHERE timestamp < ?').run(sevenDaysAgo);
+    // 용량 관리를 위해 24시간 이전의 로그 자동 삭제 (24시간 = 24 * 60 * 60 * 1000 ms)
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    db.prepare('DELETE FROM alarm_logs WHERE timestamp < ?').run(oneDayAgo);
 
     notifyAlarmLogUpdate();
   } catch (e) {

@@ -23,7 +23,16 @@ window.bindEscapeClose = function () {
 window.loadSoundList = async function () {
   try {
     const response = await fetch('assets/data/sounds.json');
-    return await response.json();
+    const defaultSounds = await response.json();
+    
+    if (window.electronAPI && window.electronAPI.getConfig) {
+      const config = await window.electronAPI.getConfig();
+      if (config && config.customSounds && config.customSounds.length > 0) {
+        return [...defaultSounds, ...config.customSounds];
+      }
+    }
+    
+    return defaultSounds;
   } catch (e) {
     console.error('Failed to load sound list:', e);
     return [];

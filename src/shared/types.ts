@@ -302,6 +302,7 @@ export interface AppConfig {
     lastContentsResetCheck?: number;
     shortcuts?: ShortcutsConfig;
     customAlerts?: CustomAlert[];
+    customSounds?: { name: string; file: string }[];
 
     // --- Chat Log Settings ---
     chatLogPath?: string;

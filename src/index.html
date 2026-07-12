@@ -220,7 +220,11 @@
       isPlayingAudio = true;
       const { soundFile, volume } = audioQueue.shift();
 
-      bossAudio.src = `assets/sound/${soundFile}`;
+      if (soundFile.startsWith('custom_')) {
+        bossAudio.src = `tw-sound://custom/${soundFile}`;
+      } else {
+        bossAudio.src = `tw-sound://default/${soundFile}`;
+      }
       bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
 
       bossAudio.onended = () => {

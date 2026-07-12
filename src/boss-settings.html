@@ -222,8 +222,15 @@
     const ALLOWED_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
 
     // 레이스 컨디션 예방을 위해 최상단에서 리스너를 동기식으로 먼저 등록합니다.
-    window.electronAPI.onConfigData((data) => {
+    window.electronAPI.onConfigData(async (data) => {
       config = data;
+      if (window.loadSoundList) {
+        try {
+          soundFiles = await window.loadSoundList();
+        } catch (e) {
+          console.error('Failed to reload sound list:', e);
+        }
+      }
       // 공통 설정 로드
       const enabledCheck = document.getElementById('boss-enabled-check');
       if (enabledCheck) enabledCheck.checked = config.fieldBossNotifyEnabled !== false;

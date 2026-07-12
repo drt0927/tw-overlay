@@ -1,10 +1,19 @@
-import { app } from 'electron';
+import { app, protocol, net } from 'electron';
+import * as path from 'path';
+import * as fs from 'fs';
+import { pathToFileURL } from 'url';
 import {
   FOCUS_DELAY_MS,
-  appState
+  appState,
+  get_RESOURCE_PATH
 } from './modules/constants';
 import { log } from './modules/logger';
 import * as config from './modules/config';
+
+// tw-sound 프로토콜 스키마 등록 (앱 준비 단계 이전 필수 호출)
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'tw-sound', privileges: { bypassCSP: true, stream: true, supportFetchAPI: true } }
+]);
 import * as tracker from './modules/tracker';
 import * as wm from './modules/windowManager';
 import * as ipcHandlers from './modules/ipcHandlers';
@@ -63,6 +72,40 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(() => {
+  // tw-sound://custom/<file> 또는 tw-sound://default/<file> 형식의 리소스 처리
+  protocol.handle('tw-sound', (request) => {
+    try {
+      const url = new URL(request.url);
+      const type = url.host; // 'custom' 또는 'default'
+      const filename = decodeURIComponent(url.pathname.substring(1));
+      
+      let filePath = '';
+      if (type === 'custom') {
+        filePath = path.join(app.getPath('userData'), 'custom_sounds', filename);
+        // 다른 PC로 설정을 가져오는 등으로 물리 파일이 부재 시 기본음(orb.mp3)으로 폴백
+        if (!fs.existsSync(filePath)) {
+          log(`[PROTOCOL] 커스텀 사운드 파일이 존재하지 않음: ${filename}. 기본 알림음(orb.mp3)으로 대체합니다.`);
+          filePath = get_RESOURCE_PATH('assets', 'sound', 'orb.mp3');
+        }
+      } else {
+        filePath = get_RESOURCE_PATH('assets', 'sound', filename);
+        if (!fs.existsSync(filePath)) {
+          filePath = get_RESOURCE_PATH('assets', 'sound', 'orb.mp3');
+        }
+      }
+      
+      return net.fetch(pathToFileURL(filePath).href);
+    } catch (err) {
+      log(`[PROTOCOL] tw-sound 프로토콜 핸들링 중 에러 발생: ${err}`);
+      try {
+        const fallbackPath = get_RESOURCE_PATH('assets', 'sound', 'orb.mp3');
+        return net.fetch(pathToFileURL(fallbackPath).href);
+      } catch (fallbackErr) {
+        return new Response('Not Found', { status: 404 });
+      }
+    }
+  });
+
   wm.createSplashWindow();
 
   const sidebar = wm.createMainWindow();

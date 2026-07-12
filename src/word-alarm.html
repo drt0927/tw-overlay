@@ -306,7 +306,7 @@
       window.bindEscapeClose();
 
       // 초기 설정 바인딩 (레이스 컨디션을 예방하기 위해 가장 먼저 동기 등록)
-      window.electronAPI.onConfigData((config) => {
+      window.electronAPI.onConfigData(async (config) => {
         appConfig = config;
         wordAlarmEnabled = !!config.wordAlarmEnabled;
         wordAlarmKeywords = JSON.parse(JSON.stringify(config.wordAlarmKeywords || []));
@@ -316,6 +316,27 @@
 
         document.getElementById('alarm-toggle').checked = wordAlarmEnabled;
         document.getElementById('history-save-toggle').checked = wordAlarmHistoryEnabled;
+        
+        // 사운드 목록 동적 갱신
+        if (window.loadSoundList) {
+          try {
+            soundFiles = await window.loadSoundList();
+            const select = document.getElementById('sound-select');
+            if (select) {
+              const prevVal = select.value || wordAlarmSound;
+              select.innerHTML = '';
+              soundFiles.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.file;
+                opt.innerText = s.name;
+                select.appendChild(opt);
+              });
+              select.value = prevVal;
+            }
+          } catch (e) {
+            console.error('Failed to reload sound list:', e);
+          }
+        }
         
         // 사운드 셀렉트 박스 옵션이 이미 준비된 경우 설정값 지정
         const select = document.getElementById('sound-select');

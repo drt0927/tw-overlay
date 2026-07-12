@@ -2,6 +2,7 @@
  * IPC 이벤트 핸들러 모듈
  */
 import { ipcMain, shell, app, BrowserWindow, dialog, screen } from 'electron';
+import * as path from 'path';
 import * as config from './config';
 import { AppConfig, QuickSlotItem } from './constants';
 import * as fs from 'fs';
@@ -799,5 +800,62 @@ export function register(): void {
         win.webContents.send('timer-toggle', state);
       }
     });
+  });
+
+  // --- Custom Sound IPC ---
+  ipcMain.handle('get-config', () => {
+    return config.load();
+  });
+
+  ipcMain.handle('select-custom-sound', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+
+    const result = await dialog.showOpenDialog(win, {
+      title: '알림 사운드 파일 추가',
+      filters: [
+        { name: '오디오 파일', extensions: ['mp3', 'wav', 'ogg', 'webm', 'm4a'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+
+    const srcPath = result.filePaths[0];
+    const originalExt = path.extname(srcPath);
+    const originalName = path.basename(srcPath, originalExt);
+    
+    // 파일명 인코딩 안전화 (영어, 숫자, 한글, 언더바, 하이픈만 허용)
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣-_]/g, '');
+    const filename = `custom_${Date.now()}_${sanitizedName}${originalExt}`;
+    
+    const customSoundsDir = path.join(app.getPath('userData'), 'custom_sounds');
+    if (!fs.existsSync(customSoundsDir)) {
+      fs.mkdirSync(customSoundsDir, { recursive: true });
+    }
+
+    const destPath = path.join(customSoundsDir, filename);
+    fs.copyFileSync(srcPath, destPath);
+
+    return {
+      name: originalName,
+      file: filename
+    };
+  });
+
+  ipcMain.handle('delete-custom-sound', (_e, filename: string) => {
+    try {
+      const filePath = path.join(app.getPath('userData'), 'custom_sounds', filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(`[IPC] Failed to delete custom sound: ${err}`);
+      return false;
+    }
   });
 }

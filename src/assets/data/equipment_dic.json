@@ -283,7 +283,7 @@
     "category": "단검",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_760931641_4.jpg",
+    "image": "cellImage_760931641_5.jpg",
     "stats": {
       "stab": "380-430",
       "hack": "130-160",
@@ -314,7 +314,7 @@
     "category": "단검",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_760931641_5.jpg",
+    "image": "",
     "stats": {
       "stab": "475-525",
       "hack": "190-220",
@@ -950,19 +950,6 @@
     "delay": "",
     "synth": "MAX",
     "levelReq": "Lv310",
-    "statReq": ""
-  },
-  {
-    "name": "*찌르기/베기/마공/마방 중 하나의 옵션만 나옵니다.",
-    "category": "데모닉 장비 세트",
-    "group": "세트",
-    "part": "",
-    "image": "",
-    "stats": {},
-    "maxStats": {},
-    "delay": "",
-    "synth": "",
-    "levelReq": "",
     "statReq": ""
   },
   {
@@ -1668,7 +1655,7 @@
     "category": "리스트",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_139432692_6.jpg",
+    "image": "cellImage_139432692_7.jpg",
     "stats": {
       "stab": "300-350",
       "hack": "300-350",
@@ -7194,7 +7181,7 @@
     "category": "스펠북",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1605342094_4.jpg",
+    "image": "cellImage_1605342094_5.jpg",
     "stats": {
       "mag_atk": "205-255",
       "eva": "50-70",
@@ -7215,7 +7202,7 @@
     "category": "스펠북",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1605342094_5.jpg",
+    "image": "",
     "stats": {
       "mag_atk": "385-435",
       "eva": "55-75",
@@ -7363,19 +7350,6 @@
     "statReq": "Mr 72"
   },
   {
-    "name": "*찌르기/베기/마공 중 하나의 옵션만 선택 가능",
-    "category": "아노마라드 공화국 시리즈",
-    "group": "갑옷",
-    "part": "",
-    "image": "",
-    "stats": {},
-    "maxStats": {},
-    "delay": "",
-    "synth": "",
-    "levelReq": "",
-    "statReq": ""
-  },
-  {
     "name": "아노마라드 왕국의 아머",
     "category": "아노마라드 왕국 시리즈",
     "group": "갑옷",
@@ -7486,19 +7460,6 @@
     "synth": "MAX",
     "levelReq": "Lv310",
     "statReq": "Mr 72"
-  },
-  {
-    "name": "*찌르기/베기/마공 중 하나의 옵션만 선택 가능",
-    "category": "아노마라드 왕국 시리즈",
-    "group": "갑옷",
-    "part": "",
-    "image": "",
-    "stats": {},
-    "maxStats": {},
-    "delay": "",
-    "synth": "",
-    "levelReq": "",
-    "statReq": ""
   },
   {
     "name": "인퍼널 아머",
@@ -7794,7 +7755,7 @@
     "category": "아밍소드",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_1073819565_5.jpg",
+    "image": "cellImage_1073819565_6.jpg",
     "stats": {
       "stab": "190-220",
       "hack": "475-525",
@@ -9426,7 +9387,7 @@
     "category": "창",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_426318430_4.jpg",
+    "image": "cellImage_426318430_5.jpg",
     "stats": {
       "stab": "380-430",
       "hack": "130-160",
@@ -9457,7 +9418,7 @@
     "category": "창",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_426318430_5.jpg",
+    "image": "",
     "stats": {
       "stab": "475-525",
       "hack": "190-220",
@@ -10541,7 +10502,7 @@
     "category": "펜듈럼",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1213573256_0.jpg",
+    "image": "cellImage_1213573256_5.jpg",
     "stats": {
       "stab": "80-90",
       "hack": "88-98",
@@ -10564,7 +10525,7 @@
     "category": "펜듈럼",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1213573256_1.jpg",
+    "image": "cellImage_1213573256_5.jpg",
     "stats": {
       "hack": "1-108",
       "hit": "20-26",
@@ -10585,7 +10546,7 @@
     "category": "펜듈럼",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1213573256_2.jpg",
+    "image": "cellImage_1213573256_5.jpg",
     "stats": {
       "stab": "108-118",
       "hack": "116-126",
@@ -10608,7 +10569,7 @@
     "category": "펜듈럼",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1213573256_3.jpg",
+    "image": "cellImage_1213573256_5.jpg",
     "stats": {
       "stab": "130-150",
       "hack": "130-150",
@@ -10631,7 +10592,7 @@
     "category": "펜듈럼",
     "group": "손목",
     "part": "wrist",
-    "image": "cellImage_1213573256_4.jpg",
+    "image": "cellImage_1213573256_5.jpg",
     "stats": {
       "stab": "200-250",
       "hack": "200-250",
@@ -11218,7 +11179,7 @@
     "category": "해머",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_1070779533_4.jpg",
+    "image": "cellImage_1070779533_5.jpg",
     "stats": {
       "def": "88-90",
       "mag_def": "360-410",
@@ -11243,7 +11204,7 @@
     "category": "해머",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_1070779533_5.jpg",
+    "image": "",
     "stats": {
       "def": "90-92",
       "mag_def": "575-625",
@@ -11264,11 +11225,11 @@
     "statReq": "Eta 21"
   },
   {
-    "name": "세크리드 해머",
+    "name": "改-세크리드 해머",
     "category": "해머",
     "group": "무기",
     "part": "weapon",
-    "image": "cellImage_1070779533_5.jpg",
+    "image": "",
     "stats": {
       "def": "90-92",
       "mag_def": "630-680",

@@ -822,7 +822,7 @@
 
     let currentShowXpWidget = true;
 
-    window.electronAPI.onConfigData((config) => {
+    window.electronAPI.onConfigData(async (config) => {
       if (config.showXpWidget !== undefined) {
         currentShowXpWidget = config.showXpWidget;
         document.getElementById('toggle-show').checked = config.showXpWidget;
@@ -841,6 +841,22 @@
         document.getElementById('pos-left').value = config.xpWidgetPos.left;
         document.getElementById('pos-bottom').value = config.xpWidgetPos.bottom;
       }
+
+      // 사운드 목록 동적 갱신
+      if (window.loadSoundList) {
+        try {
+          const sounds = await window.loadSoundList();
+          const sel = document.getElementById('essence-alert-sound');
+          if (sel && sounds) {
+            const prevVal = sel.value || config.essenceAlertSound;
+            sel.innerHTML = sounds.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+            if (prevVal) sel.value = prevVal;
+          }
+        } catch (e) {
+          console.error('Failed to reload sound list:', e);
+        }
+      }
+
       if (config.essenceAlertEnabled !== undefined)
         document.getElementById('toggle-essence-alert').checked = config.essenceAlertEnabled;
       if (config.essenceAlertSound) {

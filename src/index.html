@@ -196,7 +196,7 @@
   <script>
     // 전역 변수 선언
     const tooltip = document.getElementById('tooltip');
-    const bossAudio = document.getElementById('boss-audio');
+    let bossAudio = null;
     const toastContainer = document.getElementById('toast-container');
     const wrapper = document.getElementById('wrapper');
     const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
@@ -220,21 +220,39 @@
       isPlayingAudio = true;
       const { soundFile, volume } = audioQueue.shift();
 
-      if (soundFile.startsWith('custom_')) {
-        bossAudio.src = `tw-sound://custom/${soundFile}`;
-      } else {
-        bossAudio.src = `tw-sound://default/${soundFile}`;
+      // 기존 재생 중인 오디오 정지 및 정리
+      if (bossAudio) {
+        try {
+          bossAudio.pause();
+          bossAudio.onended = null;
+        } catch (e) {}
+        bossAudio = null;
       }
+
+      const rand = Math.random().toString(36).substring(2, 9);
+      let srcUrl = '';
+      if (soundFile.startsWith('custom_')) {
+        srcUrl = `tw-sound://custom/${soundFile}?t=${rand}`;
+      } else {
+        srcUrl = `tw-sound://default/${soundFile}?t=${rand}`;
+      }
+
+      // 새 Audio 객체 인스턴스 생성 (소스 변경 시 브라우저 오디오 엔진 레이스 컨디션 및 AbortError 전이 방지)
+      bossAudio = new Audio(srcUrl);
       bossAudio.volume = (volume !== undefined && volume !== null) ? volume / 100 : bossNotifyVolume;
 
       bossAudio.onended = () => {
-        bossAudio.onended = null;
+        bossAudio = null;
         setTimeout(playNextAudio, 500);
       };
 
       bossAudio.play().catch(e => {
+        if (e.name === 'AbortError') {
+          console.log('[AUDIO] Play request was interrupted (AbortError). Ignoring.');
+          return;
+        }
         console.error('Audio play failed:', e);
-        bossAudio.onended = null;
+        bossAudio = null;
         setTimeout(playNextAudio, 500);
       });
     }
@@ -631,8 +649,13 @@
           if (isPreview) {
             // 미리보기 요청일 경우 현재 울리던 소리를 즉각 차단하고 큐를 초기화함
             audioQueue = [];
-            bossAudio.pause();
-            bossAudio.currentTime = 0;
+            if (bossAudio) {
+              try {
+                bossAudio.pause();
+                bossAudio.onended = null;
+              } catch (e) {}
+              bossAudio = null;
+            }
             isPlayingAudio = false;
           }
 

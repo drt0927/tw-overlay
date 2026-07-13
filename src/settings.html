@@ -608,6 +608,17 @@
                   </div>
                   <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
                 </div>
+
+                <div class="p-4 bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all flex items-center justify-between group cursor-pointer" 
+                     onclick="jumpToGimmickSettings()">
+                  <div class="space-y-1">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors flex items-center gap-1.5">
+                      <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-400"></i> 기믹 & 도전과제 알림
+                    </span>
+                    <p class="text-xs text-slate-500">제2사도/로카고스/에토스 알림음 변경</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors"></i>
+                </div>
               </div>
             </div>
           </div> <!-- sub-tab-sound-settings 닫기 (정확히 3개 div 닫힘) -->
@@ -1875,7 +1886,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.1.2</span></p>
+                        class="text-purple-400">2.1.4</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2402,7 +2413,23 @@
 
         selects.forEach(id => {
           const sel = document.getElementById(id);
-          if (sel) sel.innerHTML = soundOptionsHtml;
+          if (sel) {
+            sel.innerHTML = soundOptionsHtml;
+            // 만약 이미 lastConfig가 로드되어 있다면, 해당 값을 셀렉트 박스에 다시 바인딩해 줌 (레이스 컨디션 해결)
+            if (lastConfig) {
+              if (id === 'wave-warning-sound') {
+                sel.value = lastConfig.waveMonsterWarningSound || 'orb.mp3';
+              } else if (id === 'ethos-alert-sound') {
+                sel.value = lastConfig.ethosAlertSound || '에코스_기믹_알림.mp3';
+              } else if (id === 'abyss-apostle-start-sound') {
+                sel.value = lastConfig.abyssApostleStartSound || '제2사도_반사_패턴_시작.mp3';
+              } else if (id === 'abyss-apostle-end-sound') {
+                sel.value = lastConfig.abyssApostleEndSound || '제2사도_반사_패턴_종료.mp3';
+              } else if (id === 'lokagos-alert-sound') {
+                sel.value = lastConfig.lokagosAlertSound || '로카고스_기믹_알림.mp3';
+              }
+            }
+          }
         });
       }
 
@@ -2684,6 +2711,17 @@
       window.refreshIcons();
       if (subTabId === 'sub-tab-alarm-log') {
         renderAlarmLogs();
+      }
+    }
+
+    function jumpToGimmickSettings() {
+      const chatlogTabBtn = document.querySelector(`.nav-item[onclick*="chatlog"]`);
+      if (chatlogTabBtn) {
+        showSection('chatlog', chatlogTabBtn);
+      }
+      const gimmickSubTabBtn = document.querySelector(`.sub-tab-item[onclick*="sub-tab-gimmick"]`);
+      if (gimmickSubTabBtn) {
+        showSubSection('sub-tab-gimmick', gimmickSubTabBtn);
       }
     }
 

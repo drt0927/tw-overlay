@@ -250,6 +250,7 @@ export function register(): void {
     'toggle-coefficient-calculator': wm.toggleCoefficientCalculatorWindow,
     'toggle-contents-checker': wm.toggleContentsCheckerWindow,
     'toggle-evolution-calculator': wm.toggleEvolutionCalculatorWindow,
+    'toggle-thesis-core-calculator': wm.toggleThesisCoreCalculatorWindow,
     'toggle-magic-stone-calculator': wm.toggleMagicStoneCalculatorWindow,
     'toggle-custom-alert': wm.toggleCustomAlertWindow,
     'toggle-uniform-color': wm.toggleUniformColorWindow,

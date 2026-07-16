@@ -182,6 +182,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sendEquipmentToEvolution: (item: any) => ipcRenderer.send('send-to-evolution', item),
   toggleContentsChecker: () => ipcRenderer.send('toggle-contents-checker'),
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
+  toggleThesisCoreCalculator: () => ipcRenderer.send('toggle-thesis-core-calculator'),
   toggleMagicStoneCalculator: () => ipcRenderer.send('toggle-magic-stone-calculator'),
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
   toggleScamDetector: () => ipcRenderer.send('toggle-scam-detector'),

@@ -172,6 +172,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   coefficientCalculator: { ref: null, pos: { offsetX: -1430, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1420, height: 860 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
+  thesisCoreCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'thesisCoreCalculator', html: 'thesis-core-calculator.html', width: 850, height: 880 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
   customAlert: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 580, height: 640 },
   diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 1400, height: 920 },
@@ -874,6 +875,16 @@ export function openEvolutionCalculatorWindow(): void {
     return;
   }
   createToggleableWindow('evolutionCalculator');
+}
+export function toggleThesisCoreCalculatorWindow(): boolean { return createToggleableWindow('thesisCoreCalculator'); }
+export function openThesisCoreCalculatorWindow(): void {
+  const winCfg = windowRegistry['thesisCoreCalculator'];
+  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.show();
+    winCfg.ref.focus();
+    return;
+  }
+  createToggleableWindow('thesisCoreCalculator');
 }
 export function toggleMagicStoneCalculatorWindow(): boolean { return createToggleableWindow('magicStoneCalculator'); }
 export function toggleCustomAlertWindow(): boolean { return createToggleableWindow('customAlert'); }

@@ -44,6 +44,7 @@ function buildMenuTemplate(): any[] {
         'toggleEtaRanking': wm.toggleEtaRankingWindow,
         'toggleContentsChecker': wm.toggleContentsCheckerWindow,
         'toggleEvolutionCalculator': wm.toggleEvolutionCalculatorWindow,
+        'toggleThesisCoreCalculator': wm.toggleThesisCoreCalculatorWindow,
         'toggleMagicStoneCalculator': wm.toggleMagicStoneCalculatorWindow,
         'toggleDiary': wm.toggleDiaryWindow,
         'toggleUniformColor': wm.toggleUniformColorWindow,

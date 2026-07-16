@@ -103,6 +103,15 @@
     "category": "calculators"
   },
   {
+    "id": "thesis-core-calculator-btn",
+    "label": "테시스 코어 계산기",
+    "icon": "cpu",
+    "tooltip": "테시스 코어 강화/진화 재료 기댓값 계산기",
+    "color": "cyan-400",
+    "api": "toggleThesisCoreCalculator",
+    "category": "calculators"
+  },
+  {
     "id": "magic-stone-calculator-btn",
     "label": "마정석 계산기",
     "icon": "gem",

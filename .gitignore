@@ -17,6 +17,7 @@
 *.xcodeproj
 /.idea/
 /dist/
+/dist-tools/
 node_modules/
 SHASUMS256.txt
 compile_commands.json
@@ -63,3 +64,4 @@ src/env.json
 *.exe
 
 test-pitta.js
+.agents/plan

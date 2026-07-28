@@ -1,13 +1,16 @@
 /**
  * 버프 타이머 매니저 — 채팅 로그 기반 버프 남은시간 계산 및 경고 알림
  */
-import { BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as config from './config';
 import { log } from './logger';
-import type { BuffDefinition } from '../shared/types';
+import type { BuffDefinition, BuffTimerState } from '../shared/types';
 import * as diaryDb from './diaryDb';
+import {
+  findFirstWindowByPage,
+  sendToFirstWindowByPage,
+} from './windowMessaging';
 
 export interface ActiveBuff {
   buffId: string;
@@ -16,16 +19,6 @@ export interface ActiveBuff {
   startTime: number;      // Date.now() 기준
   usedBy: string;         // 'self' 또는 닉네임
   warnedAt: Set<number>;  // 이미 경고를 보낸 임계값(초) 집합
-}
-
-export interface BuffTimerState {
-  buffId: string;
-  name: string;
-  image: string;          // 버프 아이콘 이미지 경로
-  durationMs: number;
-  remainingMs: number;
-  usedBy: string;
-  phase: 'normal' | 'warn1' | 'warn2';
 }
 
 class BuffTimerManager {
@@ -279,40 +272,26 @@ class BuffTimerManager {
    * game-overlay.html 창에 IPC 전송
    */
   private _sendToGameOverlay(channel: string, data: any): void {
-    const wins = BrowserWindow.getAllWindows();
-    const overlay = wins.find(w => {
-      if (w.isDestroyed()) return false;
-      try { return w.webContents.getURL().includes('game-overlay.html'); } catch { return false; }
-    });
-    if (overlay) overlay.webContents.send(channel, data);
+    sendToFirstWindowByPage('game-overlay.html', channel, data);
   }
 
   /**
    * buff-timer.html 창에 IPC 전송
    */
   private _sendToBuffTimerWindow(channel: string, data: any): void {
-    const wins = BrowserWindow.getAllWindows();
-    const buffTimer = wins.find(w => {
-      if (w.isDestroyed()) return false;
-      try { return w.webContents.getURL().includes('buff-timer.html'); } catch { return false; }
-    });
-    if (buffTimer) buffTimer.webContents.send(channel, data);
+    sendToFirstWindowByPage('buff-timer.html', channel, data);
   }
 
   /**
    * mainWindow에 IPC 전송
    */
   private _sendToMainWindow(channel: string, data: any): void {
-    const wins = BrowserWindow.getAllWindows();
     const cfg = config.load();
     const sidebarPos = cfg.sidebarPosition || 'right';
     const isDock = sidebarPos === 'dock' || sidebarPos === 'dock-top';
     const showOnOverlay = !!cfg.showSidebarToastOnOverlay;
 
-    const main = wins.find(w => {
-      if (w.isDestroyed()) return false;
-      try { return w.webContents.getURL().includes('index.html'); } catch { return false; }
-    });
+    const main = findFirstWindowByPage('index.html');
 
     if (main) {
       if (channel === 'play-sound') {
@@ -328,10 +307,7 @@ class BuffTimerManager {
     }
 
     if (isDock || (channel === 'play-sound' && showOnOverlay)) {
-      const overlay = wins.find(w => {
-        if (w.isDestroyed()) return false;
-        try { return w.webContents.getURL().includes('game-overlay.html'); } catch { return false; }
-      });
+      const overlay = findFirstWindowByPage('game-overlay.html');
       if (overlay) {
         if (channel === 'play-sound') {
           overlay.webContents.send(channel, {

@@ -1,15 +1,19 @@
 {
   "name": "tw-overlay",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "TalesWeaver Companion Browser",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc && node scripts/copy-resources.js",
+    "build-tools": "tsc -p tsconfig.scripts.json",
+    "build": "npm run build-tools && node dist-tools/copy-resources.js && tsc",
     "start": "npm run build && electron .",
     "only-dev": "electron . --dev",
     "dev": "npm run build && electron . --dev",
     "dist": "npm run build && electron-builder --win",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "parse-equipment": "npm run build-tools && node dist-tools/parse-equipment.js",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit",
+    "test:renderer": "electron dist-tools/check-renderer-behavior.js",
+    "test": "npm run build && node dist-tools/check-refactor-regressions.js && npm run test:renderer"
   },
   "build": {
     "appId": "com.filbertlab.twoverlay",
@@ -49,14 +53,18 @@
       "node_modules/**/*"
     ]
   },
+  "overrides": {
+    "fast-uri": "3.1.4",
+    "js-yaml": "4.3.0"
+  },
   "keywords": [],
   "author": "filbertlab",
   "license": "MIT",
   "dependencies": {
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.0",
     "better-sqlite3": "^12.8.0",
     "electron-store": "^11.0.2",
-    "electron-updater": "^6.8.3",
+    "electron-updater": "^6.8.9",
     "iconv-lite": "^0.7.2",
     "koffi": "^2.15.1",
     "tail": "^2.2.6"
@@ -66,8 +74,8 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.13.4",
     "@types/tail": "^2.2.3",
-    "electron": "^40.4.0",
-    "electron-builder": "^26.7.0",
+    "electron": "^40.10.6",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.7.3"
   }
 }

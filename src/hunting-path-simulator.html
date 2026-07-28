@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>사냥터 동선 시뮬레이션</title>
   <link class="no-drag" rel="stylesheet" href="style.css">
-  <script src="assets/tailwind.min.js"></script>
+    <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
   <script src="assets/ui-utils.js"></script>
   <style>
@@ -339,6 +339,8 @@
     let currentScale = 1.0; // 평소 일반 모드에서는 1.0 고정
     let currentOpacity = 0.8; // 평소 일반 모드에서는 0.8 고정
     let isOverlayMode = false;
+    const PATH_STROKE_WIDTH = 3.0;
+    const ARROW_MARKER_SIZE = 4.3;
 
     const mapContainer = document.getElementById('mapContainer');
     const mapImage = document.getElementById('mapImage');
@@ -575,11 +577,11 @@
         const markerId = `arrow-${color.replace('#', '')}`;
         // 오버레이 모드일 때는 노드 구체가 가려지므로 화살표를 선 끝에 밀착(refX = 10), 일반 모드일 때는 노드 경계에 도킹(refX = 22)
         const refX = ((isOverlayMode ? 10 : 22) * currentScale).toFixed(2);
-        const refY = (3.25 * currentScale).toFixed(2); // Y축 정렬 중앙값 정밀화
-        const mWidth = (6.5 * currentScale).toFixed(2); // 화살표 크기 1.3배 확대
-        const mHeight = (6.5 * currentScale).toFixed(2); // 화살표 크기 1.3배 확대
+        const refY = '5';
+        const mWidth = (ARROW_MARKER_SIZE * currentScale).toFixed(2);
+        const mHeight = (ARROW_MARKER_SIZE * currentScale).toFixed(2);
         markersHtml += `
-          <marker id="${markerId}" viewBox="0 0 10 10" refX="${refX}" refY="${refY}" markerWidth="${mWidth}" markerHeight="${mHeight}" orient="auto-start-reverse">
+          <marker id="${markerId}" viewBox="0 0 10 10" refX="${refX}" refY="${refY}" markerWidth="${mWidth}" markerHeight="${mHeight}" orient="auto-start-reverse" overflow="visible">
             <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${color}" />
           </marker>
         `;
@@ -605,7 +607,7 @@
           line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
           line.setAttribute("class", "path-line");
           line.style.stroke = segColor; // 인라인 스타일로 오버라이딩 적용
-          line.style.strokeWidth = (5.0 * currentScale) + 'px'; // 스케일 비례 선 두께 동적 설정 (기존 3.5에서 5.0으로 굵기 상향)
+          line.style.strokeWidth = (PATH_STROKE_WIDTH * currentScale) + 'px';
           if (isArrowsEnabled) {
             line.setAttribute("marker-end", `url(#${markerId})`);
           }
@@ -964,7 +966,7 @@
         lucide.createIcons();
       }
     };
-  </script>
+</script>
   <!-- 미니 컬러 팔레트 팝업 -->
   <div id="segmentColorPopup" class="fixed hidden panel-glass rounded-2xl p-2.5 border border-white/10 bg-slate-955/95 shadow-2xl z-50 flex items-center gap-2 no-drag">
     <button onmousedown="changeSelectedSegmentColor('#34d399', true)" class="w-7 h-7 rounded-full border border-white/10 transition-transform hover:scale-110 active:scale-95" style="background-color: #34d399;" title="초록"></button>

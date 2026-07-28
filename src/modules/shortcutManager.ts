@@ -1,4 +1,4 @@
-import { globalShortcut, BrowserWindow } from 'electron';
+import { globalShortcut } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import * as tracker from './tracker';
@@ -6,6 +6,7 @@ import { FOCUS_DELAY_MS } from './constants';
 import { log } from './logger';
 import { chatLogProcessor } from './chatLogProcessor';
 import { buffTimerManager } from './buffTimerManager';
+import { broadcastToAllWindows } from './windowMessaging';
 
 let _isFocused = false;
 
@@ -125,11 +126,7 @@ export function registerAll(): void {
     const registered = globalShortcut.register(shortcuts.toggleTimer, () => {
       if (!tracker.isGameOrAppForeground()) return;
       log('[SHORTCUT] Toggle Timer');
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('timer-toggle', 'toggle');
-        }
-      });
+      broadcastToAllWindows('timer-toggle', 'toggle');
     });
     if (!registered) {
       log(`[SHORTCUT] 단축키 등록 실패 (이미 사용 중): ${shortcuts.toggleTimer}`);

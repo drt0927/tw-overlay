@@ -6,14 +6,12 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
+  <script src="shared/sidebarCategories.js"></script>
 
   <script>
-    window.addEventListener('beforeunload', () => {
-      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-        window.electronAPI.cleanupAllListeners();
-      }
-    });
-  </script>
+    window.bindElectronListenerCleanup();
+</script>
   <style>
     /* 카테고리 아이콘 및 플라이아웃 서브메뉴 스타일 */
     .category-item {
@@ -199,7 +197,6 @@
     let bossAudio = null;
     const toastContainer = document.getElementById('toast-container');
     const wrapper = document.getElementById('wrapper');
-    const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
 
     let bossNotifyVolume = 0.5;
     let currentHiddenMenuIds = [];
@@ -257,8 +254,6 @@
       });
     }
 
-    function refreshIcons() { if (window.lucide) lucide.createIcons(); }
-
     function showTooltip(text, el) {
       const rect = el.getBoundingClientRect();
       tooltip.innerText = text;
@@ -279,15 +274,7 @@
       tooltip.style.display = 'none';
     }
 
-    const CATEGORIES = [
-      { id: 'monitoring', label: '실시간 모니터링', icon: 'activity', color: 'purple-400' },
-      { id: 'alarms', label: '알림 설정', icon: 'bell-ring', color: 'pink-400' },
-      { id: 'calculators', label: '전문 계산기', icon: 'calculator', color: 'indigo-400' },
-      { id: 'information', label: '정보 & 도감', icon: 'book-open', color: 'blue-400' },
-      { id: 'utilities', label: '편의 유틸리티', icon: 'pocket', color: 'yellow-400' },
-      { id: 'records', label: '플레이 기록', icon: 'calendar-check', color: 'emerald-400' },
-      { id: 'homework', label: '숙제 체크 리스트', icon: 'check-square', color: 'violet-400' }
-    ];
+    const sidebarCategories = window.sidebarCategories;
 
     let allMenus = [];
 
@@ -303,7 +290,7 @@
         systemContainer.innerHTML = '';
 
         // 1. 대분류 카테고리 렌더링
-        CATEGORIES.forEach(cat => {
+        sidebarCategories.forEach(cat => {
           const catItem = document.createElement('div');
           catItem.className = 'category-item';
           catItem.id = `cat-${cat.id}`;
@@ -444,7 +431,7 @@
     }
 
     function applyMenuVisibility() {
-      CATEGORIES.forEach(cat => {
+      sidebarCategories.forEach(cat => {
         const catItem = document.getElementById(`cat-${cat.id}`);
         if (!catItem) return;
 
@@ -479,23 +466,18 @@
     }
 
     function createToast(bossName, isCustomFromApi, spawnTime, offset, isAlreadyRecorded) {
-      const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
+      const {
+        isRealBoss,
+        validSpawnTime,
+        displayName,
+        iconName,
+        iconColor,
+      } = window.getBossToastPresentation(bossName, isCustomFromApi, spawnTime, offset);
       const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
       const toast = document.createElement('div');
       toast.id = toastId;
       toast.className = 'boss-toast show';
-
-      const iconName = isRealBoss ? 'skull' : 'bell-ring';
-      const iconColor = isRealBoss ? 'text-[#a855f7]' : 'text-amber-400';
-
-      let displayName = bossName;
-      const validSpawnTime = (spawnTime && spawnTime !== 'undefined' && spawnTime !== 'null') ? spawnTime : null;
-
-      if (isRealBoss && validSpawnTime) {
-        displayName = `[${validSpawnTime}] ${bossName}`;
-        if (offset > 0) displayName += ` <span class="text-xs text-slate-500 font-medium ml-1">${offset}분 전</span>`;
-      }
 
       const buttonHtml = isAlreadyRecorded
         ? `<button disabled class="px-3 py-1.5 flex items-center gap-1.5 bg-slate-700 text-slate-400 rounded-lg transition-all text-[11px] font-bold cursor-default">
@@ -676,17 +658,17 @@
     });
 
     window.electronAPI.onScamAlert((result) => {
-      const isScam = result.verdict === 'SCAM';
+      const {
+        isScam,
+        title,
+        colorClass,
+        reason,
+      } = window.getScamToastPresentation(result);
       const toastId = 'scam-toast-' + Date.now();
       const toast = document.createElement('div');
       toast.id = toastId;
       toast.className = 'boss-toast show';
       toast.style.borderLeft = isScam ? '3px solid #ef4444' : '3px solid #f59e0b';
-
-      const title = isScam ? '🚨 사기 위험 감지!' : '⚠️ 사기 의심 감지';
-      const colorClass = isScam ? 'text-red-400' : 'text-yellow-400';
-      const rawReason = result.analysisReason?.split('\n')[0]?.trim() || result.detectedScamTypes || '';
-      const reason = rawReason.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
       toast.innerHTML = `
         <div class="flex items-start justify-between w-full gap-3">
@@ -899,7 +881,7 @@
     updateSidebarWindowWidth(50); // 시작 시엔 좁게 설정
 
     refreshIcons();
-  </script>
+</script>
 </body>
 
 </html>

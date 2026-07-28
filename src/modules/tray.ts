@@ -5,6 +5,9 @@ import { app, Tray, Menu, nativeImage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as wm from './windowManager';
+const { SIDEBAR_CATEGORIES } = require('../shared/sidebarCategories') as {
+  SIDEBAR_CATEGORIES: readonly SidebarCategory[];
+};
 import * as config from './config';
 import { log } from './logger';
 import { appState } from './constants';
@@ -59,18 +62,15 @@ function buildMenuTemplate(): any[] {
       };
 
       // 1. 카테고리 정의
-      const CATEGORIES = [
-        { id: 'monitoring', label: '실시간 모니터링' },
-        { id: 'alarms', label: '알림 설정' },
-        { id: 'calculators', label: '전문 계산기' },
-        { id: 'information', label: '정보 & 도감' },
-        { id: 'utilities', label: '편의 유틸리티' },
-        { id: 'homework', label: '숙제 체크' },
-        { id: 'records', label: '플레이 기록' }
-      ];
+      const trayCategories = [...SIDEBAR_CATEGORIES]
+        .sort((left, right) => left.trayOrder - right.trayOrder)
+        .map(category => ({
+          id: category.id,
+          label: category.trayLabel || category.label,
+        }));
 
       // 2. 카테고리별 서브메뉴 빌드
-      CATEGORIES.forEach(cat => {
+      trayCategories.forEach(cat => {
         const catMenus = menus.filter((m: any) => m.category === cat.id && !m.isSystem && !m.isComment);
 
         if (cat.id === 'homework') {

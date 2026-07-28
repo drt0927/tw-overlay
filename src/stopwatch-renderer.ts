@@ -20,7 +20,6 @@ interface TimerRecord {
 }
 
 const STOPWATCH_PROFILES_KEY = 'tw-coefficient-calculator-profiles-v1';
-const STOPWATCH_STANDARD_BUFFS = ['util_snowman', 'dmg_potion_plus', 'stat_trust_plus', 'stat_izabel_fixed', 'stat_izabel_ratio', 'dmg_izabel', 'dmg_club_p', 'util_ampoule', 'util_haste'];
 
 const stopwatchStatNames: Record<string, string[]> = {
   stab: ['찌르기', '베기'], hack: ['베기', '찌르기'], phycomp: ['찌르기', '베기'],
@@ -535,7 +534,7 @@ function recalculateStatsAndCoefficient(pData: any, currentSeries: string, curre
   const presetId = pData.buffPreset || 'none';
   let buffIds: string[] = [];
   if (presetId === 'standard') {
-    buffIds = STOPWATCH_STANDARD_BUFFS;
+    buffIds = [...window.buffConstants.STANDARD_BUFFS];
   } else if (presetId !== 'none') {
     const savedPresets = localStorage.getItem('buff_presets');
     if (savedPresets) {

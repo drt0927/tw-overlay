@@ -4,10 +4,17 @@
  * - 키워드가 등록된 경우에만 5분 간격으로 폴링
  * - 블락 방지: 랜덤 딜레이, 지수 백오프
  */
-import * as https from 'https';
-import { Notification, BrowserWindow, shell } from 'electron';
+import { BrowserWindow, shell } from 'electron';
 import { log } from './logger';
 import * as config from './config';
+import { showDesktopNotification } from './desktopNotification';
+import {
+    calculateBackoffMs,
+    fetchTextWithSslRetry,
+    MONITOR_CHECK_INTERVAL_MS,
+    MONITOR_RATE_LIMIT,
+    waitRandomDelay,
+} from './webMonitorUtils';
 
 interface TradePost {
     no: number;
@@ -42,15 +49,6 @@ const HEADERS: Record<string, string> = {
     'Referer': 'https://cafe.daum.net/MagicWeaver',
 };
 
-const CHECK_INTERVAL_MS = 300000; // 5분
-
-// ─── 블락 방지 정책 ───
-const RATE_LIMIT = {
-    MIN_DELAY_MS: 1500,
-    MAX_DELAY_MS: 3000,
-    BACKOFF_BASE_MS: 60000,
-    MAX_BACKOFF_MS: 300000,
-};
 let consecutiveErrors = 0;
 
 // ─── 상태 ───
@@ -63,52 +61,49 @@ let notifyEnabled = true;
 let sidebarWindowRef: BrowserWindow | null = null;
 let tradeWindowRef: BrowserWindow | null = null;
 
-// ─── 유틸 ───
-function randomDelay(): Promise<void> {
-    const ms = RATE_LIMIT.MIN_DELAY_MS + Math.random() * (RATE_LIMIT.MAX_DELAY_MS - RATE_LIMIT.MIN_DELAY_MS);
-    return new Promise(resolve => setTimeout(resolve, Math.floor(ms)));
-}
-
-function getBackoffMs(): number {
-    if (consecutiveErrors <= 0) return 0;
-    return Math.min(RATE_LIMIT.BACKOFF_BASE_MS * Math.pow(2, consecutiveErrors - 1), RATE_LIMIT.MAX_BACKOFF_MS);
-}
-
 // ─── HTTP 요청 ───
 function fetchPage(url: string, skipSSLVerify = false, maxRedirects = 5): Promise<string> {
-    return new Promise((resolve, reject) => {
-        if (maxRedirects <= 0) {
-            reject(new Error('Max redirects exceeded'));
-            return;
-        }
-        const options: https.RequestOptions = { headers: HEADERS, timeout: 15000 };
-        if (skipSSLVerify) options.rejectUnauthorized = false;
+    return fetchTextWithSslRetry(url, {
+        headers: HEADERS,
+        timeoutMs: 15000,
+        onSslRetry: message => log(`[TRADE] SSL 검증 실패, 재시도: ${message}`),
+    }, skipSSLVerify, maxRedirects);
+}
 
-        const req = https.get(url, options, (res) => {
-            if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                fetchPage(res.headers.location, skipSSLVerify, maxRedirects - 1).then(resolve).catch(reject);
-                return;
-            }
-            if (res.statusCode !== 200) {
-                reject(new Error(`HTTP ${res.statusCode}`));
-                res.resume();
-                return;
-            }
-            let data = '';
-            res.setEncoding('utf-8');
-            res.on('data', (chunk) => { data += chunk; });
-            res.on('end', () => resolve(data));
-        });
-        req.on('error', (err) => {
-            if (!skipSSLVerify && (err.message.includes('certificate') || err.message.includes('SSL') || err.message.includes('CERT'))) {
-                log(`[TRADE] SSL 검증 실패, 재시도: ${err.message}`);
-                fetchPage(url, true, maxRedirects).then(resolve).catch(reject);
-                return;
-            }
-            reject(err);
-        });
-        req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
-    });
+function decodeArticleField(value: string): string {
+    try {
+        return decodeURIComponent(JSON.parse(`"${value}"`));
+    } catch {
+        return value;
+    }
+}
+
+function appendScriptArticles(source: string, fldid: string, posts: TradePost[]): void {
+    const pushRegex = /articles\.push\(\s*({[\s\S]*?})\s*\);/g;
+    let pushMatch: RegExpExecArray | null;
+
+    while ((pushMatch = pushRegex.exec(source)) !== null) {
+        try {
+            const objectSource = pushMatch[1];
+            const dataidMatch = /dataid:\s*'(\d+)'/i.exec(objectSource) || /dataid:\s*"?(\d+)"?/i.exec(objectSource);
+            const titleMatch = /title:\s*'([^']+)'/i.exec(objectSource) || /title:\s*"([^"]+)"/i.exec(objectSource);
+            const authorMatch = /author:\s*'([^']+)'/i.exec(objectSource) || /author:\s*"([^"]+)"/i.exec(objectSource);
+            const createdMatch = /created:\s*'([^']+)'/i.exec(objectSource) || /created:\s*"([^"]+)"/i.exec(objectSource);
+
+            if (!dataidMatch || !titleMatch) continue;
+
+            const no = parseInt(dataidMatch[1], 10);
+            posts.push({
+                no,
+                title: decodeArticleField(titleMatch[1]),
+                writer: decodeArticleField(authorMatch ? authorMatch[1] : ''),
+                date: createdMatch ? createdMatch[1] : '',
+                url: POST_URL(fldid, no),
+            });
+        } catch {
+            // 기존 파서는 손상된 단일 article 항목만 건너뜁니다.
+        }
+    }
 }
 
 // ─── HTML 파싱 ───
@@ -122,34 +117,7 @@ function parsePostList(html: string, fldid: string, isSearch: boolean = false): 
         const scriptMatch = scriptRegex.exec(html);
 
         if (scriptMatch && scriptMatch[1]) {
-            const pushRegex = /articles\.push\(\s*({[\s\S]*?})\s*\);/g;
-            let pushMatch;
-            while ((pushMatch = pushRegex.exec(scriptMatch[1])) !== null) {
-                try {
-                    const objStr = pushMatch[1];
-                    const dataidMatch = /dataid:\s*'(\d+)'/i.exec(objStr) || /dataid:\s*"?(\d+)"?/i.exec(objStr);
-                    const titleMatch = /title:\s*'([^']+)'/i.exec(objStr) || /title:\s*"([^"]+)"/i.exec(objStr);
-                    const authorMatch = /author:\s*'([^']+)'/i.exec(objStr) || /author:\s*"([^"]+)"/i.exec(objStr);
-                    const createdMatch = /created:\s*'([^']+)'/i.exec(objStr) || /created:\s*"([^"]+)"/i.exec(objStr);
-
-                    if (dataidMatch && titleMatch) {
-                        const no = parseInt(dataidMatch[1], 10);
-                        let rawTitle = titleMatch[1];
-                        try { rawTitle = decodeURIComponent(JSON.parse(`"${rawTitle}"`)); } catch (e) { /* ignore */ }
-
-                        let writer = authorMatch ? authorMatch[1] : '';
-                        try { writer = decodeURIComponent(JSON.parse(`"${writer}"`)); } catch (e) { /* ignore */ }
-
-                        posts.push({
-                            no,
-                            title: rawTitle,
-                            writer: writer,
-                            date: createdMatch ? createdMatch[1] : '',
-                            url: POST_URL(fldid, no),
-                        });
-                    }
-                } catch (e) { }
-            }
+            appendScriptArticles(scriptMatch[1], fldid, posts);
         } else {
             // 정규식이 너무 길어서 터지는 경우를 대비한 대안 파싱 (문자열 indexOf 기반)
             const startIndex = html.indexOf('var articles = [];');
@@ -158,34 +126,7 @@ function parsePostList(html: string, fldid: string, isSearch: boolean = false): 
                 if (endIndex !== -1) {
                     // 대략적인 articles 선언부 추출
                     const chunk = html.substring(startIndex, startIndex + 50000);
-                    const pushRegex = /articles\.push\(\s*({[\s\S]*?})\s*\);/g;
-                    let pushMatch;
-                    while ((pushMatch = pushRegex.exec(chunk)) !== null) {
-                        try {
-                            const objStr = pushMatch[1];
-                            const dataidMatch = /dataid:\s*'(\d+)'/i.exec(objStr) || /dataid:\s*"?(\d+)"?/i.exec(objStr);
-                            const titleMatch = /title:\s*'([^']+)'/i.exec(objStr) || /title:\s*"([^"]+)"/i.exec(objStr);
-                            const authorMatch = /author:\s*'([^']+)'/i.exec(objStr) || /author:\s*"([^"]+)"/i.exec(objStr);
-                            const createdMatch = /created:\s*'([^']+)'/i.exec(objStr) || /created:\s*"([^"]+)"/i.exec(objStr);
-
-                            if (dataidMatch && titleMatch) {
-                                const no = parseInt(dataidMatch[1], 10);
-                                let rawTitle = titleMatch[1];
-                                try { rawTitle = decodeURIComponent(JSON.parse(`"${rawTitle}"`)); } catch (e) { }
-
-                                let writer = authorMatch ? authorMatch[1] : '';
-                                try { writer = decodeURIComponent(JSON.parse(`"${writer}"`)); } catch (e) { }
-
-                                posts.push({
-                                    no,
-                                    title: rawTitle,
-                                    writer: writer,
-                                    date: createdMatch ? createdMatch[1] : '',
-                                    url: POST_URL(fldid, no),
-                                });
-                            }
-                        } catch (e) { }
-                    }
+                    appendScriptArticles(chunk, fldid, posts);
                     if (posts.length > 0) return posts;
                 }
             }
@@ -260,17 +201,16 @@ function parsePostList(html: string, fldid: string, isSearch: boolean = false): 
 
 // ─── 알림 ───
 function notify(title: string, body: string, url?: string): void {
-    if (!notifyEnabled) return;
-    try {
-        const noti = new Notification({ title, body, silent: false });
-        if (url) {
-            noti.on('click', () => shell.openExternal(url));
-        }
-        noti.show();
-    } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        log(`[TRADE] 알림 실패: ${msg}`);
-    }
+    showDesktopNotification({
+        enabled: notifyEnabled,
+        title,
+        body,
+        onClick: url ? () => shell.openExternal(url) : undefined,
+        onError: error => {
+            const message = error instanceof Error ? error.message : String(error);
+            log(`[TRADE] 알림 실패: ${message}`);
+        },
+    });
 }
 
 // ─── 새 글 알림용 카페 검색 감지 ───
@@ -289,7 +229,7 @@ async function checkKeywordsSearch(): Promise<boolean> {
         // 알림 기능 시에는 각각의 검색 API를 쏜다
         for (const kw of tradeKeywords) {
             try {
-                await randomDelay(); // 키워드당 딜레이 (블락 방지)
+                await waitRandomDelay(MONITOR_RATE_LIMIT.MIN_DELAY_MS, MONITOR_RATE_LIMIT.MAX_DELAY_MS); // 키워드당 딜레이 (블락 방지)
                 const html = await fetchPage(SEARCH_URL(server.fldid, kw));
                 const posts = parsePostList(html, server.fldid, true);
 
@@ -381,16 +321,20 @@ async function doCheck(): Promise<void> {
 
     // 키워드가 없으면 폴링 안 함
     if (tradeKeywords.length === 0) {
-        checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
+        checkTimer = setTimeout(doCheck, MONITOR_CHECK_INTERVAL_MS);
         return;
     }
 
     if (!notifyEnabled) {
-        checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
+        checkTimer = setTimeout(doCheck, MONITOR_CHECK_INTERVAL_MS);
         return;
     }
 
-    const backoff = getBackoffMs();
+    const backoff = calculateBackoffMs(
+        consecutiveErrors,
+        MONITOR_RATE_LIMIT.BACKOFF_BASE_MS,
+        MONITOR_RATE_LIMIT.MAX_BACKOFF_MS,
+    );
     if (backoff > 0) {
         consecutiveErrors = Math.max(0, consecutiveErrors - 1);
         checkTimer = setTimeout(doCheck, backoff);
@@ -415,7 +359,7 @@ async function doCheck(): Promise<void> {
         }
     }
 
-    checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
+    checkTimer = setTimeout(doCheck, MONITOR_CHECK_INTERVAL_MS);
 }
 
 // ─── 내부 유틸 ───

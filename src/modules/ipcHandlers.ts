@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as config from './config';
 import { AppConfig, QuickSlotItem } from './constants';
 import * as fs from 'fs';
+import { resolveSafeChildFile } from './safePath';
 import { chatLogManager } from './chatLogManager';
 import * as wm from './windowManager';
 import * as gallery from './galleryMonitor';
@@ -24,8 +25,59 @@ import { buffTimerManager } from './buffTimerManager';
 import * as scam from './scamMonitor';
 import { discordNotifier } from './discordNotifier';
 import { chatParser } from './chatParser';
+import {
+  broadcastToAllWindows,
+  broadcastToAllWindowsExcept,
+} from './windowMessaging';
 
 let _registered = false;
+
+/** 전체 화면 효과를 표시할 게임 오버레이를 준비하고 렌더러 이벤트를 전달합니다. */
+function triggerGameOverlayEffect(
+  channel: 'trigger-jellyppy-rain' | 'trigger-firework',
+  durationMs: number,
+  logLifecycle = false,
+): boolean {
+  let overlayWin = wm.getGameOverlayWindow();
+  let isNew = false;
+
+  if (!overlayWin || overlayWin.isDestroyed()) {
+    if (logLifecycle) console.log('[IPC] gameOverlayWindow not active. Creating window...');
+    wm.createGameOverlayWindow();
+    overlayWin = wm.getGameOverlayWindow();
+    isNew = true;
+  }
+  if (!overlayWin || overlayWin.isDestroyed()) return false;
+
+  const bounds = overlayWin.getBounds();
+  if (bounds.width === 0 || bounds.height === 0 || !overlayWin.isVisible()) {
+    if (logLifecycle) console.log('[IPC] gameOverlayWindow size is 0 or hidden. Setting full screen bounds...');
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width, height } = primaryDisplay.workAreaSize;
+    overlayWin.setBounds({ x: 0, y: 0, width, height });
+    overlayWin.showInactive();
+  }
+
+  overlayWin.setAlwaysOnTop(true, 'screen-saver');
+  setTimeout(() => {
+    try {
+      if (overlayWin && !overlayWin.isDestroyed()) {
+        overlayWin.setAlwaysOnTop(false);
+      }
+    } catch (_error) {}
+  }, durationMs);
+
+  const sendEffect = () => {
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      overlayWin.webContents.send(channel);
+    }
+  };
+  if (logLifecycle) console.log('[IPC] Forwarding trigger-firework to gameOverlayWindow webContents.');
+  if (isNew) overlayWin.webContents.once('did-finish-load', sendEffect);
+  else sendEffect();
+
+  return true;
+}
 
 export function register(): void {
   if (_registered) return;
@@ -78,86 +130,13 @@ export function register(): void {
   });
 
   ipcMain.on('trigger-jellyppy-rain-global', () => {
-    let overlayWin = wm.getGameOverlayWindow();
-    let isNew = false;
-    if (!overlayWin || overlayWin.isDestroyed()) {
-      wm.createGameOverlayWindow();
-      overlayWin = wm.getGameOverlayWindow();
-      isNew = true;
-    }
-    if (overlayWin && !overlayWin.isDestroyed()) {
-      const bounds = overlayWin.getBounds();
-      if (bounds.width === 0 || bounds.height === 0 || !overlayWin.isVisible()) {
-        const primaryDisplay = screen.getPrimaryDisplay();
-        const { width, height } = primaryDisplay.workAreaSize;
-        overlayWin.setBounds({ x: 0, y: 0, width, height });
-        overlayWin.showInactive();
-      }
-
-      // 비 내리는 동안 임시로 항상 위에 노출 (다른 윈도우 가림 방지)
-      overlayWin.setAlwaysOnTop(true, 'screen-saver');
-      setTimeout(() => {
-        try {
-          if (overlayWin && !overlayWin.isDestroyed()) {
-            overlayWin.setAlwaysOnTop(false);
-          }
-        } catch (e) {}
-      }, 6500);
-
-      if (isNew) {
-        overlayWin.webContents.once('did-finish-load', () => {
-          if (overlayWin && !overlayWin.isDestroyed()) {
-            overlayWin.webContents.send('trigger-jellyppy-rain');
-          }
-        });
-      } else {
-        overlayWin.webContents.send('trigger-jellyppy-rain');
-      }
-    }
+    triggerGameOverlayEffect('trigger-jellyppy-rain', 6500);
   });
 
   ipcMain.on('trigger-firework-global', () => {
     console.log('[IPC] trigger-firework-global event received from renderer in Main Process.');
     analytics.trackEvent('trigger_firework_global');
-    let overlayWin = wm.getGameOverlayWindow();
-    let isNew = false;
-    if (!overlayWin || overlayWin.isDestroyed()) {
-      console.log('[IPC] gameOverlayWindow not active. Creating window...');
-      wm.createGameOverlayWindow();
-      overlayWin = wm.getGameOverlayWindow();
-      isNew = true;
-    }
-    if (overlayWin && !overlayWin.isDestroyed()) {
-      const bounds = overlayWin.getBounds();
-      if (bounds.width === 0 || bounds.height === 0 || !overlayWin.isVisible()) {
-        console.log('[IPC] gameOverlayWindow size is 0 or hidden. Setting full screen bounds...');
-        const primaryDisplay = screen.getPrimaryDisplay();
-        const { width, height } = primaryDisplay.workAreaSize;
-        overlayWin.setBounds({ x: 0, y: 0, width, height });
-        overlayWin.showInactive();
-      }
-
-      // 폭죽 터지는 동안 임시로 항상 위에 노출 (다른 윈도우 가림 방지)
-      overlayWin.setAlwaysOnTop(true, 'screen-saver');
-      setTimeout(() => {
-        try {
-          if (overlayWin && !overlayWin.isDestroyed()) {
-            overlayWin.setAlwaysOnTop(false);
-          }
-        } catch (e) {}
-      }, 5500);
-
-      console.log('[IPC] Forwarding trigger-firework to gameOverlayWindow webContents.');
-      if (isNew) {
-        overlayWin.webContents.once('did-finish-load', () => {
-          if (overlayWin && !overlayWin.isDestroyed()) {
-            overlayWin.webContents.send('trigger-firework');
-          }
-        });
-      } else {
-        overlayWin.webContents.send('trigger-firework');
-      }
-    } else {
+    if (!triggerGameOverlayEffect('trigger-firework', 5500, true)) {
       console.warn('[IPC] Failed to forward event: gameOverlayWindow is null or destroyed.');
     }
   });
@@ -226,11 +205,7 @@ export function register(): void {
       }
     } catch {}
 
-    BrowserWindow.getAllWindows().forEach(win => {
-      if (!win.isDestroyed()) {
-        win.webContents.send('chat-log-status-changed', isValid);
-      }
-    });
+    broadcastToAllWindows('chat-log-status-changed', isValid);
   }
 
   // 창 토글 핸들러 일괄 등록
@@ -311,12 +286,6 @@ export function register(): void {
   });
   ipcMain.on('contents-remove-item', (_e, id: string) => {
     import('./contentsChecker').then(mod => mod.removeItem(id));
-  });
-  ipcMain.on('contents-reorder-item', (_e, id: string, direction: 'up' | 'down') => {
-    import('./contentsChecker').then(mod => mod.reorderItem(id, direction));
-  });
-  ipcMain.on('contents-reorder-list', (_e, ids: string[]) => {
-    import('./contentsChecker').then(mod => mod.reorderList(ids));
   });
   ipcMain.on('contents-manual-reset', () => {
     import('./contentsChecker').then(mod => mod.checkReset());
@@ -557,9 +526,7 @@ export function register(): void {
 
   // 어벤던로드 즉시 숨김 (isActive 유지, 다음 입장 로그 시 재표시)
   ipcMain.on('abandoned-hide-now', () => {
-    BrowserWindow.getAllWindows().forEach(win => {
-      if (!win.isDestroyed()) win.webContents.send('abandoned-hide-now');
-    });
+    broadcastToAllWindows('abandoned-hide-now');
   });
 
   // 어벤던로드 자동 숨김 시간 설정
@@ -796,11 +763,7 @@ export function register(): void {
     diaryDb.deleteTimerRecord(id);
   });
   ipcMain.on('timer-toggle-session', (event, state: 'start' | 'stop') => {
-    BrowserWindow.getAllWindows().forEach(win => {
-      if (!win.isDestroyed() && win.webContents !== event.sender) {
-        win.webContents.send('timer-toggle', state);
-      }
-    });
+    broadcastToAllWindowsExcept(event.sender, 'timer-toggle', state);
   });
 
   // --- Custom Sound IPC ---
@@ -848,7 +811,12 @@ export function register(): void {
 
   ipcMain.handle('delete-custom-sound', (_e, filename: string) => {
     try {
-      const filePath = path.join(app.getPath('userData'), 'custom_sounds', filename);
+      const customSoundsDir = path.join(app.getPath('userData'), 'custom_sounds');
+      const filePath = resolveSafeChildFile(customSoundsDir, filename);
+      if (!filePath) {
+        console.warn(`[IPC] Unsafe custom sound filename rejected: ${filename}`);
+        return false;
+      }
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         return true;

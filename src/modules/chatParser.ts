@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { ChatTrigger, ChatPatternType, ChatParserEventMap } from '../shared/types';
 
+const { isNpcSender } = require('../shared/chatConstants') as ChatConstants;
+
 /**
  * 테일즈위버 채팅 로그 파싱 결과 타입 정의
  */
@@ -11,7 +13,7 @@ export interface ParsedChatData {
   type: 'SEED' | 'ITEM' | 'XP' | 'TRADE' | 'ALERT' | 'PROGRESS' | 'BUFF_USED';
   originalTime: string; // [HH시 mm분 ss초]
   message: string;      // HTML 제거된 순수 메시지
-  data?: any;           // 가공된 숫자나 객체 데이터
+  data?: unknown;       // 가공된 숫자나 객체 데이터
 }
 
 /**
@@ -148,6 +150,26 @@ class ChatParser extends EventEmitter {
     if (cleanMsg.trim().length === 0) return;
 
     // J. 숙제 체크 관련 특화 패턴
+    // 0. 공허 특별 몬스터 출현
+    if (/맵\s*어딘가에\s*특별\s*몬스터가\s*출현하였습니다\./.test(cleanMsg)) {
+      this.emit('SPECIAL_MONSTER_SPAWN', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
+    // 0-1. 이터널 플로어 보상 상자 획득
+    if (/\[이터널\s*플로어\s*보상\s*상자\]\s*아이템을\s*획득하였습니다\./.test(cleanMsg)) {
+      this.emit('ETERNAL_FLOOR_CLEAR', {
+        date: this._currentDate,
+        timestamp,
+        message: cleanMsg
+      });
+      return;
+    }
+
     // 1. 이클립스 보스전
     const eclipseBossMatch = cleanMsg.match(/이클립스 보스전\((.*?)\) 클리어 횟수: \[(\d+)회\/7회\]/);
     if (eclipseBossMatch) {
@@ -303,11 +325,15 @@ class ChatParser extends EventEmitter {
       return;
     }
 
-    // 12. 신조의 둥지
-    if (/미션을\s*완료했습니다\.\s*:\s*신조의\s*둥지\s*-\s*신조\s*처치/.test(cleanMsg)) {
+    // 12. 신조의 둥지 주간 보상 획득
+    const shinjoNestMatch = cleanMsg.match(
+      /이번\s*주\s*신조\s*보상을\s*(\d+)회\s*획득\s*하셨습니다\.\s*한\s*주에\s*7회까지\s*획득\s*할\s*수\s*있습니다\./,
+    );
+    if (shinjoNestMatch) {
       this.emit('CONTENT_SHINJO_NEST_CLEAR', {
         date: this._currentDate,
         timestamp,
+        count: parseInt(shinjoNestMatch[1], 10),
         message: cleanMsg
       });
       return;
@@ -349,8 +375,8 @@ class ChatParser extends EventEmitter {
       return;
     }
 
-    // 15-2. 오를리 방어전 지옥 난이도 클리어
-    if (/미션을\s*완료했습니다\.\s*:\s*오를리\s*방어전\s*지옥\s*난이도\s*클리어/.test(cleanMsg)) {
+    // 15-2. 오를리 방어전 완료 후 남은 공격 횟수
+    if (/남은\s*공격\s*횟수\s*:\s*1\b/.test(cleanMsg)) {
       this.emit('ORLY_DEFENSE_CLEAR', {
         date: this._currentDate,
         timestamp,
@@ -420,8 +446,8 @@ class ChatParser extends EventEmitter {
 
 
 
-    // 19. 베스티지
-    if (/미션을\s*완료했습니다\.\s*:\s*베스티지\s*던전\s*클리어/.test(cleanMsg)) {
+    // 19. 베스티지 보상 획득
+    if (/\[성난\s*빅테디의\s*별사탕\]\s*아이템을\s*획득하였습니다\./.test(cleanMsg)) {
       this.emit('VESTIGE_CLEAR', {
         date: this._currentDate,
         timestamp,
@@ -662,12 +688,6 @@ class ChatParser extends EventEmitter {
     }
 
     // 일반 대화 색상(#ffffff)으로 기록되며 닉네임 형식을 취하는 보스/NPC 예외 목록
-    const NPC_BLACK_LIST = [
-        '데스포이나', '신조', '키시니크', '에레오스', '로카고스',
-        '마티아', '티로로스', '라이코스', '체리아', '실반',
-        '샐리온', '실라이론', '샐레아나', '루미너스', '크라모르'
-    ];
-
     // D-2. 색상 최우선 기반 카테고리 분류 적용
     let color = '#a8a8a8';
     const colorMatch = rawLine.match(/color=["']?(#[0-9a-fA-F]{6})["']?/);
@@ -717,7 +737,7 @@ class ChatParser extends EventEmitter {
             const sender = chatMatch[1].trim();
             const message = chatMatch[2].trim();
             // 일반 메시지인 경우에만 닉네임 유효성(공백/쉼표 검사) 및 NPC 검사를 진행
-            if (!sender.includes(' ') && !sender.includes(',') && !NPC_BLACK_LIST.includes(sender)) {
+            if (!sender.includes(' ') && !sender.includes(',') && !isNpcSender(sender)) {
                 this.emit('NORMAL_CHAT', { date: this._currentDate, timestamp, sender, message, color });
                 return;
             }

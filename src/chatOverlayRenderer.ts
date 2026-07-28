@@ -3,47 +3,37 @@ interface Window {
   electronAPI: {
     toggleChatOverlay: () => void;
     toggleChatOverlaySub: (subNum: 1 | 2) => void;
-    getChatHistory: (category: string) => Promise<any[]>;
-    getMoreChatHistory: (category: string) => Promise<any[]>;
+    getChatHistory: (category: string) => Promise<BrowserChatItem[]>;
+    getMoreChatHistory: (category: string) => Promise<BrowserChatItem[]>;
     openTodayLog: () => void;
     fetchEtaRankings: () => Promise<boolean>;
-    onChatUpdated: (callback: (chatItem: any) => void) => void;
+    onChatUpdated: (callback: (chatItem: BrowserChatItem) => void) => void;
     onChatHistoryCleared: (callback: () => void) => void;
-    onConfigData: (callback: (config: any) => void) => void;
+    onConfigData: (callback: (config: BrowserAppConfig) => void) => void;
     onChatOverlayMode: (callback: (mode: 'main' | 'sub1' | 'sub2') => void) => void;
     cleanupAllListeners: () => void;
     setChatOverlaySize: (mode: 'main' | 'sub1' | 'sub2', width: number, height: number) => void;
-    applySettings: (settings: any) => void;
+    applySettings: (settings: Partial<BrowserAppConfig>) => void;
     toggleSettings: (tabId?: string) => void;
     triggerFireworkGlobal?: () => void;
   };
-  lucide?: {
-    createIcons: () => void;
-  };
 }
 
-// NPC/몬스터 이름 블랙리스트
-const NPC_BLACK_LIST = [
-  '데스포이나', '신조', '키시니크', '에레오스', '로카고스',
-  '마티아', '티로로스', '라이코스', '체리아', '실반',
-  '샐리온', '실라이론', '샐레아나', '루미너스', '크라모르'
-];
-
 // NPC/몬스터 대사 여부 판별 함수
-function isNpcOrMonsterChat(chat: any): boolean {
+function isNpcOrMonsterChat(chat: BrowserChatItem): boolean {
   if (!chat) return false;
   const sender = chat.sender || '';
   const message = chat.message || '';
   
   // 1. 보낸 사람이 NPC인 경우
-  if (NPC_BLACK_LIST.includes(sender)) return true;
+  if (window.chatConstants.isNpcSender(sender)) return true;
   
   // 2. 시스템 메시지 내에서 "NPC이름 : 대사" 형태인 경우
   if (chat.type === 'system') {
     const match = message.match(/^(.+?)\s*:\s*(.*)$/);
     if (match) {
       const parsedSender = match[1].trim();
-      if (NPC_BLACK_LIST.includes(parsedSender)) return true;
+      if (window.chatConstants.isNpcSender(parsedSender)) return true;
       // 공백이 있는 이름은 보통 NPC/몬스터 (예: "심연의 제2사도", "수색대장, 에토스")
       if (parsedSender.includes(' ') && !parsedSender.includes(']') && !parsedSender.includes('[')) {
         return true;
@@ -54,7 +44,7 @@ function isNpcOrMonsterChat(chat: any): boolean {
 }
 
 // 오버레이 노출 조건 판별 함수
-function shouldShowChat(chat: any): boolean {
+function shouldShowChat(chat: BrowserChatItem): boolean {
   if (!chat) return false;
 
   // 1. NPC/몬스터 대사 필터 적용
@@ -74,9 +64,9 @@ function shouldShowChat(chat: any): boolean {
 }
 
 let chatOverlayCurrentTab = 'Basic';
-let chatOverlayHoverTimer: any = null;
-let chatOverlayAppConfig: any = null;
-let lastKnownConfig: any = null;
+let chatOverlayHoverTimer: ReturnType<typeof setTimeout> | null = null;
+let chatOverlayAppConfig: BrowserAppConfig | null = null;
+let lastKnownConfig: BrowserAppConfig | null = null;
 let isLoadingMore = false;
 let hasReachedEnd = false;
 let chatOverlayMode: 'main' | 'sub1' | 'sub2' = 'main';
@@ -172,7 +162,7 @@ function getChannelBadgeText(type: string): string {
 }
 
 // Build chat row element
-function createChatRow(chat: any): HTMLDivElement {
+function createChatRow(chat: BrowserChatItem): HTMLDivElement {
   const row = document.createElement('div');
   row.className = 'chat-message-row';
 
@@ -296,7 +286,7 @@ function createChatRow(chat: any): HTMLDivElement {
   // 5. Message Content
   const textSpan = document.createElement('span');
   textSpan.className = 'chat-text';
-  textSpan.textContent = ` ${chat.message}`;
+  textSpan.textContent = ` ${window.normalizeChatDisplayText(chat.message)}`;
 
   let customColor = '';
   if (chatOverlayAppConfig) {
@@ -329,9 +319,9 @@ async function loadHistory() {
   try {
     const history = await window.electronAPI.getChatHistory(chatOverlayCurrentTab);
     if (history && history.length > 0) {
-      const filtered = history.filter((chat: any) => shouldShowChat(chat));
+      const filtered = history.filter((chat: BrowserChatItem) => shouldShowChat(chat));
 
-      filtered.forEach((chat: any) => {
+      filtered.forEach((chat: BrowserChatItem) => {
         chatArea.appendChild(createChatRow(chat));
       });
       scrollToBottom();
@@ -381,7 +371,7 @@ function handleMouseLeave() {
 }
 
 // Update Header, Tabs, and Resize Handle visibility based on Click Through config
-function updateHeaderVisibility(config: any) {
+function updateHeaderVisibility(config: BrowserAppConfig) {
   if (!config) return;
   const clickThrough = !!config.chatOverlayClickThrough;
   
@@ -413,7 +403,7 @@ function updateHeaderVisibility(config: any) {
 }
 
 // Update Styles based on Config
-function applyConfigStyles(config: any) {
+function applyConfigStyles(config: BrowserAppConfig) {
   if (!config) return;
   chatOverlayAppConfig = config;
 
@@ -558,7 +548,7 @@ window.electronAPI.onConfigData((config) => {
   // 색상 변경 감지
   let colorChanged = false;
   if (lastKnownConfig) {
-    const colorKeys = [
+    const colorKeys: Array<keyof BrowserAppConfig> = [
       'chatOverlayColorGeneral',
       'chatOverlayColorWhisper',
       'chatOverlayColorTeam',
@@ -727,12 +717,12 @@ chatArea.addEventListener('scroll', async () => {
       const newItems = await window.electronAPI.getMoreChatHistory(chatOverlayCurrentTab);
       
       if (newItems && newItems.length > 0) {
-        const filtered = newItems.filter((chat: any) => shouldShowChat(chat));
+        const filtered = newItems.filter((chat: BrowserChatItem) => shouldShowChat(chat));
 
         // insertBefore로 앞에 끼워 넣을 때, 가장 최신(뒤쪽) 데이터부터 먼저 삽입해야 
         // 결과적으로 올바른 시간 순서(오래된 로그가 위, 최신 로그가 아래)로 정렬됩니다.
         const reversedItems = [...filtered].reverse();
-        reversedItems.forEach((chat: any) => {
+        reversedItems.forEach((chat: BrowserChatItem) => {
           chatArea.insertBefore(createChatRow(chat), chatArea.firstChild);
         });
 

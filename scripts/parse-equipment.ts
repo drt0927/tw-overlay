@@ -1,10 +1,38 @@
-const fs = require('fs');
-const path = require('path');
+import fs = require('fs');
+import path = require('path');
 
 const RAW_DIR = path.join(__dirname, '..', '.gemini', 'planning', 'equipment_dic');
 const RAW_RESOURCES_DIR = path.join(RAW_DIR, 'resources');
 const OUT_JSON_PATH = path.join(__dirname, '..', 'src', 'assets', 'data', 'equipment_dic.json');
 const OUT_IMG_DIR = path.join(__dirname, '..', 'src', 'assets', 'img', 'equipment');
+
+type EquipmentGroup = '무기' | '갑옷' | '손목' | '아티팩트' | '세트' | '어빌리티' | '기타';
+
+interface HtmlCell {
+  text: string;
+  colspan: number;
+  rowspan: number;
+  img: string | null;
+}
+
+type HtmlGrid = HtmlCell[][];
+
+interface ParsedItem {
+  name: string;
+  category: string;
+  group: EquipmentGroup;
+  part: string;
+  image: string;
+  stats: Record<string, string>;
+  maxStats: Record<string, string>;
+  subCategory?: string;
+  slots?: string;
+  effects?: string;
+  delay?: string;
+  synth?: string;
+  levelReq?: string;
+  statReq?: string;
+}
 
 // Ensure output directories exist
 if (!fs.existsSync(path.dirname(OUT_JSON_PATH))) {
@@ -31,7 +59,7 @@ const ARTIFACTS = [
   '찌르기', '베기', '마법공격', '마법방어(신성)', '물리 복합', '마법 베기'
 ];
 
-function getGroup(category) {
+function getGroup(category: string): EquipmentGroup {
   if (WEAPONS.includes(category)) return '무기';
   if (ARMORS.includes(category)) return '갑옷';
   if (WRISTS.includes(category)) return '손목';
@@ -41,7 +69,7 @@ function getGroup(category) {
   return '기타';
 }
 
-function getPart(name, category, group) {
+function getPart(name: string, category: string, group: EquipmentGroup): string {
   if (group === '무기') return 'weapon';
   if (group === '손목') return 'wrist';
   if (group === '아티팩트') return 'artifact';
@@ -71,7 +99,7 @@ function getPart(name, category, group) {
   return '';
 }
 
-function decodeHtml(html) {
+function decodeHtml(html: string): string {
   if (!html) return '';
   return html
     .replace(/<[^>]+>/g, '') // remove HTML tags
@@ -85,7 +113,7 @@ function decodeHtml(html) {
     .trim();
 }
 
-function parseHtmlFile(filePath) {
+function parseHtmlFile(filePath: string): ParsedItem[] {
   const fileName = path.basename(filePath);
   const category = fileName.replace('.html', '');
   const group = getGroup(category);
@@ -119,7 +147,7 @@ function parseHtmlFile(filePath) {
 
       const imgMatch = td.match(/<img[^>]+src="([^"]+)"/i);
       // Clean image path (e.g. resources/cellImage_...jpg -> cellImage_...jpg)
-      let img = null;
+      let img: string | null = null;
       if (imgMatch) {
         img = path.basename(imgMatch[1]);
       }
@@ -134,7 +162,7 @@ function parseHtmlFile(filePath) {
   });
 
   // Reconstruct 2D grid of cell references to handle rowspans and colspans
-  const grid = [];
+  const grid: HtmlGrid = [];
   for (let r = 0; r < htmlRows.length; r++) {
     if (!grid[r]) grid[r] = [];
     const rowCells = htmlRows[r];
@@ -164,8 +192,12 @@ function parseHtmlFile(filePath) {
   }
 }
 
-function parseAbilityGrid(grid, category, group) {
-  const items = [];
+function parseAbilityGrid(
+  grid: HtmlGrid,
+  category: string,
+  group: EquipmentGroup,
+): ParsedItem[] {
+  const items: ParsedItem[] = [];
   let headerRowIdx = -1;
 
   // Find header row (must contain '아이템', '효과')
@@ -184,7 +216,7 @@ function parseAbilityGrid(grid, category, group) {
 
   // Identify column roles
   const headerRow = grid[headerRowIdx];
-  const colMap = {};
+  const colMap: Record<number, 'name' | 'slots' | 'mainEffect' | 'subEffects'> = {};
   for (let c = 0; c < headerRow.length; c++) {
     const cell = headerRow[c];
     if (cell && cell.text) {
@@ -223,7 +255,7 @@ function parseAbilityGrid(grid, category, group) {
     // Col 0 and 1 are typically merged for Item Name
     const nameCell = row[0];
     if (nameCell && nameCell.text && nameCell.text.trim() && !nameCell.text.includes('목차') && nameCell.text.trim() !== '아이템' && nameCell.text.trim() !== '효과' && nameCell !== grid[r - 1]?.[0]) {
-      const item = {
+      const item: ParsedItem = {
         name: nameCell.text.replace(/\s+/g, ' '),
         category: category,
         subCategory: currentSubCategory,
@@ -237,7 +269,7 @@ function parseAbilityGrid(grid, category, group) {
       };
 
       // Extract main effect, slots, sub effects using colMap
-      const seenCells = new Set();
+      const seenCells = new Set<HtmlCell>();
       for (let c = 0; c < row.length; c++) {
         const cell = row[c];
         if (!cell || seenCells.has(cell)) continue;
@@ -260,10 +292,14 @@ function parseAbilityGrid(grid, category, group) {
   return items;
 }
 
-function parseEquipmentGrid(grid, category, group) {
-  const items = [];
+function parseEquipmentGrid(
+  grid: HtmlGrid,
+  category: string,
+  group: EquipmentGroup,
+): ParsedItem[] {
+  const items: ParsedItem[] = [];
   let headerRowIdx = -1;
-  const keyMapping = {
+  const keyMapping: Record<string, string> = {
     '찌르기': 'stab',
     '베기': 'hack',
     '방어': 'def',
@@ -283,7 +319,10 @@ function parseEquipmentGrid(grid, category, group) {
   // 부분일치(includes)는 짧은 키가 긴 키의 접두사일 때 엉뚱한 컬럼을 잡으므로,
   // 정확매칭을 우선하고 부분매칭은 긴 키부터 시도한다.
   const mappingKeys = Object.keys(keyMapping).sort((a, b) => b.length - a.length);
-  const matchKey = (text) => mappingKeys.find(k => text === k) || mappingKeys.find(k => text.includes(k));
+  const matchKey = (text: string): string | undefined => (
+    mappingKeys.find(k => text === k)
+    || mappingKeys.find(k => text.includes(k))
+  );
 
   // Find header row containing at least 2 matching keywords
   for (let r = 0; r < grid.length; r++) {
@@ -307,7 +346,7 @@ function parseEquipmentGrid(grid, category, group) {
   }
 
   const headerRow = grid[headerRowIdx];
-  const colMap = {};
+  const colMap: Record<number, string> = {};
 
   for (let c = 0; c < headerRow.length; c++) {
     const cell = headerRow[c];
@@ -349,7 +388,7 @@ function parseEquipmentGrid(grid, category, group) {
       name = name.replace(/\s*-\s*$/g, '');
       name = name.trim();
 
-      const item = {
+      const item: ParsedItem = {
         name: name,
         category: category,
         group: group,
@@ -373,7 +412,7 @@ function parseEquipmentGrid(grid, category, group) {
 
       if (rBase < grid.length && grid[rBase]) {
         const baseRow = grid[rBase];
-        const seenCells = new Set();
+        const seenCells = new Set<HtmlCell>();
         for (let c = 0; c < baseRow.length; c++) {
           const cell = baseRow[c];
           if (!cell || seenCells.has(cell)) continue;
@@ -403,7 +442,8 @@ function parseEquipmentGrid(grid, category, group) {
 
       if (rReq < grid.length && grid[rReq]) {
         // Column mapping for req is typically the last column
-        const reqColIdx = Object.keys(colMap).find(k => colMap[k] === 'req');
+        const reqColIdx = Object.entries(colMap)
+          .find(([, role]) => role === 'req')?.[0];
         if (reqColIdx !== undefined) {
           const reqCell = grid[rReq][parseInt(reqColIdx, 10)];
           // Ensure it is not spanned from base row
@@ -417,7 +457,7 @@ function parseEquipmentGrid(grid, category, group) {
         const maxRow = grid[rMax];
         // Since Column 0 (image) is spanned from rBase, column mapping starts offset.
         // We can just align using column index c of the grid.
-        const seenCells = new Set();
+        const seenCells = new Set<HtmlCell>();
         for (let c = 0; c < maxRow.length; c++) {
           const cell = maxRow[c];
           if (!cell || seenCells.has(cell)) continue;
@@ -443,7 +483,7 @@ function parseEquipmentGrid(grid, category, group) {
   return items;
 }
 
-function copyImage(imgName) {
+function copyImage(imgName: string): void {
   const srcPath = path.join(RAW_RESOURCES_DIR, imgName);
   const destPath = path.join(OUT_IMG_DIR, imgName);
 
@@ -458,7 +498,7 @@ function copyImage(imgName) {
   }
 }
 
-const NENAPLE_ITEMS = [
+const NENAPLE_ITEMS: ParsedItem[] = [
   {
     "name": "네냐플 학원의 메일",
     "category": "네냐플 학원 시리즈",
@@ -606,7 +646,7 @@ function run() {
   }
 
   const files = fs.readdirSync(RAW_DIR);
-  let allItems = [];
+  let allItems: ParsedItem[] = [];
 
   files.forEach(file => {
     if (!file.endsWith('.html')) return;

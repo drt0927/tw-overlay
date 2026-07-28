@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="style.css">
-  <script src="assets/tailwind.min.js"></script>
+    <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     .toolbar-glass {
       background: rgba(15, 18, 30, 0.85);
@@ -44,12 +45,8 @@
   </style>
 
     <script>
-        window.addEventListener('beforeunload', () => { 
-            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-                window.electronAPI.cleanupAllListeners(); 
-            }
-        });
-    </script>
+        window.bindElectronListenerCleanup();
+</script>
 </head>
 
 <body class="bg-transparent text-white overflow-hidden select-none">
@@ -96,7 +93,6 @@
   </nav>
 
   <script>
-    function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
     const urlInput = document.getElementById('url-input');
     const goBtn = document.getElementById('go-btn');
     const opacitySlider = document.getElementById('opacity-slider');
@@ -129,7 +125,7 @@
     document.addEventListener('DOMContentLoaded', refreshIcons);
     document.addEventListener('mouseenter', () => window.electronAPI.toolbarMouseEnter());
     document.addEventListener('mouseleave', () => window.electronAPI.toolbarMouseLeave());
-  </script>
+</script>
 </body>
 
 </html>

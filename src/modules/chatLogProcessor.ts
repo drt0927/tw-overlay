@@ -2,7 +2,6 @@ import { chatParser } from './chatParser';
 import * as diaryDb from './diaryDb';
 import * as config from './config';
 import { log } from './logger';
-import { Notification, BrowserWindow } from 'electron';
 import { xpTracker } from './xpTracker';
 import { abandonedTracker } from './abandonedTracker';
 import * as contentsChecker from './contentsChecker';
@@ -10,6 +9,13 @@ import { discordNotifier } from './discordNotifier';
 import { etaCacheManager } from './etaCacheManager';
 import { DEFAULT_CONFIG } from './constants';
 import * as wm from './windowManager';
+import {
+  sendToAllWindowsByPage,
+  sendToFirstWindowByPage,
+} from './windowMessaging';
+import type { ChatChannel, ChatItem } from '../shared/types';
+import type { ChatParserEventMap } from '../shared/types';
+import { showSupportedDesktopNotification } from './desktopNotification';
 
 /**
  * 파싱된 채팅 데이터를 실제 앱 기능(DB 저장, 알림 등)으로 연결하는 프로세서
@@ -18,11 +24,12 @@ import * as wm from './windowManager';
  * 이 클래스는 SEED/아이템/외치기 핸들러와 외부 API를 관리합니다.
  */
 class ChatLogProcessor {
+  private _started = false;
   private _chatContextCache: Array<{ timestamp: number; sender: string; message: string; color: string }> = [];
   private _activeTrackingAlarms: Array<{ alarmId: number; endTime: number }> = [];
 
   // 채팅 오버레이 탭별 히스토리 저장 버퍼스토어
-  private _chatHistoryStore: Record<string, Array<any>> = {
+  private _chatHistoryStore: Record<string, ChatItem[]> = {
     Basic: [],
     General: [],
     Team: [],
@@ -33,7 +40,7 @@ class ChatLogProcessor {
   };
   private readonly _maxHistoryCount = 150;
 
-  private addChatToHistory(tab: string, chat: any): void {
+  private addChatToHistory(tab: string, chat: ChatItem): void {
     const list = this._chatHistoryStore[tab];
     if (!list) return;
     list.push(chat);
@@ -42,16 +49,63 @@ class ChatLogProcessor {
     }
   }
 
-  private broadcastChatUpdate(chatItem: any): void {
-    const allWindows = BrowserWindow.getAllWindows();
-    for (const win of allWindows) {
-      if (!win.isDestroyed() && win.webContents.getURL().includes('chat-overlay.html')) {
-        win.webContents.send('chat-updated', chatItem);
-      }
+  private broadcastChatUpdate(chatItem: ChatItem): void {
+    sendToAllWindowsByPage('chat-overlay.html', 'chat-updated', chatItem);
+  }
+
+  /** 게임 오버레이가 열려 있을 때만 렌더러 이벤트를 전달합니다. */
+  private sendGameOverlayEvent(channel: string, data: unknown): void {
+    const gameOverlay = wm.getGameOverlayWindow();
+    if (gameOverlay && !gameOverlay.isDestroyed()) {
+      gameOverlay.webContents.send(channel, data);
     }
   }
 
-  public getChatHistory(category: string): any[] {
+  /** 설정된 커스텀 사운드를 기존 핸들러와 동일한 기본 볼륨 규칙으로 재생합니다. */
+  private playAlertSound(options: {
+    label: string;
+    soundFile?: string;
+    volume?: number;
+    defaultVolume: number;
+    logMessage: string;
+    allowNone?: boolean;
+  }): void {
+    if (!options.soundFile || (!options.allowNone && options.soundFile === 'none')) return;
+
+    wm.sendPlaySound({
+      label: options.label,
+      soundFile: options.soundFile,
+      volume: options.volume !== undefined ? options.volume : options.defaultVolume,
+      isCustom: true,
+      logMessage: options.logMessage
+    });
+  }
+
+  /** 동일한 구조로 렌더링되는 채팅 항목을 생성합니다. */
+  private createChatItem(options: {
+    type: ChatChannel;
+    timestamp: string;
+    sender: string;
+    message: string;
+    color: string;
+    level?: number | null;
+    characterCode?: number | null;
+  }): ChatItem {
+    return {
+      id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      ...options,
+      level: options.level ?? null,
+      characterCode: options.characterCode ?? null
+    };
+  }
+
+  /** 지정 탭에 기록한 후 모든 채팅 오버레이에 한 번만 전파합니다. */
+  private publishChatItem(chatItem: ChatItem, tabs: string[]): void {
+    tabs.forEach(tab => this.addChatToHistory(tab, chatItem));
+    this.broadcastChatUpdate(chatItem);
+  }
+
+  public getChatHistory(category: string): ChatItem[] {
     return this._chatHistoryStore[category] || [];
   }
 
@@ -75,12 +129,7 @@ class ChatLogProcessor {
    * 모든 채팅 오버레이 창에 히스토리 청소/갱신 이벤트 브로드캐스트
    */
   public broadcastHistoryCleared(): void {
-    const allWindows = BrowserWindow.getAllWindows();
-    for (const win of allWindows) {
-      if (!win.isDestroyed() && win.webContents.getURL().includes('chat-overlay.html')) {
-        win.webContents.send('chat-history-cleared');
-      }
-    }
+    sendToAllWindowsByPage('chat-overlay.html', 'chat-history-cleared');
     log('[CHAT_PROCESSOR] 모든 채팅 오버레이 창에 히스토리 갱신 이벤트를 전송했습니다.');
   }
 
@@ -102,7 +151,7 @@ class ChatLogProcessor {
     const level = rankInfo ? rankInfo.level : null;
     const characterCode = rankInfo ? rankInfo.characterCode : null;
 
-    let type = 'system';
+    let type: ChatChannel = 'system';
     if (data.type === 'shout') {
       type = 'shout';
     } else if (data.type === 'normal') {
@@ -126,7 +175,35 @@ class ChatLogProcessor {
   }
 
   public start(): void {
+    if (this._started) {
+      log('[CHAT_PROCESSOR] 이미 시작되어 중복 이벤트 리스너 등록을 건너뜁니다.');
+      return;
+    }
+    this._started = true;
     log('[CHAT_PROCESSOR] 시작됨 - 이벤트 리스너 등록');
+
+    const queueFixedHomework = (event: keyof ChatParserEventMap, homeworkId: string): void => {
+      chatParser.on(event, () => {
+        contentsChecker.queuePendingHomework(homeworkId, 1, true);
+      });
+    };
+    const queueCountHomework = (event: keyof ChatParserEventMap, homeworkId: string): void => {
+      chatParser.on(event, (data) => {
+        const count = (data as { count?: number }).count;
+        if (typeof count === 'number') {
+          contentsChecker.queuePendingHomework(homeworkId, count, false);
+        }
+      });
+    };
+
+    // 0. 공허 특별 몬스터 출현 알림
+    chatParser.on('SPECIAL_MONSTER_SPAWN', (data) => {
+      log(`[CHAT_PROCESSOR] 특별 몬스터 출현 감지: ${data.message}`);
+      this.sendGameOverlayEvent('special-monster-alert', data);
+    });
+
+    // 0-1. 이터널 플로어 보상 상자 획득 처리
+    queueFixedHomework('ETERNAL_FLOOR_CLEAR', 'weekly-eternal-floor');
 
     // 1. SEED 획득 처리
     chatParser.on('SEED_GAINED', (data) => {
@@ -134,19 +211,14 @@ class ChatLogProcessor {
       const content = `[자동] ${data.message} (${this.formatNumber(data.amount)})`;
       diaryDb.addActivityLog(data.date, timeOnly, 'calc', content, data.amount);
 
-      const chatItem = {
-        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      const chatItem = this.createChatItem({
         type: 'system',
         timestamp: data.timestamp,
         sender: '시스템',
         message: data.message,
-        color: '#a8a8a8',
-        level: null,
-        characterCode: null
-      };
-      this.addChatToHistory('Basic', chatItem);
-      this.addChatToHistory('System', chatItem);
-      this.broadcastChatUpdate(chatItem);
+        color: '#a8a8a8'
+      });
+      this.publishChatItem(chatItem, ['Basic', 'System']);
     });
 
     // 2. 아이템 획득 처리
@@ -178,22 +250,17 @@ class ChatLogProcessor {
         const amountMatch = data.message.match(/(\d+)개/);
         const amount = amountMatch ? parseInt(amountMatch[1], 10) : 1;
         diaryDb.addActivityLog(data.date, timeOnly, 'loot', `[득템] ${data.message}`, amount);
-        this.sendNotification('아이템 획득 알림', data.message);
+        showSupportedDesktopNotification('아이템 획득 알림', data.message);
       }
 
-      const chatItem = {
-        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      const chatItem = this.createChatItem({
         type: 'system',
         timestamp: data.timestamp,
         sender: '시스템',
         message: data.message,
-        color: '#ffd700',
-        level: null,
-        characterCode: null
-      };
-      this.addChatToHistory('Basic', chatItem);
-      this.addChatToHistory('System', chatItem);
-      this.broadcastChatUpdate(chatItem);
+        color: '#ffd700'
+      });
+      this.publishChatItem(chatItem, ['Basic', 'System']);
     });
 
     // 2-2. 경험치 변동 처리
@@ -203,35 +270,26 @@ class ChatLogProcessor {
         return;
       }
 
-      const chatItem = {
-        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      const chatItem = this.createChatItem({
         type: 'system',
         timestamp: data.timestamp,
         sender: '시스템',
         message: data.message,
-        color: '#ffd700',
-        level: null,
-        characterCode: null
-      };
-      this.addChatToHistory('Basic', chatItem);
-      this.addChatToHistory('System', chatItem);
-      this.broadcastChatUpdate(chatItem);
+        color: '#ffd700'
+      });
+      this.publishChatItem(chatItem, ['Basic', 'System']);
     });
 
     // 3. 외치기 처리
     chatParser.on('TRADE_SHOUT', (data) => {
       diaryDb.addShoutLog(data.sender, data.message);
-      const allWindows = BrowserWindow.getAllWindows();
-      const historyWin = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('shout-history.html'));
-      if (historyWin) {
-        historyWin.webContents.send('shout-history-updated');
-      }
+      sendToFirstWindowByPage('shout-history.html', 'shout-history-updated');
       const cfg = config.load();
       const keywords = cfg.shoutKeywords || [];
       // String.prototype.includes는 기본적으로 대소문자를 구분(Case-sensitive)합니다.
       const matchedKeyword = keywords.find(k => data.message.includes(k));
       if (keywords.length > 0 && matchedKeyword) {
-        this.sendNotification(`외치기 알림: [${data.sender}]`, data.message);
+        showSupportedDesktopNotification(`외치기 알림: [${data.sender}]`, data.message);
       }
 
       // 에타 랭킹 정보 조회 및 탭 히스토리 누적
@@ -240,8 +298,7 @@ class ChatLogProcessor {
       const level = rankInfo ? rankInfo.level : null;
       const characterCode = rankInfo ? rankInfo.characterCode : null;
 
-      const chatItem = {
-        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      const chatItem = this.createChatItem({
         type: 'shout',
         timestamp: data.timestamp,
         sender: data.sender,
@@ -249,10 +306,8 @@ class ChatLogProcessor {
         color: '#c896c8',
         level,
         characterCode
-      };
-      this.addChatToHistory('Basic', chatItem);
-      this.addChatToHistory('Shout', chatItem);
-      this.broadcastChatUpdate(chatItem);
+      });
+      this.publishChatItem(chatItem, ['Basic', 'Shout']);
 
       // 디스코드 전용 알림 처리 (외치기 전용)
       if (cfg.discordAlertEnabled && cfg.discordWebhookUrl) {
@@ -291,7 +346,7 @@ class ChatLogProcessor {
       const characterCode = rankInfo ? rankInfo.characterCode : null;
 
       // #ffffff = 타인 일반, #c8ffc8 = 본인 일반, #94ddfa = 클럽, #f7b73c = 팀, #64ff64 = 귓속말
-      let type = 'general';
+      let type: ChatChannel = 'general';
       if (data.sender === '시스템' || data.color === '#a8a8a8') {
         type = 'system';
       } else if (data.color === '#f7b73c') {
@@ -317,8 +372,7 @@ class ChatLogProcessor {
         this._chatContextCache = this._chatContextCache.filter(c => now - c.timestamp <= 5 * 60 * 1000);
       }
 
-      const chatItem = {
-        id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      const chatItem = this.createChatItem({
         type,
         timestamp: data.timestamp,
         sender: data.sender,
@@ -326,16 +380,16 @@ class ChatLogProcessor {
         color: data.color,
         level,
         characterCode
+      });
+      const tabByType: Record<string, string> = {
+        general: 'General',
+        team: 'Team',
+        club: 'Club',
+        whisper: 'Whisper',
+        system: 'System'
       };
-
-      this.addChatToHistory('Basic', chatItem);
-      if (type === 'general') this.addChatToHistory('General', chatItem);
-      else if (type === 'team') this.addChatToHistory('Team', chatItem);
-      else if (type === 'club') this.addChatToHistory('Club', chatItem);
-      else if (type === 'whisper') this.addChatToHistory('Whisper', chatItem);
-      else if (type === 'system') this.addChatToHistory('System', chatItem);
-
-      this.broadcastChatUpdate(chatItem);
+      const typedTab = tabByType[type];
+      this.publishChatItem(chatItem, typedTab ? ['Basic', typedTab] : ['Basic']);
 
       // 3. 현재 추적 활성 상태인 알림들에 대해 감지 이후의 후속 대화 기입 (시스템 로그는 제외)
       if (!isSystemLog) {
@@ -401,18 +455,17 @@ class ChatLogProcessor {
         }
 
         // OS 토스트 알림 발송
-        this.sendNotification(`일반 채팅 알림: [${data.sender}]`, data.message);
+        showSupportedDesktopNotification(`일반 채팅 알림: [${data.sender}]`, data.message);
 
         // 지정 사운드 재생
-        if (cfg.wordAlarmSound) {
-          wm.sendPlaySound({
+        this.playAlertSound({
             label: '지정 단어 알림',
             soundFile: cfg.wordAlarmSound,
-            volume: cfg.wordAlarmVolume !== undefined ? cfg.wordAlarmVolume : 70,
-            isCustom: true,
-            logMessage: `[지정 단어] [@${matchedKeyword}] ${data.sender}: ${data.message}`
-          });
-        }
+            volume: cfg.wordAlarmVolume,
+            defaultVolume: 70,
+            logMessage: `[지정 단어] [@${matchedKeyword}] ${data.sender}: ${data.message}`,
+            allowNone: true
+        });
       }
     });
 
@@ -421,21 +474,14 @@ class ChatLogProcessor {
       const cfg = config.load();
       if (!cfg.ethosAlertEnabled) return;
 
-      const allWindows = BrowserWindow.getAllWindows();
-      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-      if (gameOverlay) {
-        gameOverlay.webContents.send('ethos-alert', data);
-      }
-
-      if (cfg.ethosAlertSound && cfg.ethosAlertSound !== 'none') {
-        wm.sendPlaySound({
+      this.sendGameOverlayEvent('ethos-alert', data);
+      this.playAlertSound({
           label: '이클립스 에토스 기믹 알림',
           soundFile: cfg.ethosAlertSound,
-          volume: cfg.ethosAlertVolume !== undefined ? cfg.ethosAlertVolume : 40,
-          isCustom: true,
+          volume: cfg.ethosAlertVolume,
+          defaultVolume: 40,
           logMessage: `[에토스] 암호 감지: ${data.password}`
-        });
-      }
+      });
     });
 
     // 4-2. 심연의 제2사도 기믹 알림 처리
@@ -443,31 +489,24 @@ class ChatLogProcessor {
       const cfg = config.load();
       if (!cfg.abyssApostleAlertEnabled) return;
 
-      const allWindows = BrowserWindow.getAllWindows();
-      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-      if (gameOverlay) {
-        gameOverlay.webContents.send('abyss-apostle-alert', data);
-      }
-
-      if (cfg.abyssApostleStartSound && cfg.abyssApostleStartSound !== 'none') {
-        wm.sendPlaySound({
+      this.sendGameOverlayEvent('abyss-apostle-alert', data);
+      this.playAlertSound({
           label: '심연의 제2사도 반사 시작',
           soundFile: cfg.abyssApostleStartSound,
-          volume: cfg.abyssApostleVolume !== undefined ? cfg.abyssApostleVolume : 40,
-          isCustom: true,
+          volume: cfg.abyssApostleVolume,
+          defaultVolume: 40,
           logMessage: `[제2사도] 반사 패턴 감지`
-        });
-      }
+      });
 
       if (cfg.abyssApostleEndSound && cfg.abyssApostleEndSound !== 'none') {
         setTimeout(() => {
           const currentCfg = config.load();
-          if (currentCfg.abyssApostleAlertEnabled && currentCfg.abyssApostleEndSound && currentCfg.abyssApostleEndSound !== 'none') {
-            wm.sendPlaySound({
+          if (currentCfg.abyssApostleAlertEnabled) {
+            this.playAlertSound({
               label: '심연의 제2사도 반사 종료',
               soundFile: currentCfg.abyssApostleEndSound,
-              volume: currentCfg.abyssApostleVolume !== undefined ? currentCfg.abyssApostleVolume : 40,
-              isCustom: true,
+              volume: currentCfg.abyssApostleVolume,
+              defaultVolume: 40,
               logMessage: `[제2사도] 반사 패턴 종료`
             });
           }
@@ -480,21 +519,14 @@ class ChatLogProcessor {
       const cfg = config.load();
       if (!cfg.waveMonsterWarningEnabled) return;
 
-      const allWindows = BrowserWindow.getAllWindows();
-      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-      if (gameOverlay) {
-        gameOverlay.webContents.send('wave-warning-alert', data);
-      }
-
-      if (cfg.waveMonsterWarningSound && cfg.waveMonsterWarningSound !== 'none') {
-        wm.sendPlaySound({
+      this.sendGameOverlayEvent('wave-warning-alert', data);
+      this.playAlertSound({
           label: '몬스터 웨이브 종료 대기 알림',
           soundFile: cfg.waveMonsterWarningSound,
-          volume: cfg.waveMonsterWarningVolume !== undefined ? cfg.waveMonsterWarningVolume : 70,
-          isCustom: true,
+          volume: cfg.waveMonsterWarningVolume,
+          defaultVolume: 70,
           logMessage: `[웨이브] ${data.message}`
-        });
-      }
+      });
     });
 
     // 4-4. 로카고스 기믹 알림 처리
@@ -502,21 +534,14 @@ class ChatLogProcessor {
       const cfg = config.load();
       if (!cfg.lokagosAlertEnabled) return;
 
-      const allWindows = BrowserWindow.getAllWindows();
-      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-      if (gameOverlay) {
-        gameOverlay.webContents.send('lokagos-alert', data);
-      }
-
-      if (cfg.lokagosAlertSound && cfg.lokagosAlertSound !== 'none') {
-        wm.sendPlaySound({
+      this.sendGameOverlayEvent('lokagos-alert', data);
+      this.playAlertSound({
           label: '이클립스 로카고스 기믹 알림',
           soundFile: cfg.lokagosAlertSound,
-          volume: cfg.lokagosAlertVolume !== undefined ? cfg.lokagosAlertVolume : 40,
-          isCustom: true,
+          volume: cfg.lokagosAlertVolume,
+          defaultVolume: 40,
           logMessage: `[로카고스] 기믹 패턴 감지`
-        });
-      }
+      });
     });
 
     // 5. 이클립스 보스 클리어 처리
@@ -571,40 +596,21 @@ class ChatLogProcessor {
       }
     });
  
-    // 8. 고대 렐릭의 성소 클리어 처리
-    chatParser.on('RELIC_SANCTUARY_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-ancient-relic', data.count, false);
-    });
- 
-    // 9. 테시스 코어 던전 클리어 처리
-    chatParser.on('TESIS_CORE_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-tesis-core', 1, true);
-    });
- 
-    // 10. 힘의 근원 클리어 처리
-    chatParser.on('POWER_ROOT_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-power-root', data.count, false);
-    });
- 
-    // 11. 심연의 보물창고 입장 처리
-    chatParser.on('ABYSS_TREASURE_ENTRY', (data) => {
-      contentsChecker.queuePendingHomework('weekly-abyss-treasure', data.count, false);
-    });
- 
-    // 12. 보급품 탈환 클리어 처리
-    chatParser.on('ECLIPSE_SUPPLIES_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-eclipse-recapture-supplies', data.count, false);
-    });
- 
-    // 13. 별동대 토벌 클리어 처리
-    chatParser.on('ECLIPSE_SPECIAL_FORCE_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-eclipse-special-force-suppression', data.count, false);
-    });
- 
-    // 14. 지하요새의 망령 클리어 처리
-    chatParser.on('FORTRESS_GHOST_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-fortress-ghost', data.count, false);
-    });
+    // 절대 횟수가 로그에 포함되는 숙제
+    [
+      ['RELIC_SANCTUARY_CLEAR', 'weekly-ancient-relic'],
+      ['POWER_ROOT_CLEAR', 'weekly-power-root'],
+      ['ABYSS_TREASURE_ENTRY', 'weekly-abyss-treasure'],
+      ['ECLIPSE_SUPPLIES_CLEAR', 'weekly-eclipse-recapture-supplies'],
+      ['ECLIPSE_SPECIAL_FORCE_CLEAR', 'weekly-eclipse-special-force-suppression'],
+      ['FORTRESS_GHOST_CLEAR', 'weekly-fortress-ghost']
+    ].forEach(([event, homeworkId]) => queueCountHomework(event as keyof ChatParserEventMap, homeworkId));
+    queueCountHomework('CONTENT_SHINJO_NEST_CLEAR', 'weekly-shinjo-nest');
+
+    // 완료 로그만 제공되는 숙제
+    [
+      ['TESIS_CORE_CLEAR', 'weekly-tesis-core']
+    ].forEach(([event, homeworkId]) => queueFixedHomework(event as keyof ChatParserEventMap, homeworkId));
  
     // 15. 발굴지 입장 처리
     chatParser.on('DIGSITE_ENTRY', (data) => {
@@ -613,11 +619,6 @@ class ChatLogProcessor {
       } else {
         contentsChecker.queuePendingHomework('weekly-digsite', 1, true);
       }
-    });
- 
-    // 16. 신조의 둥지 클리어 처리
-    chatParser.on('CONTENT_SHINJO_NEST_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-shinjo-nest', 1, true);
     });
  
     // 17. 어비스 보스 (심층 1~3) 클리어 처리
@@ -633,57 +634,25 @@ class ChatLogProcessor {
       }
     });
  
-    // 18. 어비스 보스전 (EX) 클리어 처리
-    chatParser.on('ABYSS_BOSS_EX_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-abyss-boss-ex', data.count, false);
-    });
- 
-    // 19. 프라바 방어전 (1인) 클리어 처리
-    chatParser.on('PRAVA_DEFENSE_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-prava-defense', 1, true);
-    });
+    [
+      ['ABYSS_BOSS_EX_CLEAR', 'weekly-abyss-boss-ex'],
+      ['SIOKAN_BOSS_CLEAR', 'weekly-siokan-boss'],
+      ['SIOKAN_ODIN_CLEAR', 'weekly-siokan-odin'],
+      ['ECLIPSE_BOSS_SUBJUGATION_CLEAR', 'weekly-eclipse-boss'],
+      ['MOON_QUEEN_TRAINING_CLEAR', 'weekly-moon-queen'],
+      ['APETHIRIA_RAID_CLEAR', 'weekly-apethiria-raid']
+    ].forEach(([event, homeworkId]) => queueCountHomework(event as keyof ChatParserEventMap, homeworkId));
 
-    // 19-2. 오를리 방어전 클리어 처리
-    chatParser.on('ORLY_DEFENSE_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-orly-defense', 1, true);
-    });
- 
-    // 20. 망각의 카타콤 (지옥) 클리어 처리
-    chatParser.on('CATACOMB_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-catacomb-hell', 1, true);
-    });
- 
-    // 21. 시오칸하임 보스 토벌전 클리어 처리
-    chatParser.on('SIOKAN_BOSS_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-siokan-boss', data.count, false);
-    });
-
-    // 21-2. 시오칸하임 오딘 전면전 클리어 처리
-    chatParser.on('SIOKAN_ODIN_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-siokan-odin', data.count, false);
-    });
-
-    // 21-3. 이클립스 보스 토벌전 클리어 처리
-    chatParser.on('ECLIPSE_BOSS_SUBJUGATION_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-eclipse-boss', data.count, false);
-    });
-
-    // 21-4. 달여왕 군대 훈련소 클리어 처리
-    chatParser.on('MOON_QUEEN_TRAINING_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-moon-queen', data.count, false);
-    });
- 
-
- 
-    // 23. 베스티지 클리어 처리
-    chatParser.on('VESTIGE_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-vestige', 1, true);
-    });
- 
-    // 24. 아페티리아 (일반/어려움) 클리어 처리
-    chatParser.on('APETHIRIA_RAID_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-apethiria-raid', data.count, false);
-    });
+    [
+      ['PRAVA_DEFENSE_CLEAR', 'weekly-prava-defense'],
+      ['ORLY_DEFENSE_CLEAR', 'weekly-orly-defense'],
+      ['CATACOMB_CLEAR', 'weekly-catacomb-hell'],
+      ['VESTIGE_CLEAR', 'weekly-vestige'],
+      ['THURSDAY_CLEAN_CLEAR', 'weekly-thursday-clean'],
+      ['ETA_DAILY_BOX_GAIN', 'daily-eta-quest'],
+      ['ETA_WILL_UPGRADE_GAIN', 'daily-eta-will-upgrade'],
+      ['CLUB_POINT_500_GAIN', 'daily-club-boss']
+    ].forEach(([event, homeworkId]) => queueFixedHomework(event as keyof ChatParserEventMap, homeworkId));
 
     // 어벤던로드 지역별 도전 횟수 감지 및 숙제 리스트 연동
     chatParser.on('ABANDONED_ENTRY', (data) => {
@@ -698,11 +667,6 @@ class ChatLogProcessor {
       }
     });
 
-    // 목요일에는 청소를! 완료 처리
-    chatParser.on('THURSDAY_CLEAN_CLEAR', (data) => {
-      contentsChecker.queuePendingHomework('weekly-thursday-clean', 1, true);
-    });
-
     // 팔색조 언덕 (갈망하는 즐거움) 진입 처리
     chatParser.on('PITTA_ENTRY', (data) => {
       // K값이 인식되지 않는 경우 (NaN이거나 undefined인 경우 등) K를 0으로 예외 처리
@@ -715,21 +679,6 @@ class ChatLogProcessor {
       } else {
         log(`[CHAT_PROCESSOR] 팔색조 언덕 카운트 범위 초과 혹은 예외로 무시됨: computedCount=${computedCount} (energy=${energy})`);
       }
-    });
-
-    // 에타 일일 퀘스트 완료 처리
-    chatParser.on('ETA_DAILY_BOX_GAIN', (data) => {
-      contentsChecker.queuePendingHomework('daily-eta-quest', 1, true);
-    });
-
-    // 에타 도전과제 완료 처리
-    chatParser.on('ETA_WILL_UPGRADE_GAIN', (data) => {
-      contentsChecker.queuePendingHomework('daily-eta-will-upgrade', 1, true);
-    });
-
-    // 클럽 보스 (그라델/그람존) 완료 처리 (1회당 500포인트 획득 감지)
-    chatParser.on('CLUB_POINT_500_GAIN', (data) => {
-      contentsChecker.queuePendingHomework('daily-club-boss', 1, true);
     });
 
     // XP 추적 (xpTracker에 위임)
@@ -750,11 +699,7 @@ class ChatLogProcessor {
     abandonedTracker.reset();
     log('[CHAT_PROCESSOR] 어벤던로드 세션 초기화됨');
 
-    const allWindows = BrowserWindow.getAllWindows();
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) {
-      gameOverlay.webContents.send('abandoned-update', abandonedTracker.getState());
-    }
+    this.sendGameOverlayEvent('abandoned-update', abandonedTracker.getState());
   }
 
   public getStats() {
@@ -789,11 +734,6 @@ class ChatLogProcessor {
     return result.trim();
   }
 
-  private sendNotification(title: string, body: string): void {
-    if (Notification.isSupported()) {
-      new Notification({ title, body, silent: false }).show();
-    }
-  }
 }
 
 export const chatLogProcessor = new ChatLogProcessor();

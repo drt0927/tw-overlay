@@ -1,13 +1,15 @@
 import { chatParser } from './chatParser';
 import * as config from './config';
 import { log } from './logger';
-import { Notification, BrowserWindow } from 'electron';
 import type { AbandonedRoadState } from '../shared/types';
+import { broadcastToAllWindows } from './windowMessaging';
+import { showSupportedDesktopNotification } from './desktopNotification';
 
 /**
  * 어벤던로드 추적 모듈 — 지역별 통계, 마정석 수익, 자동 숨기기 타이머
  */
 class AbandonedTracker {
+  private _started = false;
   private _abandonedState: AbandonedRoadState = {
     regions: {},
     profit: 0,
@@ -32,6 +34,11 @@ class AbandonedTracker {
   };
 
   public start(): void {
+    if (this._started) {
+      log('[ABANDONED] 이미 시작되어 중복 이벤트 리스너 등록을 건너뜁니다.');
+      return;
+    }
+    this._started = true;
     const currentConfig = config.load();
     this._abandonedState.isEnabled = currentConfig.abandonedEnabled ?? true;
 
@@ -61,10 +68,8 @@ class AbandonedTracker {
       rd[data.region].totalFee += fee;
 
       if (data.count === 10) {
-        this.sendNotification('어벤던로드 알림', `${data.region} 지역 10회 도달! 최고 효율 구간입니다.`);
-        BrowserWindow.getAllWindows().forEach(win => {
-          if (!win.isDestroyed()) win.webContents.send('abandoned-alert', { region: data.region, count: data.count });
-        });
+        showSupportedDesktopNotification('어벤던로드 알림', `${data.region} 지역 10회 도달! 최고 효율 구간입니다.`);
+        broadcastToAllWindows('abandoned-alert', { region: data.region, count: data.count });
       }
       this._abandonedState.isActive = true;
       this.refreshAbandonedActivity();
@@ -119,11 +124,7 @@ class AbandonedTracker {
   }
 
   private notifyAbandonedUpdate(): void {
-    BrowserWindow.getAllWindows().forEach(win => {
-      if (!win.isDestroyed()) {
-        win.webContents.send('abandoned-update', this._abandonedState);
-      }
-    });
+    broadcastToAllWindows('abandoned-update', this._abandonedState);
   }
 
   public getState(): AbandonedRoadState {
@@ -159,12 +160,6 @@ class AbandonedTracker {
     };
     if (this._abandonedHideTimer) clearTimeout(this._abandonedHideTimer);
     this.notifyAbandonedUpdate();
-  }
-
-  private sendNotification(title: string, body: string): void {
-    if (Notification.isSupported()) {
-      new Notification({ title, body, silent: false }).show();
-    }
   }
 }
 

@@ -1,10 +1,14 @@
 import { chatParser } from './chatParser';
 import * as config from './config';
 import { log } from './logger';
-import { Notification, BrowserWindow } from 'electron';
 import { buffTimerManager } from './buffTimerManager';
 import * as diaryDb from './diaryDb';
 import * as wm from './windowManager';
+import {
+  broadcastToAllWindows,
+  sendToFirstWindowByPage,
+} from './windowMessaging';
+import type { XpStats } from '../shared/types';
 
 export const QUEST_DEFINITIONS = {
   forge: { name: '대장간', target: 1500, icon: 'hammer' },
@@ -16,6 +20,7 @@ export const QUEST_DEFINITIONS = {
  * XP 추적 모듈 — 경험치 세션 통계, 분당 히스토리, 경험의 정수 알림, 팔색조 언덕 추적
  */
 class XpTracker {
+  private _started = false;
   private _sessionXP = 0;
   private _sessionKills = 0;
   private _startTime = Date.now();
@@ -42,7 +47,21 @@ class XpTracker {
   private _questStartTime = 0;
   private _questTimer: NodeJS.Timeout | null = null;
 
+  private sendToWindow(pageName: string, channel: string, ...args: unknown[]): void {
+    sendToFirstWindowByPage(pageName, channel, ...args);
+  }
+
+  private sendToXpWindows(channel: string, ...args: unknown[]): void {
+    this.sendToWindow('game-overlay.html', channel, ...args);
+    this.sendToWindow('xp-hud.html', channel, ...args);
+  }
+
   public start(): void {
+    if (this._started) {
+      log('[XP_TRACKER] 이미 시작되어 중복 이벤트 리스너 등록을 건너뜁니다.');
+      return;
+    }
+    this._started = true;
     const cfg = config.load();
     this._isActive = cfg.xpAutoStart !== false;
 
@@ -121,11 +140,7 @@ class XpTracker {
           if (currentKills >= target) {
             this.finishQuest();
           } else {
-            const allWindows = BrowserWindow.getAllWindows();
-            const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-            if (gameOverlay) {
-              gameOverlay.webContents.send('quest-update', { currentKills });
-            }
+            this.sendToWindow('game-overlay.html', 'quest-update', { currentKills });
           }
         }
 
@@ -136,11 +151,7 @@ class XpTracker {
       }
 
       const payload = this.buildXpPayload(amount);
-      const allWindows = BrowserWindow.getAllWindows();
-      const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-      if (gameOverlay) gameOverlay.webContents.send('xp-update', payload);
-      const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
-      if (xpHud) xpHud.webContents.send('xp-update', payload);
+      this.sendToXpWindows('xp-update', payload);
     });
 
     // 버프 사용 감지
@@ -166,9 +177,7 @@ class XpTracker {
     chatParser.on('PITTA_ENTRY', (data) => {
       if (data.grade === 'SS' && data.energy === 16) {
         log('[XP_TRACKER] 팔색조 언덕 SS 5회차 진입 감지 (남은 에너지 16) - 오버레이 알림 전송');
-        const allWindows = BrowserWindow.getAllWindows();
-        const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-        if (gameOverlay) gameOverlay.webContents.send('pitta-alert');
+        this.sendToWindow('game-overlay.html', 'pitta-alert');
       }
     });
   }
@@ -180,7 +189,7 @@ class XpTracker {
     return this._accumulatedTime + (Date.now() - this._startTime);
   }
 
-  private buildXpPayload(lastGain: number) {
+  private buildXpPayload(lastGain: number): XpStats {
     const elapsedMins = this.getElapsedMs() / 60000;
     const epm = Math.floor(this._sessionXP / Math.max(1, elapsedMins));
     const recentMins = Math.min(5, this._minuteHistory.length);
@@ -233,17 +242,13 @@ class XpTracker {
       this.cancelQuest();
     }, 1200000);
 
-    const allWindows = BrowserWindow.getAllWindows();
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) {
-      gameOverlay.webContents.send('quest-started', {
-        questType: type,
-        startTime: this._questStartTime,
-        duration: 1200000,
-        startKills: this._questStartKills,
-        targetKills: targetKills
-      });
-    }
+    this.sendToWindow('game-overlay.html', 'quest-started', {
+      questType: type,
+      startTime: this._questStartTime,
+      duration: 1200000,
+      startKills: this._questStartKills,
+      targetKills: targetKills
+    });
   }
 
   private cancelQuest(): void {
@@ -256,11 +261,7 @@ class XpTracker {
     this._questType = null;
     log(`[XP_TRACKER] ${questName} 도전과제 추적 취소됨`);
     
-    const allWindows = BrowserWindow.getAllWindows();
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) {
-      gameOverlay.webContents.send('quest-cancelled');
-    }
+    this.sendToWindow('game-overlay.html', 'quest-cancelled');
   }
 
   private finishQuest(): void {
@@ -275,11 +276,7 @@ class XpTracker {
     this._questType = null;
     log(`[XP_TRACKER] ${questName} 도전과제 추적 완료! (${targetKills}마리 처치 달성)`);
 
-    const allWindows = BrowserWindow.getAllWindows();
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) {
-      gameOverlay.webContents.send('quest-complete', { questType: type });
-    }
+    this.sendToWindow('game-overlay.html', 'quest-complete', { questType: type });
 
     // 완료 알림 사운드 재생
     const cfg = config.load();
@@ -309,21 +306,18 @@ class XpTracker {
 
     log('[XP_TRACKER] XP 세션 초기화됨');
 
-    const allWindows = BrowserWindow.getAllWindows();
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) {
-      gameOverlay.webContents.send('xp-update', {
-        total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0,
-        startTime: this._startTime, accumulatedTime: 0, isActive: this._isActive
-      });
-    }
-    const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
-    if (xpHud) {
-      xpHud.webContents.send('xp-reset-done', { startTime: this._startTime, accumulatedTime: 0, isActive: this._isActive });
-    }
+    this.sendToWindow('game-overlay.html', 'xp-update', {
+      total: 0, epm: 0, movingEpm: 0, lastGain: 0, history: [], kills: 0,
+      startTime: this._startTime, accumulatedTime: 0, isActive: this._isActive
+    });
+    this.sendToWindow('xp-hud.html', 'xp-reset-done', {
+      startTime: this._startTime,
+      accumulatedTime: 0,
+      isActive: this._isActive
+    });
   }
 
-  public getStats() {
+  public getStats(): XpStats {
     if (this._isActive) {
       this.checkMinuteRollover();
     }
@@ -381,20 +375,12 @@ class XpTracker {
 
   private broadcastUpdate(): void {
     const payload = this.buildXpPayload(0);
-    const allWindows = BrowserWindow.getAllWindows();
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) gameOverlay.webContents.send('xp-update', payload);
-    const xpHud = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('xp-hud.html'));
-    if (xpHud) xpHud.webContents.send('xp-update', payload);
+    this.sendToXpWindows('xp-update', payload);
   }
 
   private broadcastConfig(): void {
     const cfg = config.load();
-    BrowserWindow.getAllWindows().forEach(win => {
-      if (!win.isDestroyed()) {
-        win.webContents.send('config-data', cfg);
-      }
-    });
+    broadcastToAllWindows('config-data', cfg);
   }
 
   private parseLogTimestamp(dateStr: string, timestampStr: string): number {
@@ -414,10 +400,7 @@ class XpTracker {
     if (cfg.essenceAlertEnabled === false) return;
 
     log('[XP_TRACKER] 경험의 정수 교환 미감지 — 버프 알람 발생');
-    const allWindows = BrowserWindow.getAllWindows();
-
-    const gameOverlay = allWindows.find(w => !w.isDestroyed() && w.webContents.getURL().includes('game-overlay.html'));
-    if (gameOverlay) gameOverlay.webContents.send('essence-alert');
+    this.sendToWindow('game-overlay.html', 'essence-alert');
 
     const soundFile = cfg.essenceAlertSound || 'orb.mp3';
     const volume = cfg.essenceAlertVolume ?? 70;

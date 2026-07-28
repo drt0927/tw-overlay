@@ -1,8 +1,9 @@
 import * as path from 'path';
-import { app, BrowserWindow } from 'electron';
+import { app } from 'electron';
 import Database = require('better-sqlite3');
 import { log } from './logger';
 import { DiaryEntry, HomeworkLog, ActivityLog, DiaryData, AlarmLog, TimerRecord } from '../shared/types';
+import { broadcastToAllWindows } from './windowMessaging';
 
 let db: Database.Database | null = null;
 
@@ -16,9 +17,7 @@ const POINTS = {
 
 /** 일지 창에 갱신 신호를 보냅니다. */
 function notifyUpdate(): void {
-  BrowserWindow.getAllWindows().forEach(win => {
-    if (!win.isDestroyed()) win.webContents.send('diary-updated');
-  });
+  broadcastToAllWindows('diary-updated');
 }
 
 export function initDb(): void {
@@ -1006,9 +1005,7 @@ export function clearAlarmLogs(): void {
  * 알람 로그 업데이트 알림
  */
 function notifyAlarmLogUpdate(): void {
-  BrowserWindow.getAllWindows().forEach(win => {
-    if (!win.isDestroyed()) win.webContents.send('alarm-logs-updated');
-  });
+  broadcastToAllWindows('alarm-logs-updated');
 }
 
 /**
@@ -1137,9 +1134,7 @@ export function deleteTimerRecord(id: number): void {
  * 시간 측정 기록 업데이트 알림
  */
 function notifyTimerUpdate(): void {
-  BrowserWindow.getAllWindows().forEach(win => {
-    if (!win.isDestroyed()) win.webContents.send('timer-updated');
-  });
+  broadcastToAllWindows('timer-updated');
 }
 
 

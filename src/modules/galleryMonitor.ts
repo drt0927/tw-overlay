@@ -5,10 +5,18 @@
  * - 블락 방지: 랜덤 딜레이, 요청 간격 제한, 쿨다운
  */
 import * as https from 'https';
-import { Notification, BrowserWindow, shell } from 'electron';
+import { BrowserWindow, shell } from 'electron';
 import { log } from './logger';
 import * as config from './config';
 import { WatchedPost } from './constants';
+import { showDesktopNotification } from './desktopNotification';
+import {
+  calculateBackoffMs,
+  fetchTextWithSslRetry,
+  MONITOR_CHECK_INTERVAL_MS,
+  MONITOR_RATE_LIMIT,
+  waitRandomDelay,
+} from './webMonitorUtils';
 
 interface Post {
   no: number;
@@ -38,16 +46,8 @@ const COMMENT_HEADERS = {
   'X-Requested-With': 'XMLHttpRequest',
 };
 
-const CHECK_INTERVAL_MS = 300000; // 5분마다 체크
-
 // ─── 블락 방지 정책 ───
-const RATE_LIMIT = {
-  MIN_DELAY_MS: 1500,        // 요청 간 최소 간격 1.5초
-  MAX_DELAY_MS: 3000,        // 요청 간 최대 간격 3초
-  MAX_COMMENT_CHECKS: 5,     // 한 사이클에 최대 댓글 체크 수
-  BACKOFF_BASE_MS: 60000,    // 에러 시 백오프 기본 시간 (1분)
-  MAX_BACKOFF_MS: 300000,    // 최대 백오프 (5분)
-};
+const MAX_COMMENT_CHECKS = 5;
 let consecutiveErrors = 0;   // 연속 에러 횟수 (백오프용)
 let cachedEsno = '';         // 캐시된 e_s_n_o 토큰
 
@@ -60,60 +60,13 @@ let notifyEnabled = true;      // 알림 on/off
 let sidebarWindowRef: BrowserWindow | null = null;
 let galleryWindowRef: BrowserWindow | null = null;
 
-// ─── 블락 방지 유틸 ───
-
-/** 랜덤 딜레이 (min~max ms) */
-function randomDelay(): Promise<void> {
-  const ms = RATE_LIMIT.MIN_DELAY_MS + Math.random() * (RATE_LIMIT.MAX_DELAY_MS - RATE_LIMIT.MIN_DELAY_MS);
-  return new Promise(resolve => setTimeout(resolve, Math.floor(ms)));
-}
-
-/** 에러 시 지수 백오프 딜레이 */
-function getBackoffMs(): number {
-  if (consecutiveErrors <= 0) return 0;
-  const ms = Math.min(RATE_LIMIT.BACKOFF_BASE_MS * Math.pow(2, consecutiveErrors - 1), RATE_LIMIT.MAX_BACKOFF_MS);
-  return ms;
-}
-
 // ─── HTTP 요청 유틸 ───
 function fetchPage(url: string, skipSSLVerify = false, maxRedirects = 5): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (maxRedirects <= 0) {
-      reject(new Error('Max redirects exceeded'));
-      return;
-    }
-    const options: https.RequestOptions = { headers: HEADERS, timeout: 10000 };
-    if (skipSSLVerify) options.rejectUnauthorized = false;
-
-    const req = https.get(url, options, (res) => {
-      // 리다이렉트 처리
-      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        fetchPage(res.headers.location, skipSSLVerify, maxRedirects - 1).then(resolve).catch(reject);
-        return;
-      }
-      if (res.statusCode !== 200) {
-        reject(new Error(`HTTP ${res.statusCode}`));
-        res.resume();
-        return;
-      }
-      let data = '';
-      res.setEncoding('utf-8');
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        resolve(data);
-      });
-    });
-    req.on('error', (err) => {
-      // SSL 검증 실패 시 rejectUnauthorized: false로 재시도
-      if (!skipSSLVerify && (err.message.includes('certificate') || err.message.includes('SSL') || err.message.includes('CERT'))) {
-        log(`[GALLERY] SSL 검증 실패, 재시도: ${err.message}`);
-        fetchPage(url, true, maxRedirects).then(resolve).catch(reject);
-        return;
-      }
-      reject(err);
-    });
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
-  });
+  return fetchTextWithSslRetry(url, {
+    headers: HEADERS,
+    timeoutMs: 10000,
+    onSslRetry: message => log(`[GALLERY] SSL 검증 실패, 재시도: ${message}`),
+  }, skipSSLVerify, maxRedirects);
 }
 
 // ─── HTML 파싱 (정규식 기반 경량 파서) ───
@@ -230,19 +183,22 @@ function fetchCommentCount(postNo: number, skipSSLVerify = false): Promise<numbe
 
 // ─── 알림 발송 ───
 function notify(title: string, body: string, postNo?: number): void {
-  if (!notifyEnabled) return;
-  try {
-    const noti = new Notification({ title, body, silent: false });
-    noti.on('click', () => {
+  showDesktopNotification({
+    enabled: notifyEnabled,
+    title,
+    body,
+    onClick: postNo
+      ? () => {
       if (postNo) {
         shell.openExternal(VIEW_URL(postNo));
       }
-    });
-    noti.show();
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    log(`[GALLERY] 알림 실패: ${msg}`);
-  }
+      }
+      : undefined,
+    onError: error => {
+      const message = error instanceof Error ? error.message : String(error);
+      log(`[GALLERY] 알림 실패: ${message}`);
+    },
+  });
 }
 
 // ─── 새 글 체크 ───
@@ -301,11 +257,11 @@ async function checkWatchedComments(): Promise<void> {
 
   if (!cachedEsno) return;
 
-  const toCheck = watchNos.slice(0, RATE_LIMIT.MAX_COMMENT_CHECKS);
+  const toCheck = watchNos.slice(0, MAX_COMMENT_CHECKS);
 
   for (const noStr of toCheck) {
     try {
-      await randomDelay();
+      await waitRandomDelay(MONITOR_RATE_LIMIT.MIN_DELAY_MS, MONITOR_RATE_LIMIT.MAX_DELAY_MS);
       const no = parseInt(noStr, 10);
       const currentCount = await fetchCommentCount(no);
       const prev = watchedPosts[noStr];
@@ -329,11 +285,15 @@ async function doCheck(): Promise<void> {
   if (!isRunning) return;
 
   if (!notifyEnabled) {
-    checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
+    checkTimer = setTimeout(doCheck, MONITOR_CHECK_INTERVAL_MS);
     return;
   }
 
-  const backoff = getBackoffMs();
+  const backoff = calculateBackoffMs(
+    consecutiveErrors,
+    MONITOR_RATE_LIMIT.BACKOFF_BASE_MS,
+    MONITOR_RATE_LIMIT.MAX_BACKOFF_MS,
+  );
   if (backoff > 0) {
     consecutiveErrors = Math.max(0, consecutiveErrors - 1);
     checkTimer = setTimeout(doCheck, backoff);
@@ -343,7 +303,7 @@ async function doCheck(): Promise<void> {
   const listSuccess = await checkNewPosts();
 
   if (listSuccess) {
-    await randomDelay();
+    await waitRandomDelay(MONITOR_RATE_LIMIT.MIN_DELAY_MS, MONITOR_RATE_LIMIT.MAX_DELAY_MS);
     await checkWatchedComments();
     if (consecutiveErrors > 0) {
       if (galleryWindowRef && !galleryWindowRef.isDestroyed()) {
@@ -359,7 +319,7 @@ async function doCheck(): Promise<void> {
     }
   }
 
-  checkTimer = setTimeout(doCheck, CHECK_INTERVAL_MS);
+  checkTimer = setTimeout(doCheck, MONITOR_CHECK_INTERVAL_MS);
 }
 
 // ─── 공개 API ───
@@ -401,7 +361,7 @@ export async function addWatch(postNo: number): Promise<WatchedPost> {
 
     let commentCount = 0;
     if (cachedEsno) {
-      await randomDelay();
+      await waitRandomDelay(MONITOR_RATE_LIMIT.MIN_DELAY_MS, MONITOR_RATE_LIMIT.MAX_DELAY_MS);
       commentCount = await fetchCommentCount(postNo);
     }
 

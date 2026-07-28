@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPost, UpdateStatusInfo, EtaRankingParams, TradePost, TradeActivity, ScamAnalysisResult, ModelStatus, GpuDetectionResult, ServerStatus, SessionState } from './shared/types';
+import type { QuickSlotItem, AppConfig, GalleryPost, GalleryActivity, WatchedPost, UpdateStatusInfo, EtaRankingParams, TradePost, TradeActivity, ScamAnalysisResult, ModelStatus, GpuDetectionResult, ServerStatus, SessionState, XpStats, ResetRule, AbandonedRoadState, ChatItem, TimerRecord, EquipmentDictionaryItem, IncompleteContentItem, BuffTimerState } from './shared/types';
 
 const DEFAULT_CONFIG: AppConfig = {
   width: 800, height: 600, opacity: 1.0,
@@ -161,6 +161,14 @@ const DEFAULT_CONFIG: AppConfig = {
   forgeQuestHudPos: { left: 50, bottom: 215 },
 };
 
+function bindIpcListener<TArgs extends unknown[]>(
+  channel: string,
+  callback: (...args: TArgs) => void,
+): void {
+  ipcRenderer.removeAllListeners(channel);
+  ipcRenderer.on(channel, (_event, ...args) => callback(...args as TArgs));
+}
+
 contextBridge.exposeInMainWorld('electronAPI', {
   DEFAULT_CONFIG,
   // 창 제어
@@ -178,8 +186,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleTrade: () => ipcRenderer.send('toggle-trade'),
   toggleCoefficientCalculator: () => ipcRenderer.send('toggle-coefficient-calculator'),
   openCoefficientCalculator: () => ipcRenderer.send('open-coefficient-calculator'),
-  sendEquipmentToCoefficient: (item: any) => ipcRenderer.send('send-to-coefficient', item),
-  sendEquipmentToEvolution: (item: any) => ipcRenderer.send('send-to-evolution', item),
+  sendEquipmentToCoefficient: (item: EquipmentDictionaryItem) => ipcRenderer.send('send-to-coefficient', item),
+  sendEquipmentToEvolution: (item: EquipmentDictionaryItem) => ipcRenderer.send('send-to-evolution', item),
   toggleContentsChecker: () => ipcRenderer.send('toggle-contents-checker'),
   toggleEvolutionCalculator: () => ipcRenderer.send('toggle-evolution-calculator'),
   toggleThesisCoreCalculator: () => ipcRenderer.send('toggle-thesis-core-calculator'),
@@ -199,24 +207,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   resetXp: () => ipcRenderer.send('xp-reset'),
   startXpSession: () => ipcRenderer.send('xp-start-session'),
   stopXpSession: () => ipcRenderer.send('xp-stop-session'),
+  getXpStats: (): Promise<XpStats> => ipcRenderer.invoke('xp-get-stats'),
   abandonedReset: () => ipcRenderer.send('abandoned-reset'),
   startChatLogWatch: () => ipcRenderer.send('start-chat-log-watch'),
   checkChatLogStatus: () => ipcRenderer.invoke('check-chat-log-status'),
   sendRendererReady: (windowKey: string) => ipcRenderer.send('renderer-ready', windowKey),
   openAndHighlight: (key: string) => ipcRenderer.send('open-and-highlight', key),
-  invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
-
   contentsToggleItem: (id: string, characterId?: string) => ipcRenderer.send('contents-toggle-item', id, characterId),
   contentsUpdateCount: (id: string, characterId: string, count: number) => ipcRenderer.send('contents-update-count', id, characterId, count),
   contentsToggleExclude: (id: string, characterId: string) => ipcRenderer.send('contents-toggle-exclude', id, characterId),
   contentsToggleVisibility: (id: string) => ipcRenderer.send('contents-toggle-visibility', id),
   contentsUpdateCategory: (id: string, category: string) => ipcRenderer.send('contents-update-category', id, category),
   contentsUpdateName: (id: string, name: string) => ipcRenderer.send('contents-update-name', id, name),
-  contentsUpdateItem: (id: string, name: string, category: string, rule: any, maxCount?: number) => ipcRenderer.send('contents-update-item', id, name, category, rule, maxCount),
-  contentsAddCustom: (name: string, category: string, rule: any, maxCount?: number) => ipcRenderer.send('contents-add-custom', name, category, rule, maxCount),
+  contentsUpdateItem: (id: string, name: string, category: string, rule: ResetRule, maxCount?: number) => ipcRenderer.send('contents-update-item', id, name, category, rule, maxCount),
+  contentsAddCustom: (name: string, category: string, rule: ResetRule, maxCount?: number) => ipcRenderer.send('contents-add-custom', name, category, rule, maxCount),
   contentsRemoveItem: (id: string) => ipcRenderer.send('contents-remove-item', id),
-  contentsReorderItem: (id: string, direction: 'up' | 'down') => ipcRenderer.send('contents-reorder-item', id, direction),
-  contentsReorderList: (ids: string[]) => ipcRenderer.send('contents-reorder-list', ids),
   contentsManualReset: () => ipcRenderer.send('contents-manual-reset'),
   contentsAddCharacter: (name: string) => ipcRenderer.send('contents-add-character', name),
   contentsRemoveCharacter: (id: string) => ipcRenderer.send('contents-remove-character', id),
@@ -338,234 +343,126 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // 이스터애그
   triggerJellyppyRainGlobal: () => ipcRenderer.send('trigger-jellyppy-rain-global'),
-  onTriggerJellyppyRain: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('trigger-jellyppy-rain');
-    ipcRenderer.on('trigger-jellyppy-rain', () => callback());
-  },
+  onTriggerJellyppyRain: (callback: () => void) =>
+    bindIpcListener('trigger-jellyppy-rain', callback),
   triggerFireworkGlobal: () => ipcRenderer.send('trigger-firework-global'),
-  onTriggerFirework: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('trigger-firework');
-    ipcRenderer.on('trigger-firework', () => callback());
-  },
+  onTriggerFirework: (callback: () => void) =>
+    bindIpcListener('trigger-firework', callback),
 
   // 이벤트 리스너 (중복 등록 방지를 위해 기존 리스너 제거 후 재등록)
-  onSidebarStatus: (callback: (isCollapsed: boolean) => void) => {
-    ipcRenderer.removeAllListeners('sidebar-status');
-    ipcRenderer.on('sidebar-status', (_event, isCollapsed) => callback(isCollapsed));
-  },
-  onOverlayStatus: (callback: (status: boolean) => void) => {
-    ipcRenderer.removeAllListeners('overlay-status');
-    ipcRenderer.on('overlay-status', (_event, status) => callback(status));
-  },
-  onChatOverlayStatus: (callback: (status: boolean) => void) => {
-    ipcRenderer.removeAllListeners('chat-overlay-status');
-    ipcRenderer.on('chat-overlay-status', (_event, status) => callback(status));
-  },
-  onClickThroughStatus: (callback: (status: boolean) => void) => {
-    ipcRenderer.removeAllListeners('click-through-status');
-    ipcRenderer.on('click-through-status', (_event, status) => callback(status));
-  },
-  onActiveWindows: (callback: (activeKeys: string[]) => void) => {
-    ipcRenderer.removeAllListeners('active-windows');
-    ipcRenderer.on('active-windows', (_event, activeKeys) => callback(activeKeys));
-  },
-  onConfigData: (callback: (config: AppConfig) => void) => {
-    ipcRenderer.removeAllListeners('config-data');
-    ipcRenderer.on('config-data', (_event, config) => callback(config));
-  },
-  onUrlChange: (callback: (url: string) => void) => {
-    ipcRenderer.removeAllListeners('url-change');
-    ipcRenderer.on('url-change', (_event, url) => callback(url));
-  },
-  onLoadStatus: (callback: (isLoading: boolean) => void) => {
-    ipcRenderer.removeAllListeners('load-status');
-    ipcRenderer.on('load-status', (_event, isLoading) => callback(isLoading));
-  },
-  onGalleryPosts: (callback: (posts: GalleryPost[]) => void) => {
-    ipcRenderer.removeAllListeners('gallery-posts');
-    ipcRenderer.on('gallery-posts', (_event, posts) => callback(posts));
-  },
-  onGalleryNewActivity: (callback: (data: GalleryActivity) => void) => {
-    ipcRenderer.removeAllListeners('gallery-new-activity');
-    ipcRenderer.on('gallery-new-activity', (_event, data) => callback(data));
-  },
-  onGalleryWatchedUpdate: (callback: (watched: Record<string, WatchedPost>) => void) => {
-    ipcRenderer.removeAllListeners('gallery-watched-update');
-    ipcRenderer.on('gallery-watched-update', (_event, watched) => callback(watched));
-  },
-  onGalleryConnectionStatus: (callback: (isConnected: boolean) => void) => {
-    ipcRenderer.removeAllListeners('gallery-connection-status');
-    ipcRenderer.on('gallery-connection-status', (_event, isConnected) => callback(isConnected));
-  },
-  onUpdateStatus: (callback: (data: UpdateStatusInfo) => void) => {
-    ipcRenderer.removeAllListeners('update-status');
-    ipcRenderer.on('update-status', (_event, data) => callback(data));
-  },
-  onBossTimesData: (callback: (times: Record<string, string[]>) => void) => {
-    ipcRenderer.removeAllListeners('boss-times-data');
-    ipcRenderer.on('boss-times-data', (_event, times) => callback(times));
-  },
-  onPlaySound: (callback: (data: { label: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean, isAlreadyRecorded?: boolean, volume?: number, isPreview?: boolean }) => void) => {
-    ipcRenderer.removeAllListeners('play-sound');
-    ipcRenderer.on('play-sound', (_event, data) => callback(data));
-  },
-  onTradePosts: (callback: (posts: TradePost[]) => void) => {
-    ipcRenderer.removeAllListeners('trade-posts');
-    ipcRenderer.on('trade-posts', (_event, posts) => callback(posts));
-  },
-  onTradeNewActivity: (callback: (data: TradeActivity) => void) => {
-    ipcRenderer.removeAllListeners('trade-new-activity');
-    ipcRenderer.on('trade-new-activity', (_event, data) => callback(data));
-  },
-  onTradeConnectionStatus: (callback: (isConnected: boolean) => void) => {
-    ipcRenderer.removeAllListeners('trade-connection-status');
-    ipcRenderer.on('trade-connection-status', (_event, isConnected) => callback(isConnected));
-  },
-  onOpenSettingsTab: (callback: (tabId: string) => void) => {
-    ipcRenderer.removeAllListeners('open-settings-tab');
-    ipcRenderer.on('open-settings-tab', (_event, tabId) => callback(tabId));
-  },
-  onHighlightAlarmSettings: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('highlight-alarm-settings');
-    ipcRenderer.on('highlight-alarm-settings', () => callback());
-  },
-  onToolbarHover: (callback: (isHover: boolean) => void) => {
-    ipcRenderer.removeAllListeners('toolbar-hover');
-    ipcRenderer.on('toolbar-hover', (_event, isHover) => callback(isHover));
-  },
-  onReminderMessage: (callback: (message: string) => void) => {
-    ipcRenderer.removeAllListeners('reminder-message');
-    ipcRenderer.on('reminder-message', (_event, message) => callback(message));
-  },
-  onIncompleteContents: (callback: (items: any[]) => void) => {
-    ipcRenderer.removeAllListeners('incomplete-contents');
-    ipcRenderer.on('incomplete-contents', (_event, items) => callback(items));
-  },
-  onDiaryUpdated: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('diary-updated');
-    ipcRenderer.on('diary-updated', () => callback());
-  },
-  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[], kills?: number, essenceCount?: number, xpSinceLastExchange?: number }) => void) => {
-    ipcRenderer.removeAllListeners('xp-update');
-    ipcRenderer.on('xp-update', (_event, data) => callback(data));
-  },
-  onShoutHistoryUpdated: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('shout-history-updated');
-    ipcRenderer.on('shout-history-updated', () => callback());
-  },
-  onBuffTimerUpdate: (callback: (states: any[]) => void) => {
-    ipcRenderer.removeAllListeners('buff-timer-update');
-    ipcRenderer.on('buff-timer-update', (_event, states) => callback(states));
-  },
-  onBuffTimerWarning: (callback: (data: { buffId: string, phase: string, warnSec: number }) => void) => {
-    ipcRenderer.removeAllListeners('buff-timer-warning');
-    ipcRenderer.on('buff-timer-warning', (_event, data) => callback(data));
-  },
+  onSidebarStatus: (callback: (isCollapsed: boolean) => void) =>
+    bindIpcListener('sidebar-status', callback),
+  onOverlayStatus: (callback: (status: boolean) => void) =>
+    bindIpcListener('overlay-status', callback),
+  onChatOverlayStatus: (callback: (status: boolean) => void) =>
+    bindIpcListener('chat-overlay-status', callback),
+  onClickThroughStatus: (callback: (status: boolean) => void) =>
+    bindIpcListener('click-through-status', callback),
+  onActiveWindows: (callback: (activeKeys: string[]) => void) =>
+    bindIpcListener('active-windows', callback),
+  onConfigData: (callback: (config: AppConfig) => void) =>
+    bindIpcListener('config-data', callback),
+  onUrlChange: (callback: (url: string) => void) =>
+    bindIpcListener('url-change', callback),
+  onLoadStatus: (callback: (isLoading: boolean) => void) =>
+    bindIpcListener('load-status', callback),
+  onGalleryPosts: (callback: (posts: GalleryPost[]) => void) =>
+    bindIpcListener('gallery-posts', callback),
+  onGalleryNewActivity: (callback: (data: GalleryActivity) => void) =>
+    bindIpcListener('gallery-new-activity', callback),
+  onGalleryWatchedUpdate: (callback: (watched: Record<string, WatchedPost>) => void) =>
+    bindIpcListener('gallery-watched-update', callback),
+  onGalleryConnectionStatus: (callback: (isConnected: boolean) => void) =>
+    bindIpcListener('gallery-connection-status', callback),
+  onUpdateStatus: (callback: (data: UpdateStatusInfo) => void) =>
+    bindIpcListener('update-status', callback),
+  onBossTimesData: (callback: (times: Record<string, string[]>) => void) =>
+    bindIpcListener('boss-times-data', callback),
+  onPlaySound: (callback: (data: { label: string, soundFile: string, spawnTime?: string, offset?: number, isCustom?: boolean, isAlreadyRecorded?: boolean, volume?: number, isPreview?: boolean }) => void) =>
+    bindIpcListener('play-sound', callback),
+  onTradePosts: (callback: (posts: TradePost[]) => void) =>
+    bindIpcListener('trade-posts', callback),
+  onTradeNewActivity: (callback: (data: TradeActivity) => void) =>
+    bindIpcListener('trade-new-activity', callback),
+  onTradeConnectionStatus: (callback: (isConnected: boolean) => void) =>
+    bindIpcListener('trade-connection-status', callback),
+  onOpenSettingsTab: (callback: (tabId: string) => void) =>
+    bindIpcListener('open-settings-tab', callback),
+  onHighlightAlarmSettings: (callback: () => void) =>
+    bindIpcListener('highlight-alarm-settings', callback),
+  onToolbarHover: (callback: (isHover: boolean) => void) =>
+    bindIpcListener('toolbar-hover', callback),
+  onReminderMessage: (callback: (message: string) => void) =>
+    bindIpcListener('reminder-message', callback),
+  onIncompleteContents: (callback: (items: IncompleteContentItem[]) => void) =>
+    bindIpcListener('incomplete-contents', callback),
+  onDiaryUpdated: (callback: () => void) =>
+    bindIpcListener('diary-updated', callback),
+  onXpUpdate: (callback: (data: { total: number, epm: number, movingEpm: number, lastGain: number, history: number[], kills?: number, essenceCount?: number, xpSinceLastExchange?: number }) => void) =>
+    bindIpcListener('xp-update', callback),
+  onShoutHistoryUpdated: (callback: () => void) =>
+    bindIpcListener('shout-history-updated', callback),
+  onBuffTimerUpdate: (callback: (states: BuffTimerState[]) => void) =>
+    bindIpcListener('buff-timer-update', callback),
+  onBuffTimerWarning: (callback: (data: { buffId: string, phase: string, warnSec: number }) => void) =>
+    bindIpcListener('buff-timer-warning', callback),
   toggleBuffTimer: () => ipcRenderer.send('toggle-buff-timer'),
   buffTimerTest: (seconds?: number) => ipcRenderer.send('buff-timer-test', seconds),
   buffTimerClearTest: () => ipcRenderer.send('buff-timer-clear-test'),
   buffTimerClearAll: () => ipcRenderer.send('buff-timer-clear-all'),
   buffTimerDeactivate: (buffId: string) => ipcRenderer.send('buff-timer-deactivate', buffId),
-  onXpResetDone: (callback: (data: { startTime: number }) => void) => {
-    ipcRenderer.removeAllListeners('xp-reset-done');
-    ipcRenderer.on('xp-reset-done', (_event, data) => callback(data));
-  },
-  onEssenceAlert: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('essence-alert');
-    ipcRenderer.on('essence-alert', () => callback());
-  },
-  onPittaHillAlert: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('pitta-alert');
-    ipcRenderer.on('pitta-alert', () => callback());
-  },
-  onEthosAlert: (callback: (data: { password: string; message: string }) => void) => {
-    ipcRenderer.removeAllListeners('ethos-alert');
-    ipcRenderer.on('ethos-alert', (_event, data) => callback(data));
-  },
-  onAbyssApostleAlert: (callback: (data: { message: string }) => void) => {
-    ipcRenderer.removeAllListeners('abyss-apostle-alert');
-    ipcRenderer.on('abyss-apostle-alert', (_event, data) => callback(data));
-  },
-  onWaveWarningAlert: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('wave-warning-alert');
-    ipcRenderer.on('wave-warning-alert', () => callback());
-  },
-  onLokagosAlert: (callback: (data: { type: 'EXCLUDE' | 'TARGET'; zone: '알파' | '브라보' | '찰리' | '델타'; message: string }) => void) => {
-    ipcRenderer.removeAllListeners('lokagos-alert');
-    ipcRenderer.on('lokagos-alert', (_event, data) => callback(data));
-  },
-  onQuestStarted: (callback: (data: { questType: 'forge' | 'golgotha' | 'void', startTime: number, duration: number, startKills: number, targetKills: number }) => void) => {
-    ipcRenderer.removeAllListeners('quest-started');
-    ipcRenderer.on('quest-started', (_event, data) => callback(data));
-  },
-  onQuestUpdate: (callback: (data: { currentKills: number }) => void) => {
-    ipcRenderer.removeAllListeners('quest-update');
-    ipcRenderer.on('quest-update', (_event, data) => callback(data));
-  },
-  onQuestComplete: (callback: (data: { questType: 'forge' | 'golgotha' | 'void' }) => void) => {
-    ipcRenderer.removeAllListeners('quest-complete');
-    ipcRenderer.on('quest-complete', (_event, data) => callback(data));
-  },
-  onQuestCancelled: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('quest-cancelled');
-    ipcRenderer.on('quest-cancelled', () => callback());
-  },
-  onScamAlert: (callback: (result: ScamAnalysisResult) => void) => {
-    ipcRenderer.removeAllListeners('scam-alert');
-    ipcRenderer.on('scam-alert', (_event, result) => callback(result));
-  },
-  onScamAnalysisResult: (callback: (result: ScamAnalysisResult) => void) => {
-    ipcRenderer.removeAllListeners('scam-analysis-result');
-    ipcRenderer.on('scam-analysis-result', (_event, result) => callback(result));
-  },
-  onScamProgress: (callback: (pct: number) => void) => {
-    ipcRenderer.removeAllListeners('scam-progress');
-    ipcRenderer.on('scam-progress', (_event, pct) => callback(pct));
-  },
-  onScamSessionUpdate: (callback: (sessions: SessionState[]) => void) => {
-    ipcRenderer.removeAllListeners('scam-session-update');
-    ipcRenderer.on('scam-session-update', (_event, sessions) => callback(sessions));
-  },
-  onScamAnalysisToken: (callback: (data: { filePath: string; token: string }) => void) => {
-    ipcRenderer.removeAllListeners('scam-analysis-token');
-    ipcRenderer.on('scam-analysis-token', (_event, data) => callback(data));
-  },
-  onAutoSelectEquipment: (callback: (item: any) => void) => {
-    ipcRenderer.removeAllListeners('auto-select-equipment');
-    ipcRenderer.on('auto-select-equipment', (_event, item) => callback(item));
-  },
-  onAutoSelectEvolution: (callback: (data: any) => void) => {
-    ipcRenderer.removeAllListeners('auto-select-evolution');
-    ipcRenderer.on('auto-select-evolution', (_event, data) => callback(data));
-  },
-  onAbandonedUpdate: (callback: (state: any) => void) => {
-    ipcRenderer.removeAllListeners('abandoned-update');
-    ipcRenderer.on('abandoned-update', (_event, state) => callback(state));
-  },
-  onAbandonedAlert: (callback: (data: { region: string, count: number }) => void) => {
-    ipcRenderer.removeAllListeners('abandoned-alert');
-    ipcRenderer.on('abandoned-alert', (_event, data) => callback(data));
-  },
-  onAbandonedHideNow: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('abandoned-hide-now');
-    ipcRenderer.on('abandoned-hide-now', () => callback());
-  },
-  onChatUpdated: (callback: (chatItem: any) => void) => {
-    ipcRenderer.removeAllListeners('chat-updated');
-    ipcRenderer.on('chat-updated', (_event, chatItem) => callback(chatItem));
-  },
-  onChatHistoryCleared: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('chat-history-cleared');
-    ipcRenderer.on('chat-history-cleared', () => callback());
-  },
-  onChatOverlayMode: (callback: (mode: 'main' | 'sub1' | 'sub2') => void) => {
-    ipcRenderer.removeAllListeners('chat-overlay-mode');
-    ipcRenderer.on('chat-overlay-mode', (_event, mode) => callback(mode));
-  },
-  onChatLogStatusChanged: (callback: (isValid: boolean) => void) => {
-    ipcRenderer.removeAllListeners('chat-log-status-changed');
-    ipcRenderer.on('chat-log-status-changed', (_event, isValid) => callback(isValid));
-  },
+  onXpResetDone: (callback: (data: { startTime: number }) => void) =>
+    bindIpcListener('xp-reset-done', callback),
+  onEssenceAlert: (callback: () => void) =>
+    bindIpcListener('essence-alert', callback),
+  onPittaHillAlert: (callback: () => void) =>
+    bindIpcListener('pitta-alert', callback),
+  onSpecialMonsterAlert: (callback: (data: { message: string }) => void) =>
+    bindIpcListener('special-monster-alert', callback),
+  onEthosAlert: (callback: (data: { password: string; message: string }) => void) =>
+    bindIpcListener('ethos-alert', callback),
+  onAbyssApostleAlert: (callback: (data: { message: string }) => void) =>
+    bindIpcListener('abyss-apostle-alert', callback),
+  onWaveWarningAlert: (callback: () => void) =>
+    bindIpcListener('wave-warning-alert', callback),
+  onLokagosAlert: (callback: (data: { type: 'EXCLUDE' | 'TARGET'; zone: '알파' | '브라보' | '찰리' | '델타'; message: string }) => void) =>
+    bindIpcListener('lokagos-alert', callback),
+  onQuestStarted: (callback: (data: { questType: 'forge' | 'golgotha' | 'void', startTime: number, duration: number, startKills: number, targetKills: number }) => void) =>
+    bindIpcListener('quest-started', callback),
+  onQuestUpdate: (callback: (data: { currentKills: number }) => void) =>
+    bindIpcListener('quest-update', callback),
+  onQuestComplete: (callback: (data: { questType: 'forge' | 'golgotha' | 'void' }) => void) =>
+    bindIpcListener('quest-complete', callback),
+  onQuestCancelled: (callback: () => void) =>
+    bindIpcListener('quest-cancelled', callback),
+  onScamAlert: (callback: (result: ScamAnalysisResult) => void) =>
+    bindIpcListener('scam-alert', callback),
+  onScamAnalysisResult: (callback: (result: ScamAnalysisResult) => void) =>
+    bindIpcListener('scam-analysis-result', callback),
+  onScamProgress: (callback: (pct: number) => void) =>
+    bindIpcListener('scam-progress', callback),
+  onScamSessionUpdate: (callback: (sessions: SessionState[]) => void) =>
+    bindIpcListener('scam-session-update', callback),
+  onScamAnalysisToken: (callback: (data: { filePath: string; token: string }) => void) =>
+    bindIpcListener('scam-analysis-token', callback),
+  onAutoSelectEquipment: (callback: (item: EquipmentDictionaryItem) => void) =>
+    bindIpcListener('auto-select-equipment', callback),
+  onAutoSelectEvolution: (callback: (data: EquipmentDictionaryItem) => void) =>
+    bindIpcListener('auto-select-evolution', callback),
+  onAbandonedUpdate: (callback: (state: AbandonedRoadState) => void) =>
+    bindIpcListener('abandoned-update', callback),
+  onAbandonedAlert: (callback: (data: { region: string, count: number }) => void) =>
+    bindIpcListener('abandoned-alert', callback),
+  onAbandonedHideNow: (callback: () => void) =>
+    bindIpcListener('abandoned-hide-now', callback),
+  onChatUpdated: (callback: (chatItem: ChatItem) => void) =>
+    bindIpcListener('chat-updated', callback),
+  onChatHistoryCleared: (callback: () => void) =>
+    bindIpcListener('chat-history-cleared', callback),
+  onChatOverlayMode: (callback: (mode: 'main' | 'sub1' | 'sub2') => void) =>
+    bindIpcListener('chat-overlay-mode', callback),
+  onChatLogStatusChanged: (callback: (isValid: boolean) => void) =>
+    bindIpcListener('chat-log-status-changed', callback),
   abandonedGetState: () => ipcRenderer.invoke('abandoned-get-state'),
   abandonedForceVisible: (visible: boolean) => ipcRenderer.send('abandoned-force-visible', visible),
   abandonedSetEnabled: (enabled: boolean) => ipcRenderer.send('abandoned-set-enabled', enabled),
@@ -573,20 +470,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setAbandonedAutoHide: (minutes: number) => ipcRenderer.send('set-abandoned-autohide', minutes),
   getAlarmLogs: (limit?: number) => ipcRenderer.invoke('alarm-get-logs', limit),
   clearAlarmLogs: () => ipcRenderer.send('alarm-clear-logs'),
-  onAlarmLogsUpdated: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('alarm-logs-updated');
-    ipcRenderer.on('alarm-logs-updated', () => callback());
-  },
+  onAlarmLogsUpdated: (callback: () => void) =>
+    bindIpcListener('alarm-logs-updated', callback),
 
-  onTimerToggle: (callback: (state: 'start' | 'stop' | 'toggle') => void) => {
-    ipcRenderer.removeAllListeners('timer-toggle');
-    ipcRenderer.on('timer-toggle', (_event, state) => callback(state));
-  },
-  onTimerUpdated: (callback: () => void) => {
-    ipcRenderer.removeAllListeners('timer-updated');
-    ipcRenderer.on('timer-updated', () => callback());
-  },
-  timerSaveRecord: (record: any) => ipcRenderer.send('timer-save-record', record),
+  onTimerToggle: (callback: (state: 'start' | 'stop' | 'toggle') => void) =>
+    bindIpcListener('timer-toggle', callback),
+  onTimerUpdated: (callback: () => void) =>
+    bindIpcListener('timer-updated', callback),
+  timerSaveRecord: (record: TimerRecord) => ipcRenderer.send('timer-save-record', record),
   timerGetRecords: () => ipcRenderer.invoke('timer-get-records'),
   timerUpdateTitle: (id: number, title: string) => ipcRenderer.send('timer-update-title', id, title),
   timerUpdateSeriesCore: (
@@ -627,7 +518,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'boss-times-data', 'play-sound', 'trade-posts', 'trade-new-activity',
       'trade-connection-status', 'open-settings-tab', 'toolbar-hover', 'reminder-message',
       'incomplete-contents', 'diary-updated', 'xp-update', 'shout-history-updated',
-      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'ethos-alert', 'abyss-apostle-alert',
+      'buff-timer-update', 'buff-timer-warning', 'xp-reset-done', 'abandoned-update', 'abandoned-alert', 'abandoned-hide-now', 'pitta-alert', 'special-monster-alert', 'ethos-alert', 'abyss-apostle-alert',
       'scam-alert', 'scam-progress', 'scam-session-update', 'scam-analysis-token', 'scam-analysis-result', 'wave-warning-alert', 'lokagos-alert', 'chat-updated', 'chat-overlay-mode', 'chat-history-cleared',
       'auto-select-equipment', 'auto-select-evolution',
       'quest-started', 'quest-update', 'quest-complete', 'quest-cancelled',

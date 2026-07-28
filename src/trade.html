@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
-    <script src="assets/tailwind.min.js"></script>
+  <script src="assets/tailwind.min.js"></script>
     <script src="assets/lucide.min.js"></script>
+    <script src="assets/ui-utils.js"></script>
     <style>
         body {
             color: white;
@@ -69,12 +70,8 @@
     </style>
 
     <script>
-        window.addEventListener('beforeunload', () => { 
-            if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-                window.electronAPI.cleanupAllListeners(); 
-            }
-        });
-    </script>
+        window.bindElectronListenerCleanup();
+</script>
 </head>
 
 <body class="panel-glass p-0 h-screen flex flex-col relative">
@@ -146,8 +143,6 @@
     </div>
 
     <script>
-        function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
-
         let isForcingCheck = false;
 
         async function refreshTrade() {
@@ -271,12 +266,10 @@
             refreshTrade();
         };
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') window.close();
-        });
+        window.bindEscapeClose();
 
         refreshIcons();
-    </script>
+</script>
 </body>
 
 </html>

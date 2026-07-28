@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="assets/tailwind.min.js"></script>
     <script src="assets/lucide.min.js"></script>
+    <script src="assets/ui-utils.js"></script>
     <style>
         body {
             color: white;
@@ -591,7 +592,9 @@
         </div>
     </div>
 
-    <script>
+  <script src="renderer/contents-checker/audio-feedback.js"></script>
+  <script src="renderer/contents-checker/dom-rendering.js"></script>
+  <script>
         let isEditMode = false;
         let editingItemId = null; // 현재 편집 중인 아이템 ID
         let configData = null;
@@ -687,10 +690,12 @@
                 const charDone = charItems.filter(i => i.completedState?.[char.id]?.isCompleted).length;
                 const charPercent = charItems.length > 0 ? Math.round((charDone / charItems.length) * 100) : 0;
 
-                header.innerHTML = `
-                    <span class="char-name" title="${char.name}">${char.name}</span>
-                    <span class="char-progress">${charPercent}%</span>
-                `;
+                const name = window.contentsDomRendering.createElement('span', 'char-name', char.name);
+                name.title = char.name;
+                header.append(
+                    name,
+                    window.contentsDomRendering.createElement('span', 'char-progress', `${charPercent}%`)
+                );
                 table.appendChild(header);
             });
 
@@ -736,10 +741,17 @@
                 // Category Header
                 const catRow = document.createElement('div');
                 catRow.className = `category-row ${isCatCollapsed ? 'collapsed' : ''}`;
-                catRow.innerHTML = `
-                    <i data-lucide="${isCatCollapsed ? 'chevron-right' : 'chevron-down'}" class="w-3.5 h-3.5"></i>
-                    <span>${catName} (${visibleItems.length})</span>
-                `;
+                catRow.append(
+                    window.contentsDomRendering.createIcon(
+                        isCatCollapsed ? 'chevron-right' : 'chevron-down',
+                        'w-3.5 h-3.5'
+                    ),
+                    window.contentsDomRendering.createElement(
+                        'span',
+                        '',
+                        `${catName} (${visibleItems.length})`
+                    )
+                );
                 catRow.onclick = () => {
                     if (collapsedCategories.has(catKey)) collapsedCategories.delete(catKey);
                     else collapsedCategories.add(catKey);
@@ -748,38 +760,92 @@
                 table.appendChild(catRow);
 
                 if (!isCatCollapsed) {
-                    visibleItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)).forEach(item => {
+                    [...visibleItems]
+                      .sort((a, b) => window.compareKoreanText(a.name, b.name))
+                      .forEach(item => {
                         const infoCell = document.createElement('div');
                         infoCell.title = `[${item.category}] ${item.name}`;
                         infoCell.className = `matrix-cell item-info sticky-col ${!item.isVisible ? 'hidden-row' : ''}`;
 
                         const timeStr = String(item.resetRule.hour || 0).padStart(2, '0') + ':00';
                         const resetInfo = item.resetRule.type === 'daily' ? `매일 ${timeStr}` : `${DAYS[item.resetRule.dayOfWeek || 1]} ${timeStr}`;
+                        const isCustomItem = item.isCustom === true || item.id.startsWith('custom-');
 
-                        infoCell.innerHTML = `
-                            <div class="flex flex-col min-w-0 flex-1">
-                                <div class="flex items-center gap-1 min-w-0">
-                                    <span class="text-xs font-bold truncate text-slate-100">${item.name}</span>
-                                    ${item.auto ? `<span class="px-1 py-0.5 text-[8px] leading-none font-bold bg-violet-500/20 text-violet-400 border border-violet-500/30 rounded flex-shrink-0 select-none">AUTO</span>` : ''}
-                                </div>
-                                <span class="text-[9px] text-slate-500 font-medium">${resetInfo}</span>
-                            </div>
-                            ${isEditMode ? `
-                                <div class="flex gap-0.5 ml-1">
-                                    <button class="p-1 hover:text-violet-400 transition-colors" onclick="event.stopPropagation(); window.electronAPI.contentsToggleVisibility('${item.id}')">
-                                        <i data-lucide="${item.isVisible ? 'eye' : 'eye-off'}" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                    ${item.isCustom ? `
-                                        <button class="p-1 hover:text-violet-400 transition-colors" title="수정" onclick="event.stopPropagation(); startEditItem('${item.id}')">
-                                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                        <button class="p-1 hover:text-red-400 transition-colors" title="삭제" onclick="event.stopPropagation(); removeItem('${item.id}')">
-                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            ` : ''}
-                        `;
+                        const info = window.contentsDomRendering.createElement(
+                            'div',
+                            'flex flex-col min-w-0 flex-1'
+                        );
+                        const titleRow = window.contentsDomRendering.createElement(
+                            'div',
+                            'flex items-center gap-1 min-w-0'
+                        );
+                        titleRow.appendChild(window.contentsDomRendering.createElement(
+                            'span',
+                            'text-xs font-bold truncate text-slate-100',
+                            item.name
+                        ));
+                        if (isCustomItem) {
+                            titleRow.appendChild(window.contentsDomRendering.createBadge(
+                                'CUSTOM',
+                                'px-1 py-0.5 text-[8px] leading-none font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded flex-shrink-0 select-none'
+                            ));
+                        }
+                        if (item.auto) {
+                            titleRow.appendChild(window.contentsDomRendering.createBadge(
+                                'AUTO',
+                                'px-1 py-0.5 text-[8px] leading-none font-bold bg-violet-500/20 text-violet-400 border border-violet-500/30 rounded flex-shrink-0 select-none'
+                            ));
+                        }
+                        info.append(
+                            titleRow,
+                            window.contentsDomRendering.createElement(
+                                'span',
+                                'text-[9px] text-slate-500 font-medium',
+                                resetInfo
+                            )
+                        );
+                        infoCell.appendChild(info);
+
+                        if (isEditMode) {
+                            const actions = window.contentsDomRendering.createElement(
+                                'div',
+                                'flex gap-0.5 ml-1'
+                            );
+                            actions.appendChild(window.contentsDomRendering.createIconButton({
+                                icon: item.isVisible ? 'eye' : 'eye-off',
+                                className: 'p-1 hover:text-violet-400 transition-colors',
+                                iconClassName: 'w-3.5 h-3.5',
+                                onClick: (event) => {
+                                    event.stopPropagation();
+                                    window.electronAPI.contentsToggleVisibility(item.id);
+                                }
+                            }));
+                            if (isCustomItem) {
+                                actions.append(
+                                    window.contentsDomRendering.createIconButton({
+                                        icon: 'edit-3',
+                                        className: 'p-1 hover:text-violet-400 transition-colors',
+                                        iconClassName: 'w-3.5 h-3.5',
+                                        title: '수정',
+                                        onClick: (event) => {
+                                            event.stopPropagation();
+                                            startEditItem(item.id);
+                                        }
+                                    }),
+                                    window.contentsDomRendering.createIconButton({
+                                        icon: 'trash-2',
+                                        className: 'p-1 hover:text-red-400 transition-colors',
+                                        iconClassName: 'w-3.5 h-3.5',
+                                        title: '삭제',
+                                        onClick: (event) => {
+                                            event.stopPropagation();
+                                            removeItem(item.id);
+                                        }
+                                    })
+                                );
+                            }
+                            infoCell.appendChild(actions);
+                        }
                         table.appendChild(infoCell);
 
                         presets.forEach(char => {
@@ -792,42 +858,59 @@
                             checkCell.className = `matrix-cell ${!item.isVisible ? 'hidden-row' : ''}`;
 
                             if (isExcluded) {
-                                checkCell.innerHTML = `
-                                    <div class="check-box excluded" 
-                                         onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})">
-                                    </div>
-                                `;
+                                const checkbox = document.createElement('div');
+                                checkbox.className = 'check-box excluded';
+                                checkbox.addEventListener('click', () => {
+                                    handleToggle(item.id, char.id, isCompleted, isExcluded);
+                                });
+                                checkCell.appendChild(checkbox);
                             } else if (max > 1) {
                                 // 카운트 진행도에 따라 카운트 텍스트 색상 분기 (7/7 완료 시 초록색, 진행 중 하늘색, 0회는 흐리게)
                                 const countColorClass = current === max 
                                     ? 'text-emerald-400 border-emerald-500/50' 
                                     : (current > 0 ? 'text-violet-400 border-violet-500/40' : 'text-slate-400 opacity-60');
-                                checkCell.innerHTML = `
-                                    <div class="flex gap-1.5 items-center justify-center">
-                                        <div class="check-box count-box ${countColorClass}" 
-                                             onclick="handleCountClick(event, '${item.id}', '${char.id}', 1, ${isExcluded})"
-                                             oncontextmenu="handleCountClick(event, '${item.id}', '${char.id}', -1, ${isExcluded})"
-                                             title="좌클릭: +1 | 우클릭: -1">
-                                            ${current}/${max}
-                                        </div>
-                                        <div class="check-box ${isCompleted ? 'checked' : ''}" 
-                                             onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})"
-                                             title="즉시 완료 토글">
-                                            <i data-lucide="check" class="w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}"></i>
-                                        </div>
-                                    </div>
-                                `;
+                                const controls = document.createElement('div');
+                                controls.className = 'flex gap-1.5 items-center justify-center';
+                                const countBox = window.contentsDomRendering.createElement(
+                                    'div',
+                                    `check-box count-box ${countColorClass}`,
+                                    `${current}/${max}`
+                                );
+                                countBox.title = '좌클릭: +1 | 우클릭: -1';
+                                countBox.addEventListener('click', (event) => {
+                                    handleCountClick(event, item.id, char.id, 1, isExcluded);
+                                });
+                                countBox.addEventListener('contextmenu', (event) => {
+                                    handleCountClick(event, item.id, char.id, -1, isExcluded);
+                                });
+
+                                const completeBox = document.createElement('div');
+                                completeBox.className = `check-box ${isCompleted ? 'checked' : ''}`;
+                                completeBox.title = '즉시 완료 토글';
+                                completeBox.appendChild(window.contentsDomRendering.createIcon(
+                                    'check',
+                                    `w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}`
+                                ));
+                                completeBox.addEventListener('click', () => {
+                                    handleToggle(item.id, char.id, isCompleted, isExcluded);
+                                });
+                                controls.append(countBox, completeBox);
+                                checkCell.appendChild(controls);
                             } else {
-                                checkCell.innerHTML = `
-                                    <div class="check-box ${isCompleted ? 'checked' : ''}" 
-                                         onclick="handleToggle('${item.id}', '${char.id}', ${isCompleted}, ${isExcluded})">
-                                        <i data-lucide="check" class="w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}"></i>
-                                    </div>
-                                `;
+                                const checkbox = document.createElement('div');
+                                checkbox.className = `check-box ${isCompleted ? 'checked' : ''}`;
+                                checkbox.appendChild(window.contentsDomRendering.createIcon(
+                                    'check',
+                                    `w-4 h-4 text-white ${isCompleted ? '' : 'invisible'}`
+                                ));
+                                checkbox.addEventListener('click', () => {
+                                    handleToggle(item.id, char.id, isCompleted, isExcluded);
+                                });
+                                checkCell.appendChild(checkbox);
                             }
                             table.appendChild(checkCell);
                         });
-                    });
+                      });
                 }
             };
 
@@ -892,9 +975,7 @@
             }
             if (isExcluded) return; // 제외된 항목은 일반 모드에서 체크 불가
 
-            const vol = (configData?.volumeContentsChecker !== undefined ? configData.volumeContentsChecker : 50) / 100;
-
-            if (!currentState && vol > 0) { // 체크하는 순간 (isCompleted: false -> true)
+            if (!currentState && window.contentsAudioFeedback.getVolume(configData) > 0) { // 체크하는 순간 (isCompleted: false -> true)
                 const item = configData.contentsCheckerItems.find(i => i.id === itemId);
                 const type = item?.resetRule?.type;
 
@@ -912,14 +993,9 @@
                 const isLastOne = (doneCount + 1 === sameTypeItems.length);
 
                 if (isLastOne) {
-                    const soundFile = type === 'daily' ? 'assets/sound/voice_wow.wav' : 'assets/sound/max_affection.wav';
-                    const audio = new Audio(soundFile);
-                    audio.volume = vol;
-                    audio.play().catch(() => {});
+                    window.contentsAudioFeedback.play(configData, window.contentsAudioFeedback.getCompletionSound(type));
                 } else {
-                    const audio = new Audio('assets/sound/item_get.wav');
-                    audio.volume = vol;
-                    audio.play().catch(() => {});
+                    window.contentsAudioFeedback.play(configData, 'assets/sound/item_get.wav');
                 }
             }
 
@@ -957,20 +1033,15 @@
             targetCount = Math.max(0, Math.min(max, targetCount));
 
             // 소리 재생 로직 (완료 시 WOW 사운드 재생)
-            const vol = (configData?.volumeContentsChecker !== undefined ? configData.volumeContentsChecker : 50) / 100;
+            const vol = window.contentsAudioFeedback.getVolume(configData);
             const nowCompleted = (targetCount === max);
             const prevCompleted = state?.isCompleted || false;
 
             if (nowCompleted && !prevCompleted && vol > 0) {
                 const type = item.resetRule.type;
-                const soundFile = type === 'daily' ? 'assets/sound/voice_wow.wav' : 'assets/sound/max_affection.wav';
-                const audio = new Audio(soundFile);
-                audio.volume = vol;
-                audio.play().catch(() => {});
+                window.contentsAudioFeedback.play(configData, window.contentsAudioFeedback.getCompletionSound(type));
             } else if (targetCount !== current && vol > 0) {
-                const audio = new Audio('assets/sound/item_get.wav');
-                audio.volume = vol;
-                audio.play().catch(() => {});
+                window.contentsAudioFeedback.play(configData, 'assets/sound/item_get.wav');
             }
 
             window.electronAPI.contentsUpdateCount(itemId, charId, targetCount);
@@ -1037,17 +1108,27 @@
             presets.forEach((char, idx) => {
                 const row = document.createElement('div');
                 row.className = 'char-item-row';
-                row.innerHTML = `
-                    <span class="text-xs font-bold text-slate-300 flex-1 truncate">${idx + 1}. ${char.name}</span>
-                    <button class="p-1.5 hover:text-violet-400 transition-colors" onclick="renameChar('${char.id}', '${char.name}')">
-                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                    </button>
-                    ${char.id !== 'char-main' && presets.length > 1 ? `
-                        <button class="p-1.5 hover:text-red-400 transition-colors" onclick="removeChar('${char.id}', '${char.name}')">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                    ` : ''}
-                `;
+                row.append(
+                    window.contentsDomRendering.createElement(
+                        'span',
+                        'text-xs font-bold text-slate-300 flex-1 truncate',
+                        `${idx + 1}. ${char.name}`
+                    ),
+                    window.contentsDomRendering.createIconButton({
+                        icon: 'edit-3',
+                        className: 'p-1.5 hover:text-violet-400 transition-colors',
+                        iconClassName: 'w-3.5 h-3.5',
+                        onClick: () => window.renameChar(char.id, char.name)
+                    })
+                );
+                if (char.id !== 'char-main' && presets.length > 1) {
+                    row.appendChild(window.contentsDomRendering.createIconButton({
+                        icon: 'trash-2',
+                        className: 'p-1.5 hover:text-red-400 transition-colors',
+                        iconClassName: 'w-3.5 h-3.5',
+                        onClick: () => window.removeChar(char.id, char.name)
+                    }));
+                }
                 list.appendChild(row);
             });
             lucide.createIcons();
@@ -1135,10 +1216,23 @@
                     
                     const div = document.createElement('div');
                     div.className = 'flex justify-between items-center py-0.5 border-b border-white/5 last:border-0';
-                    div.innerHTML = `
-                        <span class="truncate pr-2 font-bold">[<span class="${typeColor}">${typeLabel}</span>] ${name}</span>
-                        <span class="text-violet-400 font-extrabold flex-shrink-0">${p.isIncrement ? '+' : ''}${p.count}회</span>
-                    `;
+                    const nameContainer = window.contentsDomRendering.createElement(
+                        'span',
+                        'truncate pr-2 font-bold'
+                    );
+                    nameContainer.append(
+                        document.createTextNode('['),
+                        window.contentsDomRendering.createElement('span', typeColor, typeLabel),
+                        document.createTextNode(`] ${name}`)
+                    );
+                    div.append(
+                        nameContainer,
+                        window.contentsDomRendering.createElement(
+                            'span',
+                            'text-violet-400 font-extrabold flex-shrink-0',
+                            `${p.isIncrement ? '+' : ''}${p.count}회`
+                        )
+                    );
                     itemsList.appendChild(div);
                 });
 
@@ -1173,12 +1267,22 @@
                     if (activePendingCount === 0) {
                         // 모든 보류 숙제에서 제외(N/A)된 캐릭터인 경우
                         btn.className += ' bg-slate-800/40 border border-slate-700/50 text-slate-500 cursor-not-allowed opacity-50';
-                        btn.innerHTML = `<span>${char.name}</span><span class="text-xs font-bold text-slate-600 bg-slate-700/30 px-2 py-0.5 rounded">참여 안함 (N/A)</span>`;
+                        window.contentsDomRendering.setStatusButtonContent(
+                            btn,
+                            char.name,
+                            '참여 안함 (N/A)',
+                            'text-xs font-bold text-slate-600 bg-slate-700/30 px-2 py-0.5 rounded'
+                        );
                         btn.disabled = true;
                     } else if (allCompleted) {
                         // 보류 숙제들을 이미 모두 완료한 캐릭터인 경우 (실수 방지 UX)
                         btn.className += ' bg-emerald-950/20 border border-emerald-900/40 text-emerald-500/70 hover:bg-emerald-900/30 hover:border-emerald-500/30';
-                        btn.innerHTML = `<span>${char.name}</span><span class="text-xs font-bold text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded">이미 완료함 (선택가능)</span>`;
+                        window.contentsDomRendering.setStatusButtonContent(
+                            btn,
+                            char.name,
+                            '이미 완료함 (선택가능)',
+                            'text-xs font-bold text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded'
+                        );
                         btn.onclick = () => {
                             if (confirm(`'${char.name}' 캐릭터는 보류 중인 숙제를 이미 모두 완료했습니다. 정말 반영하시겠습니까? (초과 횟수는 무시됩니다)`)) {
                                 window.electronAPI.contentsApplyPending(char.id);
@@ -1188,7 +1292,12 @@
                     } else {
                         // 반영 가능한 숙제가 남은 캐릭터인 경우 (일반적인 선택 상황)
                         btn.className += ' bg-violet-950/30 border border-violet-500/30 text-violet-400 hover:bg-violet-500 hover:text-white hover:shadow-violet-500/20 hover:shadow-lg active:scale-[0.98]';
-                        btn.innerHTML = `<span>${char.name}</span><span class="text-xs font-bold text-violet-300 bg-violet-500/20 px-2 py-0.5 rounded">반영 가능</span>`;
+                        window.contentsDomRendering.setStatusButtonContent(
+                            btn,
+                            char.name,
+                            '반영 가능',
+                            'text-xs font-bold text-violet-300 bg-violet-500/20 px-2 py-0.5 rounded'
+                        );
                         btn.onclick = () => {
                             window.electronAPI.contentsApplyPending(char.id);
                             modal.classList.add('hidden');
@@ -1217,24 +1326,7 @@
             lucide.createIcons();
             updateFormVisibility();
 
-            // 챗로그 설정 점검 배너 표시
-            if (window.electronAPI && window.electronAPI.checkChatLogStatus) {
-                window.electronAPI.checkChatLogStatus().then(isValid => {
-                    if (!isValid) {
-                        showChatLogWarningBanner();
-                    }
-                });
-                if (window.electronAPI.onChatLogStatusChanged) {
-                    window.electronAPI.onChatLogStatusChanged(isValid => {
-                        if (isValid) {
-                            const b = document.getElementById('chatlog-warning-banner');
-                            if (b) b.remove();
-                        } else {
-                            showChatLogWarningBanner();
-                        }
-                    });
-                }
-            }
+            window.bindChatLogStatusWarning();
 
             // 보류 내역 삭제 버튼 이벤트 바인딩
             const clearPendingBtn = document.getElementById('btn-clear-pending');
@@ -1247,27 +1339,6 @@
                 };
             }
         });
-
-        function showChatLogWarningBanner() {
-            if (document.getElementById('chatlog-warning-banner')) return;
-            const banner = document.createElement('div');
-            banner.id = 'chatlog-warning-banner';
-            banner.className = 'w-full bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-200 z-[9999] shrink-0';
-            banner.style.cssText = 'position: relative; top: 0; left: 0;';
-            banner.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
-                    <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
-                </div>
-                <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-                    class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
-                    설정으로 이동
-                </button>
-            `;
-            document.body.insertBefore(banner, document.body.firstChild);
-            if (typeof refreshIcons === 'function') refreshIcons();
-            else if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1282,7 +1353,7 @@
                 }
             }
         });
-    </script>
+</script>
 </body>
 
 </html>

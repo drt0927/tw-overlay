@@ -118,6 +118,53 @@
       box-shadow: 0 2px 10px rgba(168, 85, 247, 0.1);
     }
 
+    /* ── 공허 특별 몬스터 출현 알림 ── */
+    .special-monster-alert-overlay {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      pointer-events: none;
+      z-index: 102;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      background: linear-gradient(160deg, rgba(57, 25, 7, 0.97), rgba(25, 10, 3, 0.97));
+      border: 1.5px solid rgba(251, 191, 36, 0.8);
+      border-radius: 24px;
+      padding: 28px 52px 24px;
+      box-shadow: 0 0 36px rgba(251, 191, 36, 0.45), 0 0 80px rgba(239, 68, 68, 0.2), 0 24px 64px rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(20px);
+      white-space: nowrap;
+    }
+
+    .special-monster-alert-overlay.show {
+      animation: ar-alert-show 5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .special-monster-alert-icon {
+      width: 34px;
+      height: 34px;
+      color: #fbbf24;
+      filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.8));
+    }
+
+    .special-monster-alert-title {
+      font-size: 1.5em;
+      font-weight: 900;
+      color: #fff7d6;
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .special-monster-alert-subtitle {
+      font-size: 0.85em;
+      font-weight: 700;
+      color: #fcd34d;
+    }
+
     /* ── XP HUD ── */
     .xp-hud {
       position: fixed;
@@ -1437,6 +1484,14 @@
     <div id="quest-alert-badge" class="quest-badge">몬스터 0마리 처치 완료</div>
   </div>
 
+  <!-- 공허 특별 몬스터 출현 알림 카드 -->
+  <div id="special-monster-alert" class="special-monster-alert-overlay">
+    <i data-lucide="skull" class="special-monster-alert-icon"></i>
+    <div class="alert-crown-label">✦ 공허의 영역 ✦</div>
+    <div class="special-monster-alert-title">특별 몬스터 출현!</div>
+    <div class="special-monster-alert-subtitle">맵 어딘가에 특별 몬스터가 나타났습니다.</div>
+  </div>
+
   <!-- 경험의 정수 버프 경고 알람 -->
   <div id="essence-alert" class="essence-alert-overlay">
     <div style="display:flex; align-items:center; gap:12px;">
@@ -1493,7 +1548,10 @@
   <!-- 버프 타이머 HUD -->
   <div id="buff-hud" class="buff-hud"></div>
 
+  <script src="assets/ui-utils.js"></script>
+  <script src="renderer/game-overlay/alerts.js"></script>
   <script>
+    const gameOverlayAlerts = window.gameOverlayAlerts;
     // ── 타이머 HUD 상태 및 로직 정의 ──
     let timerInterval = null;
     let timerStartTime = 0;
@@ -1583,8 +1641,6 @@
         }
       }
     }
-
-    function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
 
     function formatXP(num) {
       const n = Number(num);
@@ -1714,14 +1770,6 @@
     let sessionIsActive = false;
     let currentConfig = null;
 
-    function formatTime(ms) {
-      const totalSec = Math.floor(ms / 1000);
-      const h = Math.floor(totalSec / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const s = totalSec % 60;
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
     // 1초마다 경과 시간 실시간 업데이트
     setInterval(() => {
       const elapsedEl = document.getElementById('xp-elapsed');
@@ -1730,7 +1778,7 @@
         if (sessionIsActive) {
           elapsed += Date.now() - sessionStartTime;
         }
-        elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
+        elapsedEl.innerText = window.formatElapsedTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
       }
     }, 1000);
 
@@ -1791,6 +1839,22 @@
       }
     });
 
+    function updateXpElapsedDisplay() {
+      const elapsedEl = document.getElementById('xp-elapsed');
+      if (!elapsedEl) return;
+
+      let elapsed = sessionAccumulatedTime;
+      if (sessionIsActive) {
+        elapsed += Date.now() - sessionStartTime;
+        elapsedEl.classList.remove('text-slate-400');
+        elapsedEl.classList.add('text-white');
+      } else {
+        elapsedEl.classList.remove('text-white');
+        elapsedEl.classList.add('text-slate-400');
+      }
+      elapsedEl.innerText = window.formatElapsedTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
+    }
+
     // 경험치 데이터 수신
     window.electronAPI.onXpUpdate((data) => {
       if (data.startTime !== undefined) {
@@ -1805,19 +1869,7 @@
       document.getElementById('xp-total').innerText = formatXP(data.total);
       document.getElementById('xp-epm').innerText = formatXP(data.epm);
       document.getElementById('xp-kills').innerText = (data.kills || 0).toLocaleString();
-      const elapsedEl = document.getElementById('xp-elapsed');
-      if (elapsedEl) {
-        let elapsed = sessionAccumulatedTime;
-        if (sessionIsActive) {
-          elapsed += Date.now() - sessionStartTime;
-          elapsedEl.classList.remove('text-slate-400');
-          elapsedEl.classList.add('text-white');
-        } else {
-          elapsedEl.classList.remove('text-white');
-          elapsedEl.classList.add('text-slate-400');
-        }
-        elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
-      }
+      updateXpElapsedDisplay();
     });
 
     // 버프 타이머 HUD 업데이트
@@ -1954,40 +2006,17 @@
 
     // 어벤던로드 10회 알림
     window.electronAPI.onAbandonedAlert((data) => {
-      const alertOverlay = document.getElementById('abandoned-alert');
-      const regionEl = document.getElementById('abandoned-alert-region');
-      const flashEl = document.getElementById('abandoned-flash');
-      if (!alertOverlay || !regionEl) return;
-
-      regionEl.innerText = data.region;
-
-      if (flashEl) {
-        flashEl.classList.remove('show');
-        void flashEl.offsetWidth;
-        flashEl.classList.add('show');
-      }
-
-      alertOverlay.classList.remove('show');
-      void alertOverlay.offsetWidth;
-      alertOverlay.classList.add('show');
+      gameOverlayAlerts.showAbandonedAlert(data.region);
     });
 
     // 경험의 정수 버프 경고 알람
     window.electronAPI.onEssenceAlert(() => {
-      const alertEl = document.getElementById('essence-alert');
-      if (!alertEl) return;
-      alertEl.classList.remove('show');
-      void alertEl.offsetWidth;
-      alertEl.classList.add('show');
+      gameOverlayAlerts.showEssenceAlert();
     });
 
     // 팔색조 언덕 5회 알림
     window.electronAPI.onPittaHillAlert(() => {
-      const alertEl = document.getElementById('pitta-alert');
-      if (!alertEl) return;
-      alertEl.classList.remove('show');
-      void alertEl.offsetWidth;
-      alertEl.classList.add('show');
+      gameOverlayAlerts.showPittaAlert();
     });
 
     // 도전과제 실시간 타이머 및 수치 제어
@@ -2056,32 +2085,11 @@
       if (hudEl) hudEl.classList.add('hidden');
       if (questTimerInterval) clearInterval(questTimerInterval);
 
-      const alertEl = document.getElementById('quest-alert');
-      const iconEl = document.getElementById('quest-alert-icon');
-      const titleEl = document.getElementById('quest-alert-title');
-      const badgeEl = document.getElementById('quest-alert-badge');
-      if (!alertEl) return;
-
       const type = data.questType || 'forge';
       const questName = QUEST_NAMES[type] || '도전과제';
       const target = type === 'forge' ? 1500 : type === 'golgotha' ? 1000 : 800;
       const iconName = QUEST_ICONS[type] || 'hammer';
-
-      // 완료 알림 정보 동적 설정
-      if (iconEl) {
-        iconEl.setAttribute('data-lucide', iconName);
-        refreshIcons();
-      }
-      if (titleEl) {
-        titleEl.textContent = `${questName} 도전과제 완료`;
-      }
-      if (badgeEl) {
-        badgeEl.textContent = `몬스터 ${target.toLocaleString()}마리 처치 완료`;
-      }
-
-      alertEl.classList.remove('show');
-      void alertEl.offsetWidth;
-      alertEl.classList.add('show');
+      gameOverlayAlerts.showQuestComplete({ questName, target, iconName });
     });
 
     window.electronAPI.onQuestCancelled(() => {
@@ -2090,84 +2098,88 @@
       if (questTimerInterval) clearInterval(questTimerInterval);
     });
 
+    window.electronAPI.onSpecialMonsterAlert(() => {
+      gameOverlayAlerts.showSpecialMonsterAlert();
+    });
+
     // 에토스 기믹 알림
     let ethosTimeout = null;
-    window.electronAPI.onEthosAlert((data) => {
+    const ETHOS_DIRECTION_BY_PASSWORD = {
+      '번개': 'N',
+      '갈퀴 모양 번개': 'NE',
+      '갈퀴': 'E',
+      '갈퀴 모양 갈고리': 'SE',
+      '갈고리': 'S',
+      '파도 모양 갈고리': 'SW',
+      '파도': 'W',
+      '파도 모양 번개': 'NW'
+    };
+    const ETHOS_PASSWORD_BY_DIRECTION = {
+      'N': '번개', 'NE': '갈퀴 모양 번개', 'E': '갈퀴', 'SE': '갈퀴 모양 갈고리',
+      'S': '갈고리', 'SW': '파도 모양 갈고리', 'W': '파도', 'NW': '파도 모양 번개'
+    };
+
+    function showEthosAlert(password) {
       const arrowContainer = document.getElementById('ethos-arrow-container');
       const arrowIndicator = document.getElementById('ethos-arrow-indicator');
       const alertText = document.getElementById('ethos-alert-text');
-      if (!arrowContainer || !arrowIndicator || !alertText) return;
+      if (!arrowContainer || !arrowIndicator || !alertText) return null;
 
-      // 8방향 매핑
-      const dirMap = {
-        '번개': 'N',
-        '갈퀴 모양 번개': 'NE',
-        '갈퀴': 'E',
-        '갈퀴 모양 갈고리': 'SE',
-        '갈고리': 'S',
-        '파도 모양 갈고리': 'SW',
-        '파도': 'W',
-        '파도 모양 번개': 'NW'
-      };
+      const dir = ETHOS_DIRECTION_BY_PASSWORD[password];
+      if (!dir) return null;
+      if (ethosTimeout) clearTimeout(ethosTimeout);
 
-      const dir = dirMap[data.password];
-      if (!dir) return; // 알 수 없는 암호인 경우 무시
-
-      // 이전 타이머 초기화
-      if (ethosTimeout) {
-        clearTimeout(ethosTimeout);
-        ethosTimeout = null;
-      }
-
-      // 애니메이션 재시작을 위한 클래스 초기화
       arrowIndicator.className = 'ethos-arrow-wrapper ethos-dir-' + dir;
       alertText.classList.remove('show');
-      void arrowIndicator.offsetWidth; // Reflow
-
-      // 텍스트 및 화살표 표시
-      // alertText.innerText = '에토스: ' + data.password;
+      void arrowIndicator.offsetWidth;
       arrowIndicator.classList.add('show');
-      // alertText.classList.add('show');
 
-      // 5초 후 자동으로 사라짐
       ethosTimeout = setTimeout(() => {
         arrowIndicator.classList.remove('show');
         alertText.classList.remove('show');
       }, 5000);
+      return dir;
+    }
+
+    window.electronAPI.onEthosAlert((data) => {
+      showEthosAlert(data.password);
     });
 
     // ── 심연의 제2사도 기믹 알림 ──
     let abyssAlertTimeout = null;
     let abyssResetTimeout = null;
+    function showAbyssApostleAlert(onStart, onEnd) {
+      const overlay = document.getElementById('abyss-apostle-alert');
+      const title = document.getElementById('abyss-apostle-title');
+      const subtitle = document.getElementById('abyss-apostle-subtitle');
+      if (!overlay || !title || !subtitle) return false;
+
+      if (abyssAlertTimeout) clearTimeout(abyssAlertTimeout);
+      if (abyssResetTimeout) clearTimeout(abyssResetTimeout);
+
+      overlay.className = 'abyss-apostle-alert-overlay warn';
+      title.className = 'abyss-apostle-title warn';
+      title.innerText = '공격 반사 패턴! 경고!';
+      subtitle.innerText = '보스 공격 중단 (6.5초)';
+      if (onStart) onStart();
+
+      abyssAlertTimeout = setTimeout(() => {
+        overlay.className = 'abyss-apostle-alert-overlay safe';
+        title.className = 'abyss-apostle-title safe';
+        title.innerText = '공격 반사 패턴 종료!';
+        subtitle.innerText = '공격 가능';
+        if (onEnd) onEnd();
+
+        abyssResetTimeout = setTimeout(() => {
+          overlay.className = 'abyss-apostle-alert-overlay hide';
+        }, 2000);
+      }, 6500);
+      return true;
+    }
+
     if (window.electronAPI.onAbyssApostleAlert) {
       window.electronAPI.onAbyssApostleAlert(() => {
-        const overlay = document.getElementById('abyss-apostle-alert');
-        const title = document.getElementById('abyss-apostle-title');
-        const subtitle = document.getElementById('abyss-apostle-subtitle');
-        if (!overlay || !title || !subtitle) return;
-
-        // 이전 타이머들 취소
-        if (abyssAlertTimeout) clearTimeout(abyssAlertTimeout);
-        if (abyssResetTimeout) clearTimeout(abyssResetTimeout);
-
-        // 공격 반사 패턴 경고 표출 (붉은색)
-        overlay.className = 'abyss-apostle-alert-overlay warn';
-        title.className = 'abyss-apostle-title warn';
-        title.innerText = '공격 반사 패턴! 경고!';
-        subtitle.innerText = '보스 공격 중단 (6.5초)';
-
-        // 6.5초 후 종료 표시로 전환 (초록색)
-        abyssAlertTimeout = setTimeout(() => {
-          overlay.className = 'abyss-apostle-alert-overlay safe';
-          title.className = 'abyss-apostle-title safe';
-          title.innerText = '공격 반사 패턴 종료!';
-          subtitle.innerText = '공격 가능';
-
-          // 2초 유지 후 페이드 아웃
-          abyssResetTimeout = setTimeout(() => {
-            overlay.className = 'abyss-apostle-alert-overlay hide';
-          }, 2000);
-        }, 6500);
+        showAbyssApostleAlert();
       });
     }
 
@@ -2291,194 +2303,6 @@
         triggerLokagosAlert(data.type, data.zone);
       });
     }
-
-    // ── 테스트 가이드 (Console) ──
-    console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
-    console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`const el = document.getElementById('pitta-alert'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');`);
-    console.log('%c2. 에토스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testEthos('번개') // N, NE, E, SE, S, SW, W, NW 중 택1 혹은 암호 입력`);
-    console.log('%c3. 심연의 제2사도 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testAbyssApostle()`);
-    console.log('%c4. 로카고스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testLokagos('EXCLUDE', '알파') // EXCLUDE(대피), TARGET(폭격) 및 알파, 브라보, 찰리, 델타 중 택1`);
-    console.log('%c5. 경험의 정수 버프 경고 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testEssenceAlert()`);
-    console.log('----------------------------------------------------');
-
-    // [DevTools 전용 글로벌 테스트 함수]
-    window.testEssenceAlert = function() {
-      const alertEl = document.getElementById('essence-alert');
-      if (!alertEl) {
-        console.error('essence-alert 엘리먼트를 찾을 수 없습니다.');
-        return;
-      }
-      alertEl.classList.remove('show');
-      void alertEl.offsetWidth;
-      alertEl.classList.add('show');
-      console.log('✅ 경험의 정수 버프 경고 테스트 실행');
-    };
-
-    window.testLokagos = function(type = 'EXCLUDE', zone = '알파') {
-      const validTypes = ['EXCLUDE', 'TARGET'];
-      const validZones = ['알파', '브라보', '찰리', '델타'];
-      if (!validTypes.includes(type) || !validZones.includes(zone)) {
-        console.error('올바르지 않은 파라미터입니다. 예: testLokagos("EXCLUDE", "알파") 또는 testLokagos("TARGET", "브라보")');
-        return;
-      }
-      triggerLokagosAlert(type, zone);
-
-      // 테스트 사운드 재생 추가
-      if (currentConfig && currentConfig.lokagosAlertEnabled && currentConfig.lokagosAlertSound && currentConfig.lokagosAlertSound !== 'none') {
-        const vol = currentConfig.lokagosAlertVolume !== undefined ? currentConfig.lokagosAlertVolume : 40;
-        window.electronAPI.previewBossSound(currentConfig.lokagosAlertSound, vol, '로카고스 기믹 알림 테스트');
-      }
-
-      console.log(`✅ 로카고스 기믹 테스트: ${type === 'EXCLUDE' ? zone + ' 제외 구역 대피' : zone + ' 구역 회피'} (${zone})`);
-    };
-
-    window.testEthos = function(passwordOrDir = '번개') {
-      const data = {
-        password: passwordOrDir,
-        message: '테스트 메시지'
-      };
-      // 단축 방향키를 입력했을 경우 실제 암호로 변환하여 테스트 지원
-      const reverseDirMap = {
-        'N': '번개', 'NE': '갈퀴 모양 번개', 'E': '갈퀴', 'SE': '갈퀴 모양 갈고리',
-        'S': '갈고리', 'SW': '파도 모양 갈고리', 'W': '파도', 'NW': '파도 모양 번개'
-      };
-      if (reverseDirMap[passwordOrDir]) {
-        data.password = reverseDirMap[passwordOrDir];
-      }
-      
-      // 이미 등록된 ipc 콜백을 강제로 발생시키는 것은 Renderer 레벨에서 어려울 수 있으므로
-      // 동일한 IPC 이벤트 포맷으로 이벤트를 직접 트리거하는 효과를 냅니다.
-      // (단, 기존 리스너 클로저에 접근할 수 없으므로, onEthosAlert 리스너에 등록한 로직과 동일하게 작동하도록 시뮬레이션 합니다)
-      const arrowContainer = document.getElementById('ethos-arrow-container');
-      const arrowIndicator = document.getElementById('ethos-arrow-indicator');
-      const alertText = document.getElementById('ethos-alert-text');
-      if (!arrowContainer || !arrowIndicator || !alertText) return;
-
-      const dirMap = {
-        '번개': 'N', '갈퀴 모양 번개': 'NE', '갈퀴': 'E', '갈퀴 모양 갈고리': 'SE',
-        '갈고리': 'S', '파도 모양 갈고리': 'SW', '파도': 'W', '파도 모양 번개': 'NW'
-      };
-      const dir = dirMap[data.password];
-      if (!dir) {
-        console.error('올바르지 않은 에토스 암호입니다:', passwordOrDir);
-        return;
-      }
-      
-      if (window.ethosTimeout) {
-        clearTimeout(window.ethosTimeout);
-      }
-      
-      arrowIndicator.className = 'ethos-arrow-wrapper ethos-dir-' + dir;
-      alertText.classList.remove('show');
-      void arrowIndicator.offsetWidth; 
-      
-      // alertText.innerText = '에토스: ' + data.password;
-      arrowIndicator.classList.add('show');
-      // alertText.classList.add('show');
-      
-      window.ethosTimeout = setTimeout(() => {
-        arrowIndicator.classList.remove('show');
-        alertText.classList.remove('show');
-      }, 5000);
-
-      // 테스트 사운드 재생 추가
-      if (currentConfig && currentConfig.ethosAlertEnabled && currentConfig.ethosAlertSound && currentConfig.ethosAlertSound !== 'none') {
-        const vol = currentConfig.ethosAlertVolume !== undefined ? currentConfig.ethosAlertVolume : 40;
-        window.electronAPI.previewBossSound(currentConfig.ethosAlertSound, vol, '에토스 기믹 알림 테스트');
-      }
-      
-      console.log(`✅ 에토스 기믹 테스트: ${data.password} (${dir} 방향)`);
-    };
-
-    // ── 테스트 가이드 (Console) ──
-    console.log('%c[TW-Overlay 테스트 가이드]', 'color: #4ade80; font-size: 16px; font-weight: bold;');
-    console.log('%c1. 팔색조 언덕 알람 UI 즉시 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`const el = document.getElementById('pitta-alert'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');`);
-    console.log('%c2. 에토스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testEthos('번개') // N, NE, E, SE, S, SW, W, NW 중 택1 혹은 암호 입력`);
-    console.log('%c3. 심연의 제2사도 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testAbyssApostle()`);
-    console.log('%c4. 로카고스 기믹 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testLokagos('EXCLUDE', '알파') // EXCLUDE(대피), TARGET(폭격) 및 알파, 브라보, 찰리, 델타 중 택1`);
-    console.log('%c5. 경험의 정수 버프 경고 알림 테스트:', 'color: #facc15; font-weight: bold;');
-    console.log(`testEssenceAlert()`);
-    console.log('----------------------------------------------------');
-
-    // [DevTools 전용 글로벌 테스트 함수]
-    window.testEssenceAlert = function() {
-      const alertEl = document.getElementById('essence-alert');
-      if (!alertEl) {
-        console.error('essence-alert 엘리먼트를 찾을 수 없습니다.');
-        return;
-      }
-      alertEl.classList.remove('show');
-      void alertEl.offsetWidth;
-      alertEl.classList.add('show');
-      console.log('✅ 경험의 정수 버프 경고 테스트 실행');
-    };
-
-    window.testLokagos = function(type = 'EXCLUDE', zone = '알파') {
-      const validTypes = ['EXCLUDE', 'TARGET'];
-      const validZones = ['알파', '브라보', '찰리', '델타'];
-      if (!validTypes.includes(type) || !validZones.includes(zone)) {
-        console.error('올바르지 않은 파라미터입니다. 예: testLokagos("EXCLUDE", "알파") 또는 testLokagos("TARGET", "브라보")');
-        return;
-      }
-      triggerLokagosAlert(type, zone);
-
-      // 테스트 사운드 재생 추가
-      if (currentConfig && currentConfig.lokagosAlertEnabled && currentConfig.lokagosAlertSound && currentConfig.lokagosAlertSound !== 'none') {
-        const vol = currentConfig.lokagosAlertVolume !== undefined ? currentConfig.lokagosAlertVolume : 40;
-        window.electronAPI.previewBossSound(currentConfig.lokagosAlertSound, vol, '로카고스 기믹 알림 테스트');
-      }
-
-      console.log(`✅ 로카고스 기믹 테스트: ${type === 'EXCLUDE' ? zone + ' 제외 구역 대피' : zone + ' 구역 회피'} (${zone})`);
-    };
-
-    window.testAbyssApostle = function() {
-      const overlay = document.getElementById('abyss-apostle-alert');
-      const title = document.getElementById('abyss-apostle-title');
-      const subtitle = document.getElementById('abyss-apostle-subtitle');
-      if (!overlay || !title || !subtitle) return;
-
-      if (abyssAlertTimeout) clearTimeout(abyssAlertTimeout);
-      if (abyssResetTimeout) clearTimeout(abyssResetTimeout);
-
-      overlay.className = 'abyss-apostle-alert-overlay warn';
-      title.className = 'abyss-apostle-title warn';
-      title.innerText = '공격 반사 패턴! 경고!';
-      subtitle.innerText = '보스 공격 중단 (6.5초)';
-
-      // 1) 시작 테스트 사운드 재생
-      if (currentConfig && currentConfig.abyssApostleAlertEnabled && currentConfig.abyssApostleStartSound && currentConfig.abyssApostleStartSound !== 'none') {
-        const vol = currentConfig.abyssApostleVolume !== undefined ? currentConfig.abyssApostleVolume : 40;
-        window.electronAPI.previewBossSound(currentConfig.abyssApostleStartSound, vol, '제2사도 반사 시작 테스트');
-      }
-
-      abyssAlertTimeout = setTimeout(() => {
-        overlay.className = 'abyss-apostle-alert-overlay safe';
-        title.className = 'abyss-apostle-title safe';
-        title.innerText = '공격 반사 패턴 종료!';
-        subtitle.innerText = '공격 가능';
-
-        // 2) 6.5초 후 종료 테스트 사운드 재생
-        if (currentConfig && currentConfig.abyssApostleAlertEnabled && currentConfig.abyssApostleEndSound && currentConfig.abyssApostleEndSound !== 'none') {
-          const vol = currentConfig.abyssApostleVolume !== undefined ? currentConfig.abyssApostleVolume : 40;
-          window.electronAPI.previewBossSound(currentConfig.abyssApostleEndSound, vol, '제2사도 반사 종료 테스트');
-        }
-
-        abyssResetTimeout = setTimeout(() => {
-          overlay.className = 'abyss-apostle-alert-overlay hide';
-        }, 2000);
-      }, 6500);
-
-      console.log('✅ 심연의 제2사도 기믹 테스트 시작 (6.5초 경고 -> 2초 복구)');
-    };
 
     // --- 젤리삐 비 이스터애그 ---
     function triggerJellyppyRain() {
@@ -2796,7 +2620,6 @@
     }
 
     // ── Dock 모드 전용 알림 토스트 (읽기 전용) ──
-    const REAL_BOSSES = ['골론', '파멸의 기원', '스페르첸드', '골모답', '아칸', '혼란한 대지'];
 
     function createDockToast(bossName, isCustomFromApi, spawnTime, offset) {
       const isDock = currentConfig && (currentConfig.sidebarPosition === 'dock' || currentConfig.sidebarPosition === 'dock-top');
@@ -2806,23 +2629,17 @@
       const toastContainer = document.getElementById('dock-toast-container');
       if (!toastContainer) return;
 
-      const isRealBoss = REAL_BOSSES.includes(bossName) && !isCustomFromApi;
+      const {
+        isRealBoss,
+        displayName,
+        iconName,
+        iconColor,
+      } = window.getBossToastPresentation(bossName, isCustomFromApi, spawnTime, offset);
       const toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
       const toast = document.createElement('div');
       toast.id = toastId;
       toast.className = 'boss-toast show';
-
-      const iconName = isRealBoss ? 'skull' : 'bell-ring';
-      const iconColor = isRealBoss ? 'text-[#a855f7]' : 'text-amber-400';
-
-      let displayName = bossName;
-      const validSpawnTime = (spawnTime && spawnTime !== 'undefined' && spawnTime !== 'null') ? spawnTime : null;
-
-      if (isRealBoss && validSpawnTime) {
-        displayName = `[${validSpawnTime}] ${bossName}`;
-        if (offset > 0) displayName += ` <span class="text-xs text-slate-500 font-medium ml-1">${offset}분 전</span>`;
-      }
 
       toast.innerHTML = `
         <div class="flex items-start justify-between w-full gap-3">
@@ -2862,17 +2679,17 @@
       const toastContainer = document.getElementById('dock-toast-container');
       if (!toastContainer) return;
 
-      const isScam = result.verdict === 'SCAM';
+      const {
+        isScam,
+        title,
+        colorClass,
+        reason,
+      } = window.getScamToastPresentation(result);
       const toastId = 'scam-toast-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
       const toast = document.createElement('div');
       toast.id = toastId;
       toast.className = 'boss-toast show';
       toast.style.borderLeft = isScam ? '3px solid #ef4444' : '3px solid #f59e0b';
-
-      const title = isScam ? '🚨 사기 위험 감지!' : '⚠️ 사기 의심 감지';
-      const colorClass = isScam ? 'text-red-400' : 'text-yellow-400';
-      const rawReason = result.analysisReason?.split('\n')[0]?.trim() || result.detectedScamTypes || '';
-      const reason = rawReason.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
       toast.innerHTML = `
         <div class="flex items-start justify-between w-full gap-3">
@@ -2935,8 +2752,8 @@
       }
 
       function refreshXpStats() {
-        if (window.electronAPI && window.electronAPI.invoke) {
-          window.electronAPI.invoke('xp-get-stats').then(stats => {
+        if (window.electronAPI && window.electronAPI.getXpStats) {
+          window.electronAPI.getXpStats().then(stats => {
             if (stats) {
               if (stats.startTime !== undefined) {
                 sessionStartTime = stats.startTime;
@@ -2950,20 +2767,7 @@
               document.getElementById('xp-total').innerText = formatXP(stats.total || 0);
               document.getElementById('xp-epm').innerText = formatXP(stats.epm || 0);
               document.getElementById('xp-kills').innerText = (stats.kills || 0).toLocaleString();
-              
-              const elapsedEl = document.getElementById('xp-elapsed');
-              if (elapsedEl) {
-                let elapsed = sessionAccumulatedTime;
-                if (sessionIsActive) {
-                  elapsed += Date.now() - sessionStartTime;
-                  elapsedEl.classList.remove('text-slate-400');
-                  elapsedEl.classList.add('text-white');
-                } else {
-                  elapsedEl.classList.remove('text-white');
-                  elapsedEl.classList.add('text-slate-400');
-                }
-                elapsedEl.innerText = formatTime(elapsed) + (sessionIsActive ? '' : ' ⏸');
-              }
+              updateXpElapsedDisplay();
             }
           }).catch(err => console.error('Failed to get initial XP stats:', err));
         }
@@ -2972,7 +2776,8 @@
       // 경험치 초기 데이터 가져오기 (경과 시간 시작 시점 동기화)
       refreshXpStats();
     };
-  </script>
+</script>
+  <script src="renderer/game-overlay/devtools.js"></script>
 </body>
 
 </html>

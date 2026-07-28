@@ -5,8 +5,9 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' file:">
   <title>테시스 코어 계산기</title>
   <link rel="stylesheet" href="style.css">
-  <script src="assets/tailwind.min.js"></script>
+    <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
@@ -593,10 +594,6 @@
     // ----------------------------------------------------
     // 핵심 기댓값 계산 및 렌더링 엔진
     // ----------------------------------------------------
-    function formatNumber(n) {
-      return n.toLocaleString('ko-KR');
-    }
-
     function formatKoreanWon(valueInTenThousand) {
       if (!valueInTenThousand || valueInTenThousand <= 0) return '';
       const totalSeed = valueInTenThousand * 10000;
@@ -615,7 +612,7 @@
         }
       }
       if (remain > 0) {
-        result += formatNumber(remain);
+        result += window.formatLocaleNumber(remain);
       } else {
         result = result.trim();
       }
@@ -678,8 +675,8 @@
           label: `${stateFrom.label.replace("단계", "강")} ➔ ${stateTo.label.replace("단계", "강")}`,
           rate: (rate * 100).toFixed(rate < 0.1 ? 1 : 0) + '%',
           materialUnit: `${powderUnit}가루 / ${crystalUnit > 0 ? crystalUnit + '결정' : '-'}`,
-          costUnit: formatNumber(Math.round(costUnit)) + (selectedCurrency === 'seed' ? '만' : ''),
-          expectStr: `${Math.round(powderExpect)}가루 / ${crystalExpect > 0 ? Math.round(crystalExpect) + '결정 / ' : ''}${formatNumber(Math.round(costExpect))}${selectedCurrency === 'seed' ? '만' : ''}`
+          costUnit: window.formatLocaleNumber(Math.round(costUnit)) + (selectedCurrency === 'seed' ? '만' : ''),
+          expectStr: `${Math.round(powderExpect)}가루 / ${crystalExpect > 0 ? Math.round(crystalExpect) + '결정 / ' : ''}${window.formatLocaleNumber(Math.round(costExpect))}${selectedCurrency === 'seed' ? '만' : ''}`
         });
       }
 
@@ -687,9 +684,9 @@
       const roundedCrystal = Math.round(totalCrystal) * selectedPieceQty;
       const roundedCurrency = Math.round(totalCurrency) * selectedPieceQty;
 
-      document.getElementById('res-powder').textContent = formatNumber(roundedPowder);
-      document.getElementById('res-crystal').textContent = formatNumber(roundedCrystal);
-      document.getElementById('res-currency').textContent = formatNumber(roundedCurrency);
+      document.getElementById('res-powder').textContent = window.formatLocaleNumber(roundedPowder);
+      document.getElementById('res-crystal').textContent = window.formatLocaleNumber(roundedCrystal);
+      document.getElementById('res-currency').textContent = window.formatLocaleNumber(roundedCurrency);
 
       if (selectedCurrency === 'seed') {
         document.getElementById('res-currency-korean').textContent = formatKoreanWon(roundedCurrency);
@@ -768,8 +765,8 @@
       const boxPrice = parseInt(document.getElementById('box-price').value) || 0;
       const totalBoxCost = boxQty * boxPrice;
 
-      document.getElementById('total-box-cost').textContent = formatNumber(totalBoxCost) + ' 만 시드';
-      document.getElementById('total-reinforce-cost').textContent = formatNumber(reinforceCost) + (selectedCurrency === 'seed' ? ' 만 시드' : ' 엘소');
+      document.getElementById('total-box-cost').textContent = window.formatLocaleNumber(totalBoxCost) + ' 만 시드';
+      document.getElementById('total-reinforce-cost').textContent = window.formatLocaleNumber(reinforceCost) + (selectedCurrency === 'seed' ? ' 만 시드' : ' 엘소');
 
       const finalTotalEl = document.getElementById('final-total-cost');
       const finalUnitEl = document.getElementById('final-total-unit');
@@ -777,19 +774,19 @@
 
       if (selectedCurrency === 'seed') {
         const finalCost = totalBoxCost + reinforceCost;
-        finalTotalEl.textContent = formatNumber(finalCost);
+        finalTotalEl.textContent = window.formatLocaleNumber(finalCost);
         finalUnitEl.textContent = '만 시드';
         finalKoreanEl.textContent = formatKoreanWon(finalCost);
       } else {
-        finalTotalEl.textContent = `${formatNumber(totalBoxCost)}만 시드 + ${formatNumber(reinforceCost)}`;
+        finalTotalEl.textContent = `${window.formatLocaleNumber(totalBoxCost)}만 시드 + ${window.formatLocaleNumber(reinforceCost)}`;
         finalUnitEl.textContent = '엘소';
         finalKoreanEl.textContent = '';
       }
     }
 
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') window.close(); });
+    window.bindEscapeClose();
 
     init();
-  </script>
+</script>
 </body>
 </html>

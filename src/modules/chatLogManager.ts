@@ -11,6 +11,69 @@ import { findChatLogPath } from './chatLogPathFinder';
 import { DEFAULT_CONFIG } from './constants';
 import { etaCacheManager } from './etaCacheManager';
 
+const { isLegacyNpcSender } = require('../shared/chatConstants') as ChatConstants;
+
+type HistoryCategory = 'General' | 'Team' | 'Club' | 'Whisper' | 'System';
+type HistoryMessageType = 'general' | 'team' | 'club' | 'whisper' | 'system';
+
+function classifyHistoryMessage(
+  color: string,
+  cleanMessage: string
+): {
+  category: HistoryCategory;
+  type: HistoryMessageType;
+  sender: string;
+  message: string;
+} {
+  let category: HistoryCategory = 'System';
+  let type: HistoryMessageType = 'system';
+  let sender = '시스템';
+  let message = cleanMessage;
+
+  const chatMatch = cleanMessage.match(/^(.+?)\s*:\s*(.*)$/);
+  if (color === '#94ddfa') {
+    category = 'Club';
+    type = 'club';
+    sender = '클럽 알림';
+    if (chatMatch) {
+      sender = chatMatch[1].trim();
+      message = chatMatch[2].trim();
+    } else if (cleanMessage.includes('[클럽 공지]')) {
+      sender = '클럽 공지';
+    }
+  } else if (color === '#f7b73c') {
+    category = 'Team';
+    type = 'team';
+    sender = '팀 알림';
+    if (chatMatch) {
+      sender = chatMatch[1].trim();
+      message = chatMatch[2].trim();
+    }
+  } else if (color === '#64ff64') {
+    category = 'Whisper';
+    type = 'whisper';
+    sender = '귓속말';
+    if (chatMatch) {
+      sender = chatMatch[1].trim();
+      message = chatMatch[2].trim();
+    }
+  } else if ((color === '#ffffff' || color === '#c8ffc8') && chatMatch) {
+    const parsedSender = chatMatch[1].trim();
+    if (
+      !parsedSender.includes(' ') &&
+      !parsedSender.includes(',') &&
+      !isLegacyNpcSender(parsedSender)
+    ) {
+      category = 'General';
+      type = 'general';
+      sender = parsedSender;
+      message = chatMatch[2].trim();
+    }
+  }
+
+  return { category, type, sender, message };
+}
+
 class ChatLogManager {
   private _tail: Tail | null = null;
   private _currentFilePath: string | null = null;
@@ -303,63 +366,11 @@ class ChatLogManager {
       }
 
       // 5. 일반/시스템/채널 분류 및 적재
-      let catFinalName: 'General' | 'Team' | 'Club' | 'Whisper' | 'System' = 'System';
-      let sender = '시스템';
-      let message = cleanMsg;
-      let type: 'normal' | 'system' = 'system';
-
-      const NPC_BLACK_LIST = [
-        '데스포이나','신조','키시니크','에레오스','로카고스',
-        '마티아','티로로스','라이코스','체리아','실반',
-        '샐리온','실라이론','샐레아나','루미너스'
-      ];
-
-      if (color === '#94ddfa') { // 클럽
-        catFinalName = 'Club';
-        type = 'normal';
-        sender = '클럽 알림';
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          sender = chatMatch[1].trim();
-          message = chatMatch[2].trim();
-        } else if (cleanMsg.includes('[클럽 공지]')) {
-          sender = '클럽 공지';
-        }
-      }
-      else if (color === '#f7b73c') { // 팀
-        catFinalName = 'Team';
-        type = 'normal';
-        sender = '팀 알림';
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          sender = chatMatch[1].trim();
-          message = chatMatch[2].trim();
-        }
-      }
-      else if (color === '#64ff64') { // 귓속말
-        catFinalName = 'Whisper';
-        type = 'normal';
-        sender = '귓속말';
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          sender = chatMatch[1].trim();
-          message = chatMatch[2].trim();
-        }
-      }
-      else if (color === '#ffffff' || color === '#c8ffc8') { // 일반
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          const s = chatMatch[1].trim();
-          const m = chatMatch[2].trim();
-          // 일반 대화인 경우에만 닉네임 유효성 검사 진행
-          if (!s.includes(' ') && !s.includes(',') && !NPC_BLACK_LIST.includes(s)) {
-            catFinalName = 'General';
-            type = 'normal';
-            sender = s;
-            message = m;
-          }
-        }
-      }
+      const classified = classifyHistoryMessage(color, cleanMsg);
+      const catFinalName = classified.category;
+      const type: 'normal' | 'system' =
+        classified.type === 'system' ? 'system' : 'normal';
+      const { sender, message } = classified;
 
       const finalNeedForCat = categoryCounts[catFinalName] < limit;
       const finalNeedForBasic = categoryCounts.Basic < limit;
@@ -470,58 +481,7 @@ class ChatLogManager {
         color = '#ffd700';
       }
 
-      const NPC_BLACK_LIST = [
-        '데스포이나','신조','키시니크','에레오스','로카고스',
-        '마티아','티로로스','라이코스','체리아','실반',
-        '샐리온','실라이론','샐레아나','루미너스'
-      ];
-
-      let type = 'system';
-      let sender = '시스템';
-      let message = cleanMsg;
-
-      if (color === '#94ddfa') { // 클럽
-        type = 'club';
-        sender = '클럽 알림';
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          sender = chatMatch[1].trim();
-          message = chatMatch[2].trim();
-        } else if (cleanMsg.includes('[클럽 공지]')) {
-          sender = '클럽 공지';
-        }
-      }
-      else if (color === '#f7b73c') { // 팀
-        type = 'team';
-        sender = '팀 알림';
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          sender = chatMatch[1].trim();
-          message = chatMatch[2].trim();
-        }
-      }
-      else if (color === '#64ff64') { // 귓속말
-        type = 'whisper';
-        sender = '귓속말';
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          sender = chatMatch[1].trim();
-          message = chatMatch[2].trim();
-        }
-      }
-      else if (color === '#ffffff' || color === '#c8ffc8') { // 일반
-        const chatMatch = cleanMsg.match(/^(.+?)\s*:\s*(.*)$/);
-        if (chatMatch) {
-          const s = chatMatch[1].trim();
-          const m = chatMatch[2].trim();
-          // 일반 대화인 경우에만 닉네임 유효성 검사 진행
-          if (!s.includes(' ') && !s.includes(',') && !NPC_BLACK_LIST.includes(s)) {
-            type = 'general';
-            sender = s;
-            message = m;
-          }
-        }
-      }
+      const { type, sender, message } = classifyHistoryMessage(color, cleanMsg);
 
       // 타겟 카테고리 필터 매칭 여부 판정
       if (targetType && targetType !== type) {

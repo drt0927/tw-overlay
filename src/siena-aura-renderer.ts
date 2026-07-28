@@ -195,37 +195,40 @@ function unlockExtraSlot(index: number) {
   }
 }
 
-function updateAutoStatPool() {
-  const select = document.getElementById('auto-stat-name') as HTMLSelectElement;
+function replaceSelectOptions(
+  selectId: string,
+  options: Array<{ value: string; label: string }>
+) {
+  const select = document.getElementById(selectId) as HTMLSelectElement;
   if (!select) return;
-  const pool = equipType === 'weapon' ? WEAPON_STAT_POOL : ARMOR_STAT_POOL;
+
   const currentVal = select.value;
   select.innerHTML = '';
-  pool.forEach(opt => {
-    const o = document.createElement('option');
-    o.value = opt.name;
-    o.innerText = opt.name;
-    select.appendChild(o);
+  options.forEach(({ value, label }) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.innerText = label;
+    select.appendChild(option);
   });
-  if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+
+  if (currentVal && Array.from(select.options).some(option => option.value === currentVal)) {
     select.value = currentVal;
   }
 }
 
+function updateAutoStatPool() {
+  const pool = equipType === 'weapon' ? WEAPON_STAT_POOL : ARMOR_STAT_POOL;
+  replaceSelectOptions(
+    'auto-stat-name',
+    pool.map(option => ({ value: option.name, label: option.name }))
+  );
+}
+
 function updateAutoExtraPool() {
-  const select = document.getElementById('auto-extra-name') as HTMLSelectElement;
-  if (!select) return;
-  const currentVal = select.value;
-  select.innerHTML = '';
-  EXTRA_OPTION_POOL.forEach(opt => {
-    const o = document.createElement('option');
-    o.value = opt.group; // Use group as internal value for easier group check
-    o.innerText = opt.name;
-    select.appendChild(o);
-  });
-  if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
-    select.value = currentVal;
-  }
+  replaceSelectOptions(
+    'auto-extra-name',
+    EXTRA_OPTION_POOL.map(option => ({ value: option.group, label: option.name }))
+  );
 }
 
 function setButtonsDisabled(disabled: boolean, keepAutoBtn = false) {
@@ -284,6 +287,44 @@ function drawExtraOption(excludeGroups: string[]): any {
 
 // --- UI Actions ---
 
+const AUTO_BUTTON_RUNNING_CLASSES = [
+  'bg-red-500/20',
+  'hover:bg-red-500/30',
+  'text-red-400',
+  'border-red-500/30'
+];
+const AUTO_BUTTON_IDLE_CLASSES = [
+  'bg-slate-700',
+  'hover:bg-slate-600',
+  'border-white/5'
+];
+
+function setAutoButtonState(
+  button: HTMLElement | null,
+  running: boolean,
+  runningLabel = '중지'
+) {
+  if (!button) return;
+
+  button.innerText = running ? runningLabel : '자동 시작';
+  button.classList.remove(...(running ? AUTO_BUTTON_IDLE_CLASSES : AUTO_BUTTON_RUNNING_CLASSES));
+  button.classList.add(...(running ? AUTO_BUTTON_RUNNING_CLASSES : AUTO_BUTTON_IDLE_CLASSES));
+}
+
+function beginAutoRun(button: HTMLElement | null, runningLabel = '중지') {
+  isAutoRunning = true;
+  stopAutoRequested = false;
+  setButtonsDisabled(true, true);
+  setAutoButtonState(button, true, runningLabel);
+}
+
+function finishAutoRun(button: HTMLElement | null) {
+  isAutoRunning = false;
+  setButtonsDisabled(false);
+  setAutoButtonState(button, false);
+  updateUI();
+}
+
 function switchTab(tabId: string) {
   if (isAutoRunning) return;
   currentTab = tabId;
@@ -310,14 +351,8 @@ async function autoResetStats() {
   const targetName = (document.getElementById('auto-stat-name') as HTMLSelectElement).value;
   const targetGrade = (document.getElementById('auto-stat-grade') as HTMLSelectElement).value as StatGrade;
   
-  isAutoRunning = true; stopAutoRequested = false;
-  setButtonsDisabled(true, true);
   const btn = document.getElementById('btn-auto-reset-stats');
-  if (btn) {
-    btn.innerText = '중지';
-    btn.classList.remove('bg-slate-700', 'hover:bg-slate-600', 'border-white/5');
-    btn.classList.add('bg-red-500/20', 'hover:bg-red-500/30', 'text-red-400', 'border-red-500/30');
-  }
+  beginAutoRun(btn);
 
   const gradeValues: Record<StatGrade, number> = { '하': 1, '중': 2, '상': 3 };
   const targetVal = gradeValues[targetGrade];
@@ -336,13 +371,7 @@ async function autoResetStats() {
     await new Promise(r => setTimeout(r, 10));
   }
 
-  isAutoRunning = false; setButtonsDisabled(false);
-  if (btn) {
-    btn.innerText = '자동 시작';
-    btn.classList.remove('bg-red-500/20', 'hover:bg-red-500/30', 'text-red-400', 'border-red-500/30');
-    btn.classList.add('bg-slate-700', 'hover:bg-slate-600', 'border-white/5');
-  }
-  updateUI();
+  finishAutoRun(btn);
 }
 
 async function autoResetExtraOptions() {
@@ -371,14 +400,8 @@ async function autoResetExtraOptions() {
     }
   }
 
-  isAutoRunning = true; stopAutoRequested = false;
-  setButtonsDisabled(true, true);
   const btn = document.getElementById('btn-auto-reset-extra');
-  if (btn) {
-    btn.innerText = '중지';
-    btn.classList.remove('bg-slate-700', 'hover:bg-slate-600', 'border-white/5');
-    btn.classList.add('bg-red-500/20', 'hover:bg-red-500/30', 'text-red-400', 'border-red-500/30');
-  }
+  beginAutoRun(btn);
 
   const gradeValues: Record<StatGrade, number> = { '하': 1, '중': 2, '상': 3 };
   const targetVal = gradeValues[targetGrade];
@@ -407,13 +430,7 @@ async function autoResetExtraOptions() {
     await new Promise(r => setTimeout(r, 10));
   }
 
-  isAutoRunning = false; setButtonsDisabled(false);
-  if (btn) {
-    btn.innerText = '자동 시작';
-    btn.classList.remove('bg-red-500/20', 'hover:bg-red-500/30', 'text-red-400', 'border-red-500/30');
-    btn.classList.add('bg-slate-700', 'hover:bg-slate-600', 'border-white/5');
-  }
-  updateUI();
+  finishAutoRun(btn);
 }
 
 function setEquipType(type: EquipType) {
@@ -513,14 +530,8 @@ async function autoAmplify() {
   if (isAutoRunning) { stopAutoRequested = true; return; }
   const target = parseInt((document.getElementById('target-rank') as HTMLSelectElement).value);
   if (currentRank >= target) return;
-  isAutoRunning = true; stopAutoRequested = false;
-  setButtonsDisabled(true, true);
   const btn = document.getElementById('btn-auto-amplify');
-  if (btn) {
-    btn.innerText = '강화 중지';
-    btn.classList.remove('bg-slate-700', 'hover:bg-slate-600', 'border-white/5');
-    btn.classList.add('bg-red-500/20', 'hover:bg-red-500/30', 'text-red-400', 'border-red-500/30');
-  }
+  beginAutoRun(btn, '강화 중지');
   while (currentRank < target) {
     if (stopAutoRequested) break;
     const costS = AM_COST_SEED[currentRank];
@@ -542,13 +553,7 @@ async function autoAmplify() {
     updateUI();
     await new Promise(r => setTimeout(r, 10));
   }
-  isAutoRunning = false; setButtonsDisabled(false);
-  if (btn) {
-    btn.innerText = '자동 시작';
-    btn.classList.remove('bg-red-500/20', 'hover:bg-red-500/30', 'text-red-400', 'border-red-500/30');
-    btn.classList.add('bg-slate-700', 'hover:bg-slate-600', 'border-white/5');
-  }
-  updateUI();
+  finishAutoRun(btn);
 }
 
 function resetStats(isAuto = false) {

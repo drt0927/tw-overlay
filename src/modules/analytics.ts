@@ -1,11 +1,15 @@
 import { net, app } from 'electron';
 import Store from 'electron-store';
-import * as crypto from 'crypto';
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { log } from './logger';
 import { load as loadConfig } from './config';
+import {
+  normalizeGaClientId,
+  normalizeGaEventName,
+  normalizeGaEventParams,
+} from './analyticsProtocol';
 
 // ========== GA4 SETTINGS ==========
 let MEASUREMENT_ID = '';
@@ -45,12 +49,15 @@ export class Analytics {
 
   constructor() {
     // 1. Client ID persistence
-    let savedClientId = store.get('ga_client_id');
-    if (!savedClientId) {
-      savedClientId = crypto.randomUUID();
-      store.set('ga_client_id', savedClientId);
+    const savedClientId = store.get('ga_client_id');
+    const normalizedClientId = normalizeGaClientId(savedClientId);
+    if (normalizedClientId.clientId !== savedClientId) {
+      store.set('ga_client_id', normalizedClientId.clientId);
     }
-    this.clientId = savedClientId;
+    if (normalizedClientId.migrated) {
+      log('[Analytics] 기존 Client ID를 GA4 호환 형식으로 마이그레이션했습니다.');
+    }
+    this.clientId = normalizedClientId.clientId;
 
     // 2. Session ID & Number (Start new session on every restart)
     const now = Date.now();
@@ -79,7 +86,7 @@ export class Analytics {
     }, 600 * 1000);
   }
 
-  public trackEvent(eventName: string, params: Record<string, any> = {}): void {
+  public trackEvent(eventName: string, params: Record<string, unknown> = {}): void {
     if (!MEASUREMENT_ID || !API_SECRET || MEASUREMENT_ID === 'G-XXXXXXXXXX' || API_SECRET === 'XXXXXXXXXXXXXXXXXXX') {
       return; // 설정되지 않은 경우 조용히 무시
     }
@@ -93,7 +100,7 @@ export class Analytics {
     this.lastEngagementTime = now;
 
     // 1-depth 보장을 위해 params 복사 후 기본값 덮어쓰기
-    const flatParams = { ...params };
+    const flatParams = normalizeGaEventParams(params);
     
     // GA4 필수 예약 파라미터 추가
     flatParams.app_version = app.getVersion();
@@ -112,7 +119,7 @@ export class Analytics {
       client_id: this.clientId,
       events: [
         {
-          name: eventName,
+          name: normalizeGaEventName(eventName),
           params: flatParams,
         }
       ],
@@ -147,7 +154,7 @@ export class Analytics {
   public trackError(errorName: string, errorMessage: string): void {
     this.trackEvent('app_error', {
       error_name: errorName.substring(0, 100),
-      error_message: errorMessage.substring(0, 500) // GA4 파라미터 길이 제한 고려
+      error_message: errorMessage.substring(0, 100),
     });
   }
 }

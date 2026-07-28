@@ -6,7 +6,7 @@
       "ESNext",
       "DOM"
     ],
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,

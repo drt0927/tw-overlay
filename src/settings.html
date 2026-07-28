@@ -264,13 +264,6 @@
     }
   </style>
 
-  <script>
-    window.addEventListener('beforeunload', () => {
-      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-        window.electronAPI.cleanupAllListeners();
-      }
-    });
-  </script>
 </head>
 
 <body class="panel-glass overflow-hidden">
@@ -1886,7 +1879,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.1.5</span></p>
+                        class="text-purple-400">2.1.6</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -1967,6 +1960,11 @@
   <script src="assets/lucide.min.js"></script>
   <script src="assets/pickr.min.js"></script>
   <script src="assets/ui-utils.js"></script>
+  <script src="renderer/settings/sound-preview.js"></script>
+  <script src="renderer/settings/list-rendering.js"></script>
+  <script>
+window.bindElectronListenerCleanup();
+</script>
 
   <script>
     let currentSlots = [];
@@ -1982,8 +1980,20 @@
     let ALL_ICONS = [];
     let dragSrcIndex = -1;
     let soundFiles = [];
+    const ALERT_SOUND_SELECT_IDS = [
+      'wave-warning-sound',
+      'ethos-alert-sound',
+      'abyss-apostle-start-sound',
+      'abyss-apostle-end-sound',
+      'lokagos-alert-sound'
+    ];
     let loadedMenus = []; // 동적으로 로드된 메뉴 데이터
     let lastConfig = null; // 마지막으로 수신된 설정 데이터
+
+    function buildAlertSoundOptionsHtml() {
+      return '<option value="none">사용 안 함 (소리 없음)</option>'
+        + soundFiles.map(sound => `<option value="${sound.file}">${sound.name}</option>`).join('');
+    }
 
     function openWelcomeGuide() {
       if (window.electronAPI && window.electronAPI.welcomeGuideOpen) {
@@ -2146,10 +2156,11 @@
         return;
       }
       shoutKeywordsList.forEach((kw, i) => {
-        const span = document.createElement('span');
-        span.className = 'keyword-tag !border-purple-500/30 !text-purple-400 !bg-purple-500/10';
-        span.innerHTML = `${kw} <button onclick="removeShoutKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
-        list.appendChild(span);
+        list.appendChild(window.settingsListRendering.createKeywordTag(
+          kw,
+          'keyword-tag !border-purple-500/30 !text-purple-400 !bg-purple-500/10',
+          () => removeShoutKeyword(i)
+        ));
       });
       window.refreshIcons();
     }
@@ -2400,18 +2411,9 @@
 
       // 각 기믹/웨이브 알림 사운드 셀렉트 옵션 채우기
       if (soundFiles) {
-        const soundOptionsHtml = '<option value="none">사용 안 함 (소리 없음)</option>' + 
-          soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+        const soundOptionsHtml = buildAlertSoundOptionsHtml();
 
-        const selects = [
-          'wave-warning-sound',
-          'ethos-alert-sound',
-          'abyss-apostle-start-sound',
-          'abyss-apostle-end-sound',
-          'lokagos-alert-sound'
-        ];
-
-        selects.forEach(id => {
+        ALERT_SOUND_SELECT_IDS.forEach(id => {
           const sel = document.getElementById(id);
           if (sel) {
             sel.innerHTML = soundOptionsHtml;
@@ -2464,25 +2466,14 @@
         return;
       }
       
-      listContainer.innerHTML = customSounds.map(s => {
-        return `
-          <div class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl transition-all hover:bg-white/[0.08]">
-            <button type="button" onclick="playCustomSoundPreview('${s.file}')"
-                    class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:text-white flex items-center justify-center transition-all active:scale-95"
-                    title="미리듣기">
-              <i data-lucide="play" class="w-4 h-4"></i>
-            </button>
-            <input type="text" value="${s.name}" onchange="updateCustomSoundName('${s.file}', this.value)"
-                   class="w-full bg-black/40 border border-white/10 focus:border-purple-500 transition-all rounded-xl px-3 py-1.5 text-sm text-white"
-                   placeholder="알림음 이름 입력" />
-            <button type="button" onclick="deleteCustomSound('${s.file}')"
-                    class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all active:scale-95"
-                    title="삭제">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </div>
-        `;
-      }).join('');
+      listContainer.replaceChildren(...customSounds.map(s => (
+        window.settingsListRendering.createCustomSoundRow({
+          sound: s,
+          onPreview: () => playCustomSoundPreview(s.file),
+          onRename: (name) => updateCustomSoundName(s.file, name),
+          onDelete: () => deleteCustomSound(s.file)
+        })
+      )));
       
       refreshIcons();
     }
@@ -2541,18 +2532,9 @@
     async function refreshAllSoundSelects() {
       soundFiles = await window.loadSoundList();
       if (soundFiles) {
-        const soundOptionsHtml = '<option value="none">사용 안 함 (소리 없음)</option>' + 
-          soundFiles.map(s => `<option value="${s.file}">${s.name}</option>`).join('');
+        const soundOptionsHtml = buildAlertSoundOptionsHtml();
 
-        const selects = [
-          'wave-warning-sound',
-          'ethos-alert-sound',
-          'abyss-apostle-start-sound',
-          'abyss-apostle-end-sound',
-          'lokagos-alert-sound'
-        ];
-
-        selects.forEach(id => {
+        ALERT_SOUND_SELECT_IDS.forEach(id => {
           const sel = document.getElementById(id);
           if (sel) {
             const prevVal = sel.value;
@@ -3254,7 +3236,7 @@
           <div class="flex items-start gap-4 w-full">
             <span class="px-2.5 py-1 text-xs font-bold border rounded-lg shrink-0 ${badgeClass}">${badgeText}</span>
             <div class="space-y-1.5 flex-1 min-w-0">
-              <p class="text-[13px] sm:text-sm font-semibold text-slate-100 leading-snug break-all">${escapeHtml(logItem.message)}</p>
+              <p class="text-[13px] sm:text-sm font-semibold text-slate-100 leading-snug break-all">${window.escapeHtmlAttribute(logItem.message)}</p>
               <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                 <i data-lucide="clock" class="w-3.5 h-3.5 opacity-60"></i>
                 <span>${timeStr}</span>
@@ -3286,16 +3268,6 @@
       const minutes = String(d.getMinutes()).padStart(2, '0');
       const seconds = String(d.getSeconds()).padStart(2, '0');
       return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
     }
 
     function triggerSectionHighlight(tabId) {
@@ -3451,10 +3423,11 @@
         return;
       }
       currentKeywords.forEach((kw, i) => {
-        const span = document.createElement('span');
-        span.className = 'keyword-tag';
-        span.innerHTML = `${kw} <button onclick="removeKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
-        list.appendChild(span);
+        list.appendChild(window.settingsListRendering.createKeywordTag(
+          kw,
+          'keyword-tag',
+          () => removeKeyword(i)
+        ));
       });
       window.refreshIcons();
     }
@@ -3482,10 +3455,11 @@
         return;
       }
       tradeKeywordsList.forEach((kw, i) => {
-        const span = document.createElement('span');
-        span.className = 'keyword-tag !border-emerald-500/30 !text-emerald-400 !bg-emerald-500/10';
-        span.innerHTML = `${kw} <button onclick="removeTradeKeyword(${i})"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
-        list.appendChild(span);
+        list.appendChild(window.settingsListRendering.createKeywordTag(
+          kw,
+          'keyword-tag !border-emerald-500/30 !text-emerald-400 !bg-emerald-500/10',
+          () => removeTradeKeyword(i)
+        ));
       });
       window.refreshIcons();
     }
@@ -3510,6 +3484,10 @@
       list.innerHTML = '';
       currentSlots.forEach((slot, i) => {
         const isText = slot.iconType === 'text';
+        const safeLabel = window.escapeHtmlAttribute(slot.label || '');
+        const safeTextChar = window.escapeHtmlAttribute(slot.textChar || '');
+        const safeIcon = window.escapeHtmlAttribute(slot.icon || 'link');
+        const safeUrl = window.escapeHtmlAttribute(slot.url || '');
         const div = document.createElement('div');
         div.className = 'slot-card bg-white/5 p-5 rounded-2xl border border-white/10 space-y-4 relative group hover:bg-white/[0.08] transition-all';
         div.setAttribute('draggable', 'true');
@@ -3537,7 +3515,7 @@
           <div class="flex gap-3 items-center" ondragstart="event.stopPropagation()">
             <div class="flex-1">
               <label class="text-xs font-black text-slate-500 uppercase tracking-tighter mb-1 block">라벨</label>
-              <input class="input-field w-full" value="${slot.label || ''}" onchange="currentSlots[${i}].label=this.value">
+              <input class="input-field w-full" value="${safeLabel}" onchange="currentSlots[${i}].label=this.value">
             </div>
             <div class="w-24">
               <div class="flex bg-black/40 rounded-lg p-1 gap-1 mt-4">
@@ -3547,14 +3525,14 @@
             </div>
             <div class="shrink-0 mt-4">
               ${isText
-            ? `<input class="input-field w-10 h-10 text-center text-lg font-black bg-purple-500/10 border-purple-500/30 text-purple-400 p-0" maxlength="1" value="${slot.textChar || ''}" oninput="currentSlots[${i}].textChar=this.value.toUpperCase(); renderEditList()">`
-            : `<button onclick="openIconPicker(${i})" class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 hover:border-purple-500 transition-all"><i data-lucide="${slot.icon || 'link'}" class="w-5 h-5"></i></button>`
+            ? `<input class="input-field w-10 h-10 text-center text-lg font-black bg-purple-500/10 border-purple-500/30 text-purple-400 p-0" maxlength="1" value="${safeTextChar}" oninput="currentSlots[${i}].textChar=this.value.toUpperCase(); renderEditList()">`
+            : `<button onclick="openIconPicker(${i})" class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 hover:border-purple-500 transition-all"><i data-lucide="${safeIcon}" class="w-5 h-5"></i></button>`
           }
             </div>
           </div>
           <div ondragstart="event.stopPropagation()">
             <label class="text-xs font-black text-slate-500 uppercase tracking-tighter mb-1 block">URL</label>
-            <input class="input-field w-full text-xs" value="${slot.url}" onchange="currentSlots[${i}].url=this.value">
+            <input class="input-field w-full text-xs" value="${safeUrl}" onchange="currentSlots[${i}].url=this.value">
           </div>
           <div class="pt-1" ondragstart="event.stopPropagation()">
             <label class="inline-flex items-center gap-2 cursor-pointer group">
@@ -3634,6 +3612,61 @@
       content.scrollTo({ top: content.scrollHeight, behavior: 'smooth' });
     }
 
+    function collectChatOverlayDisplaySettings() {
+      return {
+        chatOverlayFontSize: document.getElementById('chat-overlay-fontsize-input') ? parseInt(document.getElementById('chat-overlay-fontsize-input').value) : 14,
+        chatOverlayOpacity: document.getElementById('chat-overlay-opacity-input') ? parseFloat(document.getElementById('chat-overlay-opacity-input').value) : 0.8,
+        chatOverlaySubOpacity: document.getElementById('chat-overlay-sub-opacity-input') ? parseFloat(document.getElementById('chat-overlay-sub-opacity-input').value) : 0.8,
+        chatOverlaySub2Opacity: document.getElementById('chat-overlay-sub2-opacity-input') ? parseFloat(document.getElementById('chat-overlay-sub2-opacity-input').value) : 0.8,
+        chatOverlayWidth: document.getElementById('chat-overlay-width-input') ? parseInt(document.getElementById('chat-overlay-width-input').value) : 450,
+        chatOverlayHeight: document.getElementById('chat-overlay-height-input') ? parseInt(document.getElementById('chat-overlay-height-input').value) : 400,
+        chatOverlaySubWidth: document.getElementById('chat-overlay-sub-width-input') ? parseInt(document.getElementById('chat-overlay-sub-width-input').value) : 450,
+        chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
+        chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
+        chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
+        chatOverlayColorGeneral: window.chatPickers && window.chatPickers['general'] ? window.chatPickers['general'].getColor().toHEXA().toString(0) : '#ffffff',
+        chatOverlayColorWhisper: window.chatPickers && window.chatPickers['whisper'] ? window.chatPickers['whisper'].getColor().toHEXA().toString(0) : '#64ff64',
+        chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
+        chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
+        chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
+        chatOverlayNicknameColorMode: document.getElementById('chat-overlay-nickname-color-mode-input') ? document.getElementById('chat-overlay-nickname-color-mode-input').value : 'same',
+        chatOverlayNicknameColorGeneral: window.nicknamePickers && window.nicknamePickers['general'] ? window.nicknamePickers['general'].getColor().toHEXA().toString(0) : '#94a3b8',
+        chatOverlayNicknameColorWhisper: window.nicknamePickers && window.nicknamePickers['whisper'] ? window.nicknamePickers['whisper'].getColor().toHEXA().toString(0) : '#94a3b8',
+        chatOverlayNicknameColorTeam: window.nicknamePickers && window.nicknamePickers['team'] ? window.nicknamePickers['team'].getColor().toHEXA().toString(0) : '#94a3b8',
+        chatOverlayNicknameColorClub: window.nicknamePickers && window.nicknamePickers['club'] ? window.nicknamePickers['club'].getColor().toHEXA().toString(0) : '#94a3b8',
+        chatOverlayNicknameColorShout: window.nicknamePickers && window.nicknamePickers['shout'] ? window.nicknamePickers['shout'].getColor().toHEXA().toString(0) : '#94a3b8',
+        chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
+          const cb = document.getElementById(`chat-overlay-channel-${ch}`);
+          return cb ? cb.checked : false;
+        }),
+        chatOverlayShowNpcChat: document.getElementById('chat-overlay-show-npc-chat') ? document.getElementById('chat-overlay-show-npc-chat').checked : true,
+        chatOverlayShowXpGain: document.getElementById('chat-overlay-show-xp-gain') ? document.getElementById('chat-overlay-show-xp-gain').checked : true,
+        chatOverlayShowElsoGain: document.getElementById('chat-overlay-show-elso-gain') ? document.getElementById('chat-overlay-show-elso-gain').checked : true,
+        chatOverlayHighlightScamNicknames: document.getElementById('chat-overlay-highlight-scam-nicknames') ? document.getElementById('chat-overlay-highlight-scam-nicknames').checked : true,
+        userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : window.electronAPI.DEFAULT_CONFIG.userServer,
+      };
+    }
+
+    function collectChatAlertSettings() {
+      return {
+        lootKeywords: lootKeywordsList,
+        shoutKeywords: shoutKeywordsList,
+        ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
+        ethosAlertSound: document.getElementById('ethos-alert-sound') ? document.getElementById('ethos-alert-sound').value : '에코스_기믹_알림.mp3',
+        ethosAlertVolume: document.getElementById('ethos-alert-volume') ? parseInt(document.getElementById('ethos-alert-volume').value) : 40,
+        abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
+        abyssApostleStartSound: document.getElementById('abyss-apostle-start-sound') ? document.getElementById('abyss-apostle-start-sound').value : '제2사도_반사_패턴_시작.mp3',
+        abyssApostleEndSound: document.getElementById('abyss-apostle-end-sound') ? document.getElementById('abyss-apostle-end-sound').value : '제2사도_반사_패턴_종료.mp3',
+        abyssApostleVolume: document.getElementById('abyss-apostle-volume') ? parseInt(document.getElementById('abyss-apostle-volume').value) : 40,
+        lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
+        lokagosAlertSound: document.getElementById('lokagos-alert-sound') ? document.getElementById('lokagos-alert-sound').value : '로카고스_기믹_알림.mp3',
+        lokagosAlertVolume: document.getElementById('lokagos-alert-volume') ? parseInt(document.getElementById('lokagos-alert-volume').value) : 40,
+        waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
+        waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
+        waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
+      };
+    }
+
     function saveSettings() {
       try {
         const validSlots = currentSlots.filter(s => s && s.url && s.url.trim().length > 0);
@@ -3689,55 +3722,12 @@
           volumeCalculators: parseInt(document.getElementById('volume-calculators').value),
 
           // 채팅 오버레이 설정
-          chatOverlayFontSize: document.getElementById('chat-overlay-fontsize-input') ? parseInt(document.getElementById('chat-overlay-fontsize-input').value) : 14,
-          chatOverlayOpacity: document.getElementById('chat-overlay-opacity-input') ? parseFloat(document.getElementById('chat-overlay-opacity-input').value) : 0.8,
-          chatOverlaySubOpacity: document.getElementById('chat-overlay-sub-opacity-input') ? parseFloat(document.getElementById('chat-overlay-sub-opacity-input').value) : 0.8,
-          chatOverlaySub2Opacity: document.getElementById('chat-overlay-sub2-opacity-input') ? parseFloat(document.getElementById('chat-overlay-sub2-opacity-input').value) : 0.8,
-          chatOverlayWidth: document.getElementById('chat-overlay-width-input') ? parseInt(document.getElementById('chat-overlay-width-input').value) : 450,
-          chatOverlayHeight: document.getElementById('chat-overlay-height-input') ? parseInt(document.getElementById('chat-overlay-height-input').value) : 400,
-          chatOverlaySubWidth: document.getElementById('chat-overlay-sub-width-input') ? parseInt(document.getElementById('chat-overlay-sub-width-input').value) : 450,
-          chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
-          chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
-          chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
-          chatOverlayColorGeneral: window.chatPickers && window.chatPickers['general'] ? window.chatPickers['general'].getColor().toHEXA().toString(0) : '#ffffff',
-          chatOverlayColorWhisper: window.chatPickers && window.chatPickers['whisper'] ? window.chatPickers['whisper'].getColor().toHEXA().toString(0) : '#64ff64',
-          chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
-          chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
-          chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
-          chatOverlayNicknameColorMode: document.getElementById('chat-overlay-nickname-color-mode-input') ? document.getElementById('chat-overlay-nickname-color-mode-input').value : 'same',
-          chatOverlayNicknameColorGeneral: window.nicknamePickers && window.nicknamePickers['general'] ? window.nicknamePickers['general'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorWhisper: window.nicknamePickers && window.nicknamePickers['whisper'] ? window.nicknamePickers['whisper'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorTeam: window.nicknamePickers && window.nicknamePickers['team'] ? window.nicknamePickers['team'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorClub: window.nicknamePickers && window.nicknamePickers['club'] ? window.nicknamePickers['club'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorShout: window.nicknamePickers && window.nicknamePickers['shout'] ? window.nicknamePickers['shout'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
-            const cb = document.getElementById(`chat-overlay-channel-${ch}`);
-            return cb ? cb.checked : false;
-          }),
-          chatOverlayShowNpcChat: document.getElementById('chat-overlay-show-npc-chat') ? document.getElementById('chat-overlay-show-npc-chat').checked : true,
-          chatOverlayShowXpGain: document.getElementById('chat-overlay-show-xp-gain') ? document.getElementById('chat-overlay-show-xp-gain').checked : true,
-          chatOverlayShowElsoGain: document.getElementById('chat-overlay-show-elso-gain') ? document.getElementById('chat-overlay-show-elso-gain').checked : true,
-          chatOverlayHighlightScamNicknames: document.getElementById('chat-overlay-highlight-scam-nicknames') ? document.getElementById('chat-overlay-highlight-scam-nicknames').checked : true,
-          userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : window.electronAPI.DEFAULT_CONFIG.userServer,
+          ...collectChatOverlayDisplaySettings(),
 
           // 채팅 로그 설정
           chatLogPath: document.getElementById('chat-log-path-input').value,
           chatLogAutoDeleteDays: parseInt(document.getElementById('chat-log-auto-delete-input').value) || 0,
-          lootKeywords: lootKeywordsList,
-          shoutKeywords: shoutKeywordsList,
-          ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
-          ethosAlertSound: document.getElementById('ethos-alert-sound') ? document.getElementById('ethos-alert-sound').value : '에코스_기믹_알림.mp3',
-          ethosAlertVolume: document.getElementById('ethos-alert-volume') ? parseInt(document.getElementById('ethos-alert-volume').value) : 40,
-          abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
-          abyssApostleStartSound: document.getElementById('abyss-apostle-start-sound') ? document.getElementById('abyss-apostle-start-sound').value : '제2사도_반사_패턴_시작.mp3',
-          abyssApostleEndSound: document.getElementById('abyss-apostle-end-sound') ? document.getElementById('abyss-apostle-end-sound').value : '제2사도_반사_패턴_종료.mp3',
-          abyssApostleVolume: document.getElementById('abyss-apostle-volume') ? parseInt(document.getElementById('abyss-apostle-volume').value) : 40,
-          lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
-          lokagosAlertSound: document.getElementById('lokagos-alert-sound') ? document.getElementById('lokagos-alert-sound').value : '로카고스_기믹_알림.mp3',
-          lokagosAlertVolume: document.getElementById('lokagos-alert-volume') ? parseInt(document.getElementById('lokagos-alert-volume').value) : 40,
-          waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
-          waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
-          waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
+          ...collectChatAlertSettings(),
           forgeQuestHudPos: {
             left: document.getElementById('forge-hud-pos-left') ? parseInt(document.getElementById('forge-hud-pos-left').value) : 50,
             bottom: document.getElementById('forge-hud-pos-bottom') ? parseInt(document.getElementById('forge-hud-pos-bottom').value) : 215
@@ -3753,51 +3743,8 @@
     function applyChatOverlaySettingsOnly() {
       try {
         const chatSettings = {
-          chatOverlayFontSize: document.getElementById('chat-overlay-fontsize-input') ? parseInt(document.getElementById('chat-overlay-fontsize-input').value) : 14,
-          chatOverlayOpacity: document.getElementById('chat-overlay-opacity-input') ? parseFloat(document.getElementById('chat-overlay-opacity-input').value) : 0.8,
-          chatOverlaySubOpacity: document.getElementById('chat-overlay-sub-opacity-input') ? parseFloat(document.getElementById('chat-overlay-sub-opacity-input').value) : 0.8,
-          chatOverlaySub2Opacity: document.getElementById('chat-overlay-sub2-opacity-input') ? parseFloat(document.getElementById('chat-overlay-sub2-opacity-input').value) : 0.8,
-          chatOverlayWidth: document.getElementById('chat-overlay-width-input') ? parseInt(document.getElementById('chat-overlay-width-input').value) : 450,
-          chatOverlayHeight: document.getElementById('chat-overlay-height-input') ? parseInt(document.getElementById('chat-overlay-height-input').value) : 400,
-          chatOverlaySubWidth: document.getElementById('chat-overlay-sub-width-input') ? parseInt(document.getElementById('chat-overlay-sub-width-input').value) : 450,
-          chatOverlaySubHeight: document.getElementById('chat-overlay-sub-height-input') ? parseInt(document.getElementById('chat-overlay-sub-height-input').value) : 400,
-          chatOverlaySub2Width: document.getElementById('chat-overlay-sub2-width-input') ? parseInt(document.getElementById('chat-overlay-sub2-width-input').value) : 450,
-          chatOverlaySub2Height: document.getElementById('chat-overlay-sub2-height-input') ? parseInt(document.getElementById('chat-overlay-sub2-height-input').value) : 400,
-          chatOverlayColorGeneral: window.chatPickers && window.chatPickers['general'] ? window.chatPickers['general'].getColor().toHEXA().toString(0) : '#ffffff',
-          chatOverlayColorWhisper: window.chatPickers && window.chatPickers['whisper'] ? window.chatPickers['whisper'].getColor().toHEXA().toString(0) : '#64ff64',
-          chatOverlayColorTeam: window.chatPickers && window.chatPickers['team'] ? window.chatPickers['team'].getColor().toHEXA().toString(0) : '#f7b73c',
-          chatOverlayColorClub: window.chatPickers && window.chatPickers['club'] ? window.chatPickers['club'].getColor().toHEXA().toString(0) : '#94ddfa',
-          chatOverlayColorShout: window.chatPickers && window.chatPickers['shout'] ? window.chatPickers['shout'].getColor().toHEXA().toString(0) : '#c896c8',
-          chatOverlayNicknameColorMode: document.getElementById('chat-overlay-nickname-color-mode-input') ? document.getElementById('chat-overlay-nickname-color-mode-input').value : 'same',
-          chatOverlayNicknameColorGeneral: window.nicknamePickers && window.nicknamePickers['general'] ? window.nicknamePickers['general'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorWhisper: window.nicknamePickers && window.nicknamePickers['whisper'] ? window.nicknamePickers['whisper'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorTeam: window.nicknamePickers && window.nicknamePickers['team'] ? window.nicknamePickers['team'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorClub: window.nicknamePickers && window.nicknamePickers['club'] ? window.nicknamePickers['club'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlayNicknameColorShout: window.nicknamePickers && window.nicknamePickers['shout'] ? window.nicknamePickers['shout'].getColor().toHEXA().toString(0) : '#94a3b8',
-          chatOverlaySelectedChannels: ['general', 'whisper', 'team', 'club', 'shout', 'system'].filter(ch => {
-            const cb = document.getElementById(`chat-overlay-channel-${ch}`);
-            return cb ? cb.checked : false;
-          }),
-          chatOverlayShowNpcChat: document.getElementById('chat-overlay-show-npc-chat') ? document.getElementById('chat-overlay-show-npc-chat').checked : true,
-          chatOverlayShowXpGain: document.getElementById('chat-overlay-show-xp-gain') ? document.getElementById('chat-overlay-show-xp-gain').checked : true,
-          chatOverlayShowElsoGain: document.getElementById('chat-overlay-show-elso-gain') ? document.getElementById('chat-overlay-show-elso-gain').checked : true,
-          chatOverlayHighlightScamNicknames: document.getElementById('chat-overlay-highlight-scam-nicknames') ? document.getElementById('chat-overlay-highlight-scam-nicknames').checked : true,
-          userServer: document.getElementById('chat-overlay-user-server-input') ? parseInt(document.getElementById('chat-overlay-user-server-input').value) : window.electronAPI.DEFAULT_CONFIG.userServer,
-          lootKeywords: lootKeywordsList,
-          shoutKeywords: shoutKeywordsList,
-          ethosAlertEnabled: document.getElementById('ethos-alert-enabled') ? document.getElementById('ethos-alert-enabled').checked : false,
-          ethosAlertSound: document.getElementById('ethos-alert-sound') ? document.getElementById('ethos-alert-sound').value : '에코스_기믹_알림.mp3',
-          ethosAlertVolume: document.getElementById('ethos-alert-volume') ? parseInt(document.getElementById('ethos-alert-volume').value) : 40,
-          abyssApostleAlertEnabled: document.getElementById('abyss-apostle-alert-enabled') ? document.getElementById('abyss-apostle-alert-enabled').checked : false,
-          abyssApostleStartSound: document.getElementById('abyss-apostle-start-sound') ? document.getElementById('abyss-apostle-start-sound').value : '제2사도_반사_패턴_시작.mp3',
-          abyssApostleEndSound: document.getElementById('abyss-apostle-end-sound') ? document.getElementById('abyss-apostle-end-sound').value : '제2사도_반사_패턴_종료.mp3',
-          abyssApostleVolume: document.getElementById('abyss-apostle-volume') ? parseInt(document.getElementById('abyss-apostle-volume').value) : 40,
-          lokagosAlertEnabled: document.getElementById('lokagos-alert-enabled') ? document.getElementById('lokagos-alert-enabled').checked : false,
-          lokagosAlertSound: document.getElementById('lokagos-alert-sound') ? document.getElementById('lokagos-alert-sound').value : '로카고스_기믹_알림.mp3',
-          lokagosAlertVolume: document.getElementById('lokagos-alert-volume') ? parseInt(document.getElementById('lokagos-alert-volume').value) : 40,
-          waveMonsterWarningEnabled: document.getElementById('wave-warning-enabled') ? document.getElementById('wave-warning-enabled').checked : false,
-          waveMonsterWarningSound: document.getElementById('wave-warning-sound') ? document.getElementById('wave-warning-sound').value : 'orb.mp3',
-          waveMonsterWarningVolume: document.getElementById('wave-warning-volume') ? parseInt(document.getElementById('wave-warning-volume').value) : 70,
+          ...collectChatOverlayDisplaySettings(),
+          ...collectChatAlertSettings(),
         };
 
         window.electronAPI.applySettings(chatSettings);
@@ -3820,37 +3767,23 @@
 
 
     function previewWaveSound() {
-      const sound = document.getElementById('wave-warning-sound').value || 'orb.mp3';
-      const vol = parseInt(document.getElementById('wave-warning-volume').value) || 70;
-      window.electronAPI.previewBossSound(sound, vol, '몬스터 웨이브 종료 대기 알림');
+      window.settingsSoundPreview.previewAlertSound({ soundElementId: 'wave-warning-sound', volumeElementId: 'wave-warning-volume', label: '몬스터 웨이브 종료 대기 알림', fallbackSound: 'orb.mp3', fallbackVolume: 70, allowNone: true });
     }
 
     function previewEthosSound() {
-      const sound = document.getElementById('ethos-alert-sound').value;
-      if (sound === 'none') return;
-      const vol = parseInt(document.getElementById('ethos-alert-volume').value) || 40;
-      window.electronAPI.previewBossSound(sound, vol, '에토스 기믹 알림');
+      window.settingsSoundPreview.previewAlertSound({ soundElementId: 'ethos-alert-sound', volumeElementId: 'ethos-alert-volume', label: '에토스 기믹 알림', fallbackVolume: 40 });
     }
 
     function previewAbyssStartSound() {
-      const sound = document.getElementById('abyss-apostle-start-sound').value;
-      if (sound === 'none') return;
-      const vol = parseInt(document.getElementById('abyss-apostle-volume').value) || 40;
-      window.electronAPI.previewBossSound(sound, vol, '제2사도 반사 시작');
+      window.settingsSoundPreview.previewAlertSound({ soundElementId: 'abyss-apostle-start-sound', volumeElementId: 'abyss-apostle-volume', label: '제2사도 반사 시작', fallbackVolume: 40 });
     }
 
     function previewAbyssEndSound() {
-      const sound = document.getElementById('abyss-apostle-end-sound').value;
-      if (sound === 'none') return;
-      const vol = parseInt(document.getElementById('abyss-apostle-volume').value) || 40;
-      window.electronAPI.previewBossSound(sound, vol, '제2사도 반사 종료');
+      window.settingsSoundPreview.previewAlertSound({ soundElementId: 'abyss-apostle-end-sound', volumeElementId: 'abyss-apostle-volume', label: '제2사도 반사 종료', fallbackVolume: 40 });
     }
 
     function previewLokagosSound() {
-      const sound = document.getElementById('lokagos-alert-sound').value;
-      if (sound === 'none') return;
-      const vol = parseInt(document.getElementById('lokagos-alert-volume').value) || 40;
-      window.electronAPI.previewBossSound(sound, vol, '로카고스 기믹 알림');
+      window.settingsSoundPreview.previewAlertSound({ soundElementId: 'lokagos-alert-sound', volumeElementId: 'lokagos-alert-volume', label: '로카고스 기믹 알림', fallbackVolume: 40 });
     }
 
     async function updateEtaCacheStatusText() {
@@ -3936,7 +3869,7 @@
         }
       });
     })();
-  </script>
+</script>
 </body>
 
 </html>

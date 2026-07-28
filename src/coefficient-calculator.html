@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     /* ── Base ─────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; }
@@ -115,6 +116,9 @@
       flex-direction: column;
       max-height: 260px;
     }
+    .custom-dropdown-menu.hidden {
+      display: none;
+    }
     .custom-dropdown-search-wrapper {
       padding: 6px;
       border-bottom: 1px solid rgba(51, 65, 85, 0.5);
@@ -217,10 +221,8 @@
     .tooltip-wrap { display: inline-flex; align-items: center; cursor: help; }
   </style>
   <script>
-    window.addEventListener('beforeunload', () => {
-      if (window.electronAPI?.cleanupAllListeners) window.electronAPI.cleanupAllListeners();
-    });
-  </script>
+    window.bindElectronListenerCleanup();
+</script>
 </head>
 
 <body class="bg-slate-950 text-slate-100 select-none h-screen flex flex-col border border-slate-800 overflow-hidden">
@@ -526,6 +528,7 @@
 
   <!-- Script -->
   <script src="utils/hangul.js"></script>
+  <script src="shared/buffConstants.js"></script>
   <script src="coefficient-calculator-renderer.js"></script>
 
   <!-- Modal -->
@@ -573,6 +576,6 @@
         tip.style.left=l+'px'; tip.style.top=t+'px';
       });
     })();
-  </script>
+</script>
 </body>
 </html>

@@ -5,8 +5,9 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: file:; font-src 'self' data: file:; connect-src 'self' file:">
   <title>장비 사전</title>
   <link rel="stylesheet" href="style.css">
-  <script src="assets/tailwind.min.js"></script>
+    <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body { background: transparent; color: var(--text-main); overflow: hidden; font-family: 'Inter', 'Noto Sans KR', sans-serif; }
     
@@ -88,12 +89,8 @@
     }
   </style>
   <script>
-    window.addEventListener('beforeunload', () => { 
-      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-        window.electronAPI.cleanupAllListeners(); 
-      }
-    });
-  </script>
+    window.bindElectronListenerCleanup();
+</script>
 </head>
 <body class="panel-glass p-0 h-screen flex flex-col select-none">
   <!-- Unified Header (Standard) -->

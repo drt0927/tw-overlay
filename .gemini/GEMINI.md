@@ -1,7 +1,7 @@
 # TalesWeaver Companion Browser (TW-Overlay) 프로젝트 가이드 (v1.13.4)
 
 이 문서는 v1.13.4 버전을 기준으로 작성되었습니다.
- 상세한 프로젝트 요약은 [release_note/](./release-note/) 폴더를 참고하시고, 배포 절차는 [release_workflow.md](./release_workflow.md)를 확인하세요. UI 일관성을 위한 디자인 가이드는 [DESIGN_TOKENS.md](./DESIGN_TOKENS.md)에서 확인하실 수 있습니다.
+이 문서는 과거 Gemini 작업 기록입니다. 현재 프로젝트 구조는 [PROJECT_GUIDE.md](../.agents/PROJECT_GUIDE.md), 개발 규칙은 [AGENTS.md](../.agents/AGENTS.md), 배포 절차는 [release_workflow.md](../.agents/release_workflow.md), UI 가이드는 [DESIGN_TOKENS.md](../.agents/DESIGN_TOKENS.md)를 기준으로 합니다.
 
 ## 📌 프로젝트 소개
 TW-Overlay는 테일즈위버 게임 화면 옆에 자석처럼 붙는 사이드바 위젯과 전용 오버레이 브라우저를 제공하는 도구입니다.

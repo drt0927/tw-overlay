@@ -5,8 +5,9 @@
   <meta charset="UTF-8">
   <title>마정석 계산기</title>
   <link rel="stylesheet" href="style.css">
-  <script src="assets/tailwind.min.js"></script>
+    <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
@@ -514,34 +515,6 @@
       }
     }
 
-    function formatSeed(seed) {
-      if (seed === 0) return '0 시드';
-
-      const units = [
-        { label: '조', value: 1000000000000 },
-        { label: '억', value: 100000000 },
-        { label: '만', value: 10000 }
-      ];
-
-      let result = '';
-      let remaining = seed;
-
-      for (const unit of units) {
-        if (remaining >= unit.value) {
-          const count = Math.floor(remaining / unit.value);
-          result += count + unit.label + ' ';
-          remaining %= unit.value;
-        }
-      }
-
-      // 만 단위 이상 기록이 있으면 나머지는 버림, 없으면(1만 미만) 숫자 표시
-      if (result === '') {
-        result = remaining.toLocaleString();
-      }
-
-      return result.trim() + ' 시드';
-    }
-
     function saveToDiary() {
       const pouches = document.getElementById('total-pouches').innerText.replace(/,/g, '');
       const seedFormatted = document.getElementById('total-seed-formatted').innerText;
@@ -600,56 +573,17 @@
 
       document.getElementById('total-pouches').innerText = totalPouches.toLocaleString();
       document.getElementById('total-seed').innerText = totalSeed.toLocaleString();
-      document.getElementById('total-seed-formatted').innerText = formatSeed(totalSeed);
+      document.getElementById('total-seed-formatted').innerText = window.formatSeedAmount(totalSeed);
     }
 
     // 초기 계산
     calculate();
 
-    // 챗로그 설정 점검 배너 표시
-    if (window.electronAPI && window.electronAPI.checkChatLogStatus) {
-      window.electronAPI.checkChatLogStatus().then(isValid => {
-        if (!isValid) {
-          showChatLogWarningBanner();
-        }
-      });
-      if (window.electronAPI.onChatLogStatusChanged) {
-        window.electronAPI.onChatLogStatusChanged(isValid => {
-          if (isValid) {
-            const b = document.getElementById('chatlog-warning-banner');
-            if (b) b.remove();
-          } else {
-            showChatLogWarningBanner();
-          }
-        });
-      }
-    }
-
-    function showChatLogWarningBanner() {
-      if (document.getElementById('chatlog-warning-banner')) return;
-      const banner = document.createElement('div');
-      banner.id = 'chatlog-warning-banner';
-      banner.className = 'w-full bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-200 z-[9999] shrink-0';
-      banner.style.cssText = 'position: relative; top: 0; left: 0;';
-      banner.innerHTML = `
-        <div class="flex items-center gap-2">
-          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
-        </div>
-        <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
-          설정으로 이동
-        </button>
-      `;
-      document.body.insertBefore(banner, document.body.firstChild);
-      if (typeof refreshIcons === 'function') refreshIcons();
-      else if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-  </script>
-  <script src="assets/ui-utils.js"></script>
+    window.bindChatLogStatusWarning();
+</script>
   <script>
     window.bindEscapeClose();
-  </script>
+</script>
 </body>
 
 </html>

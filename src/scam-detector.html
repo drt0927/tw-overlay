@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>사기꾼 탐지</title>
   <link rel="stylesheet" href="style.css">
-  <script src="assets/tailwind.min.js"></script>
+    <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
   <script src="assets/ui-utils.js"></script>
   <style>
@@ -702,10 +702,6 @@
       return 'stream-' + btoa(unescape(encodeURIComponent(fp))).replace(/[^a-zA-Z0-9]/g, '');
     }
 
-    function escapeHtml(str) {
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
     function renderSessions(sessions, queueLength = 0) {
       const listEl = document.getElementById('session-list');
       const badge = document.getElementById('session-count-badge');
@@ -736,7 +732,7 @@
 
         const streamContent = _streamBuffers[s.filePath] ?? '';
         const streamBox = (s.analyzing || streamContent)
-          ? `<div class="stream-box" id="${boxId}">${escapeHtml(streamContent)}${s.analyzing ? '<span class="cursor"></span>' : ''}</div>`
+          ? `<div class="stream-box" id="${boxId}">${window.escapeHtmlText(streamContent)}${s.analyzing ? '<span class="cursor"></span>' : ''}</div>`
           : '';
 
         const verdictIcon  = { SCAM:'🚨', SUSPICIOUS:'🟡', SAFE:'🟢', UNKNOWN:'❓' }[s.lastVerdict] ?? '❓';
@@ -750,7 +746,7 @@
         if (s.messages && s.messages.length > 0) {
           messagesHtml = s.messages.map(msg => {
             if (msg.isSystem) {
-              return `<div class="text-center text-[11px] text-slate-500 my-1 bg-slate-900/40 py-0.5 px-2 rounded-md border border-white/5 select-none">${escapeHtml(msg.content)}</div>`;
+              return `<div class="text-center text-[11px] text-slate-500 my-1 bg-slate-900/40 py-0.5 px-2 rounded-md border border-white/5 select-none">${window.escapeHtmlText(msg.content)}</div>`;
             }
 
             const timeStr = msg.timestamp ? `<span class="text-xs text-slate-600 select-none">${msg.timestamp}</span>` : '';
@@ -760,10 +756,10 @@
               return `<div class="flex flex-col items-end gap-1 my-1.5">
                 <div class="flex items-center gap-1 text-[11px]">
                   ${timeStr}
-                  <span class="font-bold text-emerald-400 select-none">${escapeHtml(msg.sender)}</span>
+                  <span class="font-bold text-emerald-400 select-none">${window.escapeHtmlText(msg.sender)}</span>
                 </div>
                 <div class="bg-emerald-950/20 border border-emerald-500/20 text-emerald-100 rounded-lg rounded-tr-none px-2.5 py-1.5 max-w-[85%] text-left text-[13px] break-all leading-relaxed">
-                  ${escapeHtml(msg.content)}
+                  ${window.escapeHtmlText(msg.content)}
                 </div>
               </div>`;
             } else {
@@ -780,9 +776,9 @@
 
               let senderHtml = '';
               if (shouldHighlight) {
-                senderHtml = `<span class="suspicious-badge select-none">⚠️ 사칭주의</span><span class="chat-sender suspicious-sender font-bold select-none">${escapeHtml(msg.sender)}</span>`;
+                senderHtml = `<span class="suspicious-badge select-none">⚠️ 사칭주의</span><span class="chat-sender suspicious-sender font-bold select-none">${window.escapeHtmlText(msg.sender)}</span>`;
               } else {
-                senderHtml = `<span class="font-bold text-slate-300 select-none">${escapeHtml(msg.sender)}</span>`;
+                senderHtml = `<span class="font-bold text-slate-300 select-none">${window.escapeHtmlText(msg.sender)}</span>`;
               }
 
               return `<div class="flex flex-col items-start gap-1 my-1.5">
@@ -792,7 +788,7 @@
                   ${timeStr}
                 </div>
                 <div class="bg-slate-800/40 border border-slate-700/40 text-slate-200 rounded-lg rounded-tl-none px-2.5 py-1.5 max-w-[85%] text-left text-[13px] break-all leading-relaxed">
-                  ${escapeHtml(msg.content)}
+                  ${window.escapeHtmlText(msg.content)}
                 </div>
               </div>`;
             }
@@ -818,7 +814,7 @@
             <div class="flex items-start gap-2 min-w-0">
               <div class="status-dot ${dotClass} mt-1.5 shrink-0"></div>
               <div class="min-w-0">
-                <div class="font-bold text-slate-200 truncate" style="font-size:12px;">${escapeHtml(s.fileName)}</div>
+                <div class="font-bold text-slate-200 truncate" style="font-size:12px;">${window.escapeHtmlText(s.fileName)}</div>
                 <div class="text-slate-500 mt-0.5" style="font-size:11px;">메시지 ${s.messageCount}개</div>
                 <div class="text-slate-400 mt-0.5" style="font-size:11px;"
                   data-timer="${fpEncoded}"
@@ -1130,8 +1126,8 @@
             <span class="font-bold">${icon} ${label}</span>
             <span class="text-slate-500">${time}</span>
           </div>
-          <div class="text-slate-500 mt-0.5" style="font-size:11px;">${escapeHtml(file)}</div>
-          ${r.detectedScamTypes ? `<div class="text-slate-400 mt-0.5" style="font-size:11px;">${escapeHtml(r.detectedScamTypes)}</div>` : ''}
+          <div class="text-slate-500 mt-0.5" style="font-size:11px;">${window.escapeHtmlText(file)}</div>
+          ${r.detectedScamTypes ? `<div class="text-slate-400 mt-0.5" style="font-size:11px;">${window.escapeHtmlText(r.detectedScamTypes)}</div>` : ''}
         </div>`;
       }).join('');
     }
@@ -1141,52 +1137,14 @@
       window.refreshIcons?.();
       window.bindEscapeClose?.();
 
-      // 챗로그 설정 점검 배너 표시
-      if (window.electronAPI && window.electronAPI.checkChatLogStatus) {
-        window.electronAPI.checkChatLogStatus().then(isValid => {
-          if (!isValid) {
-            showChatLogWarningBanner();
-          }
-        });
-        if (window.electronAPI.onChatLogStatusChanged) {
-          window.electronAPI.onChatLogStatusChanged(isValid => {
-            if (isValid) {
-              const b = document.getElementById('chatlog-warning-banner');
-              if (b) b.remove();
-            } else {
-              showChatLogWarningBanner();
-            }
-          });
-        }
-      }
+      window.bindChatLogStatusWarning();
 
       init();
     });
 
-    function showChatLogWarningBanner() {
-      if (document.getElementById('chatlog-warning-banner')) return;
-      const banner = document.createElement('div');
-      banner.id = 'chatlog-warning-banner';
-      banner.className = 'w-full bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-200 z-[9999] shrink-0';
-      banner.style.cssText = 'position: relative; top: 0; left: 0;';
-      banner.innerHTML = `
-        <div class="flex items-center gap-2">
-          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span>채팅로그 폴더가 올바르게 설정되지 않아 실시간 감지가 동작하지 않습니다.</span>
-        </div>
-        <button onclick="window.electronAPI.toggleSettings('chatlog')" 
-          class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-bold transition-all active:scale-95 text-xs shrink-0">
-          설정으로 이동
-        </button>
-      `;
-      document.body.insertBefore(banner, document.body.firstChild);
-      if (typeof refreshIcons === 'function') refreshIcons();
-      else if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
     window.addEventListener('beforeunload', () => {
       if (_statusInterval) clearInterval(_statusInterval);
     });
-  </script>
+</script>
 </body>
 </html>

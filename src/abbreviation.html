@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body { background: transparent; color: var(--text-main); overflow: hidden; font-family: 'Inter', 'Noto Sans KR', sans-serif; }
     
@@ -63,12 +64,8 @@
   </style>
 
   <script>
-    window.addEventListener('beforeunload', () => { 
-      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-        window.electronAPI.cleanupAllListeners(); 
-      }
-    });
-  </script>
+    window.bindElectronListenerCleanup();
+</script>
 </head>
 <body class="panel-glass p-0 h-screen flex flex-col">
   <!-- Unified Header (Standard) -->
@@ -224,7 +221,7 @@
     }
 
     window.onload = loadData;
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
-  </script>
+    window.bindEscapeClose();
+</script>
 </body>
 </html>

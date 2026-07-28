@@ -2,8 +2,9 @@
  * 창 관리 모듈 - WebContentsView + 동적 Z-Order 스택 버전
  */
 import { BrowserWindow, WebContentsView, screen } from 'electron';
+import type { WebContents } from 'electron';
 import * as path from 'path';
-import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig, appState, FOCUS_RESTORE_DELAY_MS, MAIN_CHAR_ID, DEFAULT_CHAR_NAME } from './constants';
+import { MIN_W, MIN_H, IS_DEV, WindowPosition, SIDEBAR_HEIGHT, SIDEBAR_WIDTH, OVERLAY_TOOLBAR_HEIGHT, GameRect, POSITION_THRESHOLD, AppConfig, appState, FOCUS_RESTORE_DELAY_MS } from './constants';
 import * as config from './config';
 import * as bossNotifier from './bossNotifier';
 import * as gallery from './galleryMonitor';
@@ -12,36 +13,20 @@ import * as tracker from './tracker';
 import { log } from './logger';
 import { buffTimerManager } from './buffTimerManager';
 import * as diaryDb from './diaryDb';
+import type { EquipmentDictionaryItem } from '../shared/types';
+import { collectIncompleteContents } from './contentsSummary';
+import { getStandardOptions, isValidCoordinate } from './windowOptions';
 
 
 // --- 상태 관리 ---
 let activeWindowsStack: BrowserWindow[] = [];
-let pendingCoefficientItem: any = null;
-let pendingEvolutionItem: any = null;
-
-/** 공통 창 생성 옵션 (DRY) */
-function getStandardOptions(width: number, height: number, extraProps: any = {}): any {
-  return {
-    width, height,
-    frame: false, transparent: true, alwaysOnTop: false, show: false,
-    webPreferences: {
-      preload: path.join(__dirname, '..', 'preload.js'),
-      contextIsolation: true, nodeIntegration: false,
-      backgroundThrottling: false,
-      ...extraProps.webPreferences
-    },
-    ...extraProps
-  };
-}
+let pendingCoefficientItem: EquipmentDictionaryItem | null = null;
+let pendingEvolutionItem: EquipmentDictionaryItem | null = null;
 
 function pushToStack(win: BrowserWindow | null): void {
   if (!win || win.isDestroyed()) return;
   activeWindowsStack = activeWindowsStack.filter(w => w !== win && !w.isDestroyed());
   activeWindowsStack.push(win);
-}
-
-function isValidCoordinate(val: any): boolean {
-  return typeof val === 'number' && Number.isFinite(val) && !Number.isNaN(val);
 }
 
 function removeFromStack(win: BrowserWindow | null): void {
@@ -150,6 +135,13 @@ interface ManagedWindow {
   calcPosition?: (gr: GameRect, pos: WindowPosition) => { x: number, y: number };
 }
 
+function applyChatOverlayClickThrough(win: BrowserWindow): void {
+  const cfg = config.load();
+  if (cfg.chatOverlayClickThrough) {
+    win.setIgnoreMouseEvents(true, { forward: true });
+  }
+}
+
 const windowRegistry: Record<string, ManagedWindow> = {
   settings: {
     ref: null, pos: { offsetX: -1110, offsetY: 40 }, key: 'settings', html: 'settings.html', width: 1100, height: 720,
@@ -171,7 +163,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   trade: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 450, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -1430, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1420, height: 860 },
   contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
-  evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 580, height: 720 },
+  evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 600, height: 720 },
   thesisCoreCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'thesisCoreCalculator', html: 'thesis-core-calculator.html', width: 850, height: 880 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
   customAlert: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 580, height: 640 },
@@ -196,10 +188,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
     height: 400,
     skipTaskbar: true,
     onOpen: (win) => {
-      const cfg = config.load();
-      if (cfg.chatOverlayClickThrough) {
-        win.setIgnoreMouseEvents(true, { forward: true });
-      }
+      applyChatOverlayClickThrough(win);
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('chat-overlay-status', true);
       }
@@ -223,14 +212,12 @@ const windowRegistry: Record<string, ManagedWindow> = {
       }
 
       // 서브 창들도 함께 닫아줌
-      const subWinCfg = windowRegistry['chatOverlaySub'];
-      const sub2WinCfg = windowRegistry['chatOverlaySub2'];
-      if (subWinCfg.ref && !subWinCfg.ref.isDestroyed()) {
-        subWinCfg.ref.close();
-      }
-      if (sub2WinCfg.ref && !sub2WinCfg.ref.isDestroyed()) {
-        sub2WinCfg.ref.close();
-      }
+      ['chatOverlaySub', 'chatOverlaySub2'].forEach(key => {
+        const subWindow = windowRegistry[key].ref;
+        if (subWindow && !subWindow.isDestroyed()) {
+          subWindow.close();
+        }
+      });
     }
   },
   chatOverlaySub: {
@@ -242,10 +229,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
     height: 400,
     skipTaskbar: true,
     onOpen: (win) => {
-      const cfg = config.load();
-      if (cfg.chatOverlayClickThrough) {
-        win.setIgnoreMouseEvents(true, { forward: true });
-      }
+      applyChatOverlayClickThrough(win);
       win.webContents.send('chat-overlay-mode', 'sub1');
     },
     onClose: () => {
@@ -263,10 +247,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
     height: 400,
     skipTaskbar: true,
     onOpen: (win) => {
-      const cfg = config.load();
-      if (cfg.chatOverlayClickThrough) {
-        win.setIgnoreMouseEvents(true, { forward: true });
-      }
+      applyChatOverlayClickThrough(win);
       win.webContents.send('chat-overlay-mode', 'sub2');
     },
     onClose: () => {
@@ -820,39 +801,41 @@ export function toggleTradeWindow(): boolean {
     onReady: (win) => { trade.updateWindows(null, win); }
   });
 }
+
+/** 이미 열린 관리 창을 전면에 표시합니다. 열려 있지 않으면 false를 반환합니다. */
+function showExistingManagedWindow(key: string): boolean {
+  const win = windowRegistry[key]?.ref;
+  if (!win || win.isDestroyed()) return false;
+  win.show();
+  win.focus();
+  return true;
+}
+
+/** 이미 열린 관리 창으로 데이터를 전달하고 전면에 표시합니다. */
+function sendToExistingManagedWindow(key: string, channel: string, payload: unknown): boolean {
+  const win = windowRegistry[key]?.ref;
+  if (!win || win.isDestroyed()) return false;
+  win.webContents.send(channel, payload);
+  win.show();
+  win.focus();
+  return true;
+}
+
 export function toggleCoefficientCalculatorWindow(): boolean { return createToggleableWindow('coefficientCalculator'); }
 export function openCoefficientCalculatorWindow(): void {
-  const winCfg = windowRegistry['coefficientCalculator'];
-  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
-    winCfg.ref.show();
-    winCfg.ref.focus();
-    return;
-  }
-  createToggleableWindow('coefficientCalculator');
+  if (!showExistingManagedWindow('coefficientCalculator')) createToggleableWindow('coefficientCalculator');
 }
-export function sendEquipmentToCoefficient(item: any): void {
-  const winCfg = windowRegistry['coefficientCalculator'];
-  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
-    winCfg.ref.webContents.send('auto-select-equipment', item);
-    winCfg.ref.show();
-    winCfg.ref.focus();
-    return;
-  }
+export function sendEquipmentToCoefficient(item: EquipmentDictionaryItem): void {
+  if (sendToExistingManagedWindow('coefficientCalculator', 'auto-select-equipment', item)) return;
   pendingCoefficientItem = item;
   openCoefficientCalculatorWindow();
 }
-export function sendEquipmentToEvolution(item: any): void {
-  const winCfg = windowRegistry['evolutionCalculator'];
-  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
-    winCfg.ref.webContents.send('auto-select-evolution', item);
-    winCfg.ref.show();
-    winCfg.ref.focus();
-    return;
-  }
+export function sendEquipmentToEvolution(item: EquipmentDictionaryItem): void {
+  if (sendToExistingManagedWindow('evolutionCalculator', 'auto-select-evolution', item)) return;
   pendingEvolutionItem = item;
   openEvolutionCalculatorWindow();
 }
-export function handleRendererReady(windowKey: string, webContents: any): void {
+export function handleRendererReady(windowKey: string, webContents: WebContents): void {
   // ready 신호는 우리가 소유한 창(레지스트리 ref)에서 온 것만 신뢰한다.
   // 임의 렌더러가 windowKey를 위조해 pending payload를 가로채는 것을 방지.
   const winCfg = windowRegistry[windowKey];
@@ -868,23 +851,11 @@ export function handleRendererReady(windowKey: string, webContents: any): void {
 }
 export function toggleEvolutionCalculatorWindow(): boolean { return createToggleableWindow('evolutionCalculator'); }
 export function openEvolutionCalculatorWindow(): void {
-  const winCfg = windowRegistry['evolutionCalculator'];
-  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
-    winCfg.ref.show();
-    winCfg.ref.focus();
-    return;
-  }
-  createToggleableWindow('evolutionCalculator');
+  if (!showExistingManagedWindow('evolutionCalculator')) createToggleableWindow('evolutionCalculator');
 }
 export function toggleThesisCoreCalculatorWindow(): boolean { return createToggleableWindow('thesisCoreCalculator'); }
 export function openThesisCoreCalculatorWindow(): void {
-  const winCfg = windowRegistry['thesisCoreCalculator'];
-  if (winCfg && winCfg.ref && !winCfg.ref.isDestroyed()) {
-    winCfg.ref.show();
-    winCfg.ref.focus();
-    return;
-  }
-  createToggleableWindow('thesisCoreCalculator');
+  if (!showExistingManagedWindow('thesisCoreCalculator')) createToggleableWindow('thesisCoreCalculator');
 }
 export function toggleMagicStoneCalculatorWindow(): boolean { return createToggleableWindow('magicStoneCalculator'); }
 export function toggleCustomAlertWindow(): boolean { return createToggleableWindow('customAlert'); }
@@ -1696,26 +1667,7 @@ export function showGameExitReminder(): void {
   const cfg = config.load();
   if (!cfg.gameExitReminderEnabled || !cfg.gameExitReminderMessage?.trim()) return;
 
-  const presets = cfg.characterPresets || [{ id: MAIN_CHAR_ID, name: DEFAULT_CHAR_NAME }];
-  const items = cfg.contentsCheckerItems || [];
-
-  const incompleteItems: any[] = [];
-
-  // 모든 캐릭터를 순회하며 미완료 숙제 수집
-  presets.forEach(char => {
-    items.forEach(item => {
-      const state = item.completedState?.[char.id];
-      // 가시성이 있고, 해당 캐릭터가 제외되지 않았으며, 아직 완료하지 않은 항목
-      if (item.isVisible && !state?.isExcluded && !state?.isCompleted) {
-        incompleteItems.push({
-          charName: char.name,
-          name: item.name,
-          category: item.category,
-          type: item.resetRule.type
-        });
-      }
-    });
-  });
+  const incompleteItems = collectIncompleteContents(cfg);
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const winWidth = 500, winHeight = 560;

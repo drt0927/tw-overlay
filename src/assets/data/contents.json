@@ -470,6 +470,16 @@
     "auto": true
   },
   {
+    "id": "weekly-eternal-floor",
+    "name": "이터널 플로어",
+    "category": "재화",
+    "isVisible": true,
+    "isCustom": false,
+    "resetRule": { "type": "weekly", "dayOfWeek": 1, "hour": 0 },
+    "maxCount": 10,
+    "auto": true
+  },
+  {
     "id": "weekly-vestige",
     "name": "베스티지",
     "category": "내실",

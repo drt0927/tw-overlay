@@ -2,40 +2,27 @@
  * 커스텀 알림 모듈
  * 사용자가 설정한 시각 + offset으로 매일 반복 알림을 발송합니다.
  */
-import { Notification } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import { log } from './logger';
 import { getGameStatus } from './pollingLoop';
+import { MinuteAlignedScheduler } from './minuteAlignedScheduler';
+import { showDesktopNotification } from './desktopNotification';
 
-let _timer: NodeJS.Timeout | null = null;
+const minuteScheduler = new MinuteAlignedScheduler();
 
 // Map<alertId, lastFiredKey> — "YYYY-MM-DD HH:mm" 형식으로 중복 방지
 const _fired = new Map<string, string>();
 
 /** 알림 루프 시작 */
 export function start(): void {
-  if (_timer) return;
+  if (!minuteScheduler.start(checkAlerts)) return;
   log('[CUSTOM_ALERT] 커스텀 알림 감시 시작');
-  scheduleNextTick();
-}
-
-/** 다음 정각(00초)에 맞춰 실행 스케줄링 */
-function scheduleNextTick(): void {
-  const now = new Date();
-  const msUntilNextMinute = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()) + 100;
-  _timer = setTimeout(() => {
-    checkAlerts();
-    scheduleNextTick();
-  }, msUntilNextMinute);
 }
 
 /** 알림 루프 중지 */
 export function stop(): void {
-  if (_timer) {
-    clearTimeout(_timer);
-    _timer = null;
-  }
+  minuteScheduler.stop();
 }
 
 function checkAlerts(): void {
@@ -101,17 +88,13 @@ function notify(message: string, soundFile: string, volume?: number): void {
   // 게임창이 최소화되어 있는 상태일 때 Windows 알림 발송
   const gameStatus = getGameStatus();
   if (gameStatus === 'minimized') {
-    try {
-      const noti = new Notification({
-        title: '🔔 커스텀 알림',
-        body: message,
-        silent: false
-      });
-      noti.show();
-      log(`[CUSTOM_ALERT] Windows 네이티브 알림 발송 (상태: ${gameStatus}, 메시지: ${message})`);
-    } catch (e) {
-      log(`[CUSTOM_ALERT] 네이티브 알림 발송 실패: ${e}`);
-    }
+    showDesktopNotification({
+      enabled: true,
+      title: '🔔 커스텀 알림',
+      body: message,
+      onShow: () => log(`[CUSTOM_ALERT] Windows 네이티브 알림 발송 (상태: ${gameStatus}, 메시지: ${message})`),
+      onError: error => log(`[CUSTOM_ALERT] 네이티브 알림 발송 실패: ${error}`),
+    });
   }
 
   wm.sendPlaySound({

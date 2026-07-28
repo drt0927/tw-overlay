@@ -34,7 +34,7 @@ export interface ChatParserEventMap {
     ABYSS_TREASURE_ENTRY: { date: string; timestamp: string; count: number; message: string };
     FORTRESS_GHOST_CLEAR: { date: string; timestamp: string; count: number; message: string };
     DIGSITE_ENTRY: { date: string; timestamp: string; count?: number; message: string };
-    CONTENT_SHINJO_NEST_CLEAR: { date: string; timestamp: string; message: string };
+    CONTENT_SHINJO_NEST_CLEAR: { date: string; timestamp: string; count: number; message: string };
     ABYSS_DUNGEON_CLEAR: { date: string; timestamp: string; depth: string; count: number; message: string };
     ABYSS_BOSS_EX_CLEAR: { date: string; timestamp: string; count: number; message: string };
     PRAVA_DEFENSE_CLEAR: { date: string; timestamp: string; count: number; message: string };
@@ -44,6 +44,8 @@ export interface ChatParserEventMap {
     ETA_DAILY_BOX_GAIN: { date: string; timestamp: string; message: string };
     ETA_WILL_UPGRADE_GAIN: { date: string; timestamp: string; message: string };
     CLUB_POINT_500_GAIN: { date: string; timestamp: string; message: string };
+    SPECIAL_MONSTER_SPAWN: { date: string; timestamp: string; message: string };
+    ETERNAL_FLOOR_CLEAR: { date: string; timestamp: string; message: string };
 
     VESTIGE_CLEAR: { date: string; timestamp: string; message: string };
     APETHIRIA_RAID_CLEAR: { date: string; timestamp: string; count: number; message: string };
@@ -93,6 +95,48 @@ export interface WatchedPost {
 export interface WindowPosition {
     offsetX: number;
     offsetY: number;
+}
+
+export interface XpStats {
+    total: number;
+    epm: number;
+    movingEpm: number;
+    startTime: number;
+    history: number[];
+    kills: number;
+    essenceCount: number;
+    xpSinceLastExchange: number;
+    accumulatedTime: number;
+    isActive: boolean;
+    lastGain?: number;
+}
+
+export type ChatChannel = 'general' | 'team' | 'club' | 'shout' | 'whisper' | 'system';
+export type ChatOverlayTab = 'Basic' | 'General' | 'Team' | 'Club' | 'Shout' | 'Whisper' | 'System';
+
+export interface ChatItem {
+    id: string;
+    type: ChatChannel;
+    timestamp: string;
+    sender: string;
+    message: string;
+    color: string;
+    level: number | null;
+    characterCode: number | null;
+}
+
+export interface EquipmentDictionaryItem {
+    name: string;
+    category?: string;
+    subCategory?: string;
+    [key: string]: unknown;
+}
+
+export interface IncompleteContentItem {
+    charName: string;
+    name: string;
+    category: string;
+    type: ResetRule['type'];
 }
 
 export interface GameRect {
@@ -197,6 +241,16 @@ export interface BuffDefinition {
     effects?: BuffEffects;
 }
 
+export interface BuffTimerState {
+    buffId: string;
+    name: string;
+    image: string;
+    durationMs: number;
+    remainingMs: number;
+    usedBy: string;
+    phase: 'normal' | 'warn1' | 'warn2';
+}
+
 
 export interface ResetRule {
     type: 'daily' | 'weekly';
@@ -211,7 +265,6 @@ export interface ContentsCheckerItem {
     isVisible: boolean;
     isCustom?: boolean;
     resetRule: ResetRule;
-    sortOrder?: number;
     maxCount?: number; // 최대 완료 필요 횟수 (생략 시 기본값: 1)
     auto?: boolean;    // 실시간 채팅 로그를 통한 자동 체크 지원 여부
 

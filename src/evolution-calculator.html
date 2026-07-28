@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/tailwind.min.js"></script>
   <script src="assets/lucide.min.js"></script>
+  <script src="assets/ui-utils.js"></script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
@@ -146,12 +147,8 @@
   </style>
 
   <script>
-    window.addEventListener('beforeunload', () => {
-      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-        window.electronAPI.cleanupAllListeners();
-      }
-    });
-  </script>
+    window.bindElectronListenerCleanup();
+</script>
 </head>
 
 <body class="bg-slate-950 text-slate-100 select-none h-screen flex flex-col border border-slate-800">
@@ -419,10 +416,6 @@
       return agg;
     }
 
-    function formatNumber(n) {
-      return n.toLocaleString('ko-KR');
-    }
-
     function formatKoreanWon(value) {
       if (!value || value <= 0) return '0';
       const units = [
@@ -463,7 +456,7 @@
 
       const elsoContainer = document.getElementById('total-elso-container');
       if (totalElso > 0) {
-        document.getElementById('total-elso').textContent = formatNumber(totalElso);
+        document.getElementById('total-elso').textContent = window.formatLocaleNumber(totalElso);
         elsoContainer.style.display = 'flex';
       } else {
         elsoContainer.style.display = 'none';
@@ -524,7 +517,7 @@
         let subtotalColor = 'text-slate-700';
 
         if (isTaecheong && isElsoSelected) {
-          subtotal = formatNumber(data.quantity * 23000) + ' 엘소';
+          subtotal = window.formatLocaleNumber(data.quantity * 23000) + ' 엘소';
           subtotalColor = 'text-purple-400 flex flex-col text-right !text-xs leading-none mt-1';
         } else if (savedPrice) {
           subtotal = formatKoreanWon(Math.round(data.quantity * parseFloat(savedPrice) * 10000));
@@ -552,7 +545,7 @@
             </div>
           </div>
           <div class="w-12 text-right shrink-0">
-            <span class="text-xs font-black text-slate-300">×${formatNumber(data.quantity)}</span>
+            <span class="text-xs font-black text-slate-300">×${window.formatLocaleNumber(data.quantity)}</span>
           </div>
           <div class="w-24 shrink-0 flex justify-end">
             <input
@@ -696,10 +689,10 @@
       });
     }
 
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') window.close(); });
+    window.bindEscapeClose();
     lucide.createIcons();
     init();
-  </script>
+</script>
 </body>
 
 </html>

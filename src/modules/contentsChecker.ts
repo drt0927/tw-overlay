@@ -5,9 +5,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import * as config from './config';
-import { ContentsCheckerItem, ResetRule, MAIN_CHAR_ID, DEFAULT_CHAR_NAME, PendingHomework } from '../shared/types';
+import { AppConfig, ContentsCheckerItem, ResetRule, MAIN_CHAR_ID, DEFAULT_CHAR_NAME, PendingHomework } from '../shared/types';
 import { log } from './logger';
 import * as diaryDb from './diaryDb';
+
+type LegacyContentsCheckerItem = ContentsCheckerItem & {
+  isCompleted?: boolean;
+  lastCompletedAt?: number;
+};
 
 /** 기본 컨텐츠 JSON 로드 */
 function loadDefaultItems(): ContentsCheckerItem[] {
@@ -31,19 +36,19 @@ export function init(): void {
   const cfg = config.load();
   const defaultItems = loadDefaultItems();
   
-  let currentItems = cfg.contentsCheckerItems || [];
+  let currentItems = (cfg.contentsCheckerItems || []) as LegacyContentsCheckerItem[];
   let changed = false;
 
   // 구버전 클럽던전 데이터 삭제 처리 (신규 클럽 보스로 대체)
-  const hasOldClubDungeon = currentItems.some((i: any) => i.id === 'daily-club-dungeon');
+  const hasOldClubDungeon = currentItems.some(i => i.id === 'daily-club-dungeon');
   if (hasOldClubDungeon) {
     log(`[Contents Checker] 구버전 클럽던전 데이터 삭제`);
-    currentItems = currentItems.filter((i: any) => i.id !== 'daily-club-dungeon');
+    currentItems = currentItems.filter(i => i.id !== 'daily-club-dungeon');
     changed = true;
   }
 
   // 구버전 임시 등록된 주간 pitta/eta-will-upgrade ID를 일일형으로 변경
-  currentItems.forEach((item: any) => {
+  currentItems.forEach(item => {
     if (item.id === 'weekly-pitta') {
       log(`[Contents Checker] 주간 pitta -> 일일 pitta 마이그레이션`);
       item.id = 'daily-pitta';
@@ -59,19 +64,18 @@ export function init(): void {
   });
 
   // 0-A. 고대 렐릭의 성소 (신조/키시니크) 단일 항목 병합 마이그레이션
-  const relicShinjoIdx = currentItems.findIndex((i: any) => i.id === 'weekly-ancient-relic-shinjo');
-  const relicKishinikIdx = currentItems.findIndex((i: any) => i.id === 'weekly-ancient-relic-kishinik');
+  const relicShinjoIdx = currentItems.findIndex(i => i.id === 'weekly-ancient-relic-shinjo');
+  const relicKishinikIdx = currentItems.findIndex(i => i.id === 'weekly-ancient-relic-kishinik');
   
   if (relicShinjoIdx !== -1 || relicKishinikIdx !== -1) {
     log(`[Contents Checker] 고대 렐릭의 성소 병합 마이그레이션 수행`);
     const relicDef = defaultItems.find(d => d.id === 'weekly-ancient-relic');
     if (relicDef) {
-      let relicItem = currentItems.find((i: any) => i.id === 'weekly-ancient-relic');
+      let relicItem = currentItems.find(i => i.id === 'weekly-ancient-relic');
       if (!relicItem) {
         relicItem = {
           ...relicDef,
-          completedState: {},
-          sortOrder: currentItems.length
+          completedState: {}
         };
         currentItems.push(relicItem);
       }
@@ -102,10 +106,10 @@ export function init(): void {
       });
       
       if (relicShinjoIdx !== -1) {
-        currentItems = currentItems.filter((i: any) => i.id !== 'weekly-ancient-relic-shinjo');
+        currentItems = currentItems.filter(i => i.id !== 'weekly-ancient-relic-shinjo');
       }
       if (relicKishinikIdx !== -1) {
-        currentItems = currentItems.filter((i: any) => i.id !== 'weekly-ancient-relic-kishinik');
+        currentItems = currentItems.filter(i => i.id !== 'weekly-ancient-relic-kishinik');
       }
       changed = true;
     }
@@ -131,7 +135,7 @@ export function init(): void {
     'weekly-eclipse-boss-selfina': 'weekly-eclipse-boss-lokagos'
   };
 
-  currentItems.forEach((item: any) => {
+  currentItems.forEach(item => {
     if (ID_MIGRATION_MAP[item.id]) {
       const newId = ID_MIGRATION_MAP[item.id];
       log(`[Contents Checker] 마이그레이션: ${item.id} -> ${newId}`);
@@ -197,7 +201,7 @@ export function init(): void {
   };
 
   Object.entries(SPLIT_MIGRATION_MAP).forEach(([oldId, newIds]) => {
-    const oldItemIdx = currentItems.findIndex((item: any) => item.id === oldId);
+    const oldItemIdx = currentItems.findIndex(item => item.id === oldId);
     if (oldItemIdx !== -1) {
       const oldItem = currentItems[oldItemIdx];
       log(`[Contents Checker] 분할 마이그레이션 시작: ${oldId} -> ${newIds.join(', ')}`);
@@ -206,12 +210,11 @@ export function init(): void {
         const def = defaultItems.find(d => d.id === newId);
         if (!def) return;
 
-        let newItem = currentItems.find((item: any) => item.id === newId);
+        let newItem = currentItems.find(item => item.id === newId);
         if (!newItem) {
           newItem = {
             ...def,
-            completedState: {},
-            sortOrder: currentItems.length
+            completedState: {}
           };
           currentItems.push(newItem);
         }
@@ -243,15 +246,15 @@ export function init(): void {
   });
 
   // 0-2. ID 기준 중복 항목 제거 및 상태 병합
-  const uniqueMap = new Map<string, any>();
-  const deduplicatedItems: any[] = [];
+  const uniqueMap = new Map<string, LegacyContentsCheckerItem>();
+  const deduplicatedItems: LegacyContentsCheckerItem[] = [];
 
-  currentItems.forEach((item: any) => {
+  currentItems.forEach(item => {
     if (!uniqueMap.has(item.id)) {
       uniqueMap.set(item.id, item);
       deduplicatedItems.push(item);
     } else {
-      const existing = uniqueMap.get(item.id);
+      const existing = uniqueMap.get(item.id)!;
       log(`[Contents Checker] 중복 항목 감지 및 병합: ${item.id} (${item.name})`);
 
       // 더 가치 있는 설정 보존 (가시성이 켜져 있거나 완료 횟수가 더 많은 상태 우선)
@@ -300,7 +303,7 @@ export function init(): void {
   }
 
   // 2. 데이터 마이그레이션 및 구조 일원화
-  currentItems.forEach((item: any) => {
+  currentItems.forEach(item => {
     if (!item.completedState) {
       item.completedState = {};
       changed = true;
@@ -345,8 +348,7 @@ export function init(): void {
     if (!exists) {
       currentItems.push({ 
         ...def, 
-        completedState: {}, 
-        sortOrder: currentItems.length 
+        completedState: {}
       });
       changed = true;
     } else {
@@ -382,14 +384,6 @@ export function init(): void {
     changed = true;
   }
 
-  // sortOrder가 없는 기존 항목들에 대해 순서 부여
-  currentItems.forEach((item, idx) => {
-    if (item.sortOrder === undefined) {
-      item.sortOrder = idx;
-      changed = true;
-    }
-  });
-
   if (changed || !cfg.contentsCheckerItems) {
     config.saveImmediate({ 
       contentsCheckerItems: currentItems,
@@ -400,58 +394,6 @@ export function init(): void {
   }
   
   checkReset();
-}
-
-/** 순서 변경 */
-export function reorderItem(id: string, direction: 'up' | 'down'): void {
-  const cfg = config.load();
-  const items = cfg.contentsCheckerItems || [];
-  const idx = items.findIndex(i => i.id === id);
-  if (idx === -1) return;
-
-  // 같은 유형(daily/weekly) 내환에서의 순서 변경이 직관적임
-  const targetType = items[idx].resetRule.type;
-  const sameTypeItems = items
-    .filter(i => i.resetRule.type === targetType)
-    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  
-  const internalIdx = sameTypeItems.findIndex(i => i.id === id);
-  if (direction === 'up' && internalIdx > 0) {
-    // 이전 항목과 sortOrder 교체
-    const prev = sameTypeItems[internalIdx - 1];
-    const curr = sameTypeItems[internalIdx];
-    const tmp = prev.sortOrder;
-    prev.sortOrder = curr.sortOrder;
-    curr.sortOrder = tmp;
-    config.saveImmediate({ contentsCheckerItems: items });
-    refreshUI();
-  } else if (direction === 'down' && internalIdx < sameTypeItems.length - 1) {
-    // 다음 항목과 sortOrder 교체
-    const next = sameTypeItems[internalIdx + 1];
-    const curr = sameTypeItems[internalIdx];
-    const tmp = next.sortOrder;
-    next.sortOrder = curr.sortOrder;
-    curr.sortOrder = tmp;
-    config.saveImmediate({ contentsCheckerItems: items });
-    refreshUI();
-  }
-}
-
-/** 전체 목록 순서 갱신 (드래그 앤 드롭용) */
-export function reorderList(ids: string[]): void {
-  const cfg = config.load();
-  const items = cfg.contentsCheckerItems || [];
-  
-  // 전달받은 ID 배열 순서대로 sortOrder 재할당
-  items.forEach(item => {
-    const newIdx = ids.indexOf(item.id);
-    if (newIdx !== -1) {
-      item.sortOrder = newIdx;
-    }
-  });
-
-  config.saveImmediate({ contentsCheckerItems: items });
-  refreshUI();
 }
 
 /** 초기화 로직 (정기적으로 또는 수동 호출) */
@@ -561,13 +503,13 @@ function syncDiaryStats(items: ContentsCheckerItem[]) {
     }).length;
   });
   
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const dateStr = String(now.getDate()).padStart(2, '0');
-  const date = `${year}-${month}-${dateStr}`;
-  
-  diaryDb.updateHomeworkStats(date, dailyDone, dailyTotal, weeklyDone, weeklyTotal);
+  diaryDb.updateHomeworkStats(
+    getLocalDateKey(),
+    dailyDone,
+    dailyTotal,
+    weeklyDone,
+    weeklyTotal,
+  );
 }
 
 /** 화면 갱신 알림 유틸리티 */
@@ -575,23 +517,75 @@ function refreshUI() {
   import('./windowManager').then(wm => wm.applySettings({}));
 }
 
-/** 항목 토글 */
-export function toggleItem(id: string, characterId?: string): void {
+function getLocalDateKey(now = new Date()): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function syncHomeworkDiary(
+  cfg: AppConfig,
+  item: ContentsCheckerItem,
+  characterId: string,
+  state: ContentsCheckerItem['completedState'][string],
+  previousCompleted?: boolean,
+): void {
+  const date = getLocalDateKey();
+  const characterName =
+    cfg.characterPresets?.find(preset => preset.id === characterId)?.name
+    || '알수없음';
+  const contentId = `${item.id}_${characterId}`;
+  const contentName = `[${characterName}] ${item.name}`;
+  const shouldAdd = state.isCompleted
+    && (previousCompleted === undefined || !previousCompleted);
+  const shouldRemove = !state.isCompleted
+    && (previousCompleted === undefined || previousCompleted);
+
+  if (shouldAdd) {
+    diaryDb.addHomeworkLog(
+      date,
+      contentId,
+      contentName,
+      item.category,
+      item.resetRule.type,
+      Date.now(),
+    );
+  } else if (shouldRemove) {
+    diaryDb.removeHomeworkLog(date, contentId);
+  }
+}
+
+function getItemStateContext(id: string, characterId?: string) {
   const cfg = config.load();
   const items = cfg.contentsCheckerItems || [];
   const targetCharId = characterId || cfg.selectedCharacterId || MAIN_CHAR_ID;
-  
-  const item = items.find(i => i.id === id);
-  if (item) {
-    if (!item.completedState) item.completedState = {};
-    if (!item.completedState[targetCharId]) {
-      item.completedState[targetCharId] = { isCompleted: false };
-    }
+  const item = items.find(candidate => candidate.id === id);
+  if (!item) return null;
+
+  if (!item.completedState) item.completedState = {};
+  if (!item.completedState[targetCharId]) {
+    item.completedState[targetCharId] = { isCompleted: false };
+  }
+
+  return {
+    cfg,
+    items,
+    targetCharId,
+    item,
+    state: item.completedState[targetCharId],
+  };
+}
+
+/** 항목 토글 */
+export function toggleItem(id: string, characterId?: string): void {
+  const context = getItemStateContext(id, characterId);
+  if (context) {
+    const { cfg, items, targetCharId, item, state } = context;
 
     // 제외된 항목은 체크 불가 (방어 로직)
-    if (item.completedState[targetCharId].isExcluded) return;
+    if (state.isExcluded) return;
 
-    const state = item.completedState[targetCharId];
     const max = item.maxCount || 1;
 
     state.isCompleted = !state.isCompleted;
@@ -600,22 +594,7 @@ export function toggleItem(id: string, characterId?: string): void {
 
     config.saveImmediate({ contentsCheckerItems: items });
 
-    // 일지 연동 로직
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const dateStr = String(now.getDate()).padStart(2, '0');
-    const date = `${year}-${month}-${dateStr}`;
-
-    const charName = cfg.characterPresets?.find(p => p.id === targetCharId)?.name || '알수없음';
-    const diaryContentId = `${item.id}_${targetCharId}`;
-    const diaryContentName = `[${charName}] ${item.name}`;
-
-    if (state.isCompleted) {
-      diaryDb.addHomeworkLog(date, diaryContentId, diaryContentName, item.category, item.resetRule.type, Date.now());
-    } else {
-      diaryDb.removeHomeworkLog(date, diaryContentId);
-    }
+    syncHomeworkDiary(cfg, item, targetCharId, state);
 
     // 전 캐릭터 통합 다이어리 통계 동기화
     syncDiaryStats(items);
@@ -645,10 +624,8 @@ export function toggleExcludeItem(id: string, characterId: string): void {
       state.lastCompletedAt = undefined;
       
       // 일지에서도 제거
-      const now = new Date();
-      const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const diaryContentId = `${item.id}_${characterId}`;
-      diaryDb.removeHomeworkLog(date, diaryContentId);
+      diaryDb.removeHomeworkLog(getLocalDateKey(), diaryContentId);
     }
 
     config.saveImmediate({ contentsCheckerItems: items });
@@ -811,7 +788,6 @@ export function addCustomItem(name: string, category: string, rule: ResetRule, m
     isVisible: true,
     isCustom: true,
     resetRule: rule,
-    sortOrder: items.length,
     completedState: {}
   };
   
@@ -835,18 +811,9 @@ export function removeItem(id: string): void {
 
 /** 특정 숙제의 완료 횟수 직접 업데이트 */
 export function updateItemCount(id: string, characterId: string, count: number): void {
-  const cfg = config.load();
-  const items = cfg.contentsCheckerItems || [];
-  const targetCharId = characterId || cfg.selectedCharacterId || MAIN_CHAR_ID;
-  
-  const item = items.find(i => i.id === id);
-  if (item) {
-    if (!item.completedState) item.completedState = {};
-    if (!item.completedState[targetCharId]) {
-      item.completedState[targetCharId] = { isCompleted: false };
-    }
-
-    const state = item.completedState[targetCharId];
+  const context = getItemStateContext(id, characterId);
+  if (context) {
+    const { cfg, items, targetCharId, item, state } = context;
     if (state.isExcluded) return;
 
     const max = item.maxCount || 1;
@@ -858,22 +825,7 @@ export function updateItemCount(id: string, characterId: string, count: number):
 
     config.saveImmediate({ contentsCheckerItems: items });
 
-    // 일지 연동 로직
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const dateStr = String(now.getDate()).padStart(2, '0');
-    const date = `${year}-${month}-${dateStr}`;
-
-    const charName = cfg.characterPresets?.find(p => p.id === targetCharId)?.name || '알수없음';
-    const diaryContentId = `${item.id}_${targetCharId}`;
-    const diaryContentName = `[${charName}] ${item.name}`;
-
-    if (state.isCompleted && !prevCompleted) {
-      diaryDb.addHomeworkLog(date, diaryContentId, diaryContentName, item.category, item.resetRule.type, Date.now());
-    } else if (!state.isCompleted && prevCompleted) {
-      diaryDb.removeHomeworkLog(date, diaryContentId);
-    }
+    syncHomeworkDiary(cfg, item, targetCharId, state, prevCompleted);
 
     // 전 캐릭터 통합 다이어리 통계 동기화
     syncDiaryStats(items);
@@ -1026,22 +978,7 @@ export function applyPendingHomeworks(characterId: string): void {
 
     log(`[Contents Checker] 반영 완료 - 숙제: ${item.name}, 카운트: ${current} -> ${state.currentCount} (${state.isCompleted ? '완료' : '진행중'})`);
 
-    // 일지 연동 로직
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const dateStr = String(now.getDate()).padStart(2, '0');
-    const date = `${year}-${month}-${dateStr}`;
-
-    const charName = cfg.characterPresets?.find(p => p.id === characterId)?.name || '알수없음';
-    const diaryContentId = `${item.id}_${characterId}`;
-    const diaryContentName = `[${charName}] ${item.name}`;
-
-    if (state.isCompleted && !prevCompleted) {
-      diaryDb.addHomeworkLog(date, diaryContentId, diaryContentName, item.category, item.resetRule.type, Date.now());
-    } else if (!state.isCompleted && prevCompleted) {
-      diaryDb.removeHomeworkLog(date, diaryContentId);
-    }
+    syncHomeworkDiary(cfg, item, characterId, state, prevCompleted);
   });
 
   // 대기열 비우기 및 저장

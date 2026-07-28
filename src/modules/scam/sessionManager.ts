@@ -81,6 +81,23 @@ function broadcastSessionUpdate(): void {
   }
 }
 
+async function publishAnalysisResult(
+  session: ActiveSession,
+  result: ScamAnalysisResult,
+): Promise<void> {
+  const scamWin = wm.getScamDetectorWindow();
+  if (scamWin && !scamWin.isDestroyed()) {
+    scamWin.webContents.send('scam-analysis-result', result);
+  }
+
+  const shouldAlert =
+    (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&
+    result.verdict !== session.lastVerdict;
+  session.lastVerdict = result.verdict;
+
+  if (shouldAlert) await sendAlert(result);
+}
+
 // ── 타이머 ──
 function resetInactivityTimer(session: ActiveSession): void {
   if (session.inactivityTimer) clearTimeout(session.inactivityTimer);
@@ -216,17 +233,7 @@ async function runMockAnalysis(session: ActiveSession): Promise<void> {
     // 가상 딜레이 연출 (0.5초)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const scamWin = wm.getScamDetectorWindow();
-    if (scamWin && !scamWin.isDestroyed()) {
-      scamWin.webContents.send('scam-analysis-result', result);
-    }
-
-    const shouldAlert =
-      (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&
-      result.verdict !== session.lastVerdict;
-    session.lastVerdict = result.verdict;
-
-    if (shouldAlert) await sendAlert(result);
+    await publishAnalysisResult(session, result);
   } catch (e) {
     log(`[SCAM] [MOCK] 가상 분석 예외 발생: ${e}`);
   } finally {
@@ -278,17 +285,7 @@ async function analyze(session: ActiveSession): Promise<void> {
       analyzedAt: Date.now(),
     };
 
-    const scamWin = wm.getScamDetectorWindow();
-    if (scamWin && !scamWin.isDestroyed()) {
-      scamWin.webContents.send('scam-analysis-result', result);
-    }
-
-    const shouldAlert =
-      (result.verdict === 'SCAM' || result.verdict === 'SUSPICIOUS') &&
-      result.verdict !== session.lastVerdict;
-    session.lastVerdict = result.verdict;
-
-    if (shouldAlert) await sendAlert(result);
+    await publishAnalysisResult(session, result);
   } catch (e) {
     session.newSinceLastAnalysis = savedCount;
     log(`[SCAM] 분석 실패: ${e}`);

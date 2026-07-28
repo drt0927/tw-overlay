@@ -1,7 +1,6 @@
 /**
  * 필드보스 알림 모듈
  */
-import { Notification } from 'electron';
 import * as config from './config';
 import * as wm from './windowManager';
 import * as contents from './contentsChecker';
@@ -9,6 +8,8 @@ import { log } from './logger';
 import { analytics } from './analytics';
 import { getGameStatus } from './pollingLoop';
 import * as diaryDb from './diaryDb';
+import { MinuteAlignedScheduler } from './minuteAlignedScheduler';
+import { showDesktopNotification } from './desktopNotification';
 
 interface BossTime {
   time: string; // HH:mm
@@ -46,34 +47,18 @@ export function getBossTimes(bossName: string): string[] {
   return BOSS_SCHEDULE.filter(b => b.name === bossName).map(b => b.time);
 }
 
-let _timer: NodeJS.Timeout | null = null;
+const minuteScheduler = new MinuteAlignedScheduler();
 let _lastNotifiedTime: string | null = null;
 
 /** 알림 루프 시작 */
 export function start(): void {
-  if (_timer) return;
+  if (!minuteScheduler.start(checkBossTime)) return;
   log('[BOSS] 보스 알림 감시 시작 (정밀 동기화 모드)');
-  scheduleNextTick();
-}
-
-/** 다음 정각(00초)에 맞춰 실행 스케줄링 */
-function scheduleNextTick(): void {
-  const now = new Date();
-  // 다음 00초까지 남은 시간 계산 (100ms 여유를 두어 이전 분에 걸리는 현상 방지)
-  const msUntilNextMinute = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()) + 100;
-
-  _timer = setTimeout(() => {
-    checkBossTime();
-    scheduleNextTick(); // 재귀적으로 다음 정각 예약
-  }, msUntilNextMinute);
 }
 
 /** 알림 루프 중지 */
 export function stop(): void {
-  if (_timer) {
-    clearTimeout(_timer);
-    _timer = null;
-  }
+  minuteScheduler.stop();
 }
 
 function checkBossTime(): void {
@@ -135,17 +120,13 @@ function notify(bossName: string, soundFile: string, spawnTime: string, offset: 
       ? `지금 [${bossName}]이(가) 출현했습니다!`
       : `약 ${offset}분 후 [${bossName}]이(가) 출현합니다. (${spawnTime})`;
 
-    try {
-      const noti = new Notification({
-        title,
-        body,
-        silent: false
-      });
-      noti.show();
-      log(`[BOSS] Windows 네이티브 알림 발송 (상태: ${gameStatus}, 제목: ${title})`);
-    } catch (e) {
-      log(`[BOSS] 네이티브 알림 발송 실패: ${e}`);
-    }
+    showDesktopNotification({
+      enabled: true,
+      title,
+      body,
+      onShow: () => log(`[BOSS] Windows 네이티브 알림 발송 (상태: ${gameStatus}, 제목: ${title})`),
+      onError: error => log(`[BOSS] 네이티브 알림 발송 실패: ${error}`),
+    });
   }
 
   wm.sendPlaySound({

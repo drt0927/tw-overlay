@@ -70,7 +70,6 @@ const statNames: Record<string, string[]> = {
   magatk: ['마공', '마방'], maghack: ['베기', '마공'], magdef: ['마방', '마공']
 };
 
-const STANDARD_BUFFS = ['util_snowman', 'dmg_potion_plus', 'stat_trust_plus', 'stat_izabel_fixed', 'stat_izabel_ratio', 'dmg_izabel', 'dmg_club_p', 'util_ampoule', 'util_haste'];
 const PROFILES_KEY = 'tw-coefficient-calculator-profiles-v1';
 const SAVE_KEY = 'tw-coefficient-calculator-settings-v7final';
 
@@ -240,7 +239,7 @@ function calculate() {
   try {
     const presetId = (document.getElementById('buff-preset-select') as HTMLSelectElement)?.value || 'none';
     let buffIds: string[] = [];
-    if (presetId === 'standard') buffIds = STANDARD_BUFFS;
+    if (presetId === 'standard') buffIds = (window as any).buffConstants.STANDARD_BUFFS;
     else if (presetId !== 'none') {
       const savedPresets = localStorage.getItem('buff_presets');
       if (savedPresets) {
@@ -583,7 +582,18 @@ function initProfiles() {
     console.error('Profile Init Failed:', err);
   }
 }
-function renderProfileSelect() { const s = document.getElementById('profile-select') as HTMLSelectElement; if (s) { s.innerHTML = Object.values(profiles).map(p => `<option value="${p.id}" ${p.id === currentProfileId ? 'selected' : ''}>${p.name}</option>`).join(''); } }
+function renderProfileSelect(): void {
+  const select = document.getElementById('profile-select') as HTMLSelectElement | null;
+  if (!select) return;
+  const options = Object.values(profiles).map(profile => {
+    const option = document.createElement('option');
+    option.value = profile.id;
+    option.selected = profile.id === currentProfileId;
+    option.textContent = profile.name;
+    return option;
+  });
+  select.replaceChildren(...options);
+}
 function addProfile(n: string) { const id = 'p' + Date.now(); profiles[id] = { id, name: n, data: captureCurrentData() }; saveProfilesToStorage(); switchProfile(id); }
 function renameProfile(id: string, n: string) { if (profiles[id]) { profiles[id].name = n; saveProfilesToStorage(); renderProfileSelect(); } }
 function deleteProfile(id: string) { delete profiles[id]; saveProfilesToStorage(); switchProfile(Object.keys(profiles)[0]); }

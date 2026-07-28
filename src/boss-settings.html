@@ -111,12 +111,8 @@
   </style>
 
   <script>
-    window.addEventListener('beforeunload', () => {
-      if (window.electronAPI && window.electronAPI.cleanupAllListeners) {
-        window.electronAPI.cleanupAllListeners();
-      }
-    });
-  </script>
+    window.bindElectronListenerCleanup();
+</script>
 </head>
 
 <body class="panel-glass p-0 h-screen flex flex-col">
@@ -420,36 +416,15 @@
       });
     }
 
-    // 하이라이트 공통 함수 및 리스너
-    function highlightElement(el) {
-      if (!el) return;
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.style.transition = 'all 0.4s ease';
-      
-      let count = 0;
-      const interval = setInterval(() => {
-        if (count % 2 === 0) {
-          el.style.borderColor = 'rgba(239, 68, 68, 0.8)';
-          el.style.boxShadow = '0 0 25px rgba(239, 68, 68, 0.5)';
-        } else {
-          el.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-          el.style.boxShadow = 'none';
-        }
-        count++;
-        if (count > 5) {
-          clearInterval(interval);
-          el.style.borderColor = '';
-          el.style.boxShadow = '';
-        }
-      }, 300);
-    }
-
     if (window.electronAPI && window.electronAPI.onHighlightAlarmSettings) {
       window.electronAPI.onHighlightAlarmSettings(() => {
-        highlightElement(document.getElementById('global-boss-settings'));
+        window.highlightElement(document.getElementById('global-boss-settings'), {
+          borderColor: 'rgba(239, 68, 68, 0.8)',
+          boxShadow: '0 0 25px rgba(239, 68, 68, 0.5)',
+        });
       });
     }
-  </script>
+</script>
 </body>
 
 </html>

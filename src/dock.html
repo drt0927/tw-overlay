@@ -283,6 +283,7 @@
 
   <script src="assets/lucide.min.js"></script>
   <script src="assets/ui-utils.js"></script>
+  <script src="shared/sidebarCategories.js"></script>
   <script>
     let appConfig = null;
     let menuData = [];
@@ -334,16 +335,9 @@
       const hiddenMenuIds = (appConfig && appConfig.hiddenMenuIds) || [];
 
       // 3. 카테고리별 그룹화 렌더링
-      const CATEGORIES = [
-        { id: 'monitoring', label: '실시간 모니터링', icon: 'activity', color: 'purple-400' },
-        { id: 'alarms', label: '알림 설정', icon: 'bell-ring', color: 'pink-400' },
-        { id: 'calculators', label: '전문 계산기', icon: 'calculator', color: 'indigo-400' },
-        { id: 'information', label: '정보 & 도감', icon: 'book-open', color: 'blue-400' },
-        { id: 'utilities', label: '편의 유틸리티', icon: 'pocket', color: 'yellow-400' },
-        { id: 'records', label: '플레이 기록', icon: 'calendar-check', color: 'emerald-400' }
-      ];
+      const dockCategories = window.sidebarCategories.filter(cat => cat.id !== 'homework');
 
-      CATEGORIES.forEach(cat => {
+      dockCategories.forEach(cat => {
         const catItem = document.createElement('div');
         catItem.className = 'dock-category-item';
         catItem.id = `dock-cat-${cat.id}`;
@@ -579,8 +573,10 @@
       });
 
       // 2. 서브메뉴 칩 및 부모 카테고리 active 상태 갱신
-      const CATEGORIES = ['monitoring', 'alarms', 'calculators', 'information', 'utilities', 'records'];
-      CATEGORIES.forEach(catId => {
+      const dockCategoryIds = window.sidebarCategories
+        .filter(cat => cat.id !== 'homework')
+        .map(cat => cat.id);
+      dockCategoryIds.forEach(catId => {
         const catItem = document.getElementById(`dock-cat-${catId}`);
         if (!catItem) return;
 
@@ -631,6 +627,6 @@
     if (window.bindEscapeClose) {
       window.bindEscapeClose();
     }
-  </script>
+</script>
 </body>
 </html>

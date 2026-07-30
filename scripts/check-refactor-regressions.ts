@@ -959,6 +959,33 @@ function checkAgentDocumentationLocations(): void {
   );
 }
 
+function checkBuffTimerChatTriggers(): void {
+  const { chatParser } = require(path.join(projectRoot, 'dist', 'modules', 'chatParser.js'));
+
+  const detected: Array<{ buffId: string; usedBy: string }> = [];
+  const listener = (data: { buffId: string; usedBy: string }) => {
+    detected.push({ buffId: data.buffId, usedBy: data.usedBy });
+  };
+
+  chatParser.on('BUFF_USED', listener);
+
+  try {
+    // 실제 게임 로그 형식: 시간 태그 + 색상 태그가 한 줄에 존재
+    chatParser.parseLine('<font size="2" color="white"> [21시 35분 5초] </font><font size="2" color="#ff64ff">[전기세비싸]님이 [통찰의 비약(대)] 아이템을 사용하셨습니다</font>');
+    chatParser.parseLine('<font size="2" color="white"> [21시 35분 59초] </font><font size="2" color="#ff64ff">[전기세비싸]님이 [통찰의 비약(특대)] 아이템을 사용하셨습니다</font>');
+    chatParser.parseLine('<font size="2" color="white"> [21시 00분 00초] </font>[경험의 심장]을(를) 사용하였습니다.');
+    chatParser.parseLine('<font size="2" color="white"> [21시 00분 01초] </font>[홍길동]님이 [로토의 부적] 아이템을 사용하셨습니다.');
+
+    assert.equal(detected.length, 4, `4개의 버프 감지 이벤트가 발생해야 합니다. (실제: ${detected.length}개, buffIds: ${detected.map(d => d.buffId).join(', ')})`);
+    assert.deepEqual(detected[0], { buffId: 'insight_elixir_large', usedBy: '전기세비싸' });
+    assert.deepEqual(detected[1], { buffId: 'insight_elixir_special', usedBy: '전기세비싸' });
+    assert.deepEqual(detected[2], { buffId: 'exp_heart', usedBy: 'self' });
+    assert.deepEqual(detected[3], { buffId: 'rare_loto', usedBy: '홍길동' });
+  } finally {
+    chatParser.removeListener('BUFF_USED', listener);
+  }
+}
+
 checkCommonFormatters();
 checkAnalyticsProtocol();
 checkDevtoolsInitializationIsIdempotent();
@@ -980,5 +1007,6 @@ checkRequestedFeatureContracts();
 checkRequestedChatSamples();
 checkNoAuthoredJavaScriptSources();
 checkAgentDocumentationLocations();
+checkBuffTimerChatTriggers();
 
 console.log('Refactor regression checks passed.');

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as config from './config';
 import { log } from './logger';
+import { chatParser } from './chatParser';
 import type { BuffDefinition, BuffTimerState } from '../shared/types';
 import * as diaryDb from './diaryDb';
 import {
@@ -22,6 +23,7 @@ export interface ActiveBuff {
 }
 
 class BuffTimerManager {
+  private _started = false;
   private _activeBuffs: Map<string, ActiveBuff> = new Map();
   private _tickInterval: NodeJS.Timeout | null = null;
   private _buffDefs: Map<string, BuffDefinition> = new Map();
@@ -31,14 +33,32 @@ class BuffTimerManager {
   public start(): void {
     this.loadBuffDefs();
     this._refreshWarnSecondsCache();
+
+    if (!this._started) {
+      this._started = true;
+      chatParser.on('BUFF_USED', (data) => {
+        const startTime = this._parseLogTimestamp(data.date, data.timestamp);
+        this.activateBuff(data.buffId, data.usedBy, undefined, startTime);
+      });
+    }
+
     if (this._tickInterval) clearInterval(this._tickInterval);
     this._tickInterval = setInterval(() => this._tick(), 1000);
     log('[BUFF_TIMER] 매니저 시작됨');
   }
 
-  /**
-   * 설정이 변경될 때 호출하여 warnSeconds 캐시를 갱신
-   */
+  private _parseLogTimestamp(dateStr: string, timestampStr: string): number {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const timeOnly = timestampStr.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
+      const [hh, mm, ss] = timeOnly.split(':').map(Number);
+      return new Date(y, m - 1, d, hh, mm, ss).getTime();
+    } catch (e) {
+      log(`[BUFF_TIMER] 시간 파싱 실패: ${e}`);
+      return Date.now();
+    }
+  }
+
   public refreshConfig(): void {
     this._refreshWarnSecondsCache();
   }
@@ -57,9 +77,6 @@ class BuffTimerManager {
     log('[BUFF_TIMER] 매니저 중지됨');
   }
 
-  /**
-   * buffs.json에서 버프 정의 로드
-   */
   public loadBuffDefs(): void {
     try {
       const buffsPath = path.join(__dirname, '..', 'assets', 'data', 'buffs.json');

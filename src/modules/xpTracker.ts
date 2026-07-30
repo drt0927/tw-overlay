@@ -1,7 +1,6 @@
 import { chatParser } from './chatParser';
 import * as config from './config';
 import { log } from './logger';
-import { buffTimerManager } from './buffTimerManager';
 import * as diaryDb from './diaryDb';
 import * as wm from './windowManager';
 import {
@@ -152,25 +151,6 @@ class XpTracker {
 
       const payload = this.buildXpPayload(amount);
       this.sendToXpWindows('xp-update', payload);
-    });
-
-    // 버프 사용 감지
-    chatParser.on('BUFF_USED', (data) => {
-      const allowedKeywords = [
-        '경험의 심장', '레어의 심장', '퇴마사의 은총', '사미선령지채',
-        '로토의 부적', '속성 앰플', '앰플', '이자벨의 비법', '일루미네이션 축제 음료',
-        '최상급 에오스의 파편', '전설의 군고구마', '얼리버드 경험치 부스터'
-      ];
-      const isAllowed = allowedKeywords.some(k => data.message.includes(k)) ||
-        [
-          'exp_heart', 'rare_heart', 'stat_exorcist', 'stat_sami_sunryeong',
-          'rare_loto', 'util_ampoule', 'dmg_izabel', 'util_illumination',
-          'exp_eos_supreme', 'exp_sweetpotato_legend', 'exp_earlybird'
-        ].includes(data.buffId);
-      if (isAllowed) {
-        const startTime = this.parseLogTimestamp(data.date, data.timestamp);
-        buffTimerManager.activateBuff(data.buffId, data.usedBy, undefined, startTime);
-      }
     });
 
     // 팔색조 언덕 진입 (5회차 진입 시 남은 에너지 16 감지하여 즉시 알람 전송)
@@ -381,18 +361,6 @@ class XpTracker {
   private broadcastConfig(): void {
     const cfg = config.load();
     broadcastToAllWindows('config-data', cfg);
-  }
-
-  private parseLogTimestamp(dateStr: string, timestampStr: string): number {
-    try {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const timeOnly = timestampStr.replace(/ /g, '').replace(/[시분]/g, ':').replace('초', '');
-      const [hh, mm, ss] = timeOnly.split(':').map(Number);
-      return new Date(y, m - 1, d, hh, mm, ss).getTime();
-    } catch (e) {
-      log(`[XP_TRACKER] 시간 파싱 실패: ${e}`);
-      return Date.now();
-    }
   }
 
   private _fireEssenceAlert(): void {

@@ -788,11 +788,11 @@ class ChatParser extends EventEmitter {
       }
     }
 
-    // SELF_USE: "XXX를/을 사용하였습니다."
-    const selfUseMatch = cleanMsg.match(/^(.+?)(?:를|을) 사용하였습니다\.?$/);
+    // SELF_USE: "XXX를/을 사용하였습니다." (조사/대괄호/띄어쓰기 유연 대응)
+    const selfUseMatch = cleanMsg.match(/^(?:\[(.+?)\]|(.+?))(?:을\(를\)|를|을)?(?:\s*아이템을)?\s*사용\s*하였습니다\.?$/);
     if (selfUseMatch) {
-      const keyword = selfUseMatch[1].trim().toLowerCase();
-      const hits = this._lookupTrigger(keyword, 'SELF_USE');
+      const rawKeyword = (selfUseMatch[1] || selfUseMatch[2] || '').trim();
+      const hits = this._lookupTrigger(rawKeyword, 'SELF_USE');
       if (hits.length > 0) {
         hits.forEach(({ buffId }) => {
           this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy: 'self', message: cleanMsg });
@@ -801,12 +801,12 @@ class ChatParser extends EventEmitter {
       }
     }
 
-    // PARTY_ITEM: "[닉네임]님이 [아이템명] 아이템을 사용하셨습니다"
-    const partyItemMatch = cleanMsg.match(/\[(.+?)\]님이 \[(.+?)\] 아이템을 사용하셨습니다/);
+    // PARTY_ITEM: "[닉네임]님이 [아이템명] (아이템을) 사용하셨습니다" (띄어쓰기 유연 대응)
+    const partyItemMatch = cleanMsg.match(/\[(.+?)\]님이\s*\[(.+?)\](?:\s*아이템을)?\s*사용\s*하셨습니다/);
     if (partyItemMatch) {
       const usedBy = partyItemMatch[1].trim();
-      const itemName = partyItemMatch[2].trim().toLowerCase();
-      const hits = this._lookupTrigger(itemName, 'PARTY_ITEM');
+      const rawItemName = partyItemMatch[2].trim();
+      const hits = this._lookupTrigger(rawItemName, 'PARTY_ITEM');
       if (hits.length > 0) {
         hits.forEach(({ buffId }) => {
           this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy, message: cleanMsg });
@@ -815,11 +815,11 @@ class ChatParser extends EventEmitter {
       }
     }
 
-    // EFFECT_APPLIED: "[아이템명] 효과가 발동/적용"
-    const effectMatch = cleanMsg.match(/\[(.+?)\] 효과가/);
+    // EFFECT_APPLIED: "[아이템명] (또는 아이템명) 효과가 발동/적용"
+    const effectMatch = cleanMsg.match(/(?:\[(.+?)\]|([^\s\[\]]+))\s*효과가/);
     if (effectMatch) {
-      const itemName = effectMatch[1].trim().toLowerCase();
-      const hits = this._lookupTrigger(itemName, 'EFFECT_APPLIED');
+      const rawItemName = (effectMatch[1] || effectMatch[2] || '').trim();
+      const hits = this._lookupTrigger(rawItemName, 'EFFECT_APPLIED');
       if (hits.length > 0) {
         hits.forEach(({ buffId }) => {
           this.emit('BUFF_USED', { date: this._currentDate, timestamp, buffId, usedBy: 'self', message: cleanMsg });
@@ -831,15 +831,18 @@ class ChatParser extends EventEmitter {
 
   /**
    * 트리거 인덱스에서 keyword와 pattern으로 매칭
-   * exact 또는 contains 매칭 지원
+   * exact 또는 contains 매칭 지원 (대괄호/공백 정제)
    */
   private _lookupTrigger(inputKey: string, pattern: ChatPatternType): Array<{ buffId: string; trigger: ChatTrigger }> {
+    const cleanInput = inputKey.replace(/[\[\]]/g, '').trim().toLowerCase();
     const results: Array<{ buffId: string; trigger: ChatTrigger }> = [];
+
     for (const [key, entries] of this._triggerIndex) {
+      const cleanKey = key.replace(/[\[\]]/g, '').trim().toLowerCase();
       for (const entry of entries) {
         if (entry.trigger.pattern !== pattern) continue;
         const matchType = entry.trigger.matchType ?? 'exact';
-        if (matchType === 'contains' ? inputKey.includes(key) : inputKey === key) {
+        if (matchType === 'contains' ? cleanInput.includes(cleanKey) : cleanInput === cleanKey) {
           results.push(entry);
         }
       }

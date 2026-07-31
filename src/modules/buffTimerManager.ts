@@ -114,11 +114,13 @@ class BuffTimerManager {
       }
     }
 
-    // 중복 갱신 방지 로직 (버프 가동 중에는 맵 이동 및 추가 복용 로그로 인한 타이머 리셋을 완전히 방지)
     const existing = this._activeBuffs.get(buffId);
     if (existing && usedBy !== 'test' && existing.usedBy !== 'test') {
-      log(`[BUFF_TIMER] 중복 활성화 무시: ${existing.name}은(는) 이미 활성화 상태입니다. (완료 전까지 리셋 방지)`);
-      return;
+      const refreshedStartTime = startTime ?? Date.now();
+      if (refreshedStartTime <= existing.startTime) {
+        log(`[BUFF_TIMER] 이전 또는 동일 시각 재감지 무시: ${existing.name}`);
+        return;
+      }
     }
 
     const def = this._buffDefs.get(buffId);
@@ -154,7 +156,8 @@ class BuffTimerManager {
 
     this._activeBuffs.set(buffId, activeBuff);
     const startStr = new Date(finalStartTime).toLocaleTimeString();
-    log(`[BUFF_TIMER] 버프 활성화: ${def.name} (${durationMs / 60000}분), 시작시각: ${startStr}, 사용자: ${usedBy}`);
+    const action = existing && existing.usedBy !== 'test' ? '버프 시간 갱신' : '버프 활성화';
+    log(`[BUFF_TIMER] ${action}: ${def.name} (${durationMs / 60000}분), 시작시각: ${startStr}, 사용자: ${usedBy}`);
 
     // 즉시 HUD 갱신
     this._sendHudUpdate();

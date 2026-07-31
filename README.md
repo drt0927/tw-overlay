@@ -5,21 +5,19 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-2.1.6-violet.svg)
+![Version](https://img.shields.io/badge/version-2.1.8-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v2.1.6 (2026.07.28)
-이번 업데이트는 공허의 영역 특별 몬스터 알람과 이터널 플로어 주간 숙제를 추가하고, 변경된 게임 채팅 로그에 맞춰 숙제 자동 감지를 복구한 **강제 업데이트 v2.1.6**입니다.
+## 🚀 최신 버전: v2.1.8 (2026.07.31)
+이번 업데이트는 숙제 체크리스트의 항목과 카테고리를 드래그 앤 드롭으로 정렬할 수 있게 하고, 활성 버프 재감지 시 타이머가 갱신되도록 개선한 **v2.1.8**입니다.
 
-- **🔔 공허의 영역 특별 몬스터 출현 알람 추가**
-- **📋 이터널 플로어 주간 숙제 추가 및 자동 횟수 증가**
-- **🛠️ 오를리 방어전, 베스티지, 신조의 둥지 채팅 로그 미감지 문제 수정**
-- **💬 채팅 오버레이에서 `&nbsp`를 제거하여 출력**
-- **🏷️ 사용자 추가 숙제에 `CUSTOM` 딱지 표시**
-- **⚙️ 코드 구조 개선 및 효율화**
+- **📋 숙제 항목과 카테고리 순서 편집 추가**
+- **🖱️ 드래그 중 실제 배치 위치 미리보기 지원**
+- **⏱️ 사용 중인 버프 재감지 시 남은 시간 갱신**
+- **🛠️ 타이머에 표시하지 않는 `改-신뢰의 물약` 자동 감지 제외**
 
 *(이전 버전의 변경 사항은 [release-note](release-note/) 폴더의 릴리즈 노트를 참조해 주세요.)*
 
@@ -69,7 +67,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.1.6.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.1.8.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

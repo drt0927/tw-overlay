@@ -1,4 +1,4 @@
-# 📦 TW-Overlay Release Note - v2.1.7 (2026-07-30)
+# 📦 TW-Overlay Release Note - [Mandatory Update] v2.1.7 (2026-07-30)
 
 이번 v2.1.7 버전은 버프 타이머 알림 기능에서 `통찰의 비약(대/특대)` 등 일부 아이템이 감지되지 않던 문제를 수정한 **버그 수정** 버전입니다.
 

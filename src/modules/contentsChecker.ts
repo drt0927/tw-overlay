@@ -809,6 +809,127 @@ export function removeItem(id: string): void {
   refreshUI();
 }
 
+type MoveDirection = 'up' | 'down';
+type DropPosition = 'before' | 'after';
+
+function getMoveOffset(direction: MoveDirection): number {
+  return direction === 'up' ? -1 : 1;
+}
+
+function getCategoryName(item: ContentsCheckerItem): string {
+  return item.category || '기타';
+}
+
+/** 같은 초기화 유형과 카테고리 안에서 숙제 순서를 이동합니다. */
+export function moveItem(id: string, direction: MoveDirection): void {
+  if (direction !== 'up' && direction !== 'down') return;
+
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const itemIndex = items.findIndex(item => item.id === id);
+  if (itemIndex === -1) return;
+
+  const target = items[itemIndex];
+  const siblingIndices = items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.resetRule.type === target.resetRule.type && getCategoryName(item) === getCategoryName(target))
+    .map(({ index }) => index);
+  const siblingIndex = siblingIndices.indexOf(itemIndex);
+  const destinationIndex = siblingIndices[siblingIndex + getMoveOffset(direction)];
+  if (destinationIndex === undefined) return;
+
+  [items[itemIndex], items[destinationIndex]] = [items[destinationIndex], items[itemIndex]];
+  config.saveImmediate({ contentsCheckerItems: items });
+  refreshUI();
+}
+
+/** 같은 초기화 유형과 카테고리 안에서 숙제를 드롭 위치로 이동합니다. */
+export function reorderItem(sourceId: string, targetId: string, position: DropPosition): void {
+  if (sourceId === targetId || (position !== 'before' && position !== 'after')) return;
+
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const source = items.find(item => item.id === sourceId);
+  const target = items.find(item => item.id === targetId);
+  if (!source || !target || source.resetRule.type !== target.resetRule.type || getCategoryName(source) !== getCategoryName(target)) return;
+
+  const siblingIndices = items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.resetRule.type === source.resetRule.type && getCategoryName(item) === getCategoryName(source))
+    .map(({ index }) => index);
+  const siblings = siblingIndices.map(index => items[index]);
+  const sourceIndex = siblings.findIndex(item => item.id === sourceId);
+  const targetIndex = siblings.findIndex(item => item.id === targetId);
+  const [movedItem] = siblings.splice(sourceIndex, 1);
+  const adjustedTargetIndex = targetIndex - (sourceIndex < targetIndex ? 1 : 0);
+  siblings.splice(adjustedTargetIndex + (position === 'after' ? 1 : 0), 0, movedItem);
+  siblingIndices.forEach((itemIndex, index) => {
+    items[itemIndex] = siblings[index];
+  });
+
+  config.saveImmediate({ contentsCheckerItems: items });
+  refreshUI();
+}
+
+/** 같은 초기화 유형 안에서 카테고리 묶음의 순서를 이동합니다. */
+export function moveCategory(resetType: ResetRule['type'], category: string, direction: MoveDirection): void {
+  if ((resetType !== 'daily' && resetType !== 'weekly') || (direction !== 'up' && direction !== 'down')) return;
+
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const typeIndices = items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.resetRule.type === resetType)
+    .map(({ index }) => index);
+  const typeItems = typeIndices.map(index => items[index]);
+  const categories = [...new Set(typeItems.map(getCategoryName))];
+  const categoryIndex = categories.indexOf(category);
+  const destinationCategoryIndex = categoryIndex + getMoveOffset(direction);
+  if (categoryIndex === -1 || destinationCategoryIndex < 0 || destinationCategoryIndex >= categories.length) return;
+
+  [categories[categoryIndex], categories[destinationCategoryIndex]] = [categories[destinationCategoryIndex], categories[categoryIndex]];
+  const reorderedItems = categories.flatMap(categoryName => typeItems.filter(item => getCategoryName(item) === categoryName));
+  typeIndices.forEach((itemIndex, index) => {
+    items[itemIndex] = reorderedItems[index];
+  });
+
+  config.saveImmediate({ contentsCheckerItems: items });
+  refreshUI();
+}
+
+/** 같은 초기화 유형 안에서 카테고리 묶음을 드롭 위치로 이동합니다. */
+export function reorderCategory(
+  resetType: ResetRule['type'],
+  sourceCategory: string,
+  targetCategory: string,
+  position: DropPosition,
+): void {
+  if ((resetType !== 'daily' && resetType !== 'weekly') || sourceCategory === targetCategory || (position !== 'before' && position !== 'after')) return;
+
+  const cfg = config.load();
+  const items = cfg.contentsCheckerItems || [];
+  const typeIndices = items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.resetRule.type === resetType)
+    .map(({ index }) => index);
+  const typeItems = typeIndices.map(index => items[index]);
+  const categories = [...new Set(typeItems.map(getCategoryName))];
+  const sourceIndex = categories.indexOf(sourceCategory);
+  const targetIndex = categories.indexOf(targetCategory);
+  if (sourceIndex === -1 || targetIndex === -1) return;
+
+  const [movedCategory] = categories.splice(sourceIndex, 1);
+  const adjustedTargetIndex = targetIndex - (sourceIndex < targetIndex ? 1 : 0);
+  categories.splice(adjustedTargetIndex + (position === 'after' ? 1 : 0), 0, movedCategory);
+  const reorderedItems = categories.flatMap(categoryName => typeItems.filter(item => getCategoryName(item) === categoryName));
+  typeIndices.forEach((itemIndex, index) => {
+    items[itemIndex] = reorderedItems[index];
+  });
+
+  config.saveImmediate({ contentsCheckerItems: items });
+  refreshUI();
+}
+
 /** 특정 숙제의 완료 횟수 직접 업데이트 */
 export function updateItemCount(id: string, characterId: string, count: number): void {
   const context = getItemStateContext(id, characterId);

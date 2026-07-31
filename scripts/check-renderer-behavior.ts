@@ -62,8 +62,54 @@ async function checkContentsChecklist(window: BrowserWindow): Promise<void> {
       const displayNode = document.createElement('span');
       displayNode.textContent = displayText;
 
+      const moveCalls = [];
+      window.electronAPI = {
+        contentsReorderItem: (...args) => moveCalls.push(['item', ...args]),
+        contentsReorderCategory: (...args) => moveCalls.push(['category', ...args])
+      };
+      isEditMode = true;
+      configData.contentsCheckerItems = [
+        makeItem('category-b-1', 'B 첫째', 'B 카테고리'),
+        makeItem('category-a-1', 'A 첫째', 'A 카테고리'),
+        makeItem('category-b-2', 'B 둘째', 'B 카테고리')
+      ];
+      render();
+      const orderedCategories = Array.from(document.querySelectorAll('.category-row > span'))
+        .map(span => span.textContent);
+      const categoryHandles = document.querySelectorAll('[title="드래그하여 카테고리 순서 변경"]');
+      categoryHandles[0]?.dispatchEvent(new Event('dragstart', { bubbles: true }));
+      document.querySelectorAll('.category-row')[1]?.dispatchEvent(new MouseEvent('dragover', { bubbles: true, clientY: 9999 }));
+      const previewCategories = Array.from(document.querySelectorAll('.category-row > span')).map(span => span.textContent);
+      categoryHandles[0]?.dispatchEvent(new Event('dragend', { bubbles: true }));
+      const restoredCategories = Array.from(document.querySelectorAll('.category-row > span')).map(span => span.textContent);
+      categoryHandles[0]?.dispatchEvent(new Event('dragstart', { bubbles: true }));
+      document.querySelectorAll('.category-row')[1]?.dispatchEvent(new MouseEvent('dragover', { bubbles: true, clientY: 9999 }));
+      document.getElementById('matrix-table')?.dispatchEvent(new MouseEvent('drop', { bubbles: true, clientY: 9999 }));
+      categoryHandles[0]?.dispatchEvent(new Event('dragend', { bubbles: true }));
+      const committedCategories = Array.from(document.querySelectorAll('.category-row > span')).map(span => span.textContent);
+      render();
+      const itemHandles = document.querySelectorAll('[title="드래그하여 숙제 순서 변경"]');
+      itemHandles[0]?.dispatchEvent(new Event('dragstart', { bubbles: true }));
+      document.querySelectorAll('.item-info')[1]?.dispatchEvent(new MouseEvent('dragover', { bubbles: true, clientY: 9999 }));
+      const previewItems = Array.from(document.querySelectorAll('.item-info')).map(cell => cell.querySelector('.text-xs')?.textContent);
+      itemHandles[0]?.dispatchEvent(new Event('dragend', { bubbles: true }));
+      const restoredItems = Array.from(document.querySelectorAll('.item-info')).map(cell => cell.querySelector('.text-xs')?.textContent);
+      itemHandles[0]?.dispatchEvent(new Event('dragstart', { bubbles: true }));
+      document.querySelectorAll('.item-info')[1]?.dispatchEvent(new MouseEvent('dragover', { bubbles: true, clientY: 9999 }));
+      document.getElementById('matrix-table')?.dispatchEvent(new MouseEvent('drop', { bubbles: true, clientY: 9999 }));
+      itemHandles[0]?.dispatchEvent(new Event('dragend', { bubbles: true }));
+      const committedItems = Array.from(document.querySelectorAll('.item-info')).map(cell => cell.querySelector('.text-xs')?.textContent);
+
       return {
         orderedNames,
+        orderedCategories,
+        previewCategories,
+        restoredCategories,
+        committedCategories,
+        previewItems,
+        restoredItems,
+        committedItems,
+        moveCalls,
         characterName: document.querySelector('.char-name')?.textContent,
         customName: customCell?.querySelector('.text-xs')?.textContent,
         customBadge: Array.from(customCell?.querySelectorAll('span') || [])
@@ -76,6 +122,14 @@ async function checkContentsChecklist(window: BrowserWindow): Promise<void> {
     })()
   `) as {
     orderedNames: string[];
+    orderedCategories: string[];
+    previewCategories: string[];
+    restoredCategories: string[];
+    committedCategories: string[];
+    previewItems: Array<string | undefined>;
+    restoredItems: Array<string | undefined>;
+    committedItems: Array<string | undefined>;
+    moveCalls: unknown[][];
     characterName: string;
     customName: string;
     customBadge: boolean;
@@ -83,7 +137,18 @@ async function checkContentsChecklist(window: BrowserWindow): Promise<void> {
     displayText: string;
   };
 
-  assert.deepEqual(result.orderedNames, ['가람', '나래', '하늘2', '하늘10']);
+  assert.deepEqual(result.orderedNames, ['하늘10', '가람', '하늘2', '나래']);
+  assert.deepEqual(result.orderedCategories, ['B 카테고리 (2)', 'A 카테고리 (1)']);
+  assert.deepEqual(result.previewCategories, ['A 카테고리 (1)', 'B 카테고리 (2)']);
+  assert.deepEqual(result.restoredCategories, result.orderedCategories);
+  assert.deepEqual(result.committedCategories, result.previewCategories);
+  assert.deepEqual(result.previewItems, ['B 둘째', 'B 첫째', 'A 첫째']);
+  assert.deepEqual(result.restoredItems, ['B 첫째', 'B 둘째', 'A 첫째']);
+  assert.deepEqual(result.committedItems, result.previewItems);
+  assert.deepEqual(result.moveCalls, [
+    ['category', 'weekly', 'B 카테고리', 'A 카테고리', 'after'],
+    ['item', 'category-b-1', 'category-b-2', 'after']
+  ]);
   assert.equal(result.characterName, '캐릭터"><img id="injected-character">');
   assert.equal(result.customName, '<img id="injected-item">사용자 숙제');
   assert.equal(result.customBadge, true);
@@ -116,6 +181,107 @@ async function checkLifecycleStartIsIdempotent(): Promise<void> {
   assert.deepEqual(afterSecondStart, afterFirstStart);
   assert.equal(afterFirstStart.SPECIAL_MONSTER_SPAWN, 1);
   assert.equal(afterFirstStart.ETERNAL_FLOOR_CLEAR, 1);
+}
+
+async function checkBuffRefreshPolicy(): Promise<void> {
+  const { buffTimerManager } = require(
+    path.join(projectRoot, 'dist/modules/buffTimerManager.js'),
+  ) as {
+    buffTimerManager: {
+      loadBuffDefs(): void;
+      activateBuff(buffId: string, usedBy?: string, customDurationMs?: number, startTime?: number): void;
+      getActiveBuffs(): Array<{ buffId: string; startTime: number; warnedAt: Set<number> }>;
+      clearAllBuffs(): void;
+    };
+  };
+
+  buffTimerManager.loadBuffDefs();
+  buffTimerManager.clearAllBuffs();
+
+  const initialStartTime = Date.now() - 10_000;
+  buffTimerManager.activateBuff('exp_potato_900', 'self', undefined, initialStartTime);
+  const initialBuff = buffTimerManager.getActiveBuffs().find(buff => buff.buffId === 'exp_potato_900');
+  assert.ok(initialBuff);
+  initialBuff.warnedAt.add(60);
+
+  const refreshedStartTime = initialStartTime + 1_000;
+  buffTimerManager.activateBuff('exp_potato_900', 'self', undefined, refreshedStartTime);
+  const refreshedBuff = buffTimerManager.getActiveBuffs().find(buff => buff.buffId === 'exp_potato_900');
+  assert.ok(refreshedBuff);
+  assert.equal(refreshedBuff.startTime, refreshedStartTime);
+  assert.equal(refreshedBuff.warnedAt.size, 0);
+
+  buffTimerManager.activateBuff('exp_potato_900', 'self', undefined, initialStartTime);
+  assert.equal(
+    buffTimerManager.getActiveBuffs().find(buff => buff.buffId === 'exp_potato_900')?.startTime,
+    refreshedStartTime,
+  );
+
+  buffTimerManager.clearAllBuffs();
+}
+
+async function checkContentsOrderingPersistence(): Promise<void> {
+  const configModule = require(path.join(projectRoot, 'dist/modules/config.js')) as {
+    load(): { contentsCheckerItems?: Array<{ id: string; completedState: Record<string, unknown> }> };
+    saveImmediate(value: Record<string, unknown>): void;
+  };
+  const contentsChecker = require(path.join(projectRoot, 'dist/modules/contentsChecker.js')) as {
+    moveItem(id: string, direction: 'up' | 'down'): void;
+    moveCategory(resetType: 'daily' | 'weekly', category: string, direction: 'up' | 'down'): void;
+    reorderItem(sourceId: string, targetId: string, position: 'before' | 'after'): void;
+    reorderCategory(resetType: 'daily' | 'weekly', sourceCategory: string, targetCategory: string, position: 'before' | 'after'): void;
+  };
+  const makeItem = (id: string, category: string, type: 'daily' | 'weekly') => ({
+    id,
+    name: id,
+    category,
+    isVisible: true,
+    resetRule: { type },
+    completedState: { 'char-main': { isCompleted: id === 'daily-a-1' } },
+  });
+
+  configModule.saveImmediate({
+    contentsCheckerItems: [
+      makeItem('daily-a-1', 'A', 'daily'),
+      makeItem('weekly-x-1', 'X', 'weekly'),
+      makeItem('daily-b-1', 'B', 'daily'),
+      makeItem('daily-a-2', 'A', 'daily'),
+    ],
+  });
+
+  contentsChecker.moveItem('daily-a-2', 'up');
+  assert.deepEqual(
+    configModule.load().contentsCheckerItems?.map(item => item.id),
+    ['daily-a-2', 'weekly-x-1', 'daily-b-1', 'daily-a-1'],
+  );
+
+  contentsChecker.moveCategory('daily', 'B', 'up');
+  const reorderedItems = configModule.load().contentsCheckerItems ?? [];
+  assert.deepEqual(
+    reorderedItems.map(item => item.id),
+    ['daily-b-1', 'weekly-x-1', 'daily-a-2', 'daily-a-1'],
+  );
+  assert.deepEqual(reorderedItems.find(item => item.id === 'daily-a-1')?.completedState, {
+    'char-main': { isCompleted: true },
+  });
+
+  contentsChecker.moveCategory('daily', 'B', 'up');
+  assert.deepEqual(
+    configModule.load().contentsCheckerItems?.map(item => item.id),
+    ['daily-b-1', 'weekly-x-1', 'daily-a-2', 'daily-a-1'],
+  );
+
+  contentsChecker.reorderItem('daily-a-2', 'daily-a-1', 'after');
+  assert.deepEqual(
+    configModule.load().contentsCheckerItems?.map(item => item.id),
+    ['daily-b-1', 'weekly-x-1', 'daily-a-1', 'daily-a-2'],
+  );
+
+  contentsChecker.reorderCategory('daily', 'B', 'A', 'after');
+  assert.deepEqual(
+    configModule.load().contentsCheckerItems?.map(item => item.id),
+    ['daily-a-1', 'weekly-x-1', 'daily-a-2', 'daily-b-1'],
+  );
 }
 
 async function checkRendererHelpers(window: BrowserWindow): Promise<void> {
@@ -208,6 +374,8 @@ async function main(): Promise<void> {
   app.setPath('userData', testUserDataDirectory);
   await app.whenReady();
   await checkLifecycleStartIsIdempotent();
+  await checkBuffRefreshPolicy();
+  await checkContentsOrderingPersistence();
   const window = new BrowserWindow({
     show: false,
     webPreferences: {

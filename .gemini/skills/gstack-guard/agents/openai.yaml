@@ -1,6 +1,0 @@
-interface:
-  display_name: "gstack-guard"
-  short_description: ""
-  default_prompt: "Use gstack-guard for this task."
-policy:
-  allow_implicit_invocation: true

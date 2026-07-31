@@ -1,6 +1,0 @@
-interface:
-  display_name: "gstack-qa-only"
-  short_description: ""
-  default_prompt: "Use gstack-qa-only for this task."
-policy:
-  allow_implicit_invocation: true

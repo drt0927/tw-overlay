@@ -1,6 +1,0 @@
-interface:
-  display_name: "gstack-document-release"
-  short_description: ""
-  default_prompt: "Use gstack-document-release for this task."
-policy:
-  allow_implicit_invocation: true

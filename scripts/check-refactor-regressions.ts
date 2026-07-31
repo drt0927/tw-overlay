@@ -420,10 +420,35 @@ function checkHuntingPathArrowSizing(): void {
 function checkContentsChecklistOrdering(): void {
   const html = read('src/contents-checker.html');
 
-  assert.match(
+  assert.doesNotMatch(
     html,
     /\.sort\(\(a,\s*b\)\s*=>\s*window\.compareKoreanText\(a\.name,\s*b\.name\)\)/,
-    '숙제 체크리스트가 카테고리 안에서 이름 가나다순으로 정렬되지 않습니다.',
+    '숙제 체크리스트가 저장된 사용자 순서 대신 이름순으로 다시 정렬됩니다.',
+  );
+  assert.match(
+    html,
+    /visibleItems\.forEach\(item\s*=>/,
+    '숙제 체크리스트가 저장 배열 순서로 렌더링되지 않습니다.',
+  );
+  assert.match(
+    html,
+    /contentsReorderCategory\(drop\.resetType, drop\.sourceName, drop\.targetName, drop\.position\)/,
+    '숙제 체크리스트의 카테고리 드래그 재배치 연결이 누락되었습니다.',
+  );
+  assert.match(
+    html,
+    /contentsReorderItem\(drop\.sourceId, drop\.targetId, drop\.position\)/,
+    '숙제 체크리스트의 항목 드래그 재배치 연결이 누락되었습니다.',
+  );
+  assert.match(
+    html,
+    /table\.ondrop = event => commitDragPreview\(event\)/,
+    '숙제 체크리스트의 테이블 드롭 커밋 연결이 누락되었습니다.',
+  );
+  assert.match(
+    html,
+    /title = '드래그하여 숙제 순서 변경'/,
+    '숙제 체크리스트의 드래그 핸들이 누락되었습니다.',
   );
   assert.match(
     html,
@@ -466,6 +491,27 @@ function checkLifecycleAndIpcSafetyContracts(): void {
   assert.match(preload, /getXpStats:\s*\(\): Promise<XpStats>/);
   assert.doesNotMatch(read('src/game-overlay.html'), /electronAPI\.invoke\(/);
   assert.doesNotMatch(read('src/xp-hud.html'), /electronAPI\.invoke\(/);
+
+  const windowMessaging = read('src/modules/windowMessaging.ts');
+  assert.match(
+    windowMessaging,
+    /function safeSend\(window: BrowserWindow,[\s\S]*window\.webContents\.isDestroyed\(\)/,
+    '공용 IPC 전송에 폐기된 webContents 차단이 없습니다.',
+  );
+  assert.match(
+    windowMessaging,
+    /catch \(error\) \{[\s\S]*error\.message\.includes\('Render frame was disposed'\)/,
+    '렌더 프레임 폐기 경쟁 상태의 전송 예외 처리가 없습니다.',
+  );
+  assert.match(
+    windowMessaging,
+    /throw error;/,
+    '예상하지 못한 IPC 전송 오류를 다시 발생시키지 않습니다.',
+  );
+  assert.ok(
+    (windowMessaging.match(/safeSend\(window, channel, \.\.\.args\)/g) || []).length >= 3,
+    '전체 창 IPC 전송 경로가 안전 전송 함수를 사용하지 않습니다.',
+  );
 
   const { resolveSafeChildFile } = require(
     path.join(projectRoot, 'dist/modules/safePath.js'),
@@ -568,11 +614,8 @@ function checkLegacyContentsOrderingRemoved(): void {
 
   [
     'sortOrder',
-    'contentsReorderItem',
     'contentsReorderList',
-    'contents-reorder-item',
     'contents-reorder-list',
-    'reorderItem',
     'reorderList',
   ].forEach(legacyName => {
     assert.equal(
@@ -975,8 +1018,9 @@ function checkBuffTimerChatTriggers(): void {
     chatParser.parseLine('<font size="2" color="white"> [21시 35분 59초] </font><font size="2" color="#ff64ff">[전기세비싸]님이 [통찰의 비약(특대)] 아이템을 사용하셨습니다</font>');
     chatParser.parseLine('<font size="2" color="white"> [21시 00분 00초] </font>[경험의 심장]을(를) 사용하였습니다.');
     chatParser.parseLine('<font size="2" color="white"> [21시 00분 01초] </font>[홍길동]님이 [로토의 부적] 아이템을 사용하셨습니다.');
+    chatParser.parseLine('<font size="2" color="white"> [12시  3분 20초] </font> <font size="2" color="#ff64ff">친구들이 주는 신뢰가 힘을 주고 있다. 모든 능력치 31 증가.</font></br>');
 
-    assert.equal(detected.length, 4, `4개의 버프 감지 이벤트가 발생해야 합니다. (실제: ${detected.length}개, buffIds: ${detected.map(d => d.buffId).join(', ')})`);
+    assert.equal(detected.length, 4, `타이머 표시 대상 4개만 감지되어야 합니다. (실제: ${detected.length}개, buffIds: ${detected.map(d => d.buffId).join(', ')})`);
     assert.deepEqual(detected[0], { buffId: 'insight_elixir_large', usedBy: '전기세비싸' });
     assert.deepEqual(detected[1], { buffId: 'insight_elixir_special', usedBy: '전기세비싸' });
     assert.deepEqual(detected[2], { buffId: 'exp_heart', usedBy: 'self' });

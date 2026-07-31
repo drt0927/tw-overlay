@@ -140,6 +140,17 @@
             color: #f1f5f9;
         }
 
+        .drag-handle {
+            cursor: grab;
+            color: #64748b;
+        }
+
+        .drag-handle:active { cursor: grabbing; }
+        .drag-handle:hover { color: #c4b5fd; }
+        .drag-preview-source { opacity: 0.45; }
+        .drag-over-before { box-shadow: inset 0 2px 0 #a78bfa; }
+        .drag-over-after { box-shadow: inset 0 -2px 0 #a78bfa; }
+
         /* 캐릭터 열 헤더 */
         .char-header {
             display: flex;
@@ -732,11 +743,77 @@
             });
 
             // --- 3. 렌더링 헬퍼 ---
+            let draggedItemId = null;
+            let draggedCategory = null;
+            let dragPreviewOriginalOrder = null;
+            let dragPreviewCommitted = false;
+            let dragPreviewTarget = null;
+            let dragPreviewDrop = null;
+            const itemRowNodes = new Map();
+            const categoryBlockNodes = new Map();
+
+            const beginDragPreview = nodes => {
+                dragPreviewOriginalOrder = Array.from(table.children);
+                dragPreviewCommitted = false;
+                dragPreviewTarget = null;
+                dragPreviewDrop = null;
+                nodes.forEach(node => node.classList.add('drag-preview-source'));
+            };
+
+            const moveDragPreview = (sourceNodes, targetNodes, position, targetKey) => {
+                const previewKey = `${targetKey}:${position}`;
+                if (dragPreviewTarget === previewKey) return;
+
+                const sourceSet = new Set(sourceNodes);
+                const reorderedNodes = Array.from(table.children).filter(node => !sourceSet.has(node));
+                const targetNode = position === 'before' ? targetNodes[0] : targetNodes[targetNodes.length - 1];
+                const targetIndex = reorderedNodes.indexOf(targetNode);
+                if (targetIndex < 0) return;
+
+                reorderedNodes.splice(targetIndex + (position === 'after' ? 1 : 0), 0, ...sourceNodes);
+                reorderedNodes.forEach(node => table.appendChild(node));
+                dragPreviewTarget = previewKey;
+            };
+
+            const endDragPreview = () => {
+                if (!dragPreviewCommitted && dragPreviewOriginalOrder) {
+                    dragPreviewOriginalOrder.forEach(node => table.appendChild(node));
+                }
+                document.querySelectorAll('.drag-preview-source, .drag-over-before, .drag-over-after').forEach(element => {
+                    element.classList.remove('drag-preview-source', 'drag-over-before', 'drag-over-after');
+                });
+                dragPreviewOriginalOrder = null;
+                dragPreviewCommitted = false;
+                dragPreviewTarget = null;
+                dragPreviewDrop = null;
+            };
+
+            const commitDragPreview = event => {
+                if (!dragPreviewDrop) return false;
+                event.preventDefault();
+                event.stopPropagation();
+                dragPreviewCommitted = true;
+                const drop = dragPreviewDrop;
+                dragPreviewDrop = null;
+                if (drop.kind === 'category') {
+                    window.electronAPI.contentsReorderCategory(drop.resetType, drop.sourceName, drop.targetName, drop.position);
+                } else {
+                    window.electronAPI.contentsReorderItem(drop.sourceId, drop.targetId, drop.position);
+                }
+                return true;
+            };
+
+            table.ondragover = event => {
+                if (dragPreviewDrop) event.preventDefault();
+            };
+            table.ondrop = event => commitDragPreview(event);
+
             const renderCategory = (sectionKey, catName, catItems) => {
                 const catKey = `${sectionKey}-${catName}`;
                 const isCatCollapsed = collapsedCategories.has(catKey);
                 const visibleItems = isEditMode ? catItems : catItems.filter(i => i.isVisible);
                 if (visibleItems.length === 0) return;
+                const categoryBlockStart = table.children.length;
 
                 // Category Header
                 const catRow = document.createElement('div');
@@ -748,10 +825,58 @@
                     ),
                     window.contentsDomRendering.createElement(
                         'span',
-                        '',
+                        'flex-1',
                         `${catName} (${visibleItems.length})`
                     )
                 );
+                if (isEditMode && !searchQuery && sectionKey !== '완료됨') {
+                    const categoryActions = window.contentsDomRendering.createElement('div', 'flex gap-0.5 ml-auto');
+                    const resetType = sectionKey === '일일 숙제' ? 'daily' : 'weekly';
+                    const dragHandle = window.contentsDomRendering.createElement('span', 'drag-handle p-1');
+                    dragHandle.appendChild(window.contentsDomRendering.createIcon('grip-vertical', 'w-4 h-4'));
+                    dragHandle.title = '드래그하여 카테고리 순서 변경';
+                    dragHandle.draggable = true;
+                    dragHandle.addEventListener('click', event => event.stopPropagation());
+                    dragHandle.addEventListener('dragstart', event => {
+                        event.stopPropagation();
+                        draggedCategory = { resetType, name: catName, key: catKey };
+                        beginDragPreview(categoryBlockNodes.get(catKey) || [catRow]);
+                        event.dataTransfer?.setData('text/plain', catName);
+                        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+                    });
+                    dragHandle.addEventListener('dragend', () => {
+                        draggedCategory = null;
+                        endDragPreview();
+                    });
+                    categoryActions.appendChild(dragHandle);
+                    catRow.appendChild(categoryActions);
+                    catRow.addEventListener('dragover', event => {
+                        if (!draggedCategory || draggedCategory.resetType !== resetType || draggedCategory.name === catName) return;
+                        event.preventDefault();
+                        const position = event.clientY < catRow.getBoundingClientRect().top + catRow.offsetHeight / 2 ? 'before' : 'after';
+                        const sourceNodes = categoryBlockNodes.get(draggedCategory.key);
+                        const targetNodes = categoryBlockNodes.get(catKey);
+                        if (sourceNodes && targetNodes) moveDragPreview(sourceNodes, targetNodes, position, catKey);
+                        dragPreviewDrop = {
+                            kind: 'category', resetType, sourceName: draggedCategory.name, targetName: catName, position
+                        };
+                        catRow.classList.toggle('drag-over-before', position === 'before');
+                        catRow.classList.toggle('drag-over-after', position === 'after');
+                    });
+                    catRow.addEventListener('dragleave', () => catRow.classList.remove('drag-over-before', 'drag-over-after'));
+                    catRow.addEventListener('drop', event => {
+                        if (!draggedCategory || draggedCategory.resetType !== resetType || draggedCategory.name === catName) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const position = event.clientY < catRow.getBoundingClientRect().top + catRow.offsetHeight / 2 ? 'before' : 'after';
+                        if (!dragPreviewDrop) {
+                            dragPreviewDrop = {
+                                kind: 'category', resetType, sourceName: draggedCategory.name, targetName: catName, position
+                            };
+                        }
+                        commitDragPreview(event);
+                    });
+                }
                 catRow.onclick = () => {
                     if (collapsedCategories.has(catKey)) collapsedCategories.delete(catKey);
                     else collapsedCategories.add(catKey);
@@ -760,9 +885,7 @@
                 table.appendChild(catRow);
 
                 if (!isCatCollapsed) {
-                    [...visibleItems]
-                      .sort((a, b) => window.compareKoreanText(a.name, b.name))
-                      .forEach(item => {
+                    visibleItems.forEach(item => {
                         const infoCell = document.createElement('div');
                         infoCell.title = `[${item.category}] ${item.name}`;
                         infoCell.className = `matrix-cell item-info sticky-col ${!item.isVisible ? 'hidden-row' : ''}`;
@@ -811,6 +934,50 @@
                                 'div',
                                 'flex gap-0.5 ml-1'
                             );
+                            if (!searchQuery) {
+                                const dragHandle = window.contentsDomRendering.createElement('span', 'drag-handle p-1');
+                                dragHandle.appendChild(window.contentsDomRendering.createIcon('grip-vertical', 'w-4 h-4'));
+                                dragHandle.title = '드래그하여 숙제 순서 변경';
+                                dragHandle.draggable = true;
+                                dragHandle.addEventListener('dragstart', event => {
+                                    draggedItemId = item.id;
+                                    beginDragPreview(itemRowNodes.get(item.id) || [infoCell]);
+                                    event.dataTransfer?.setData('text/plain', item.id);
+                                    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+                                });
+                                dragHandle.addEventListener('dragend', () => {
+                                    draggedItemId = null;
+                                    endDragPreview();
+                                });
+                                actions.appendChild(dragHandle);
+                                infoCell.addEventListener('dragover', event => {
+                                    if (!draggedItemId || draggedItemId === item.id) return;
+                                    const draggedItem = visibleItems.find(candidate => candidate.id === draggedItemId);
+                                    if (!draggedItem) return;
+                                    event.preventDefault();
+                                    const position = event.clientY < infoCell.getBoundingClientRect().top + infoCell.offsetHeight / 2 ? 'before' : 'after';
+                                    const sourceNodes = itemRowNodes.get(draggedItemId);
+                                    const targetNodes = itemRowNodes.get(item.id);
+                                    if (sourceNodes && targetNodes) moveDragPreview(sourceNodes, targetNodes, position, item.id);
+                                    dragPreviewDrop = {
+                                        kind: 'item', sourceId: draggedItemId, targetId: item.id, position
+                                    };
+                                    infoCell.classList.toggle('drag-over-before', position === 'before');
+                                    infoCell.classList.toggle('drag-over-after', position === 'after');
+                                });
+                                infoCell.addEventListener('dragleave', () => infoCell.classList.remove('drag-over-before', 'drag-over-after'));
+                                infoCell.addEventListener('drop', event => {
+                                    if (!draggedItemId || draggedItemId === item.id) return;
+                                    event.preventDefault();
+                                    const position = event.clientY < infoCell.getBoundingClientRect().top + infoCell.offsetHeight / 2 ? 'before' : 'after';
+                                    if (!dragPreviewDrop) {
+                                        dragPreviewDrop = {
+                                            kind: 'item', sourceId: draggedItemId, targetId: item.id, position
+                                        };
+                                    }
+                                    commitDragPreview(event);
+                                });
+                            }
                             actions.appendChild(window.contentsDomRendering.createIconButton({
                                 icon: item.isVisible ? 'eye' : 'eye-off',
                                 className: 'p-1 hover:text-violet-400 transition-colors',
@@ -846,6 +1013,7 @@
                             }
                             infoCell.appendChild(actions);
                         }
+                        const itemRowStart = table.children.length;
                         table.appendChild(infoCell);
 
                         presets.forEach(char => {
@@ -910,8 +1078,10 @@
                             }
                             table.appendChild(checkCell);
                         });
+                                                itemRowNodes.set(item.id, Array.from(table.children).slice(itemRowStart));
                       });
                 }
+                                categoryBlockNodes.set(catKey, Array.from(table.children).slice(categoryBlockStart));
             };
 
             const renderSection = (title, categoriesObj, icon, typeClass) => {
@@ -935,7 +1105,8 @@
                 table.appendChild(secRow);
 
                 if (!isSecCollapsed) {
-                    Object.keys(categoriesObj).sort().forEach(catName => {
+                    const categoryNames = Object.keys(categoriesObj);
+                    categoryNames.forEach(catName => {
                         renderCategory(title, catName, categoriesObj[catName]);
                     });
                 }

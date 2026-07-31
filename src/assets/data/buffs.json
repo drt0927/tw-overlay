@@ -479,12 +479,7 @@
     "removeOnExit": false,
     "removeOnDeath": true,
     "image": "",
-    "chatTriggers": [
-      {
-        "pattern": "FIXED_MSG",
-        "keyword": "친구들이 주는 신뢰가 힘을 주고 있다"
-      }
-    ],
+    "chatTriggers": [],
     "description": "조제 획득. 사망 시 사라짐. 네냐플 친밀도에 따라 모든 능력치 최대 +34까지 증가.",
     "effects": {
       "stat": 34

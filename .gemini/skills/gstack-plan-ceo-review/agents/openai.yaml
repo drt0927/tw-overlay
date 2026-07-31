@@ -1,6 +1,0 @@
-interface:
-  display_name: "gstack-plan-ceo-review"
-  short_description: ""
-  default_prompt: "Use gstack-plan-ceo-review for this task."
-policy:
-  allow_implicit_invocation: true

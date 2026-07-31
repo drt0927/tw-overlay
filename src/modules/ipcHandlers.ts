@@ -287,6 +287,18 @@ export function register(): void {
   ipcMain.on('contents-remove-item', (_e, id: string) => {
     import('./contentsChecker').then(mod => mod.removeItem(id));
   });
+  ipcMain.on('contents-move-item', (_e, id: string, direction: 'up' | 'down') => {
+    import('./contentsChecker').then(mod => mod.moveItem(id, direction));
+  });
+  ipcMain.on('contents-move-category', (_e, resetType: 'daily' | 'weekly', category: string, direction: 'up' | 'down') => {
+    import('./contentsChecker').then(mod => mod.moveCategory(resetType, category, direction));
+  });
+  ipcMain.on('contents-reorder-item', (_e, sourceId: string, targetId: string, position: 'before' | 'after') => {
+    import('./contentsChecker').then(mod => mod.reorderItem(sourceId, targetId, position));
+  });
+  ipcMain.on('contents-reorder-category', (_e, resetType: 'daily' | 'weekly', sourceCategory: string, targetCategory: string, position: 'before' | 'after') => {
+    import('./contentsChecker').then(mod => mod.reorderCategory(resetType, sourceCategory, targetCategory, position));
+  });
   ipcMain.on('contents-manual-reset', () => {
     import('./contentsChecker').then(mod => mod.checkReset());
   });

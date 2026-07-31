@@ -5,8 +5,21 @@
  */
 import { BrowserWindow, WebContents } from 'electron';
 
+function safeSend(window: BrowserWindow, channel: string, ...args: unknown[]): boolean {
+  if (window.isDestroyed() || window.webContents.isDestroyed()) return false;
+  try {
+    window.webContents.send(channel, ...args);
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Render frame was disposed')) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 function isPageWindow(window: BrowserWindow, pageName: string): boolean {
-  if (window.isDestroyed()) return false;
+  if (window.isDestroyed() || window.webContents.isDestroyed()) return false;
   try {
     return window.webContents.getURL().includes(pageName);
   } catch {
@@ -25,8 +38,7 @@ export function sendToFirstWindowByPage(
 ): boolean {
   const target = findFirstWindowByPage(pageName);
   if (!target) return false;
-  target.webContents.send(channel, ...args);
-  return true;
+  return safeSend(target, channel, ...args);
 }
 
 export function sendToAllWindowsByPage(
@@ -37,8 +49,7 @@ export function sendToAllWindowsByPage(
   let sentCount = 0;
   BrowserWindow.getAllWindows().forEach(window => {
     if (!isPageWindow(window, pageName)) return;
-    window.webContents.send(channel, ...args);
-    sentCount++;
+    if (safeSend(window, channel, ...args)) sentCount++;
   });
   return sentCount;
 }
@@ -46,9 +57,7 @@ export function sendToAllWindowsByPage(
 export function broadcastToAllWindows(channel: string, ...args: unknown[]): number {
   let sentCount = 0;
   BrowserWindow.getAllWindows().forEach(window => {
-    if (window.isDestroyed()) return;
-    window.webContents.send(channel, ...args);
-    sentCount++;
+    if (safeSend(window, channel, ...args)) sentCount++;
   });
   return sentCount;
 }
@@ -61,8 +70,7 @@ export function broadcastToAllWindowsExcept(
   let sentCount = 0;
   BrowserWindow.getAllWindows().forEach(window => {
     if (window.isDestroyed() || window.webContents === excludedWebContents) return;
-    window.webContents.send(channel, ...args);
-    sentCount++;
+    if (safeSend(window, channel, ...args)) sentCount++;
   });
   return sentCount;
 }

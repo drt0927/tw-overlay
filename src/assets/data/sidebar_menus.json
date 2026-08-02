@@ -139,6 +139,17 @@
     "category": "calculators"
   },
   {
+    "id": "sword-enhance-btn",
+    "label": "검 강화하기",
+    "icon": "sword",
+    "image": "assets/img/검강화하기.png",
+    "tooltip": "검 강화하기 게임 (twliker)",
+    "color": "amber-400",
+    "api": "toggleSwordEnhance",
+    "category": "homework",
+    "isOneDepth": true
+  },
+  {
     "id": "scam-detector-btn",
     "label": "사기꾼 탐지",
     "icon": "shield-alert",

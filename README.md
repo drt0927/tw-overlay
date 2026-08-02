@@ -5,19 +5,18 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-2.1.8-violet.svg)
+![Version](https://img.shields.io/badge/version-2.2.0-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v2.1.8 (2026.07.31)
-이번 업데이트는 숙제 체크리스트의 항목과 카테고리를 드래그 앤 드롭으로 정렬할 수 있게 하고, 활성 버프 재감지 시 타이머가 갱신되도록 개선한 **v2.1.8**입니다.
+## 🚀 최신 버전: v2.2.0 (2026.08.02)
+이번 업데이트는 별도 창에서 즐길 수 있는 **검 강화하기** 게임을 추가한 **v2.2.0**입니다.
 
-- **📋 숙제 항목과 카테고리 순서 편집 추가**
-- **🖱️ 드래그 중 실제 배치 위치 미리보기 지원**
-- **⏱️ 사용 중인 버프 재감지 시 남은 시간 갱신**
-- **🛠️ 타이머에 표시하지 않는 `改-신뢰의 물약` 자동 감지 제외**
+- **⚔️ 검 강화하기 게임을 사이드바 1depth 메뉴로 추가**
+- **🖼️ 전용 게임 아이콘 및 1300×850 독립 창 지원**
+- **💾 게임 데이터의 LocalStorage 저장 환경 유지**
 
 *(이전 버전의 변경 사항은 [release-note](release-note/) 폴더의 릴리즈 노트를 참조해 주세요.)*
 
@@ -48,6 +47,7 @@
 - **[시에나의 기운 시뮬레이터](./docs/siena-aura.md) (v1.13.1 Hot)**: 증폭, 능력치 재설정, 추가 옵션 시뮬레이션 및 자동 설정 기능
 - **[캐릭터 계수 계산기](./docs/coefficient-calculator.md)**: 스탯 투자에 따른 정밀 데미지 상승폭 분석
 - **[제복 색상 시뮬레이터](./docs/uniform-color.md)**: 캐릭터 제복 염색 미리보기 (비설화님 twsnowflower 연동)
+- **검 강화하기**: 별도 창에서 즐기는 검 강화 게임 (twliker 연동)
 - **[마정석 가치 계산기](./docs/magic-stone-calculator.md)**: 획득한 마정석 수량별 수익 정산 도구
 - **[강화 및 진화 시뮬레이터](./docs/evolution-calculator.md)**: 아이템 강화 확률 및 기댓값 계산
 
@@ -67,7 +67,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.1.8.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.2.0.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

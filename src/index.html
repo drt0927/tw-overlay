@@ -402,6 +402,21 @@
           }
 
           dynamicContainer.appendChild(catItem);
+
+          allMenus.filter(menu => menu.isOneDepth && menu.category === cat.id && !menu.isSystem && !menu.isComment).forEach(menu => {
+            const btn = document.createElement('div');
+            btn.id = menu.id;
+            btn.className = `category-item one-depth-menu p-2 cursor-pointer text-slate-400 hover:text-${menu.color} relative`;
+            btn.innerHTML = menu.image
+              ? `<img src="${menu.image}" class="w-4 h-4 object-contain" alt="${menu.label}">`
+              : `<i data-lucide="${menu.icon}" class="w-4 h-4"></i>`;
+            btn.onclick = () => {
+              if (menu.api && window.electronAPI[menu.api]) window.electronAPI[menu.api]();
+            };
+            btn.onmouseenter = () => showTooltip(menu.tooltip, btn);
+            btn.onmouseleave = () => hideTooltip();
+            dynamicContainer.appendChild(btn);
+          });
         });
 
         // 2. 시스템 고정 메뉴 렌더링
@@ -435,6 +450,11 @@
         const catItem = document.getElementById(`cat-${cat.id}`);
         if (!catItem) return;
 
+        if (cat.id === 'homework') {
+          catItem.style.display = currentHiddenMenuIds.includes('contents-checker-btn') ? 'none' : 'flex';
+          return;
+        }
+
         const flyout = document.getElementById(`flyout-${cat.id}`);
         if (!flyout) return;
 
@@ -456,6 +476,10 @@
           }
         });
       }
+
+      document.querySelectorAll('.one-depth-menu').forEach(menu => {
+        menu.style.display = currentHiddenMenuIds.includes(menu.id) ? 'none' : 'flex';
+      });
     }
 
     // 마우스 투과 제어 통합 함수

@@ -195,6 +195,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleCustomAlert: () => ipcRenderer.send('toggle-custom-alert'),
   toggleScamDetector: () => ipcRenderer.send('toggle-scam-detector'),
   toggleUniformColor: () => ipcRenderer.send('toggle-uniform-color'),
+  toggleSwordEnhance: () => ipcRenderer.send('toggle-sword-enhance'),
   toggleDiary: () => ipcRenderer.send('toggle-diary'),
   toggleXpHud: () => ipcRenderer.send('toggle-xp-hud'),
   toggleSienaAura: () => ipcRenderer.send('toggle-siena-aura'),

@@ -229,6 +229,7 @@ export function register(): void {
     'toggle-magic-stone-calculator': wm.toggleMagicStoneCalculatorWindow,
     'toggle-custom-alert': wm.toggleCustomAlertWindow,
     'toggle-uniform-color': wm.toggleUniformColorWindow,
+    'toggle-sword-enhance': wm.toggleSwordEnhanceWindow,
     'toggle-diary': wm.toggleDiaryWindow,
     'toggle-buff-timer': wm.toggleBuffTimerWindow,
     'toggle-xp-hud': wm.toggleXpHudWindow,

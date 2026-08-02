@@ -1879,7 +1879,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.1.8</span></p>
+                        class="text-purple-400">2.2.0</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2581,7 +2581,10 @@ window.bindElectronListenerCleanup();
           catMenus.forEach(menu => {
             const label = document.createElement('label');
             label.className = 'flex items-center gap-3 cursor-pointer group';
-            label.innerHTML = `<input type="checkbox" value="${menu.id}" class="menu-visible-check w-4 h-4 accent-purple-600"><i data-lucide="${menu.icon}" class="w-3.5 h-3.5 text-${menu.color}"></i><span class="text-xs font-bold text-slate-400 group-hover:text-white">${menu.label}</span>`;
+            const menuIcon = menu.image
+              ? `<img src="${menu.image}" class="w-3.5 h-3.5 object-contain" alt="">`
+              : `<i data-lucide="${menu.icon}" class="w-3.5 h-3.5 text-${menu.color}"></i>`;
+            label.innerHTML = `<input type="checkbox" value="${menu.id}" class="menu-visible-check w-4 h-4 accent-purple-600">${menuIcon}<span class="text-xs font-bold text-slate-400 group-hover:text-white">${menu.label}</span>`;
             menuGrid.appendChild(label);
           });
           section.appendChild(menuGrid);

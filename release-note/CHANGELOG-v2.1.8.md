@@ -1,4 +1,4 @@
-# 📦 TW-Overlay Release Note - v2.1.8 (2026-07-31)
+# 📦 TW-Overlay Release Note - [Mandatory Update] v2.1.8 (2026-07-31)
 
 이번 v2.1.8 버전은 숙제 체크리스트의 정렬 편의성을 높이고, 버프 타이머의 재감지 동작을 개선한 업데이트입니다.
 

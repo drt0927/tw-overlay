@@ -85,6 +85,7 @@ let splashWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
 let view: WebContentsView | null = null;
 let uniformColorView: WebContentsView | null = null;
+let swordEnhanceView: WebContentsView | null = null;
 let gameOverlayWindow: BrowserWindow | null = null;
 let welcomeGuideWindow: BrowserWindow | null = null;
 
@@ -169,6 +170,7 @@ const windowRegistry: Record<string, ManagedWindow> = {
   customAlert: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'customAlert', html: 'custom-alert.html', width: 580, height: 640 },
   diary: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'diary', html: 'diary.html', width: 1400, height: 920 },
   uniformColor: { ref: null, pos: { offsetX: -360, offsetY: 40 }, key: 'uniformColor', html: 'uniform-color.html', width: 360, height: 800 },
+  swordEnhance: { ref: null, pos: { offsetX: -1300, offsetY: 40 }, key: 'swordEnhance', html: 'sword-enhance.html', width: 1300, height: 850 },
   shoutHistory: { ref: null, pos: { offsetX: -460, offsetY: 40 }, key: 'shoutHistory', html: 'shout-history.html', width: 450, height: 600 },
   gameOverlay: { ref: null, pos: { offsetX: 0, offsetY: 0 }, key: 'gameOverlay', html: 'game-overlay.html', width: 0, height: 0 },
   buffTimer: { ref: null, pos: { offsetX: -900, offsetY: 40 }, key: 'buffTimer', html: 'buff-timer.html', width: 900, height: 850 },
@@ -930,6 +932,71 @@ export function toggleUniformColorWindow(): void {
         if (gameRect) {
           tracker.focusGameWindow();
         }
+      }, FOCUS_RESTORE_DELAY_MS);
+    }
+  });
+}
+
+export function toggleSwordEnhanceWindow(): void {
+  const winCfg = windowRegistry.swordEnhance;
+  if (winCfg.ref && !winCfg.ref.isDestroyed()) {
+    winCfg.ref.close();
+    return;
+  }
+
+  const win = new BrowserWindow(getStandardOptions(winCfg.width, winCfg.height));
+  winCfg.ref = win;
+  attachStackListeners(win);
+  win.loadFile(path.join(__dirname, '..', winCfg.html));
+
+  swordEnhanceView = new WebContentsView({
+    webPreferences: {
+      backgroundThrottling: false,
+      preload: path.join(__dirname, '..', 'overlay-view-preload.js')
+    }
+  });
+  win.contentView.addChildView(swordEnhanceView);
+
+  const setViewBounds = () => {
+    if (!swordEnhanceView) return;
+    const bounds = win.getContentBounds();
+    swordEnhanceView.setBounds({ x: 0, y: 56, width: bounds.width, height: bounds.height - 56 - 28 });
+  };
+  setViewBounds();
+  win.on('resize', setViewBounds);
+  swordEnhanceView.webContents.loadURL('https://twliker.github.io/tw-sword-enhance/');
+
+  win.once('ready-to-show', () => {
+    if (gameRect) {
+      const { x, y } = { x: Math.round(gameRect.x + gameRect.width + winCfg.pos.offsetX), y: Math.round(gameRect.y + winCfg.pos.offsetY) };
+      win.setPosition(x, y);
+    }
+    if (IS_DEV) {
+      win.webContents.openDevTools({ mode: 'detach' });
+      swordEnhanceView?.webContents.openDevTools({ mode: 'detach' });
+    }
+    win.show();
+  });
+
+  win.on('move', () => {
+    if (consumeProgrammaticMove('swordEnhance') || !winCfg.ref || !gameRect || isGameFullscreen) return;
+    const bounds = winCfg.ref.getBounds();
+    winCfg.pos = { offsetX: bounds.x - (gameRect.x + gameRect.width), offsetY: bounds.y - gameRect.y };
+    savePosition('swordEnhance', winCfg.pos);
+  });
+
+  win.on('closed', () => {
+    if (swordEnhanceView) {
+      try { swordEnhanceView.webContents.close(); } catch { }
+      swordEnhanceView = null;
+    }
+    winCfg.ref = null;
+
+    if (!appState.isQuitting && !suppressFocusRestore) {
+      if (focusRestoreTimer) clearTimeout(focusRestoreTimer);
+      focusRestoreTimer = setTimeout(() => {
+        focusRestoreTimer = null;
+        if (gameRect) tracker.focusGameWindow();
       }, FOCUS_RESTORE_DELAY_MS);
     }
   });

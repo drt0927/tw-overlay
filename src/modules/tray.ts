@@ -51,6 +51,7 @@ function buildMenuTemplate(): any[] {
         'toggleMagicStoneCalculator': wm.toggleMagicStoneCalculatorWindow,
         'toggleDiary': wm.toggleDiaryWindow,
         'toggleUniformColor': wm.toggleUniformColorWindow,
+        'toggleSwordEnhance': wm.toggleSwordEnhanceWindow,
         'toggleScamDetector': wm.toggleScamDetectorWindow,
         'toggleSienaAura': wm.toggleSienaAuraWindow,
         'toggleHuntingPathSimulator': wm.toggleHuntingPathSimulatorWindow,

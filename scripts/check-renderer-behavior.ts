@@ -217,6 +217,18 @@ async function checkBuffRefreshPolicy(): Promise<void> {
     refreshedStartTime,
   );
 
+  const izabelInitialStartTime = Date.now() - 10_000;
+  buffTimerManager.activateBuff('dmg_izabel', 'self', undefined, izabelInitialStartTime);
+  const izabelInitialBuff = buffTimerManager.getActiveBuffs().find(buff => buff.buffId === 'dmg_izabel');
+  assert.ok(izabelInitialBuff);
+
+  buffTimerManager.activateBuff('dmg_izabel', 'self', undefined, izabelInitialStartTime + 1_000);
+  assert.equal(
+    buffTimerManager.getActiveBuffs().find(buff => buff.buffId === 'dmg_izabel')?.startTime,
+    izabelInitialStartTime,
+    '이자벨 대미지는 활성 중 효과 재감지로 타이머가 갱신되면 안 됩니다.',
+  );
+
   buffTimerManager.clearAllBuffs();
 }
 

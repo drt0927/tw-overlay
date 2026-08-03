@@ -115,6 +115,13 @@ class BuffTimerManager {
     }
 
     const existing = this._activeBuffs.get(buffId);
+    // 이자벨 대미지는 아이템 사용 로그가 아닌 효과 적용 문구를 감지한다.
+    // 마을 이동 등으로 같은 문구가 다시 기록될 수 있으므로, 활성 중에는
+    // 최초 감지 시각을 유지해 타이머가 잘못 연장되지 않게 한다.
+    if (buffId === 'dmg_izabel' && existing && usedBy !== 'test' && existing.usedBy !== 'test') {
+      log(`[BUFF_TIMER] 이자벨 대미지 재감지 무시: ${existing.name}`);
+      return;
+    }
     if (existing && usedBy !== 'test' && existing.usedBy !== 'test') {
       const refreshedStartTime = startTime ?? Date.now();
       if (refreshedStartTime <= existing.startTime) {

@@ -808,12 +808,7 @@
     "group": "none",
     "removeOnExit": false,
     "image": "",
-    "chatTriggers": [
-      {
-        "pattern": "EFFECT_APPLIED",
-        "keyword": "신속 포션"
-      }
-    ],
+    "chatTriggers": [],
     "description": "이벤트 기간 획득.",
     "effects": {
       "speed": 15,

@@ -1475,8 +1475,15 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
     }
     return;
   }
-  const current = config.load(), updated = { ...current, ...newSettings };
-  const { isSidebarResize, ...saveSettings } = newSettings;
+  const sanitizedSettings = { ...newSettings };
+  if (sanitizedSettings.xpWidgetPos) {
+    sanitizedSettings.xpWidgetPos = {
+      ...sanitizedSettings.xpWidgetPos,
+      left: Math.max(0, sanitizedSettings.xpWidgetPos.left),
+    };
+  }
+  const current = config.load(), updated = { ...current, ...sanitizedSettings };
+  const { isSidebarResize, ...saveSettings } = sanitizedSettings;
   config.save(saveSettings);
   if (overlayWindow) {
     isApplyingSize = true;

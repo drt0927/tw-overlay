@@ -775,7 +775,7 @@
     });
 
     document.getElementById('btn-apply-pos').addEventListener('click', () => {
-      const left = parseInt(document.getElementById('pos-left').value) || 0;
+      const left = Math.max(0, parseInt(document.getElementById('pos-left').value) || 0);
       const bottom = parseInt(document.getElementById('pos-bottom').value) || 0;
       window.electronAPI.applySettings({ xpWidgetPos: { left, bottom } });
     });

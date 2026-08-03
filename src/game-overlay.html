@@ -1802,7 +1802,8 @@
         }
 
         if (config.xpWidgetPos) {
-          const left = config.xpWidgetPos.left;
+          // 잘못 저장된 음수 좌표도 렌더링 단계에서 화면 밖으로 나가지 않게 방어한다.
+          const left = Math.max(0, config.xpWidgetPos.left);
           const bottom = config.xpWidgetPos.bottom;
 
           hud.style.left = `${left}px`;

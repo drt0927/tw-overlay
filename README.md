@@ -5,18 +5,18 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-2.2.0-violet.svg)
+![Version](https://img.shields.io/badge/version-2.2.1-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v2.2.0 (2026.08.02)
-이번 업데이트는 별도 창에서 즐길 수 있는 **검 강화하기** 게임을 추가한 **v2.2.0**입니다.
+## 🚀 최신 버전: v2.2.1 (2026.08.03)
+이번 업데이트는 버프 타이머의 오탐을 줄이고, 경험치 HUD가 화면 밖으로 벗어나는 문제를 보완한 **v2.2.1**입니다.
 
-- **⚔️ 검 강화하기 게임을 사이드바 1depth 메뉴로 추가**
-- **🖼️ 전용 게임 아이콘 및 1300×850 독립 창 지원**
-- **💾 게임 데이터의 LocalStorage 저장 환경 유지**
+- **🛡️ 이자벨의 비법(대미지) 재감지 시 타이머 갱신 방지**
+- **📍 음수 좌표 보정으로 경험치 HUD의 화면 이탈 방지**
+- **🔕 신속 포션 채팅 로그 자동 감지 제거**
 
 *(이전 버전의 변경 사항은 [release-note](release-note/) 폴더의 릴리즈 노트를 참조해 주세요.)*
 
@@ -67,7 +67,7 @@
 ## 🚀 시작하기 (테일즈위버 오버레이 프로그램 설치 및 다운로드)
 
 ### 설치 방법
-[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.2.0.exe` 파일을 다운로드하여 실행하세요.
+[Releases](https://github.com/drt0927/tw-overlay/releases) 페이지에서 최신 버전의 `twOverlay-Setup-2.2.1.exe` 파일을 다운로드하여 실행하세요.
 
 ### 단축키 및 팁
 - **단축키:** 

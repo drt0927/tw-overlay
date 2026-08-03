@@ -39,6 +39,10 @@ export function load(): AppConfig {
         parsed.chatOverlaySub2Opacity = 0.2;
         migrated = true;
       }
+      if (parsed.xpWidgetPos && parsed.xpWidgetPos.left < 0) {
+        parsed.xpWidgetPos = { ...parsed.xpWidgetPos, left: 0 };
+        migrated = true;
+      }
 
       // 득템 키워드 2차 마이그레이션 (기존 데이터를 74종 기본값으로 강제 덮어쓰기)
       if (parsed.lootKeywordsMigratedV2 !== true) {

@@ -5,18 +5,18 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Version](https://img.shields.io/badge/version-2.2.1-violet.svg)
+![Version](https://img.shields.io/badge/version-2.2.2-violet.svg)
 
 ## 📸 스크린샷
 
 ![App Screenshot](./screenshot/screen1.png)
 
-## 🚀 최신 버전: v2.2.1 (2026.08.03)
-이번 업데이트는 버프 타이머의 오탐을 줄이고, 경험치 HUD가 화면 밖으로 벗어나는 문제를 보완한 **v2.2.1**입니다.
+## 🚀 최신 버전: v2.2.2 (2026.08.08)
+이번 업데이트는 창 위치 저장 안정성을 강화하고 숙제 체크리스트 자동 복원 및 루미나의 회랑 ELSO 추가 획득 감지를 반영한 **v2.2.2**입니다.
 
-- **🛡️ 이자벨의 비법(대미지) 재감지 시 타이머 갱신 방지**
-- **📍 음수 좌표 보정으로 경험치 HUD의 화면 이탈 방지**
-- **🔕 신속 포션 채팅 로그 자동 감지 제거**
+- **📍 서브2 및 숙제 체크리스트 창 위치 복원 및 이탈 방지 개선**
+- **📋 숙제 체크리스트 열림 상태 기억 및 게임 시작 시 자동 복원 옵션 추가**
+- **💎 루미나의 회랑 ELSO 획득량 증가 효과 추가 포인트 자동 파싱 및 DB 누적**
 
 *(이전 버전의 변경 사항은 [release-note](release-note/) 폴더의 릴리즈 노트를 참조해 주세요.)*
 

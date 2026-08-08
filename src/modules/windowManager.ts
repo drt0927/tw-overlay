@@ -163,7 +163,12 @@ const windowRegistry: Record<string, ManagedWindow> = {
   etaRanking: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'etaRanking', html: 'eta-ranking.html', width: 400, height: 600 },
   trade: { ref: null, pos: { offsetX: -450, offsetY: 40 }, key: 'trade', html: 'trade.html', width: 450, height: 600 },
   coefficientCalculator: { ref: null, pos: { offsetX: -1430, offsetY: 40 }, key: 'coefficientCalculator', html: 'coefficient-calculator.html', width: 1420, height: 860 },
-  contentsChecker: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200 },
+  contentsChecker: {
+    ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'contentsChecker', html: 'contents-checker.html', width: 400, height: 1200,
+    onClose: () => {
+      broadcastConfig();
+    }
+  },
   evolutionCalculator: { ref: null, pos: { offsetX: -580, offsetY: 40 }, key: 'evolutionCalculator', html: 'evolution-calculator.html', width: 600, height: 720 },
   thesisCoreCalculator: { ref: null, pos: { offsetX: -850, offsetY: 40 }, key: 'thesisCoreCalculator', html: 'thesis-core-calculator.html', width: 850, height: 880 },
   magicStoneCalculator: { ref: null, pos: { offsetX: -400, offsetY: 40 }, key: 'magicStoneCalculator', html: 'magic-stone-calculator.html', width: 400, height: 800 },
@@ -298,6 +303,7 @@ let isOverlayVisible = false;
 let isChatOverlayVisible = false;
 let isChatOverlaySubVisible = false; // 신규 추가
 let isChatOverlaySub2Visible = false; // 신규 추가
+let isContentsCheckerVisible = false;
 let onOverlayReady: (() => void) | null = null;
 let mandatoryUpdateLock = false;
 
@@ -312,6 +318,7 @@ function init() {
   isChatOverlayVisible = !!cfg.chatOverlayEnabled;
   isChatOverlaySubVisible = !!cfg.chatOverlaySubEnabled; // 신규 추가
   isChatOverlaySub2Visible = !!cfg.chatOverlaySub2Enabled; // 신규 추가
+  isContentsCheckerVisible = !!cfg.contentsCheckerEnabled;
   if (cfg.positions) {
     if (cfg.positions.overlay) overlayPos = { ...cfg.positions.overlay };
     Object.keys(windowRegistry).forEach(key => {
@@ -556,8 +563,8 @@ function isVisibleOnScreens(x: number, y: number, width: number, height: number)
       { x: bounds.x, y: bounds.y, w: bounds.width, h: bounds.height }
     );
   }
-  // 최소 900 픽셀 (30x30) 또는 창 크기의 10% 중 더 작은 영역 이상이 화면과 겹쳐야 함.
-  const minOverlapArea = Math.min(900, width * height * 0.1);
+  // 최소 100 픽셀 (10x10) 또는 창 크기의 1% 중 더 작은 영역 이상이 화면과 겹쳐야 함.
+  const minOverlapArea = Math.min(100, width * height * 0.01);
   return totalOverlap >= minOverlapArea;
 }
 
@@ -728,6 +735,9 @@ function createToggleableWindow(key: string, callbacks?: {
     savePosition(key, winCfg.pos);
   });
   win.on('closed', () => {
+    if (config.hasPending()) {
+      config.saveImmediate();
+    }
     if (winCfg.onClose) winCfg.onClose();
     winCfg.ref = null;
     sendActiveWindowsStatus();
@@ -1144,16 +1154,28 @@ export function toggleDockWindow(): void {
   }
 }
 export function toggleContentsCheckerWindow(): boolean {
-  return createToggleableWindow('contentsChecker', {
-    onReady: (win) => {
-      // 1. 데이터 초기화 수행
-      import('./contentsChecker').then(mod => {
-        mod.init();
-        // 2. 초기화 완료 후 명시적으로 최신 데이터 전송
-        win.webContents.send('config-data', config.load());
+  isContentsCheckerVisible = !isContentsCheckerVisible;
+  config.save({ contentsCheckerEnabled: isContentsCheckerVisible });
+
+  const contentsWinCfg = windowRegistry['contentsChecker'];
+  if (isContentsCheckerVisible) {
+    if (!contentsWinCfg.ref || contentsWinCfg.ref.isDestroyed()) {
+      createToggleableWindow('contentsChecker', {
+        onReady: (win) => {
+          import('./contentsChecker').then(mod => {
+            mod.init();
+            win.webContents.send('config-data', config.load());
+          });
+        }
       });
     }
-  });
+  } else {
+    if (contentsWinCfg.ref && !contentsWinCfg.ref.isDestroyed()) {
+      contentsWinCfg.ref.close();
+    }
+  }
+  broadcastConfig();
+  return isContentsCheckerVisible;
 }
 
 export function toggleStopwatchWindow(): boolean {
@@ -1364,6 +1386,25 @@ export function syncOverlay(currentRect: GameRect): void {
       }
     }
 
+    // --- 숙제 체크리스트 자동 동기화 및 띄우기 ---
+    if (cfg.autoOpenContentsChecker && isContentsCheckerVisible) {
+      const contentsWinCfg = windowRegistry['contentsChecker'];
+      if (!contentsWinCfg.ref || contentsWinCfg.ref.isDestroyed()) {
+        createToggleableWindow('contentsChecker', {
+          onReady: (win) => {
+            import('./contentsChecker').then(mod => {
+              mod.init();
+              win.webContents.send('config-data', config.load());
+            });
+          }
+        });
+      } else {
+        if (!contentsWinCfg.ref.isVisible()) {
+          contentsWinCfg.ref.showInactive();
+        }
+      }
+    }
+
     if (sidebarPos === 'dock' || sidebarPos === 'dock-top') {
       const dockCfg = windowRegistry['dock'];
       if (isDockVisible) {
@@ -1561,6 +1602,10 @@ export function applySettings(newSettings: Partial<AppConfig> & { isSidebarResiz
       const h = newSettings.chatOverlaySub2Height ?? b.height;
       sub2WinCfg.ref.setBounds({ x: b.x, y: b.y, width: w, height: h });
     }
+  }
+
+  if (newSettings.contentsCheckerEnabled !== undefined) {
+    isContentsCheckerVisible = newSettings.contentsCheckerEnabled;
   }
 
   // buffTimerManager warnSeconds 캐시 갱신

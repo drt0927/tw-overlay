@@ -236,8 +236,9 @@ class ChatLogProcessor {
         log(`[Processor] Elso parse/save error: ${err}`);
       }
 
-      // 엘소(Elso) 습득 필터링 (오직 "[엘소 N포인트]을(를) [K]개 획득하였습니다." 패턴만 체크)
-      const isTargetElso = /\[엘소\s*\d+포인트\]을\(를\)\s*\[\d+\]개\s*획득하였습니다/.test(data.message);
+      // 엘소(Elso) 습득 필터링 (오직 "[엘소 N포인트]을(를) [K]개 획득하였습니다." 또는 루미나의 회랑 패턴만 체크)
+      const isTargetElso = /\[엘소\s*\d+포인트\]을\(를\)\s*\[\d+\]개\s*획득하였습니다/.test(data.message) ||
+        /루미나의\s*회랑\s*ELSO\s*획득량\s*증가\s*효과로/.test(data.message);
       if (isTargetElso && cfg.chatOverlayShowElsoGain === false) {
         return;
       }
@@ -766,6 +767,12 @@ function parseElsoMessage(msg: string): number {
       const count = parseInt(countMatch[1].replace(/,/g, ''), 10);
       return pt * count;
     }
+  }
+
+  // 4. 루미나의 회랑 ELSO 획득량 증가 효과로 [N] ELSO 포인트를 추가로 획득했습니다.
+  const match4 = msg.match(/루미나의\s*회랑\s*ELSO\s*획득량\s*증가\s*효과로\s*\[([\d,]+)\]\s*ELSO\s*포인트를\s*추가로\s*획득(?:했|하였)습니다/);
+  if (match4) {
+    return parseInt(match4[1].replace(/,/g, ''), 10);
   }
 
   return 0;

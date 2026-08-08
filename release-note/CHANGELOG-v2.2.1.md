@@ -1,4 +1,4 @@
-# 📦 TW-Overlay Release Note - v2.2.1 (2026-08-03)
+# 📦 TW-Overlay Release Note - [Mandatory Update] v2.2.1 (2026-08-03)
 
 이번 v2.2.1 버전은 버프 타이머의 잘못된 시간 갱신을 줄이고, 경험치 HUD의 위치 안정성을 보완한 버그 수정 업데이트입니다.
 

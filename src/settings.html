@@ -371,6 +371,15 @@
                   <p class="text-xs text-slate-500 mt-0.5">게임창 이동 시 오버레이 창들이 자동으로 함께 이동합니다.</p>
                 </div>
               </label>
+
+              <label
+                class="flex items-center gap-4 cursor-pointer group p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all">
+                <input type="checkbox" id="auto-open-contents-checker-input" class="w-5 h-5 accent-purple-600">
+                <div>
+                  <span class="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">숙제창 상태 유지 및 자동 복원</span>
+                  <p class="text-xs text-slate-500 mt-0.5">숙제창 열림 상태를 기억하여 게임 복원/기동 시 자동으로 켭니다.</p>
+                </div>
+              </label>
             </div>
 
             <div class="pt-6 border-t border-white/5 space-y-4">
@@ -1879,7 +1888,7 @@
                   <div>
                     <h3 class="text-xl font-black text-white">TW-Overlay</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">현재 버전 <span id="app-version"
-                        class="text-purple-400">2.2.1</span></p>
+                        class="text-purple-400">2.2.2</span></p>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -2787,6 +2796,7 @@ window.bindElectronListenerCleanup();
       document.getElementById('auto-launch-input').checked = !!config.autoLaunch;
       document.getElementById('auto-update-input').checked = config.autoUpdateEnabled !== false;
       document.getElementById('follow-game-window-input').checked = config.followGameWindow !== false;
+      document.getElementById('auto-open-contents-checker-input').checked = !!config.autoOpenContentsChecker;
 
       document.getElementById('game-exit-reminder-input').checked = !!config.gameExitReminderEnabled;
       document.getElementById('game-exit-reminder-message').value = config.gameExitReminderMessage || '';
@@ -3700,6 +3710,7 @@ window.bindElectronListenerCleanup();
           autoLaunch: document.getElementById('auto-launch-input').checked,
           autoUpdateEnabled: document.getElementById('auto-update-input').checked,
           followGameWindow: document.getElementById('follow-game-window-input').checked,
+          autoOpenContentsChecker: document.getElementById('auto-open-contents-checker-input').checked,
           hiddenMenuIds, // 앞으로는 숨긴 목록 값을 우선으로 기준 삼음
 
           sidebarPosition: sidebarPosValue,

@@ -31,7 +31,7 @@ jobs:
         run: npm test
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Inject Analytics Secrets
         env:

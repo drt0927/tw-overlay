@@ -311,6 +311,8 @@ export interface AppConfig {
     galleryNotify?: boolean;
     overlayVisible?: boolean;
     autoLaunch?: boolean;
+    autoOpenContentsChecker?: boolean;
+    contentsCheckerEnabled?: boolean;
     autoUpdateEnabled?: boolean;
     hasSeenWelcomeGuide?: boolean;
     galleryKeywords?: string[];

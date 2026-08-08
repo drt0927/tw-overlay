@@ -746,7 +746,7 @@ class ChatParser extends EventEmitter {
     }
 
     // E. 아이템 획득
-    if (cleanMsg.includes('획득 하였습니다') || cleanMsg.includes('획득하였습니다')) {
+    if (cleanMsg.includes('획득 하였습니다') || cleanMsg.includes('획득하였습니다') || cleanMsg.includes('획득했습니다') || cleanMsg.includes('획득 했습니다')) {
         // 어벤던로드 마정석 획득 특화 (예: "하급 마정석 1개를 획득 하였습니다.")
         const magicStoneGainMatch = cleanMsg.match(/(하급|중급|상급|최상급)\s+마정석\s+(\d+)개를\s+획득\s+하였습니다/);
         if (magicStoneGainMatch) {

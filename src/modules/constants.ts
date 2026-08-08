@@ -174,6 +174,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   discordKeywords: [],
   discordRules: [],
   chatOverlayEnabled: false,
+  autoOpenContentsChecker: false,
+  contentsCheckerEnabled: false,
   chatOverlaySubEnabled: false, // 신규 추가
   chatOverlaySub2Enabled: false,
   chatOverlayOpacity: 0.8,

@@ -726,7 +726,7 @@ function checkPreloadDefaultConfigCompatibility() {
     .digest('hex');
   assert.equal(
     compatibilityHash,
-    '9d691eceafb7ef1823eb6f9d67fee44c98e28a9185a57eef54d39f1e2cf77578',
+    '36ec6568a8530d01331841fd68d381bfafa5a452a209aa5e91d03e17213ec3b6',
     'preload DEFAULT_CONFIG의 기존 값 또는 열거 순서가 변경되었습니다.',
   );
 

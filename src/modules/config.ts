@@ -63,6 +63,7 @@ export function load(): AppConfig {
       _cachedConfig = {
         ...DEFAULT_CONFIG,
         ...parsed,
+        positions: { ...DEFAULT_CONFIG.positions, ...(parsed.positions || {}) },
         shortcuts: { ...DEFAULT_CONFIG.shortcuts, ...(parsed.shortcuts || {}) },
         fieldBossSettings: { ...DEFAULT_CONFIG.fieldBossSettings, ...(parsed.fieldBossSettings || {}) },
       } as AppConfig;
